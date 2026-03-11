@@ -68,14 +68,14 @@ void Swc_Lights_10ms(void)
     }
 
     /* --- 1. Read input signals ---------------------------------------- */
-    (void)Rte_Read(BCM_SIG_VEHICLE_SPEED, &vehicle_speed);
-    (void)Rte_Read(BCM_SIG_VEHICLE_STATE, &vehicle_state);
-    (void)Rte_Read(BCM_SIG_BODY_CONTROL_CMD, &body_cmd);
+    (void)Rte_Read(BCM_SIG_MOTOR_STATUS_MOTOR_SPEED_RPM, &vehicle_speed);
+    (void)Rte_Read(BCM_SIG_VEHICLE_STATE_VEHICLE_STATE, &vehicle_state);
+    (void)Rte_Read(BCM_SIG_BODY_CONTROL_CMD_HEADLIGHT_CMD, &body_cmd);
 
     /* --- 2. Determine headlamp state ---------------------------------- */
 
-    /* Manual override: bit 0 of body control command */
-    manual_override = (body_cmd & 0x01u);
+    /* Manual override: discrete headlight command signal (0 or 1) */
+    manual_override = body_cmd;
 
     /* Auto headlamp: ON when driving and speed > 0 */
     if ((vehicle_state == BCM_VSTATE_DRIVING) && (vehicle_speed > 0u)) {
@@ -92,6 +92,6 @@ void Swc_Lights_10ms(void)
     }
 
     /* --- 3. Write output signals -------------------------------------- */
-    (void)Rte_Write(BCM_SIG_LIGHT_HEADLAMP, headlamp);
-    (void)Rte_Write(BCM_SIG_LIGHT_TAIL, headlamp);  /* Tail follows headlamp */
+    (void)Rte_Write(BCM_SIG_LIGHT_STATUS_HEADLIGHT_ON, headlamp);
+    (void)Rte_Write(BCM_SIG_LIGHT_STATUS_TAIL_LIGHT_ON, headlamp);  /* Tail follows headlamp */
 }

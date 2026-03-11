@@ -33,9 +33,6 @@
  * Internal constants
  * ==================================================================== */
 
-/** Manual lock command: byte 1 bit 0 of body_control_cmd */
-#define LOCK_CMD_MASK   0x0100u  /* Bit 8 = byte 1, bit 0 */
-
 /** Lock state values */
 #define DOOR_UNLOCKED   0u
 #define DOOR_LOCKED     1u
@@ -101,19 +98,15 @@ void Swc_DoorLock_100ms(void)
     }
 
     /* --- 1. Read input signals ---------------------------------------- */
-    (void)Rte_Read(BCM_SIG_BODY_CONTROL_CMD, &body_cmd);
-    (void)Rte_Read(BCM_SIG_VEHICLE_SPEED, &vehicle_speed);
-    (void)Rte_Read(BCM_SIG_VEHICLE_STATE, &vehicle_state);
+    (void)Rte_Read(BCM_SIG_BODY_CONTROL_CMD_DOOR_LOCK_CMD, &body_cmd);
+    (void)Rte_Read(BCM_SIG_MOTOR_STATUS_MOTOR_SPEED_RPM, &vehicle_speed);
+    (void)Rte_Read(BCM_SIG_VEHICLE_STATE_VEHICLE_STATE, &vehicle_state);
 
-    /* --- 2. Manual lock command --------------------------------------- */
-    manual_lock = ((body_cmd & LOCK_CMD_MASK) != 0u) ? TRUE : FALSE;
+    /* --- 2. Manual lock command (discrete signal: 0=unlock, 1=lock) --- */
+    manual_lock = (body_cmd != 0u) ? TRUE : FALSE;
 
     if (manual_lock == TRUE) {
         lock_state = DOOR_LOCKED;
-    } else if ((body_cmd & LOCK_CMD_MASK) == 0u) {
-        /* Manual unlock only if no auto-lock condition applies below */
-    } else {
-        /* No action — lock state unchanged */
     }
 
     /* --- 3. Auto-lock: speed > threshold ------------------------------ */
@@ -133,5 +126,5 @@ void Swc_DoorLock_100ms(void)
     prev_vehicle_state = vehicle_state;
 
     /* --- 6. Write output ---------------------------------------------- */
-    (void)Rte_Write(BCM_SIG_DOOR_LOCK_STATE, lock_state);
+    (void)Rte_Write(BCM_SIG_DOOR_LOCK_STATUS_FRONT_LEFT_LOCK, lock_state);
 }

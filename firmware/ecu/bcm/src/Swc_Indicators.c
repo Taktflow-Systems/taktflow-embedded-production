@@ -81,7 +81,8 @@ void Swc_Indicators_Init(void)
  */
 void Swc_Indicators_10ms(void)
 {
-    uint32  body_cmd;
+    uint32  turn_signal_cmd;
+    uint32  hazard_cmd;
     uint32  estop_active;
     uint8   turn_cmd;
     boolean hazard_requested;
@@ -95,12 +96,13 @@ void Swc_Indicators_10ms(void)
     }
 
     /* --- 1. Read input signals ---------------------------------------- */
-    (void)Rte_Read(BCM_SIG_BODY_CONTROL_CMD, &body_cmd);
-    (void)Rte_Read(BCM_SIG_ESTOP_ACTIVE, &estop_active);
+    (void)Rte_Read(BCM_SIG_BODY_CONTROL_CMD_TURN_SIGNAL_CMD, &turn_signal_cmd);
+    (void)Rte_Read(BCM_SIG_BODY_CONTROL_CMD_HAZARD_CMD, &hazard_cmd);
+    (void)Rte_Read(BCM_SIG_ESTOP_BROADCAST_ESTOP_ACTIVE, &estop_active);
 
     /* --- 2. Decode commands ------------------------------------------- */
-    turn_cmd = (uint8)((body_cmd & TURN_CMD_MASK) >> TURN_CMD_SHIFT);
-    hazard_requested = (((body_cmd & HAZARD_CMD_MASK) != 0u) ||
+    turn_cmd = (uint8)turn_signal_cmd;  /* 0=off, 1=left, 2=right */
+    hazard_requested = ((hazard_cmd != 0u) ||
                         (estop_active != 0u)) ? TRUE : FALSE;
 
     /* Determine if any indicator is active */
@@ -152,7 +154,7 @@ void Swc_Indicators_10ms(void)
     }
 
     /* --- 5. Write output signals -------------------------------------- */
-    (void)Rte_Write(BCM_SIG_INDICATOR_LEFT, left_output);
-    (void)Rte_Write(BCM_SIG_INDICATOR_RIGHT, right_output);
-    (void)Rte_Write(BCM_SIG_HAZARD_ACTIVE, hazard_output);
+    (void)Rte_Write(BCM_SIG_INDICATOR_STATE_LEFT_INDICATOR, left_output);
+    (void)Rte_Write(BCM_SIG_INDICATOR_STATE_RIGHT_INDICATOR, right_output);
+    (void)Rte_Write(BCM_SIG_INDICATOR_STATE_HAZARD_ACTIVE, hazard_output);
 }
