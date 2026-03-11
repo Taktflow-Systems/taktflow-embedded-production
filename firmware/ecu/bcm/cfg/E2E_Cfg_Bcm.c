@@ -19,10 +19,10 @@
  * ================================================================== */
 
 typedef struct {
-    uint8_t pdu_id;         /* Com PDU ID (TX or RX) */
-    uint8_t data_id;        /* E2E data ID (4-bit) */
-    uint8_t counter_bit;    /* Bit position of alive counter in PDU */
-    uint8_t crc_bit;        /* Bit position of CRC8 in PDU */
+    uint8 pdu_id;         /* Com PDU ID (TX or RX) */
+    uint8 data_id;        /* E2E data ID (4-bit) */
+    uint8 counter_bit;    /* Bit position of alive counter in PDU */
+    uint8 crc_bit;        /* Bit position of CRC8 in PDU */
 } E2E_PduProtectCfgType;
 
 /* ==================================================================
@@ -71,12 +71,12 @@ static const E2E_PduProtectCfgType bcm_e2e_rx_config[] = {
 
 typedef struct {
     const E2E_PduProtectCfgType *txConfig;
-    uint8_t                      txCount;
+    uint8                        txCount;
     const E2E_PduProtectCfgType *rxConfig;
-    uint8_t                      rxCount;
-} E2E_ConfigType;
+    uint8                        rxCount;
+} E2E_ProtectConfigType;
 
-const E2E_ConfigType bcm_e2e_config = {
+const E2E_ProtectConfigType bcm_e2e_config = {
     .txConfig = bcm_e2e_tx_config,
     .txCount  = BCM_E2E_TX_PROTECT_COUNT,
     .rxConfig = bcm_e2e_rx_config,
