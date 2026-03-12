@@ -40,6 +40,7 @@ class ArxmlReader:
         self._dbc_tx_map: dict[str, str] = {}           # message_name → sender_ecu (uppercase)
         self._dbc_rx_map: dict[str, list[str]] = {}     # message_name → list of receiver ECUs
         self._dbc_e2e_map: dict[str, int] = {}          # message_name → E2E data ID (from DBC attr)
+        self._additional_tx_ecus: dict[str, list[str]] = {}  # message_name → extra TX ECUs
 
     def read(self) -> ProjectModel:
         """Read all ARXML files and build the project model."""
@@ -156,6 +157,23 @@ class ArxmlReader:
 
         e2e_count = len(self._dbc_e2e_map)
         _info(f"  DBC routing: {len(db.messages)} messages, {len(db.nodes)} nodes, {e2e_count} E2E data IDs")
+
+        # Load message_routing overrides from sidecar (multi-sender messages)
+        if self.config.sidecar_path and os.path.exists(self.config.sidecar_path):
+            try:
+                with open(self.config.sidecar_path, "r", encoding="utf-8") as f:
+                    sidecar = yaml.safe_load(f) or {}
+                routing = sidecar.get("message_routing", {})
+                for msg_name, cfg in routing.items():
+                    extra_tx = cfg.get("additional_tx_ecus", [])
+                    if extra_tx:
+                        self._additional_tx_ecus[msg_name] = [
+                            e.upper() for e in extra_tx
+                        ]
+                if routing:
+                    _info(f"  Routing overrides: {len(routing)} messages")
+            except Exception as exc:
+                self._warn(f"Failed to read sidecar routing: {exc}")
 
     # ------------------------------------------------------------------
     # Platform types
@@ -369,6 +387,30 @@ class ArxmlReader:
                     e2e_crc_bit=pdu.e2e_crc_bit,
                 )
                 ecu.rx_pdus.append(rx_pdu)
+
+        # Apply routing overrides: add TX PDUs for additional senders
+        for pdu_path, pdu in all_pdus.items():
+            extra_ecus = self._additional_tx_ecus.get(pdu.name, [])
+            for extra_ecu in extra_ecus:
+                ecu_lower = extra_ecu.lower()
+                if ecu_lower not in ecus:
+                    continue
+                # Skip if already a TX PDU for this ECU
+                if any(p.name == pdu.name for p in ecus[ecu_lower].tx_pdus):
+                    continue
+                tx_pdu = Pdu(
+                    name=pdu.name,
+                    pdu_id=len(ecus[ecu_lower].tx_pdus),
+                    can_id=pdu.can_id,
+                    dlc=pdu.dlc,
+                    direction="TX",
+                    signals=pdu.signals,
+                    e2e_protected=pdu.e2e_protected,
+                    e2e_data_id=pdu.e2e_data_id,
+                    e2e_counter_bit=pdu.e2e_counter_bit,
+                    e2e_crc_bit=pdu.e2e_crc_bit,
+                )
+                ecus[ecu_lower].tx_pdus.append(tx_pdu)
 
         # Sort PDUs by CAN ID and reassign PDU IDs
         for ecu in ecus.values():

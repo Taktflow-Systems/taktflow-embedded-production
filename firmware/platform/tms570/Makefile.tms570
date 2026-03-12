@@ -83,7 +83,8 @@ HALCOGEN_SRCS_ALL = $(wildcard $(HALCOGEN_DIR)/source/*.c)
 HALCOGEN_EXCLUDE  = $(HALCOGEN_DIR)/source/HL_sys_main.c \
                     $(HALCOGEN_DIR)/source/HL_gio.c \
                     $(HALCOGEN_DIR)/source/HL_rti.c \
-                    $(HALCOGEN_DIR)/source/HL_notification.c
+                    $(HALCOGEN_DIR)/source/HL_notification.c \
+                    $(HALCOGEN_DIR)/source/HL_emif.c
 HALCOGEN_SRCS = $(filter-out $(HALCOGEN_EXCLUDE),$(HALCOGEN_SRCS_ALL))
 
 # --- HALCoGen assembly (.asm — TI assembler syntax) ---

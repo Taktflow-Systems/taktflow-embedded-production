@@ -32,17 +32,23 @@
  * Use these instead of hardcoded numbers in Com_SendSignal/Com_ReceiveSignal
  * ==================================================================== */
 
-{% set ns = namespace(com_id=0) %}
+{% set ns = namespace(com_id=0, seen_sigs=[]) %}
 {% for pdu in ecu.tx_pdus %}
 {% for sig in pdu.signals %}
+{% if sig.name not in ns.seen_sigs %}
 #define {{ ecu.prefix }}_COM_SIG_{{ sig.name | upper_snake }}  {{ "%4d"|format(ns.com_id) }}u   /* TX {{ pdu.name }} */
+{% set ns.seen_sigs = ns.seen_sigs + [sig.name] %}
 {% set ns.com_id = ns.com_id + 1 %}
+{% endif %}
 {% endfor %}
 {% endfor %}
 {% for pdu in ecu.rx_pdus %}
 {% for sig in pdu.signals %}
+{% if sig.name not in ns.seen_sigs %}
 #define {{ ecu.prefix }}_COM_SIG_{{ sig.name | upper_snake }}  {{ "%4d"|format(ns.com_id) }}u   /* RX {{ pdu.name }} */
+{% set ns.seen_sigs = ns.seen_sigs + [sig.name] %}
 {% set ns.com_id = ns.com_id + 1 %}
+{% endif %}
 {% endfor %}
 {% endfor %}
 #define {{ ecu.prefix }}_COM_SIG_COUNT  {{ "%4d"|format(ns.com_id) }}u
@@ -86,5 +92,12 @@
 #define {{ name }}  {{ "%4d"|format(value) }}u
 {% endfor %}
 {% endif %}
+
+/* ====================================================================
+ * Application-specific constants (hand-authored, not generated)
+ * ==================================================================== */
+#if __has_include("{{ ecu.prefix.capitalize() }}_App.h")
+#include "{{ ecu.prefix.capitalize() }}_App.h"
+#endif
 
 #endif /* {{ ecu.prefix }}_CFG_H */

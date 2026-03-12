@@ -22,17 +22,17 @@
  * ==================================================================== */
 
 /**
- * @brief  Read TurnSignalCmd (uint8)
+ * @brief  Read TurnSignalCmd (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_TurnSignalCmd(uint8 *data)
+static inline Rte_StatusType Rte_Read_TurnSignalCmd(uint8_t *data)
 {
-    uint32 tmp;
+    uint32_t tmp;
     Rte_StatusType status = Rte_Read(BCM_SIG_TURN_SIGNAL_CMD, &tmp);
     if (status == RTE_E_OK)
     {
-        *data = (uint8)tmp;
+        *data = (uint8_t)tmp;
     }
     return status;
 }
@@ -44,7 +44,7 @@ static inline Rte_StatusType Rte_Read_TurnSignalCmd(uint8 *data)
  */
 static inline Rte_StatusType Rte_Write_RightIndicator(boolean value)
 {
-    return Rte_Write(BCM_SIG_RIGHT_INDICATOR, (uint32)value);
+    return Rte_Write(BCM_SIG_RIGHT_INDICATOR, (uint32_t)value);
 }
 
 /**
@@ -54,7 +54,7 @@ static inline Rte_StatusType Rte_Write_RightIndicator(boolean value)
  */
 static inline Rte_StatusType Rte_Write_LeftIndicator(boolean value)
 {
-    return Rte_Write(BCM_SIG_LEFT_INDICATOR, (uint32)value);
+    return Rte_Write(BCM_SIG_LEFT_INDICATOR, (uint32_t)value);
 }
 
 #endif /* RTE_SWC_INDICATORS_H */

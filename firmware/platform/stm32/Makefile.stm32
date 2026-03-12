@@ -249,7 +249,7 @@ $(BUILD_DIR):
 # --- Flash via OpenOCD ---
 flash: $(BIN)
 	@echo "=== Flashing $(TARGET) via OpenOCD ==="
-	$(OCD) -f target/stm32/openocd.cfg \
+	$(OCD) -f $(PLAT)/openocd.cfg \
 		-c "program $(ELF) verify reset exit"
 
 # --- Firmware size report ---

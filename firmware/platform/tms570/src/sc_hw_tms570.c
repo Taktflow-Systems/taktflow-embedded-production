@@ -1360,7 +1360,7 @@ void sc_hw_debug_periodic(void)
 
 #endif /* PLATFORM_TMS570 */
 
-/* Appended by build fix: stub for unused EMIF referenced by HL_system.c */
-#ifdef PLATFORM_TMS570
-void emif_SDRAM_StartupInit(void) { /* SC does not use EMIF/SDRAM */ }
-#endif
+/* Override HALCoGen's emif_SDRAM_StartupInit() — LaunchPad has no SDRAM.
+ * The real implementation in HL_emif.c configures EMIF registers for
+ * external SDRAM that doesn't exist on LAUNCHXL2-570LC43, causing a hang. */
+void emif_SDRAM_StartupInit(void) { /* no-op: no SDRAM on LaunchPad */ }

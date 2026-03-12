@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taktflow — Automotive Software Factory Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:     #07090F;
+  --bg2:    #0D1220;
+  --bg3:    #111827;
+  --bg4:    #161E2E;
+  --line:   #1E2D45;
+  --dim:    #3D5470;
+  --mid:    #5A7EA0;
+  --text:   #B8CCE4;
+  --bright: #E8F0FB;
+  --white:  #F4F8FF;
+
+  /* pipeline */
+  --c1: #6B9FFF;
+  --c2: #A78BFA;
+  --c3: #34D399;
+  --c4: #F59E0B;
+  --c5: #60A5FA;
+  --c6: #F472B6;
+  --c7: #FB923C;
+  --c8: #4ADE80;
+
+  /* roles */
+  --r-pm:   #F59E0B;
+  --r-bsw:  #34D399;
+  --r-test: #60A5FA;
+  --r-safe: #F472B6;
+  --r-asp:  #A78BFA;
+  --r-rel:  #4ADE80;
+
+  /* vendors */
+  --v-vec:  #FF6B35;
+  --v-dsp:  #3B82F6;
+  --v-pol:  #8B5CF6;
+  --v-son:  #EF4444;
+  --v-gh:   #94A3B8;
+  --v-can:  #10B981;
+
+  --human:  #FFD700;
+  --auto:   #34D399;
+  --gate:   #EF4444;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* ─── TOPBAR ─────────────────────────── */
+.topbar {
+  position: sticky; top:0; z-index:300;
+  background: rgba(7,9,15,0.97);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(10px);
+  padding: 10px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--white);
+  white-space: nowrap;
+}
+.logo em { color: var(--c3); font-style: normal; }
+
+.top-pills {
+  display: flex;
+  gap: 6px;
+}
+.pill {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.pill-auto { color: var(--auto); border-color: var(--auto); }
+.pill-human { color: var(--human); border-color: var(--human); background: rgba(255,215,0,0.06); }
+.pill-gate { color: var(--gate); border-color: var(--gate); }
+
+.top-right {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--dim);
+  text-align: right;
+  white-space: nowrap;
+  line-height: 1.8;
+}
+
+/* ─── LAYOUT ──────────────────────── */
+.page {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 22px 24px 48px;
+}
+
+.stitle {
+  font-family: 'DM Mono', monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.stitle::after { content:''; flex:1; height:1px; background:var(--line); }
+.stitle em { color: var(--human); font-style:normal; font-size:8px; }
+
+/* ─── VISION BANNER ──────────────── */
+.vision {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--c3);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+}
+.vis-block {}
+.vis-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 5px;
+}
+.vis-text {
+  font-size: 12.5px;
+  color: var(--text);
+  line-height: 1.6;
+}
+.vis-text strong { color: var(--bright); }
+.vis-text em { color: var(--c3); font-style: normal; }
+
+/* ─── FULL PIPELINE WITH HUMANS ──── */
+.pipeline-section {
+  margin-bottom: 20px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  padding: 20px 16px 16px;
+  position: relative;
+  overflow: hidden;
+}
+.pipeline-section::before {
+  content: 'AUTOMATED  ─────────────────────────────────────────────────────────────────  HUMAN GOVERNED';
+  position: absolute;
+  top: 7px; left: 16px; right: 16px;
+  font-family: 'DM Mono', monospace;
+  font-size: 7px;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+}
+
+/* rows */
+.pipe-row {
+  display: grid;
+  align-items: start;
+  margin-bottom: 0;
+}
+/* ROW 1: stations */
+.stations-row {
+  grid-template-columns: repeat(8, 1fr) 20px repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 6px;
+}
+/* ROW 2: connector line area */
+.connect-row {
+  grid-template-columns: repeat(8, 1fr) 20px repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 6px;
+  position: relative;
+}
+
+.station {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.s-dot {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: var(--bg3);
+  border: 2px solid var(--sc);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  transition: all 0.2s;
+  cursor: pointer;
+  position: relative;
+}
+.s-dot:hover { background: var(--sc); }
+.s-dot:hover .s-n, .s-dot:hover .s-i { color: var(--bg) !important; }
+.s-n {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800; font-size: 16px;
+  color: var(--sc); line-height: 1; transition: color 0.2s;
+}
+.s-i {
+  font-family: 'DM Mono', monospace;
+  font-size: 7.5px; color: var(--sc);
+  opacity: 0.8; transition: color 0.2s;
+}
+.s-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 10px;
+  color: var(--bright); text-align: center;
+  line-height: 1.25; margin-bottom: 2px;
+}
+.s-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 7.5px; color: var(--dim);
+  text-align: center; line-height: 1.4;
+}
+.s-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 7px;
+  border: 1px solid var(--sc);
+  color: var(--sc);
+  padding: 1px 4px;
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+/* DIVIDER */
+.pipe-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 12px;
+}
+.divider-line {
+  width: 2px;
+  height: 60px;
+  background: linear-gradient(180deg, var(--dim) 0%, var(--human) 100%);
+  position: relative;
+}
+.divider-line::after {
+  content: '⚡';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  background: var(--bg2);
+  padding: 2px;
+  color: var(--human);
+}
+
+/* APPROVAL STATIONS */
+.approval-station {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.a-dot {
+  width: 52px; height: 52px;
+  border-radius: 4px;
+  background: rgba(255,215,0,0.06);
+  border: 2px solid var(--human);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+.a-icon { font-size: 18px; line-height: 1; }
+.a-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 9px;
+  color: var(--human); text-align: center;
+  line-height: 1.3; margin-bottom: 2px;
+}
+.a-role {
+  font-family: 'DM Mono', monospace;
+  font-size: 7.5px; color: var(--dim);
+  text-align: center; line-height: 1.4;
+}
+.a-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 7px;
+  border: 1px solid var(--human);
+  color: var(--human);
+  padding: 1px 4px;
+  margin-top: 3px;
+  white-space: nowrap;
+  background: rgba(255,215,0,0.04);
+}
+
+/* flow arrow connecting pipeline to approval */
+.flow-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.flow-arrow::before {
+  content: '';
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--c8) 0%, var(--human) 100%);
+  opacity: 0.6;
+}
+.flow-arrow-label {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'DM Mono', monospace;
+  font-size: 7px;
+  color: var(--human);
+  white-space: nowrap;
+  background: var(--bg2);
+  padding: 0 4px;
+  letter-spacing: 0.08em;
+}
+
+/* connecting arrow between stations row */
+.chain-line {
+  position: relative;
+  height: 16px;
+  margin-bottom: 4px;
+}
+.chain-line::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 3%;
+  right: 3%;
+  height: 2px;
+  background: linear-gradient(90deg,
+    var(--c1) 0%, var(--c2) 12%, var(--c3) 25%,
+    var(--c4) 37%, var(--c5) 50%, var(--c6) 62%,
+    var(--c7) 75%, var(--c8) 88%, var(--human) 100%);
+  opacity: 0.4;
+}
+
+/* ─── HUMAN WORKFLOW DETAIL ──────── */
+.workflow-section {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.backlog-board {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--human);
+  overflow: hidden;
+}
+.bb-head {
+  background: var(--bg3);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.bb-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 12px;
+  color: var(--human);
+}
+.bb-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 8px; color: var(--dim);
+}
+
+.backlog-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1.2fr 1.2fr 0.8fr 0.8fr;
+  border-bottom: 1px solid var(--line);
+}
+.backlog-row:last-child { border-bottom: none; }
+.backlog-row.hdr { background: color-mix(in srgb, var(--line) 50%, transparent); }
+.bc {
+  padding: 7px 9px;
+  font-family: 'DM Mono', monospace;
+  font-size: 8.5px;
+  color: var(--text);
+  border-right: 1px solid var(--line);
+  line-height: 1.4;
+}
+.bc:last-child { border-right: none; }
+.bc.lbl { font-size:7.5px; color:var(--dim); text-transform:uppercase; letter-spacing:0.1em; }
+.bc.artifact { color: var(--bright); font-weight: 500; }
+.bc.role { }
+.bc.trigger { color: var(--c3); font-size:8px; }
+
+.role-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 1px 5px;
+  font-size: 7.5px;
+  font-family: 'DM Mono', monospace;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.s-pending { color: var(--r-pm); border-color: var(--r-pm); }
+.s-review  { color: var(--human); border-color: var(--human); }
+.s-signed  { color: var(--auto); border-color: var(--auto); }
+.s-block   { color: var(--gate); border-color: var(--gate); }
+
+/* sign-off flow */
+.signoff-flow {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--c3);
+  padding: 14px;
+}
+.sf-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 12px;
+  color: var(--bright);
+  margin-bottom: 14px;
+}
+.sf-step {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  align-items: flex-start;
+}
+.sf-step:last-child { margin-bottom: 0; }
+.sf-num {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--sc2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--sc2);
+  flex-shrink: 0;
+}
+.sf-body { flex: 1; }
+.sf-title2 {
+  font-family: 'DM Mono', monospace;
+  font-size: 9.5px; font-weight: 500;
+  color: var(--bright);
+  margin-bottom: 2px;
+}
+.sf-desc {
+  font-size: 11px; color: var(--text);
+  line-height: 1.5;
+}
+.sf-desc em { color: var(--human); font-style: normal; }
+
+/* ─── LOWER TRIPLE ───────────────── */
+.lower {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr 0.9fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* artifact table */
+.art-table {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.art-head {
+  background: var(--bg3);
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+  font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 11px;
+  color: var(--bright);
+  display: flex; align-items: center; gap: 6px;
+}
+.art-row {
+  display: grid;
+  grid-template-columns: 1.8fr 1.2fr 1.6fr;
+  border-bottom: 1px solid var(--line);
+}
+.art-row:last-child { border-bottom: none; }
+.art-row.hdr { background: color-mix(in srgb, var(--line) 50%, transparent); }
+.ac {
+  padding: 6px 9px;
+  font-family: 'DM Mono', monospace;
+  font-size: 8.5px;
+  color: var(--text);
+  border-right: 1px solid var(--line);
+  line-height: 1.4;
+}
+.ac:last-child { border-right: none; }
+.ac.lbl { font-size:7.5px; color:var(--dim); text-transform:uppercase; letter-spacing:0.08em; }
+.ac.name { color: var(--bright); font-weight: 500; }
+.ac.fmt  { color: var(--c3); }
+.ac.dest { color: var(--mid); font-size:8px; }
+.ac.who  { }
+
+.human-tag {
+  display: inline-block;
+  font-size: 7px;
+  padding: 1px 4px;
+  border: 1px solid var(--human);
+  color: var(--human);
+  margin-left: 3px;
+  vertical-align: middle;
+}
+.auto-tag {
+  display: inline-block;
+  font-size: 7px;
+  padding: 1px 4px;
+  border: 1px solid var(--auto);
+  color: var(--auto);
+  margin-left: 3px;
+  vertical-align: middle;
+}
+
+/* aspice */
+.aspice-table {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.asp-head {
+  background: var(--bg3);
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+  font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 11px;
+  color: var(--bright);
+}
+.asp-row {
+  display: grid;
+  grid-template-columns: 0.8fr 1fr 1.8fr;
+  border-bottom: 1px solid var(--line);
+}
+.asp-row:last-child { border-bottom: none; }
+.asp-row.hdr { background: color-mix(in srgb, var(--line) 50%, transparent); }
+.apc {
+  padding: 6px 9px;
+  font-family: 'DM Mono', monospace;
+  font-size: 8.5px;
+  color: var(--text);
+  border-right: 1px solid var(--line);
+  line-height: 1.4;
+}
+.apc:last-child { border-right: none; }
+.apc.lbl { font-size:7.5px; color:var(--dim); text-transform:uppercase; letter-spacing:0.08em; }
+.apc.pa { color: var(--bright); font-weight:500; }
+.apc.ev { color: var(--c3); font-size:8px; }
+.lbadge {
+  display:inline-block; padding:1px 4px;
+  font-size:7px; border:1px solid; margin-left:3px;
+}
+.lv2 { color:var(--c4); border-color:var(--c4); }
+.lv3 { color:var(--c8); border-color:var(--c8); }
+
+/* ci/cd */
+.ci-table {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.ci-head {
+  background: var(--bg3);
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+  font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 11px;
+  color: var(--bright);
+}
+.ci-step {
+  display: flex;
+  border-bottom: 1px solid var(--line);
+}
+.ci-step:last-child { border-bottom: none; }
+.ci-num {
+  width: 26px; min-width:26px;
+  background: var(--bg3);
+  border-right: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; color: var(--dim);
+}
+.ci-body { flex:1; padding: 7px 9px; }
+.ci-name {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; font-weight:500;
+  color: var(--bright); margin-bottom: 1px;
+}
+.ci-cmd {
+  font-family: 'DM Mono', monospace;
+  font-size: 7.5px; color: var(--c3); line-height:1.5;
+}
+.ci-out {
+  font-family: 'DM Mono', monospace;
+  font-size: 7.5px; color: var(--dim); margin-top: 1px;
+}
+.ci-gate {
+  width: 48px; min-width:48px;
+  border-left: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 7px; text-align: center; padding: 3px;
+  line-height: 1.4;
+}
+.g-auto  { color:var(--auto);  background:rgba(52,211,153,.06); }
+.g-human { color:var(--human); background:rgba(255,215,0,.06); }
+.g-block { color:var(--gate);  background:rgba(239,68,68,.06); }
+.g-prod  { color:var(--c8);    background:rgba(74,222,128,.08); }
+
+/* ─── VENDOR STRIP ───────────────── */
+.vendor-strip {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+.vs-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 12px;
+  color: var(--bright); margin-bottom: 12px;
+}
+.vs-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+.vs-card {
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--vc);
+  padding: 9px 11px;
+}
+.vs-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 11px;
+  color: var(--vc); margin-bottom: 3px;
+}
+.vs-role {
+  font-family: 'DM Mono', monospace;
+  font-size: 7.5px; color: var(--dim);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+.vs-items { list-style: none; }
+.vs-items li {
+  font-size: 10px; color: var(--text);
+  line-height: 1.55; padding-left: 10px;
+  position: relative;
+}
+.vs-items li::before {
+  content: '→'; position: absolute; left: 0;
+  color: var(--vc); font-size: 8px;
+}
+
+/* ─── SCALE SECTION ─────────────── */
+.scale-section {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--c3);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.sc-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 13px;
+  color: var(--bright); margin-bottom: 14px;
+}
+.sc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.sc-card {
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--cc);
+  padding: 12px;
+}
+.sc-tier {
+  font-family: 'DM Mono', monospace;
+  font-size: 8px; color: var(--dim);
+  text-transform: uppercase; letter-spacing: 0.12em;
+  margin-bottom: 4px;
+}
+.sc-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 13px;
+  color: var(--cc); margin-bottom: 8px;
+}
+.sc-items { list-style: none; }
+.sc-items li {
+  font-size: 10.5px; color: var(--text);
+  line-height: 1.6; padding-left: 10px;
+  position: relative;
+}
+.sc-items li::before {
+  content: '·'; position: absolute; left: 2px;
+  color: var(--cc);
+}
+
+/* ─── STATEMENT ─────────────────── */
+.statement {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 20px;
+}
+.stmt {
+  font-family: 'Syne', sans-serif;
+  font-weight: 600; font-size: 14px;
+  color: var(--text); line-height: 1.65;
+}
+.stmt em { color: var(--c3); font-style: normal; }
+.stmt strong { color: var(--human); }
+.stmt-r {
+  font-family: 'DM Mono', monospace;
+  font-size: 8.5px; color: var(--dim);
+  text-align: right; line-height: 1.9;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">TAKT<em>FLOW</em></div>
+  <div class="top-pills">
+    <span class="pill pill-auto">Automated Pipeline</span>
+    <span class="pill pill-human">Human in the Loop</span>
+    <span class="pill pill-gate">No human sign-off = no production</span>
+  </div>
+  <div class="top-right">
+    Automotive Software Factory Platform<br>
+    Supply Chain · ASPICE · ISO 26262
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- ── VISION ── -->
+  <div class="vision">
+    <div class="vis-block">
+      <div class="vis-label">What this is</div>
+      <div class="vis-text">
+        <strong>A platform, not a tool.</strong> The factory runs across every project in the supply chain —
+        OEM to Tier-1 to Tier-2 — with a consistent pipeline, consistent evidence, and
+        <em>every deviation reviewed and signed off by the right human before it moves forward.</em>
+      </div>
+    </div>
+    <div class="vis-block">
+      <div class="vis-label">The human contract</div>
+      <div class="vis-text">
+        Automation generates the evidence. <strong>Humans own the decisions.</strong>
+        Every CI/CD artifact is pushed to a role-based backlog.
+        The Safety Manager signs safety evidence. The BSW Lead signs ARXML changes.
+        The Test Manager signs test results. <em>Nothing reaches production without a complete sign-off chain.</em>
+      </div>
+    </div>
+    <div class="vis-block">
+      <div class="vis-label">Why this scales</div>
+      <div class="vis-text">
+        One factory instance. Multiple projects. Multiple teams. Multiple tiers.
+        The pipeline is identical for every project — only the DBC and requirements change.
+        <em>Evidence quality is consistent across every project the factory touches</em>,
+        not dependent on which engineer set up the toolchain this time.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FULL PIPELINE WITH APPROVAL ── -->
+  <div class="stitle">Full pipeline — automated stations → human approval gates → production <em>★ human sign-off required</em></div>
+
+  <div class="pipeline-section">
+
+    <!-- chain line -->
+    <div style="height:14px; position:relative; margin-bottom:6px;">
+      <div style="position:absolute;top:50%;left:0.5%;right:38%;height:2px;
+        background:linear-gradient(90deg,var(--c1),var(--c2),var(--c3),var(--c4),var(--c5),var(--c6),var(--c7),var(--c8));opacity:0.35;"></div>
+      <div style="position:absolute;top:50%;left:63%;right:0;height:2px;
+        background:linear-gradient(90deg,var(--human),var(--human));opacity:0.35;"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(8,1fr) 48px repeat(3,1fr);gap:6px;align-items:start;">
+
+      <!-- S1 -->
+      <div class="station">
+        <div class="s-dot" style="--sc:var(--c1)">
+          <div class="s-n">1</div><div class="s-i">REQ</div>
+        </div>
+        <div class="s-name">Requirements</div>
+        <div class="s-sub">doorstop<br>ReqIF 1.2</div>
+        <div class="s-badge" style="--sc:var(--c1)">SWE.1</div>
+      </div>
+
+      <!-- S2 -->
+      <div class="station">
+        <div class="s-dot" style="--sc:var(--c2)">
+          <div class="s-n">2</div><div class="s-i">SYS</div>
+        </div>
+        <div class="s-name">Architecture</div>
+        <div class="s-sub">Capella<br>SysML XMI</div>
+        <div class="s-badge" style="--sc:var(--c2)">SWE.2</div>
+      </div>
+
+      <!-- S3 -->
+      <div class="station">
+        <div class="s-dot" style="--sc:var(--c3)">
+          <div class="s-n">3</div><div class="s-i">ARXML</div>
+        </div>
+        <div class="s-name">ARXML Engine</div>
+        <div class="s-sub">arxmlgen<br>strict valid.</div>
+        <div class="s-badge" style="--sc:var(--c3)">SWE.2/3</div>
+      </div>
+
+      <!-- S4 -->
+      <div class="station">
+        <div class="s-dot" style="--sc:var(--c4)">
+          <div class="s-n">4</div><div class="s-i">BSW</div>
+        </div>
+        <div class="s-name">BSW Codegen</div>
+        <div class="s-sub">Jinja2 + MISRA<br>cppcheck</div>
+        <div class="s-badge" style="--sc:var(--c4)">SWE.3</div>
+      </div>
+
+      <!-- S5 -->
+      <div class="station">
+        <div class="s-dot" style="--sc:var(--c5)">
+          <div class="s-n">5</div><div class="s-i">SIL</div>
+        </div>
+        <div class="s-name">SIL</div>
+        <div class="s-sub">Docker · pytest<br>MC/DC · LLVM</div>
+        <div class="s-badge" style="--sc:var(--c5)">SWE.4</div>
+      </div>
+
+      <!-- S6 -->
+      <div class="station">
+        <div class="s-dot" style="--sc:var(--c6)">
+          <div class="s-n">6</div><div class="s-i">PIL</div>
+        </div>
+        <div class="s-name">PIL</div>
+        <div class="s-sub">OpenOCD<br>real silicon</div>
+        <div class="s-badge" style="--sc:var(--c6)">SWE.5</div>
+      </div>
+
+      <!-- S7 -->
+      <div class="station">
+        <div class="s-dot" style="--sc:var(--c7)">
+          <div class="s-n">7</div><div class="s-i">HIL</div>
+        </div>
+        <div class="s-name">HIL</div>
+        <div class="s-sub">PCAN · RPi4<br>7-ECU live</div>
+        <div class="s-badge" style="--sc:var(--c7)">SWE.5/6</div>
+      </div>
+
+      <!-- S8 -->
+      <div class="station">
+        <div class="s-dot" style="--sc:var(--c8)">
+          <div class="s-n">8</div><div class="s-i">EVD</div>
+        </div>
+        <div class="s-name">Evidence</div>
+        <div class="s-sub">merge_xil<br>traceability</div>
+        <div class="s-badge" style="--sc:var(--c8)">SUP.1/9/10</div>
+      </div>
+
+      <!-- DIVIDER -->
+      <div style="display:flex;flex-direction:column;align-items:center;padding-top:10px;gap:4px;">
+        <div style="width:2px;height:30px;background:linear-gradient(180deg,var(--c8),var(--human));"></div>
+        <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--human);writing-mode:vertical-rl;letter-spacing:0.1em;">★ GATE</div>
+        <div style="width:2px;height:30px;background:linear-gradient(180deg,var(--human),var(--human));opacity:0.5;"></div>
+      </div>
+
+      <!-- A1: BSW Lead -->
+      <div class="approval-station">
+        <div class="a-dot">
+          <div class="a-icon">🔧</div>
+        </div>
+        <div class="a-name">BSW Lead</div>
+        <div class="a-role">ARXML · codegen<br>MISRA report</div>
+        <div class="a-badge">signs ARXML Δ</div>
+      </div>
+
+      <!-- A2: Test Manager -->
+      <div class="approval-station">
+        <div class="a-dot">
+          <div class="a-icon">✅</div>
+        </div>
+        <div class="a-name">Test Manager</div>
+        <div class="a-role">SIL · PIL · HIL<br>coverage report</div>
+        <div class="a-badge">signs test results</div>
+      </div>
+
+      <!-- A3: Safety Manager -->
+      <div class="approval-station">
+        <div class="a-dot">
+          <div class="a-icon">🛡️</div>
+        </div>
+        <div class="a-name">Safety Manager</div>
+        <div class="a-role">deviations · timing<br>ASIL evidence</div>
+        <div class="a-badge">signs safety case</div>
+      </div>
+
+    </div>
+
+    <!-- second row: additional approvers -->
+    <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px;
+      display:grid;grid-template-columns:repeat(8,1fr) 48px repeat(3,1fr);gap:6px;">
+
+      <!-- auto labels -->
+      <div style="grid-column:1/9;display:flex;align-items:center;gap:6px;">
+        <span style="font-family:'DM Mono',monospace;font-size:8px;color:var(--auto);">
+          ● AUTOMATED — every artifact timestamped, committed, immutable
+        </span>
+      </div>
+
+      <div></div><!-- spacer for gate column -->
+
+      <!-- more approvers -->
+      <div class="approval-station">
+        <div class="a-dot" style="height:40px;width:40px;">
+          <div class="a-icon" style="font-size:14px;">📋</div>
+        </div>
+        <div class="a-name" style="font-size:8px;">ASPICE Coord.</div>
+        <div class="a-role">process evidence<br>SWE.1–6</div>
+        <div class="a-badge">signs ASPICE pkg</div>
+      </div>
+
+      <div class="approval-station">
+        <div class="a-dot" style="height:40px;width:40px;">
+          <div class="a-icon" style="font-size:14px;">📦</div>
+        </div>
+        <div class="a-name" style="font-size:8px;">Release Eng.</div>
+        <div class="a-role">version · tag<br>delivery pkg</div>
+        <div class="a-badge">signs release</div>
+      </div>
+
+      <div class="approval-station">
+        <div class="a-dot" style="height:40px;width:40px;background:rgba(74,222,128,0.1);border-color:var(--c8);">
+          <div class="a-icon" style="font-size:14px;">🚀</div>
+        </div>
+        <div class="a-name" style="font-size:8px;color:var(--c8);">PRODUCTION</div>
+        <div class="a-role">all signed off<br>gate cleared</div>
+        <div class="a-badge" style="border-color:var(--c8);color:var(--c8);">RELEASED</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── HUMAN WORKFLOW ── -->
+  <div class="stitle">Human-in-the-loop workflow — how deviations and artifacts reach the right person</div>
+
+  <div class="workflow-section">
+
+    <!-- BACKLOG BOARD -->
+    <div class="backlog-board">
+      <div class="bb-head">
+        <div class="bb-title">Role-Based Approval Backlog</div>
+        <div class="bb-sub">CI/CD pushes artifacts here · humans sign off · nothing moves without it</div>
+      </div>
+
+      <div class="backlog-row hdr">
+        <div class="bc lbl">Artifact</div>
+        <div class="bc lbl">Assigned To</div>
+        <div class="bc lbl">Trigger</div>
+        <div class="bc lbl">Status</div>
+        <div class="bc lbl">Blocks</div>
+      </div>
+
+      <div class="backlog-row">
+        <div class="bc artifact">ARXML schema Δ detected</div>
+        <div class="bc"><span class="role-dot" style="background:var(--r-bsw)"></span>BSW Lead</div>
+        <div class="bc trigger">autosar-data: new warning</div>
+        <div class="bc"><span class="status-badge s-review">IN REVIEW</span></div>
+        <div class="bc">SIL run</div>
+      </div>
+
+      <div class="backlog-row">
+        <div class="bc artifact">MISRA violation — Rule 15.5</div>
+        <div class="bc"><span class="role-dot" style="background:var(--r-bsw)"></span>BSW Lead</div>
+        <div class="bc trigger">cppcheck: new violation</div>
+        <div class="bc"><span class="status-badge s-block">BLOCKED</span></div>
+        <div class="bc">codegen merge</div>
+      </div>
+
+      <div class="backlog-row">
+        <div class="bc artifact">SIL timing deviation: REQ-0042</div>
+        <div class="bc"><span class="role-dot" style="background:var(--r-safe)"></span>Safety Manager</div>
+        <div class="bc trigger">measured 11.2ms vs 10ms goal</div>
+        <div class="bc"><span class="status-badge s-review">IN REVIEW</span></div>
+        <div class="bc">PIL · HIL · production</div>
+      </div>
+
+      <div class="backlog-row">
+        <div class="bc artifact">SIL coverage: 87% MC/DC</div>
+        <div class="bc"><span class="role-dot" style="background:var(--r-test)"></span>Test Manager</div>
+        <div class="bc trigger">below 90% ASIL D threshold</div>
+        <div class="bc"><span class="status-badge s-review">IN REVIEW</span></div>
+        <div class="bc">SWE.4 evidence</div>
+      </div>
+
+      <div class="backlog-row">
+        <div class="bc artifact">HIL results — Sprint 7</div>
+        <div class="bc"><span class="role-dot" style="background:var(--r-test)"></span>Test Manager</div>
+        <div class="bc trigger">HIL run completed</div>
+        <div class="bc"><span class="status-badge s-signed">✓ SIGNED</span></div>
+        <div class="bc">ASPICE evidence</div>
+      </div>
+
+      <div class="backlog-row">
+        <div class="bc artifact">coverage_report.html v7.3</div>
+        <div class="bc"><span class="role-dot" style="background:var(--r-asp)"></span>ASPICE Coord.</div>
+        <div class="bc trigger">sprint closure</div>
+        <div class="bc"><span class="status-badge s-pending">PENDING</span></div>
+        <div class="bc">ASPICE submission</div>
+      </div>
+
+      <div class="backlog-row">
+        <div class="bc artifact">PIL timing regression: +4.2ms</div>
+        <div class="bc"><span class="role-dot" style="background:var(--r-safe)"></span>Safety Manager</div>
+        <div class="bc trigger">SIL↔PIL delta exceeded</div>
+        <div class="bc"><span class="status-badge s-block">BLOCKED</span></div>
+        <div class="bc">HIL · production</div>
+      </div>
+
+      <div class="backlog-row">
+        <div class="bc artifact">Release candidate v2.4.0</div>
+        <div class="bc"><span class="role-dot" style="background:var(--r-rel)"></span>Release Eng. +<br><span class="role-dot" style="background:var(--r-safe)"></span>Safety Mgr.</div>
+        <div class="bc trigger">all prior items signed</div>
+        <div class="bc"><span class="status-badge s-pending">PENDING</span></div>
+        <div class="bc">production deploy</div>
+      </div>
+
+    </div>
+
+    <!-- SIGN-OFF FLOW -->
+    <div class="signoff-flow">
+      <div class="sf-title">How a Deviation Gets Resolved</div>
+
+      <div class="sf-step" style="--sc2:var(--c7)">
+        <div class="sf-num" style="--sc2:var(--c7)">1</div>
+        <div class="sf-body">
+          <div class="sf-title2">CI detects deviation</div>
+          <div class="sf-desc">HIL measures safe state at 11.2ms. Requirement says 10ms. Pipeline does not fail silently — it <em>names the requirement, names the safety goal, shows the delta.</em></div>
+        </div>
+      </div>
+
+      <div class="sf-step" style="--sc2:var(--human)">
+        <div class="sf-num" style="--sc2:var(--human)">2</div>
+        <div class="sf-body">
+          <div class="sf-title2">Artifact pushed to backlog</div>
+          <div class="sf-desc">Deviation automatically routed to <em>Safety Manager's backlog</em> with full context: measured value, requirement ID, HARA traceability, commit hash, test name.</div>
+        </div>
+      </div>
+
+      <div class="sf-step" style="--sc2:var(--human)">
+        <div class="sf-num" style="--sc2:var(--human)">3</div>
+        <div class="sf-body">
+          <div class="sf-title2">Human reviews and decides</div>
+          <div class="sf-desc">Safety Manager sees the full picture. Three options: <em>Reject</em> — fix required before any progress. <em>Accept with justification</em> — documented deviation. <em>Escalate</em> — push to OEM or change request.</div>
+        </div>
+      </div>
+
+      <div class="sf-step" style="--sc2:var(--c3)">
+        <div class="sf-num" style="--sc2:var(--c3)">4</div>
+        <div class="sf-body">
+          <div class="sf-title2">Sign-off recorded immutably</div>
+          <div class="sf-desc">Decision committed to git with name, timestamp, and justification. <em>Becomes part of the safety case.</em> Auditor can see every deviation and every human decision made about it.</div>
+        </div>
+      </div>
+
+      <div class="sf-step" style="--sc2:var(--c8)">
+        <div class="sf-num" style="--sc2:var(--c8)">5</div>
+        <div class="sf-body">
+          <div class="sf-title2">Gate cleared — pipeline continues</div>
+          <div class="sf-desc">Only after <em>all role-based sign-offs are complete</em> does the pipeline allow progression to the next stage — or to production release.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── LOWER THREE ── -->
+  <div class="lower">
+
+    <!-- ARTIFACTS -->
+    <div class="art-table">
+      <div class="art-head">
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--c3)"></div>
+        Artifacts — Who Reviews
+      </div>
+      <div class="art-row hdr">
+        <div class="ac lbl">Artifact</div>
+        <div class="ac lbl">Format</div>
+        <div class="ac lbl">Reviewer</div>
+      </div>
+      <div class="art-row">
+        <div class="ac name">requirements.reqif</div>
+        <div class="ac fmt">ReqIF 1.2</div>
+        <div class="ac"><span class="role-dot" style="background:var(--r-pm)"></span>PM + Safety<span class="human-tag">★</span></div>
+      </div>
+      <div class="art-row">
+        <div class="ac name">TaktflowSystem.arxml</div>
+        <div class="ac fmt">AUTOSAR 4.x</div>
+        <div class="ac"><span class="role-dot" style="background:var(--r-bsw)"></span>BSW Lead<span class="human-tag">★</span></div>
+      </div>
+      <div class="art-row">
+        <div class="ac name">MISRA report</div>
+        <div class="ac fmt">XML + HTML</div>
+        <div class="ac"><span class="role-dot" style="background:var(--r-bsw)"></span>BSW Lead<span class="human-tag">★</span></div>
+      </div>
+      <div class="art-row">
+        <div class="ac name">results_sil.xml</div>
+        <div class="ac fmt">JUnit XML</div>
+        <div class="ac"><span class="role-dot" style="background:var(--r-test)"></span>Test Mgr.<span class="human-tag">★</span></div>
+      </div>
+      <div class="art-row">
+        <div class="ac name">MC/DC coverage</div>
+        <div class="ac fmt">LCOV/LLVM</div>
+        <div class="ac"><span class="role-dot" style="background:var(--r-test)"></span>Test + Safety<span class="human-tag">★</span></div>
+      </div>
+      <div class="art-row">
+        <div class="ac name">SIL↔PIL delta</div>
+        <div class="ac fmt">CSV + HTML</div>
+        <div class="ac"><span class="role-dot" style="background:var(--r-safe)"></span>Safety Mgr.<span class="human-tag">★</span></div>
+      </div>
+      <div class="art-row">
+        <div class="ac name">HIL fault injection log</div>
+        <div class="ac fmt">JUnit + .asc</div>
+        <div class="ac"><span class="role-dot" style="background:var(--r-safe)"></span>Safety Mgr.<span class="human-tag">★</span></div>
+      </div>
+      <div class="art-row">
+        <div class="ac name">coverage_report.html</div>
+        <div class="ac fmt">HTML</div>
+        <div class="ac"><span class="role-dot" style="background:var(--r-asp)"></span>ASPICE Coord.<span class="human-tag">★</span></div>
+      </div>
+      <div class="art-row">
+        <div class="ac name">candump.asc</div>
+        <div class="ac fmt">CANoe log</div>
+        <div class="ac"><span class="role-dot" style="background:var(--r-test)"></span>Test Mgr.<span class="auto-tag">auto</span></div>
+      </div>
+      <div class="art-row">
+        <div class="ac name">Release package</div>
+        <div class="ac fmt">tagged bundle</div>
+        <div class="ac"><span class="role-dot" style="background:var(--r-rel)"></span>All roles<span class="human-tag">★ ALL</span></div>
+      </div>
+    </div>
+
+    <!-- ASPICE -->
+    <div class="aspice-table">
+      <div class="asp-head">ASPICE + ISO 26262 — Human Gate per Area</div>
+      <div class="asp-row hdr">
+        <div class="apc lbl">PA</div>
+        <div class="apc lbl">Auto Evidence</div>
+        <div class="apc lbl">Human Gate</div>
+      </div>
+      <div class="asp-row">
+        <div class="apc pa">SWE.1<span class="lbadge lv2">L2</span><span class="lbadge lv3">L3</span></div>
+        <div class="apc">reqif generated<br>traceability built</div>
+        <div class="apc ev">PM + Safety sign req baseline ★</div>
+      </div>
+      <div class="asp-row">
+        <div class="apc pa">SWE.2<span class="lbadge lv3">L3</span></div>
+        <div class="apc">Capella XMI<br>ARXML validated</div>
+        <div class="apc ev">BSW Lead signs arch. interfaces ★</div>
+      </div>
+      <div class="asp-row">
+        <div class="apc pa">SWE.3<span class="lbadge lv2">L2</span><span class="lbadge lv3">L3</span></div>
+        <div class="apc">BSW generated<br>MISRA clean</div>
+        <div class="apc ev">BSW Lead signs generated code ★</div>
+      </div>
+      <div class="asp-row">
+        <div class="apc pa">SWE.4<span class="lbadge lv2">L2</span><span class="lbadge lv3">L3</span></div>
+        <div class="apc">JUnit SIL<br>MC/DC report</div>
+        <div class="apc ev">Test Mgr + Safety sign SIL ★</div>
+      </div>
+      <div class="asp-row">
+        <div class="apc pa">SWE.5<span class="lbadge lv2">L2</span><span class="lbadge lv3">L3</span></div>
+        <div class="apc">JUnit PIL+HIL<br>delta measured</div>
+        <div class="apc ev">Test Mgr signs; Safety reviews δ ★</div>
+      </div>
+      <div class="asp-row">
+        <div class="apc pa">SWE.6<span class="lbadge lv3">L3</span></div>
+        <div class="apc">7-ECU HIL<br>system coverage</div>
+        <div class="apc ev">Safety + PM sign system results ★</div>
+      </div>
+      <div class="asp-row">
+        <div class="apc pa">SUP.1</div>
+        <div class="apc">CI gate log<br>SonarQube</div>
+        <div class="apc ev">QA signs non-conformances ★</div>
+      </div>
+      <div class="asp-row">
+        <div class="apc pa">SUP.9</div>
+        <div class="apc">Issue auto-created<br>on test fail</div>
+        <div class="apc ev">Lead signs root cause + fix ★</div>
+      </div>
+      <div class="asp-row">
+        <div class="apc pa">SUP.10</div>
+        <div class="apc">PR = change req<br>CI shows impact</div>
+        <div class="apc ev">Change board signs impact ★</div>
+      </div>
+      <div class="asp-row">
+        <div class="apc pa">26262 D</div>
+        <div class="apc">MC/DC + fault<br>inject measured</div>
+        <div class="apc ev">Safety Manager signs safety case ★</div>
+      </div>
+    </div>
+
+    <!-- CI/CD -->
+    <div class="ci-table">
+      <div class="ci-head">CI/CD — Automated + Human Gates</div>
+      <div class="ci-step">
+        <div class="ci-num">1</div>
+        <div class="ci-body">
+          <div class="ci-name">ARXML Validation</div>
+          <div class="ci-cmd">autosar-data strict</div>
+          <div class="ci-out">→ 0 warnings required</div>
+        </div>
+        <div class="ci-gate g-auto">AUTO<br>GATE</div>
+      </div>
+      <div class="ci-step">
+        <div class="ci-num">2</div>
+        <div class="ci-body">
+          <div class="ci-name">BSW Codegen + MISRA</div>
+          <div class="ci-cmd">arxmlgen + cppcheck</div>
+          <div class="ci-out">→ MISRA report to backlog</div>
+        </div>
+        <div class="ci-gate g-human">★ BSW<br>LEAD</div>
+      </div>
+      <div class="ci-step">
+        <div class="ci-num">3</div>
+        <div class="ci-body">
+          <div class="ci-name">Req. Check</div>
+          <div class="ci-cmd">doorstop check</div>
+          <div class="ci-out">→ suspect links fail</div>
+        </div>
+        <div class="ci-gate g-block">PR<br>BLOCK</div>
+      </div>
+      <div class="ci-step">
+        <div class="ci-num">4</div>
+        <div class="ci-body">
+          <div class="ci-name">SIL Suite</div>
+          <div class="ci-cmd">pytest --target=sil</div>
+          <div class="ci-out">→ JUnit + MC/DC to backlog</div>
+        </div>
+        <div class="ci-gate g-human">★ TEST<br>MGR</div>
+      </div>
+      <div class="ci-step">
+        <div class="ci-num">5</div>
+        <div class="ci-body">
+          <div class="ci-name">PIL Suite</div>
+          <div class="ci-cmd">pytest --target=pil</div>
+          <div class="ci-out">→ delta report to backlog</div>
+        </div>
+        <div class="ci-gate g-human">★ SAFE<br>MGR</div>
+      </div>
+      <div class="ci-step">
+        <div class="ci-num">6</div>
+        <div class="ci-body">
+          <div class="ci-name">HIL Suite</div>
+          <div class="ci-cmd">pytest --target=hil</div>
+          <div class="ci-out">→ results + .asc to backlog</div>
+        </div>
+        <div class="ci-gate g-human">★ TEST<br>+SAFE</div>
+      </div>
+      <div class="ci-step">
+        <div class="ci-num">7</div>
+        <div class="ci-body">
+          <div class="ci-name">Evidence Merge</div>
+          <div class="ci-cmd">merge_xil_results.py</div>
+          <div class="ci-out">→ coverage_report.html</div>
+        </div>
+        <div class="ci-gate g-human">★ ASPICE<br>COORD</div>
+      </div>
+      <div class="ci-step">
+        <div class="ci-num">8</div>
+        <div class="ci-body">
+          <div class="ci-name">Release Gate</div>
+          <div class="ci-cmd">all sign-offs verified</div>
+          <div class="ci-out">→ production allowed</div>
+        </div>
+        <div class="ci-gate g-prod">ALL ★<br>PROD</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── VENDOR STRIP ── -->
+  <div class="stitle">Integration — existing tools stay, factory feeds them, humans govern them</div>
+  <div class="vendor-strip">
+    <div class="vs-grid">
+      <div class="vs-card" style="--vc:var(--v-vec)">
+        <div class="vs-name">Vector</div>
+        <div class="vs-role">CANoe · DaVinci · CANdb++</div>
+        <ul class="vs-items">
+          <li>ARXML → DaVinci (BSW Lead reviews)</li>
+          <li>DBC compatible with CANdb++</li>
+          <li>.asc → CANoe replay</li>
+          <li>JUnit → Vector test reports</li>
+        </ul>
+      </div>
+      <div class="vs-card" style="--vc:var(--v-dsp)">
+        <div class="vs-name">dSpace</div>
+        <div class="vs-role">SCALEXIO · VEOS · SystemDesk</div>
+        <ul class="vs-items">
+          <li>ARXML → SystemDesk compatible</li>
+          <li>JUnit XML → VEOS format</li>
+          <li>Early HIL feeds SCALEXIO path</li>
+          <li>Sign-off carries across platforms</li>
+        </ul>
+      </div>
+      <div class="vs-card" style="--vc:var(--v-pol)">
+        <div class="vs-name">Polarion / DOORS</div>
+        <div class="vs-role">ALM · Requirements · Test</div>
+        <ul class="vs-items">
+          <li>reqif → native import</li>
+          <li>JUnit → Polarion Test records</li>
+          <li>Sign-off history → ALM workflow</li>
+          <li>Backlog items sync to Polarion tasks</li>
+        </ul>
+      </div>
+      <div class="vs-card" style="--vc:var(--v-son)">
+        <div class="vs-name">SonarQube</div>
+        <div class="vs-role">Quality · MISRA · Coverage</div>
+        <ul class="vs-items">
+          <li>LCOV → coverage trends</li>
+          <li>MISRA violations → quality gate</li>
+          <li>BSW Lead reviews via SonarQube UI</li>
+          <li>Historical trend across projects</li>
+        </ul>
+      </div>
+      <div class="vs-card" style="--vc:var(--v-gh)">
+        <div class="vs-name">GitHub / Jenkins</div>
+        <div class="vs-role">CI · Change · Issue Tracking</div>
+        <ul class="vs-items">
+          <li>PR = change request for review</li>
+          <li>Failed test → Issue auto-assigned</li>
+          <li>Sign-off recorded as git commit</li>
+          <li>Full audit trail in repo history</li>
+        </ul>
+      </div>
+      <div class="vs-card" style="--vc:var(--v-can)">
+        <div class="vs-name">CANape / INCA</div>
+        <div class="vs-role">Calibration · XCP · A2L</div>
+        <ul class="vs-items">
+          <li>A2L auto-generated from ELF</li>
+          <li>XCP deviations → Safety backlog</li>
+          <li>Calibration sign-off → Safety Mgr.</li>
+          <li>Production cal. requires full sign-off</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCALE ── -->
+  <div class="stitle">Platform scale — one factory, the whole supply chain</div>
+  <div class="scale-section">
+    <div class="sc-grid">
+      <div class="sc-card" style="--cc:var(--c1)">
+        <div class="sc-tier">Tier 0</div>
+        <div class="sc-name">OEM</div>
+        <ul class="sc-items">
+          <li>Receives reqif + coverage report</li>
+          <li>Signs off system-level requirements</li>
+          <li>Reads traceability directly</li>
+          <li>No more PDF export, no manual reentry</li>
+        </ul>
+      </div>
+      <div class="sc-card" style="--cc:var(--c3)">
+        <div class="sc-tier">Tier 1</div>
+        <div class="sc-name">Tier-1 Supplier</div>
+        <ul class="sc-items">
+          <li>BSW, test, safety, ASPICE roles</li>
+          <li>Each role has own backlog view</li>
+          <li>Every deviation signed before progression</li>
+          <li>ASPICE L3 evidence continuous, not periodic</li>
+        </ul>
+      </div>
+      <div class="sc-card" style="--cc:var(--c5)">
+        <div class="sc-tier">Tier 2</div>
+        <div class="sc-name">Tier-2 Supplier</div>
+        <ul class="sc-items">
+          <li>Runs same factory on their ECU subset</li>
+          <li>Delivers artifacts in Tier-1 accepted formats</li>
+          <li>Validates Tier-1 requirements before commitment</li>
+          <li>Sign-off chain carries into Tier-1 factory</li>
+        </ul>
+      </div>
+      <div class="sc-card" style="--cc:var(--human)">
+        <div class="sc-tier">Eng. Services</div>
+        <div class="sc-name">IAV · AVL · KPIT</div>
+        <ul class="sc-items">
+          <li>One factory instance per customer project</li>
+          <li>ASPICE compliance consistent across all projects</li>
+          <li>New project: 2 weeks to HIL — factory reused</li>
+          <li>Human governance customisable per customer</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STATEMENT ── -->
+  <div class="statement">
+    <div class="stmt">
+      The factory automates the evidence chain across the entire supply chain.<br>
+      <strong>Humans own every decision. Every sign-off is immutable. Nothing reaches production without it.</strong><br>
+      <em>That is what makes it a platform — not a tool, not a project, not a one-person pipeline.</em>
+    </div>
+    <div class="stmt-r">
+      taktflow.io<br>
+      contact@taktflow.io<br>
+      Stuttgart · Germany<br>
+      Embedded World 2026
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

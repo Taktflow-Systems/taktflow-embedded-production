@@ -28,7 +28,7 @@
  */
 static inline Rte_StatusType Rte_Read_DoorLockCmd(boolean *data)
 {
-    uint32 tmp;
+    uint32_t tmp;
     Rte_StatusType status = Rte_Read(BCM_SIG_DOOR_LOCK_CMD, &tmp);
     if (status == RTE_E_OK)
     {
@@ -44,7 +44,7 @@ static inline Rte_StatusType Rte_Read_DoorLockCmd(boolean *data)
  */
 static inline Rte_StatusType Rte_Write_RearLeftLock(boolean value)
 {
-    return Rte_Write(BCM_SIG_REAR_LEFT_LOCK, (uint32)value);
+    return Rte_Write(BCM_SIG_REAR_LEFT_LOCK, (uint32_t)value);
 }
 
 /**
@@ -54,7 +54,7 @@ static inline Rte_StatusType Rte_Write_RearLeftLock(boolean value)
  */
 static inline Rte_StatusType Rte_Write_CentralLock(boolean value)
 {
-    return Rte_Write(BCM_SIG_CENTRAL_LOCK, (uint32)value);
+    return Rte_Write(BCM_SIG_CENTRAL_LOCK, (uint32_t)value);
 }
 
 /**
@@ -64,7 +64,7 @@ static inline Rte_StatusType Rte_Write_CentralLock(boolean value)
  */
 static inline Rte_StatusType Rte_Write_RearRightLock(boolean value)
 {
-    return Rte_Write(BCM_SIG_REAR_RIGHT_LOCK, (uint32)value);
+    return Rte_Write(BCM_SIG_REAR_RIGHT_LOCK, (uint32_t)value);
 }
 
 /**
@@ -74,7 +74,7 @@ static inline Rte_StatusType Rte_Write_RearRightLock(boolean value)
  */
 static inline Rte_StatusType Rte_Write_FrontLeftLock(boolean value)
 {
-    return Rte_Write(BCM_SIG_FRONT_LEFT_LOCK, (uint32)value);
+    return Rte_Write(BCM_SIG_FRONT_LEFT_LOCK, (uint32_t)value);
 }
 
 /**
@@ -84,7 +84,7 @@ static inline Rte_StatusType Rte_Write_FrontLeftLock(boolean value)
  */
 static inline Rte_StatusType Rte_Write_FrontRightLock(boolean value)
 {
-    return Rte_Write(BCM_SIG_FRONT_RIGHT_LOCK, (uint32)value);
+    return Rte_Write(BCM_SIG_FRONT_RIGHT_LOCK, (uint32_t)value);
 }
 
 #endif /* RTE_SWC_DOORLOCK_H */

@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taktflow-Systems — Embedded World 2026 Briefs</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800&family=Barlow:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:    #0B1120;
+    --ink2:   #141D2F;
+    --ink3:   #1C2842;
+    --steel:  #2A3F5F;
+    --mid:    #3D5A80;
+    --white:  #F0F4FF;
+    --white2: #C8D8F0;
+    --dim:    #7A92B8;
+    --green:  #3DBA7E;
+    --red:    #E05555;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: #0D1525;
+    font-family: 'Barlow', sans-serif;
+    font-size: 13px;
+    color: var(--white);
+  }
+
+  /* NAV */
+  .nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: rgba(11,17,32,0.96);
+    border-bottom: 1px solid var(--steel);
+    display: flex;
+    gap: 0;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+  .nav-btn {
+    flex: 1;
+    padding: 12px 8px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dim);
+    border-right: 1px solid var(--steel);
+    transition: all 0.2s;
+  }
+  .nav-btn:last-child { border-right: none; }
+  .nav-btn.active { color: var(--white); }
+  .nav-btn .co-name { display: block; font-size: 15px; }
+  .nav-btn .co-tag  { display: block; font-size: 9px; opacity: 0.7; letter-spacing: 0.1em; }
+
+  /* PAGES */
+  .page {
+    display: none;
+    padding: 68px 0 32px;
+    min-height: 100vh;
+  }
+  .page.active { display: block; }
+
+  .frame {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 24px 32px;
+    position: relative;
+  }
+  .frame::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events:none; z-index:0;
+  }
+  .frame > * { position: relative; z-index: 1; }
+
+  /* HEADER */
+  header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: end;
+    gap: 20px;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+  }
+  .logo-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 42px;
+    color: var(--white);
+    line-height: 1;
+    letter-spacing: 0.03em;
+  }
+  .logo-sub {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 300;
+    font-size: 16px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .to-block {
+    flex: 1;
+    padding-bottom: 4px;
+  }
+  .to-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .to-company {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+  }
+  .to-desc {
+    font-size: 11px;
+    color: var(--dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .header-context {
+    text-align: right;
+    padding-bottom: 4px;
+  }
+  .ew-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: var(--ink);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    margin-bottom: 4px;
+  }
+  .ew-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--dim);
+    display: block;
+  }
+
+  /* INTENT BAR */
+  .intent-bar {
+    border-left: 4px solid var(--accent2);
+    background: var(--ink2);
+    padding: 12px 16px;
+    margin-bottom: 18px;
+  }
+  .intent-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--accent2);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .intent-text {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--white);
+    line-height: 1.5;
+  }
+  .intent-text em {
+    color: var(--accent2);
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content:''; flex:1; height:1px; background:var(--steel);
+  }
+
+  /* MAIN GRID */
+  .main-grid {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .g2 { grid-template-columns: 1fr 1fr; }
+  .g3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .card {
+    background: var(--ink2);
+    border: 1px solid var(--steel);
+    padding: 14px;
+  }
+  .card-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .card-body {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--white2);
+  }
+  .card-body em { color: var(--accent2); font-style: normal; font-weight: 600; }
+  .card-body strong { color: var(--white); font-weight: 600; }
+
+  /* PIPELINE STRIP */
+  .pipeline {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 0;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .pipeline::before {
+    content:'';
+    position:absolute;
+    top:20px; left:6%; right:6%;
+    height:2px;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
+    z-index:0;
+  }
+  .pipe-node {
+    display: flex; flex-direction: column;
+    align-items: center; position: relative; z-index:1;
+  }
+  .pipe-dot {
+    width:40px; height:40px; border-radius:50%;
+    background: var(--ink3);
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:6px;
+  }
+  .pipe-dot.hi { border: 2px solid var(--accent2); }
+  .pipe-dot.lo { border: 2px solid var(--mid); }
+  .pipe-num {
+    font-family:'Barlow Condensed',sans-serif;
+    font-weight:800; font-size:15px;
+  }
+  .pipe-num.hi { color: var(--accent2); }
+  .pipe-num.lo { color: var(--mid); }
+  .pipe-label {
+    font-family:'Barlow Condensed',sans-serif;
+    font-weight:600; font-size:10px;
+    color:var(--white2); text-align:center;
+    letter-spacing:0.04em; line-height:1.3;
+  }
+  .pipe-sub {
+    font-family:'JetBrains Mono',monospace;
+    font-size:7.5px; color:var(--dim);
+    text-align:center; margin-top:2px; line-height:1.3;
+  }
+
+  /* QUESTIONS BLOCK */
+  .questions {
+    background: var(--ink2);
+    border: 1px solid var(--steel);
+    border-top: 3px solid var(--accent2);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .q-title {
+    font-family:'Barlow Condensed',sans-serif;
+    font-weight:700; font-size:13px;
+    color:var(--accent2); letter-spacing:0.08em;
+    text-transform:uppercase; margin-bottom:12px;
+  }
+  .q-item {
+    display:flex; gap:10px;
+    margin-bottom:10px; align-items:flex-start;
+  }
+  .q-num {
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px; color:var(--accent2);
+    background: var(--ink3);
+    border:1px solid var(--mid);
+    padding:2px 6px; white-space:nowrap;
+    flex-shrink:0; margin-top:1px;
+  }
+  .q-text {
+    font-size:12.5px; color:var(--white2);
+    line-height:1.5;
+  }
+  .q-text em { color:var(--white); font-style:normal; font-weight:600; }
+
+  /* WHAT WE BUILT */
+  .built-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .built-chip {
+    background: var(--ink3);
+    border: 1px solid var(--steel);
+    padding: 10px 12px;
+  }
+  .built-chip .bc-label {
+    font-family:'JetBrains Mono',monospace;
+    font-size:8.5px; color:var(--dim);
+    letter-spacing:0.1em; text-transform:uppercase;
+    margin-bottom:3px;
+  }
+  .built-chip .bc-value {
+    font-family:'Barlow Condensed',sans-serif;
+    font-weight:700; font-size:13px;
+    color:var(--accent); line-height:1.3;
+  }
+
+  /* FOOTER */
+  footer {
+    border-top:1px solid var(--steel);
+    padding-top:12px;
+    display:grid; grid-template-columns:1fr auto;
+    align-items:center;
+  }
+  .footer-stmt {
+    font-family:'Barlow Condensed',sans-serif;
+    font-weight:600; font-size:14px;
+    color:var(--white2); font-style:italic;
+    line-height:1.5;
+  }
+  .footer-stmt em { color:var(--accent); font-style:normal; }
+  .footer-contact {
+    font-family:'JetBrains Mono',monospace;
+    font-size:9.5px; color:var(--dim);
+    text-align:right; line-height:1.8;
+  }
+
+  /* SP */
+  .sp { height: 8px; }
+
+  @media print {
+    .nav { display: none; }
+    .page { display: block !important; padding-top: 0; page-break-after: always; }
+    body { background: white; color: #0B1120; }
+    .frame::before { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="show('vector')">
+    <span class="co-name">Vector</span>
+    <span class="co-tag">Tool Ecosystem</span>
+  </button>
+  <button class="nav-btn" onclick="show('dspace')">
+    <span class="co-name">dSpace</span>
+    <span class="co-tag">HIL / Simulation</span>
+  </button>
+  <button class="nav-btn" onclick="show('intacs')">
+    <span class="co-name">intacs</span>
+    <span class="co-tag">ASPICE Assessors</span>
+  </button>
+  <button class="nav-btn" onclick="show('tuv')">
+    <span class="co-name">TÜV</span>
+    <span class="co-tag">Safety Certification</span>
+  </button>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     PAGE 1 — VECTOR
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="page active" id="page-vector" style="--accent:#4A9EE0; --accent2:#00D4AA;">
+<div class="frame">
+
+  <header>
+    <div>
+      <div class="logo-name">Taktflow-Systems</div>
+      <div class="logo-sub">Automotive Software Factory</div>
+    </div>
+    <div class="to-block">
+      <div class="to-tag">Opinion requested from</div>
+      <div class="to-company">Vector Informatik</div>
+      <div class="to-desc">CANoe · CANdb++ · DaVinci · VN hardware · AUTOSAR toolchain</div>
+    </div>
+    <div class="header-context">
+      <div class="ew-badge">Embedded World 2026</div>
+      <span class="ew-sub">Nürnberg · informal conversation</span>
+    </div>
+  </header>
+
+  <div class="intent-bar">
+    <div class="intent-label">Why we are talking to Vector</div>
+    <div class="intent-text">
+      Vector owns the dominant tool nodes in the automotive development chain — CANoe, DaVinci, CANdb++.
+      We built an open-source pipeline that <em>connects those nodes automatically</em>.
+      We want to understand whether Vector sees this as complementary to their ecosystem,
+      and whether the output formats we produce are genuinely compatible with the tools your customers use daily.
+    </div>
+  </div>
+
+  <div class="section-label">What we built and where Vector tools fit</div>
+  <div class="pipeline">
+    <div class="pipe-node">
+      <div class="pipe-dot lo"><span class="pipe-num lo">1</span></div>
+      <div class="pipe-label">Requirements</div>
+      <div class="pipe-sub">ReqIF · doorstop</div>
+    </div>
+    <div class="pipe-node">
+      <div class="pipe-dot lo"><span class="pipe-num lo">2</span></div>
+      <div class="pipe-label">DBC / FIBEX</div>
+      <div class="pipe-sub">CANdb++ compat.</div>
+    </div>
+    <div class="pipe-node">
+      <div class="pipe-dot hi"><span class="pipe-num hi">3</span></div>
+      <div class="pipe-label">ARXML Engine</div>
+      <div class="pipe-sub">→ DaVinci import<br>validated ✓</div>
+    </div>
+    <div class="pipe-node">
+      <div class="pipe-dot hi"><span class="pipe-num hi">4</span></div>
+      <div class="pipe-label">BSW Codegen</div>
+      <div class="pipe-sub">CanIf · Com · RTE<br>MISRA clean</div>
+    </div>
+    <div class="pipe-node">
+      <div class="pipe-dot lo"><span class="pipe-num lo">5</span></div>
+      <div class="pipe-label">SIL</div>
+      <div class="pipe-sub">Docker · pytest</div>
+    </div>
+    <div class="pipe-node">
+      <div class="pipe-dot lo"><span class="pipe-num lo">6</span></div>
+      <div class="pipe-label">PIL</div>
+      <div class="pipe-sub">real silicon</div>
+    </div>
+    <div class="pipe-node">
+      <div class="pipe-dot hi"><span class="pipe-num hi">7</span></div>
+      <div class="pipe-label">HIL</div>
+      <div class="pipe-sub">PCAN · .asc log<br>→ CANoe replay</div>
+    </div>
+    <div class="pipe-node">
+      <div class="pipe-dot lo"><span class="pipe-num lo">8</span></div>
+      <div class="pipe-label">Evidence</div>
+      <div class="pipe-sub">ASPICE · 26262</div>
+    </div>
+  </div>
+  <div style="font-size:10px; color:var(--accent2); font-family:'JetBrains Mono',monospace; margin-bottom:16px;">
+    ● highlighted nodes produce or consume Vector-compatible artifacts
+  </div>
+
+  <div class="main-grid g2">
+    <div class="card" style="border-top:3px solid var(--accent);">
+      <div class="card-title" style="color:var(--accent);">What our pipeline produces for Vector tools</div>
+      <div class="card-body">
+        ARXML validated with <em>autosar-data strict — 0 warnings</em>. DaVinci Configurator import confirmed in prototype testing.<br><br>
+        DBC / FIBEX compatible signal database — same format as CANdb++. No conversion required.<br><br>
+        HIL CAN logs in <em>.asc format</em> — directly replayable in CANoe and CANalyzer.<br><br>
+        pytest replaces CAPL for test scripting, but JUnit XML output is identical to what Vector's test reporting tools consume.
+      </div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--accent2);">
+      <div class="card-title" style="color:var(--accent2);">The gap we are filling</div>
+      <div class="card-body">
+        Vector's tools are excellent at what they do. The gap is not in any individual tool — it is in the <em>automation between them</em>.<br><br>
+        A DBC change today requires a manual DaVinci update, a manual CAPL test update, and a manual traceability matrix update. Each step is a silo handoff where information gets lost or delayed.<br><br>
+        We automate those handoffs. <strong>DBC change → ARXML regenerated → BSW configs updated → SIL runs → traceability updated.</strong> The Vector tools at the nodes stay exactly as they are.
+      </div>
+    </div>
+  </div>
+
+  <div class="questions">
+    <div class="q-title">Questions for Vector — your expert opinion matters here</div>
+    <div class="q-item">
+      <div class="q-num">Q1</div>
+      <div class="q-text">Our ARXML passes <em>autosar-data strict validation</em> with 0 warnings and imports into DaVinci in prototype testing. Are there known compatibility constraints in DaVinci Configurator that we should be testing against? Edge cases in signal routing or memory mapping that break real-world imports?</div>
+    </div>
+    <div class="q-item">
+      <div class="q-num">Q2</div>
+      <div class="q-text">We replaced CAPL with pytest for test scripting. The output is JUnit XML. From your experience with customers — <em>is pytest-based test evidence accepted by OEMs</em> in ASPICE Level 2/3 assessments, or do assessors still expect CAPL/CANoe native test reports?</div>
+    </div>
+    <div class="q-item">
+      <div class="q-num">Q3</div>
+      <div class="q-text">Does Vector see an open-source pipeline that produces DaVinci-ready ARXML and CANoe-compatible .asc logs as <em>complementary to your ecosystem</em>, or does it compete with parts of your toolchain that you are investing in?</div>
+    </div>
+    <div class="q-item">
+      <div class="q-num">Q4</div>
+      <div class="q-text">Are there <em>Vector customers actively looking</em> for this kind of CI automation layer — teams that have DaVinci and CANoe but no pipeline connecting them to their requirements and CI system?</div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-stmt">
+      Vector owns the nodes. <em>We build the pipeline between them.</em><br>
+      We want to know if that is a gap you recognise in your customers.
+    </div>
+    <div class="footer-contact">Taktflow-Systems.io<br>Embedded World 2026<br>Nürnberg</div>
+  </footer>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     PAGE 2 — DSPACE
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-dspace" style="--accent:#E07B35; --accent2:#FFB84A;">
+<div class="frame">
+
+  <header>
+    <div>
+      <div class="logo-name">Taktflow-Systems</div>
+      <div class="logo-sub">Automotive Software Factory</div>
+    </div>
+    <div class="to-block">
+      <div class="to-tag">Opinion requested from</div>
+      <div class="to-company">dSpace</div>
+      <div class="to-desc">SCALEXIO · TargetLink · SystemDesk · VEOS · HIL infrastructure</div>
+    </div>
+    <div class="header-context">
+      <div class="ew-badge" style="background:var(--accent);">Embedded World 2026</div>
+      <span class="ew-sub">Nürnberg · informal conversation</span>
+    </div>
+  </header>
+
+  <div class="intent-bar" style="border-left-color:var(--accent2);">
+    <div class="intent-label" style="color:var(--accent2);">Why we are talking to dSpace</div>
+    <div class="intent-text">
+      dSpace defines the standard for production-grade HIL testing. We built an open-source HIL
+      that reaches <em>7-ECU live integration in 2 weeks</em> at a fraction of SCALEXIO cost —
+      explicitly for teams that cannot yet justify a full dSpace investment.
+      We want dSpace's perspective on where open-source HIL ends and where production HIL begins,
+      and whether these approaches are genuinely complementary or fundamentally in conflict.
+    </div>
+  </div>
+
+  <div class="main-grid g2" style="margin-bottom:16px;">
+    <div class="card" style="border-top:3px solid var(--accent);">
+      <div class="card-title" style="color:var(--accent);">What we built — the open-source HIL</div>
+      <div class="card-body">
+        <strong>7-ECU mixed HIL</strong>: 4 physical ECUs (TMS570LS3137, STM32H743 ×2, TMS570LS1224) + 3 Docker vECUs on a shared live CAN bus. ASIL D logic executing on all physical nodes.<br><br>
+        Hardware: <em>PEAK PCAN-USB FD, Raspberry Pi 4 RT-patched, Korad KA3005P SCPI power simulation, relay fault injection boards.</em> Total hardware cost: ~€2,500.<br><br>
+        Pipeline: pytest replaces CAPL. SIL → PIL → HIL automated in CI. JUnit XML results merged with full requirement traceability.
+      </div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--accent2);">
+      <div class="card-title" style="color:var(--accent2);">The gap we are targeting</div>
+      <div class="card-body">
+        SCALEXIO is the right answer for production HIL — qualified toolchain, real-time guarantees, I/O density, support SLA. We are not competing with that.<br><br>
+        The gap is <em>teams that need HIL results in week 2</em> — before the project budget justifies SCALEXIO, before the ECU design is finalised, before a safety concept is signed.<br><br>
+        Assumption deviations found at week 2 HIL cost €500 to fix. The same deviation found at dSpace SCALEXIO integration in week 36 costs €50–200k. The open-source HIL is an <strong>early validation layer</strong>, not a production test replacement.
+      </div>
+    </div>
+  </div>
+
+  <div class="main-grid g3">
+    <div class="card">
+      <div class="card-title" style="color:var(--accent);">Coverage vs SCALEXIO</div>
+      <div class="card-body">
+        CAN/CAN-FD bus: <em>equivalent</em><br>
+        Restbus simulation: <em>equivalent</em><br>
+        I/O density: lower — expandable<br>
+        Real-time determinism: lower<br>
+        Fault injection: functional, not calibrated<br>
+        LIN / Ethernet: partial<br>
+        Qualified toolchain: <em>no — known gap</em><br>
+        Cost: €2,500 vs €40–80k
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--accent);">What we produce</div>
+      <div class="card-body">
+        JUnit XML results — same format as dSpace VEOS test output<br><br>
+        .asc CAN logs — replayable in CANoe<br><br>
+        ARXML validated — SystemDesk compatible<br><br>
+        Full requirement traceability — feeds any ALM tool
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--accent);">Potential complementarity</div>
+      <div class="card-body">
+        Taktflow-Systems for early project validation (weeks 2–16)<br><br>
+        dSpace SCALEXIO for qualification testing and SOP validation<br><br>
+        Same test cases, same JUnit format — results comparable across both platforms<br><br>
+        <em>A team that starts with Taktflow-Systems arrives at dSpace with fewer surprises.</em>
+      </div>
+    </div>
+  </div>
+
+  <div class="sp"></div>
+
+  <div class="questions" style="border-top-color:var(--accent2);">
+    <div class="q-title" style="color:var(--accent2);">Questions for dSpace — genuinely seeking your view</div>
+    <div class="q-item">
+      <div class="q-num" style="color:var(--accent2); border-color:var(--accent);">Q1</div>
+      <div class="q-text">From your customer experience — <em>at what project stage do teams typically commission their first SCALEXIO HIL setup?</em> Is there a common gap before that point where teams are running no HIL at all?</div>
+    </div>
+    <div class="q-item">
+      <div class="q-num" style="color:var(--accent2); border-color:var(--accent);">Q2</div>
+      <div class="q-text">We produce JUnit XML from pytest and ARXML from our generator. <em>Are these formats compatible with VEOS and SystemDesk</em> as test result inputs and architecture inputs respectively?</div>
+    </div>
+    <div class="q-item">
+      <div class="q-num" style="color:var(--accent2); border-color:var(--accent);">Q3</div>
+      <div class="q-text">Does dSpace see an early-stage open-source HIL layer as <em>a feeder to the SCALEXIO investment</em> — teams that prove the concept cheaply, then scale — or as a competitive threat to your entry-level products?</div>
+    </div>
+    <div class="q-item">
+      <div class="q-num" style="color:var(--accent2); border-color:var(--accent);">Q4</div>
+      <div class="q-text">For a team migrating from our open-source HIL to SCALEXIO — <em>what is typically the most painful migration point</em>? Test case portability? I/O mapping? Real-time model interfaces?</div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-stmt" style="color:var(--white2);">
+      <em>Early validation, not production replacement.</em><br>
+      We want to understand where the boundary is — from the people who define it.
+    </div>
+    <div class="footer-contact">Taktflow-Systems.io<br>Embedded World 2026<br>Nürnberg</div>
+  </footer>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     PAGE 3 — INTACS
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-intacs" style="--accent:#7AC96B; --accent2:#B4E89A;">
+<div class="frame">
+
+  <header>
+    <div>
+      <div class="logo-name">Taktflow-Systems</div>
+      <div class="logo-sub">Automotive Software Factory</div>
+    </div>
+    <div class="to-block">
+      <div class="to-tag">Opinion requested from</div>
+      <div class="to-company">intacs</div>
+      <div class="to-desc">ASPICE certification body · assessor training · process assessment</div>
+    </div>
+    <div class="header-context">
+      <div class="ew-badge" style="background:var(--accent); color:#0B1120;">Embedded World 2026</div>
+      <span class="ew-sub">Nürnberg · informal conversation</span>
+    </div>
+  </header>
+
+  <div class="intent-bar" style="border-left-color:var(--accent);">
+    <div class="intent-label" style="color:var(--accent);">Why we are talking to intacs</div>
+    <div class="intent-text">
+      We built a pipeline that generates ASPICE evidence automatically — as a byproduct of normal software development, not as a separate compliance activity.
+      Before we claim this satisfies what ASPICE assessors actually look for,
+      <em>we want to hear from the people who train those assessors</em>.
+      What does Level 3 evidence look like in practice? Are we producing the right artifacts, or are we solving the wrong problem?
+    </div>
+  </div>
+
+  <div class="section-label">What the factory produces per ASPICE process area</div>
+  <div class="main-grid g2">
+    <div class="card" style="border-top:3px solid var(--accent);">
+      <div class="card-title" style="color:var(--accent);">Software Engineering (SWE.1–SWE.6)</div>
+      <div class="card-body">
+        <strong>SWE.1</strong> Requirements: <em>requirements.reqif</em> auto-generated. Bidirectional traceability via doorstop. REQ-IDs tagged in test cases.<br><br>
+        <strong>SWE.2/3</strong> Architecture + Design: Capella ARCADIA model exports SysML XMI. ARXML BSW configs generated from architecture.<br><br>
+        <strong>SWE.4</strong> Unit Verification: pytest SIL. MC/DC coverage via LLVM. JUnit XML per commit.<br><br>
+        <strong>SWE.5</strong> Integration Test: pytest PIL + HIL. Same test cases, different transport. Delta measured.<br><br>
+        <strong>SWE.6</strong> System Qualification: 7-ECU HIL. Requirement coverage report. All results timestamped and git-tagged.
+      </div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--accent2);">
+      <div class="card-title" style="color:var(--accent2);">Support Processes (SUP.1, SUP.9, SUP.10)</div>
+      <div class="card-body">
+        <strong>SUP.1</strong> Quality Assurance: CI gate — PR merge blocked on any failure. SonarQube dashboard aggregates MISRA, coverage, test results.<br><br>
+        <strong>SUP.9</strong> Problem Resolution: failed CI step = GitHub Issue auto-created with commit hash, requirement ID, and measured vs expected values.<br><br>
+        <strong>SUP.10</strong> Change Management: every PR is a formal change request. CI shows exactly which requirements were affected by the change and whether they still pass.<br><br>
+        <em>All evidence is generated automatically. It is always current. It does not require a manual sprint before assessment.</em>
+      </div>
+    </div>
+  </div>
+
+  <div class="built-grid">
+    <div class="built-chip">
+      <div class="bc-label">SWE.1 artifact</div>
+      <div class="bc-value">requirements.reqif + coverage_report.html</div>
+    </div>
+    <div class="built-chip">
+      <div class="bc-label">SWE.4 artifact</div>
+      <div class="bc-value">JUnit XML + MC/DC LCOV per commit</div>
+    </div>
+    <div class="built-chip">
+      <div class="bc-label">SWE.5/6 artifact</div>
+      <div class="bc-value">JUnit XML SIL + PIL + HIL merged</div>
+    </div>
+    <div class="built-chip">
+      <div class="bc-label">SUP.1 artifact</div>
+      <div class="bc-value">SonarQube + CI gate log per PR</div>
+    </div>
+  </div>
+
+  <div class="questions" style="border-top-color:var(--accent);">
+    <div class="q-title" style="color:var(--accent);">Questions for intacs — your assessors see this every day</div>
+    <div class="q-item">
+      <div class="q-num" style="color:var(--accent); border-color:var(--accent);">Q1</div>
+      <div class="q-text">We auto-generate a traceability report: requirement → test case → SIL result → PIL result → HIL result, all linked by REQ-ID and produced on every commit. <em>Does this satisfy what an ASPICE Level 2/3 assessor looks for in SWE.4 and SWE.5 evidence?</em> Or is there a formal structure to the evidence that we are missing?</div>
+    </div>
+    <div class="q-item">
+      <div class="q-num" style="color:var(--accent); border-color:var(--accent);">Q2</div>
+      <div class="q-text">Our "change management" is a GitHub Pull Request with a CI run attached. Every change is reviewed, linked to a ticket, and the CI output shows which tests passed or failed. <em>Is PR-based change management accepted as SUP.10 evidence at Level 3, or do assessors expect a dedicated change management tool?</em></div>
+    </div>
+    <div class="q-item">
+      <div class="q-num" style="color:var(--accent); border-color:var(--accent);">Q3</div>
+      <div class="q-text">The most common failure mode we observe at Tier-1s: <em>evidence exists but is always out of date</em> — assembled manually before each assessment. Our pipeline makes evidence continuous and automatic. From an assessor's perspective, does continuous automated evidence actually score better than periodic manual evidence — or does the methodology matter less than the content?</div>
+    </div>
+    <div class="q-item">
+      <div class="q-num" style="color:var(--accent); border-color:var(--accent);">Q4</div>
+      <div class="q-text">We are positioning the factory as a path from ASPICE Level 1 to Level 3 in one project cycle. <em>Is that a realistic claim</em> based on what you see in assessments? What is typically the hardest process gap to close between Level 2 and Level 3?</div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-stmt" style="color:var(--white2);">
+      We want to produce evidence that <em>actually satisfies assessors</em> —<br>
+      not evidence that looks right to engineers. That is why we are asking you.
+    </div>
+    <div class="footer-contact">Taktflow-Systems.io<br>Embedded World 2026<br>Nürnberg</div>
+  </footer>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     PAGE 4 — TÜV
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-tuv" style="--accent:#E05566; --accent2:#FF8A95;">
+<div class="frame">
+
+  <header>
+    <div>
+      <div class="logo-name">Taktflow-Systems</div>
+      <div class="logo-sub">Automotive Software Factory</div>
+    </div>
+    <div class="to-block">
+      <div class="to-tag">Opinion requested from</div>
+      <div class="to-company">TÜV SÜD / TÜV Rheinland</div>
+      <div class="to-desc">ISO 26262 certification · functional safety assessment · ASIL verification</div>
+    </div>
+    <div class="header-context">
+      <div class="ew-badge" style="background:var(--accent);">Embedded World 2026</div>
+      <span class="ew-sub">Nürnberg · informal conversation</span>
+    </div>
+  </header>
+
+  <div class="intent-bar" style="border-left-color:var(--accent);">
+    <div class="intent-label" style="color:var(--accent);">Why we are talking to TÜV</div>
+    <div class="intent-text">
+      We built a pipeline that produces ISO 26262 safety evidence automatically — traceability from HARA assumptions to measured hardware results, on every commit.
+      Before we present this to customers as a path toward functional safety certification,
+      <em>we need to understand from TÜV's perspective what that evidence is actually worth</em> —
+      and where the gaps are between what we produce and what a safety case actually requires.
+    </div>
+  </div>
+
+  <div class="main-grid g2">
+    <div class="card" style="border-top:3px solid var(--accent);">
+      <div class="card-title" style="color:var(--accent);">The core safety claim</div>
+      <div class="card-body">
+        Every HARA assumption, every TSC assumption, every software safety requirement carries forward an estimate about the layer below it. Those estimates are often wrong.<br><br>
+        Our pipeline <em>makes those assumptions continuously testable</em>. A safety goal that says "safe state reachable in 10ms" is tested against real hardware on every commit. The measured result — 9.8ms — is timestamped and linked to the safety goal by requirement ID.<br><br>
+        <strong>The assumption is no longer an estimate. It is a measurement. Updated on every build.</strong>
+      </div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--accent2);">
+      <div class="card-title" style="color:var(--accent2);">What we produce for ASIL D evidence</div>
+      <div class="card-body">
+        <em>Structural coverage</em>: MC/DC via LLVM per commit. Statement, branch, and condition coverage.<br><br>
+        <em>Requirements-based testing</em>: every test linked to a SW safety requirement via REQ-ID. JUnit XML as evidence.<br><br>
+        <em>Fault injection</em>: HIL relay boards inject hardware faults. Measured reaction time vs safety goal.<br><br>
+        <em>E2E verification</em>: AUTOSAR E2E profile tested in SIL for single-bit and burst error detection.<br><br>
+        <em>Traceability chain</em>: HARA → TSC → SW safety req → test case → SIL/PIL/HIL result. All linked.
+      </div>
+    </div>
+  </div>
+
+  <div class="main-grid g3">
+    <div class="card">
+      <div class="card-title" style="color:var(--accent);">What we claim to satisfy</div>
+      <div class="card-body">
+        ISO 26262-6: software unit design and implementation<br><br>
+        ISO 26262-6 Table 10: MC/DC for ASIL D<br><br>
+        ISO 26262-6 Table 11: requirements-based test<br><br>
+        ISO 26262-4: technical safety concept verification<br><br>
+        ISO 26262-9: ASIL decomposition traceability
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--accent);">Known limitations</div>
+      <div class="card-body">
+        No tool qualification (ISO 26262-8:11) — open source tools not formally qualified<br><br>
+        No independence between developer and tester in single-person setup<br><br>
+        HIL not formally calibrated — timing measurements are indicative, not certified<br><br>
+        Safety case structure not yet formally documented per ISO 26262-2
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--accent);">What changes this claim</div>
+      <div class="card-body">
+        Tool qualification of open-source tools via TÜV assessment<br><br>
+        Two-person review — developer + independent safety reviewer<br><br>
+        Calibrated HIL timing with traceability to measurement equipment<br><br>
+        Formal safety case document linking all evidence artifacts
+      </div>
+    </div>
+  </div>
+
+  <div class="sp"></div>
+
+  <div class="questions" style="border-top-color:var(--accent);">
+    <div class="q-title" style="color:var(--accent);">Questions for TÜV — where does this evidence actually stand?</div>
+    <div class="q-item">
+      <div class="q-num" style="color:var(--accent); border-color:var(--accent);">Q1</div>
+      <div class="q-text">We use open-source tools — autosar-data, pytest, LLVM, python-can. <em>Can open-source tools be used for ASIL D evidence without formal tool qualification under ISO 26262-8:11?</em> Or is tool qualification a hard requirement for any claim at ASIL D?</div>
+    </div>
+    <div class="q-item">
+      <div class="q-num" style="color:var(--accent); border-color:var(--accent);">Q2</div>
+      <div class="q-text">We measure safety goal timing on real hardware — "safe state in 9.8ms against a 10ms goal" — and timestamp the result linked to the requirement ID. <em>Does this constitute verification evidence for ISO 26262-4 technical safety concept, or does it require additional analysis to be accepted in a safety case?</em></div>
+    </div>
+    <div class="q-item">
+      <div class="q-num" style="color:var(--accent); border-color:var(--accent);">Q3</div>
+      <div class="q-text">We produce MC/DC coverage via LLVM on the software build. <em>Is compiler-instrumented MC/DC accepted as structural coverage evidence for ASIL D under ISO 26262-6 Table 10</em>, or is source-code-level coverage required and how does TÜV typically assess this?</div>
+    </div>
+    <div class="q-item">
+      <div class="q-num" style="color:var(--accent); border-color:var(--accent);">Q4</div>
+      <div class="q-text">We are positioning this pipeline as a path toward functional safety certification for small Tier-2 suppliers and engineering services companies. <em>What is the most common and most expensive gap TÜV finds</em> when assessing ASIL D software at smaller suppliers — the one we should design around first?</div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-stmt" style="color:var(--white2);">
+      We know where our evidence is strong. <em>We want to know where it is not —</em><br>
+      from the people who will eventually assess it.
+    </div>
+    <div class="footer-contact">Taktflow-Systems.io<br>Embedded World 2026<br>Nürnberg</div>
+  </footer>
+</div>
+</div>
+
+<script>
+  function show(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+</script>
+</body>
+</html>

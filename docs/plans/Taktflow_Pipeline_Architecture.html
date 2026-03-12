@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taktflow-Systems — Full Pipeline Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #07090F;
+  --bg2:     #0D1220;
+  --bg3:     #111827;
+  --line:    #1E2D45;
+  --dim:     #3D5470;
+  --mid:     #5A7EA0;
+  --text:    #B8CCE4;
+  --bright:  #E8F0FB;
+  --white:   #F4F8FF;
+
+  /* station colors */
+  --c-req:   #6B9FFF;
+  --c-sys:   #A78BFA;
+  --c-arxml: #34D399;
+  --c-bsw:   #F59E0B;
+  --c-sil:   #60A5FA;
+  --c-pil:   #F472B6;
+  --c-hil:   #FB923C;
+  --c-ev:    #4ADE80;
+
+  /* vendor */
+  --v-vec:   #FF6B35;
+  --v-dsp:   #3B82F6;
+  --v-pol:   #8B5CF6;
+  --v-db:    #10B981;
+  --v-son:   #EF4444;
+  --v-gh:    #E2E8F0;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  overflow-x: hidden;
+}
+
+/* ── HEADER ── */
+.top-bar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--line);
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 22px;
+  color: var(--white);
+  letter-spacing: 0.04em;
+}
+.logo span { color: var(--c-arxml); }
+.top-meta {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--dim);
+  text-align: right;
+  line-height: 1.8;
+}
+.legend {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.leg-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--mid);
+  font-family: 'DM Mono', monospace;
+}
+.leg-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+}
+
+/* ── MAIN LAYOUT ── */
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 28px 48px;
+}
+
+/* ── SECTION TITLE ── */
+.stitle {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.stitle::after { content:''; flex:1; height:1px; background:var(--line); }
+
+/* ══════════════════════════════════
+   PIPELINE CHAIN
+══════════════════════════════════ */
+.chain-wrap {
+  margin-bottom: 24px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  padding: 24px 20px 20px;
+  position: relative;
+  overflow: hidden;
+}
+.chain-wrap::before {
+  content: 'GIT PUSH → CI TRIGGER → PIPELINE RUNS → EVIDENCE GENERATED';
+  position: absolute;
+  top: 8px; right: 16px;
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  color: var(--dim);
+  letter-spacing: 0.12em;
+}
+
+.chain {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
+  position: relative;
+}
+
+/* connecting line */
+.chain::before {
+  content: '';
+  position: absolute;
+  top: 32px; left: 5%; right: 5%;
+  height: 2px;
+  background: linear-gradient(90deg,
+    var(--c-req) 0%,
+    var(--c-sys) 14%,
+    var(--c-arxml) 28%,
+    var(--c-bsw) 42%,
+    var(--c-sil) 56%,
+    var(--c-pil) 70%,
+    var(--c-hil) 84%,
+    var(--c-ev) 100%);
+  z-index: 0;
+  opacity: 0.5;
+}
+
+.station {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  cursor: pointer;
+}
+
+.s-dot {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--bg3);
+  border: 2px solid var(--sc);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  transition: all 0.25s;
+  box-shadow: 0 0 0 0 var(--sc);
+}
+.station:hover .s-dot,
+.station.active .s-dot {
+  background: var(--sc);
+  box-shadow: 0 0 20px 4px color-mix(in srgb, var(--sc) 30%, transparent);
+}
+.station:hover .s-dot .s-num,
+.station.active .s-dot .s-num { color: var(--bg); }
+.station:hover .s-dot .s-icon,
+.station.active .s-dot .s-icon { opacity: 1; color: var(--bg); }
+
+.s-num {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--sc);
+  line-height: 1;
+  transition: color 0.25s;
+}
+.s-icon {
+  font-size: 9px;
+  color: var(--sc);
+  opacity: 0.7;
+  line-height: 1;
+  transition: all 0.25s;
+  font-family: 'DM Mono', monospace;
+}
+
+.s-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--bright);
+  text-align: center;
+  letter-spacing: 0.03em;
+  line-height: 1.3;
+  margin-bottom: 3px;
+}
+.s-tool {
+  font-family: 'DM Mono', monospace;
+  font-size: 8.5px;
+  color: var(--dim);
+  text-align: center;
+  line-height: 1.5;
+}
+.s-aspice {
+  margin-top: 5px;
+  font-family: 'DM Mono', monospace;
+  font-size: 7.5px;
+  background: var(--bg3);
+  border: 1px solid var(--sc);
+  color: var(--sc);
+  padding: 1px 5px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ══════════════════════════════════
+   DETAIL PANEL
+══════════════════════════════════ */
+.detail-panel {
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--active-color, var(--c-req));
+  padding: 0;
+  margin-bottom: 24px;
+  min-height: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease, padding 0.2s;
+}
+.detail-panel.open {
+  max-height: 500px;
+  padding: 20px;
+}
+.detail-inner {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1.5fr 1.5fr;
+  gap: 16px;
+}
+.di-block {}
+.di-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.di-content {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.65;
+}
+.di-content strong { color: var(--bright); }
+.di-content em { font-style: normal; }
+
+.artifact-pill {
+  display: inline-block;
+  border: 1px solid;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  padding: 2px 7px;
+  margin: 2px 2px 2px 0;
+  white-space: nowrap;
+}
+
+.vendor-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  padding: 2px 7px;
+  margin: 2px 2px 2px 0;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+/* ══════════════════════════════════
+   THREE COLUMN LOWER
+══════════════════════════════════ */
+.lower {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* ARTIFACT TABLE */
+.artifact-table {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.at-head {
+  background: var(--bg3);
+  padding: 10px 14px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--bright);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.at-head .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.at-row {
+  display: grid;
+  grid-template-columns: 2fr 1.4fr 1.6fr;
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+}
+.at-row:last-child { border-bottom: none; }
+.at-row.header {
+  background: color-mix(in srgb, var(--line) 60%, transparent);
+}
+.at-cell {
+  padding: 7px 10px;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 9.5px;
+  line-height: 1.4;
+  border-right: 1px solid var(--line);
+}
+.at-cell:last-child { border-right: none; }
+.at-cell.label {
+  font-weight: 500;
+  color: var(--dim);
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.at-cell.name { color: var(--bright); font-weight: 500; }
+.at-cell.fmt  { color: var(--c-arxml); }
+.at-cell.dest { color: var(--mid); }
+
+/* ASPICE MAP */
+.aspice-map {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.am-head {
+  background: var(--bg3);
+  padding: 10px 14px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--bright);
+  border-bottom: 1px solid var(--line);
+}
+.am-row {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1.8fr;
+  border-bottom: 1px solid var(--line);
+}
+.am-row:last-child { border-bottom: none; }
+.am-row.header { background: color-mix(in srgb, var(--line) 60%, transparent); }
+.am-cell {
+  padding: 7px 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 9.5px;
+  color: var(--text);
+  border-right: 1px solid var(--line);
+  line-height: 1.4;
+}
+.am-cell:last-child { border-right: none; }
+.am-cell.pa { color: var(--bright); font-weight: 500; }
+.am-cell.label { font-size:8.5px; color:var(--dim); text-transform:uppercase; letter-spacing:0.1em; }
+.am-cell.ev { color: var(--c-arxml); font-size: 9px; }
+
+.level-badge {
+  display: inline-block;
+  padding: 1px 5px;
+  font-size: 8px;
+  font-family: 'DM Mono', monospace;
+  margin-left: 4px;
+  border: 1px solid;
+}
+.lv2 { color: var(--c-bsw); border-color: var(--c-bsw); }
+.lv3 { color: var(--c-ev); border-color: var(--c-ev); }
+
+/* CI/CD FLOW */
+.cicd {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.cicd-head {
+  background: var(--bg3);
+  padding: 10px 14px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--bright);
+  border-bottom: 1px solid var(--line);
+}
+.ci-step {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--line);
+}
+.ci-step:last-child { border-bottom: none; }
+.ci-num {
+  width: 32px;
+  min-width: 32px;
+  background: var(--bg3);
+  border-right: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--dim);
+  font-weight: 500;
+}
+.ci-body {
+  flex: 1;
+  padding: 8px 10px;
+}
+.ci-name {
+  font-family: 'DM Mono', monospace;
+  font-size: 9.5px;
+  color: var(--bright);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+.ci-cmd {
+  font-family: 'DM Mono', monospace;
+  font-size: 8.5px;
+  color: var(--c-arxml);
+  line-height: 1.5;
+}
+.ci-out {
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  color: var(--dim);
+  margin-top: 2px;
+}
+.ci-gate {
+  width: 56px;
+  min-width: 56px;
+  border-left: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  text-align: center;
+  padding: 4px;
+}
+.gate-pass { color: var(--c-ev); background: color-mix(in srgb, var(--c-ev) 8%, transparent); }
+.gate-block { color: var(--v-son); background: color-mix(in srgb, var(--v-son) 8%, transparent); }
+
+/* ══════════════════════════════════
+   VENDOR INTEGRATION STRIP
+══════════════════════════════════ */
+.vendor-strip {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+}
+.vs-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--bright);
+  margin-bottom: 14px;
+}
+.vs-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+.vs-card {
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--vc);
+  padding: 10px 12px;
+}
+.vs-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--vc);
+  margin-bottom: 4px;
+}
+.vs-role {
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+}
+.vs-items {
+  list-style: none;
+}
+.vs-items li {
+  font-size: 10.5px;
+  color: var(--text);
+  line-height: 1.6;
+  padding-left: 10px;
+  position: relative;
+}
+.vs-items li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: var(--vc);
+  font-size: 9px;
+}
+
+/* ══════════════════════════════════
+   BOTTOM STATEMENT
+══════════════════════════════════ */
+.statement {
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 20px;
+}
+.stmt-text {
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.6;
+}
+.stmt-text em { color: var(--c-arxml); font-style: normal; }
+.stmt-right {
+  text-align: right;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--dim);
+  line-height: 1.9;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes glow {
+  0%,100% { box-shadow: 0 0 8px 2px color-mix(in srgb, var(--sc) 20%, transparent); }
+  50%      { box-shadow: 0 0 18px 5px color-mix(in srgb, var(--sc) 40%, transparent); }
+}
+.station.active .s-dot { animation: glow 2s ease-in-out infinite; }
+
+@media print {
+  .detail-panel { display: none; }
+  body { background: white; color: #0D1220; }
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div>
+    <div class="logo">TAKT<span>FLOW</span></div>
+  </div>
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:var(--c-arxml)"></div>our artifact</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--v-vec)"></div>Vector</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--v-dsp)"></div>dSpace</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--v-pol)"></div>Polarion/DOORS</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--v-gh)"></div>GitHub/CI</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--v-son)"></div>SonarQube</div>
+  </div>
+  <div class="top-meta">Full Pipeline Architecture<br>Integration · Artifacts · ASPICE</div>
+</div>
+
+<div class="page">
+
+  <!-- ── PIPELINE CHAIN ── -->
+  <div class="stitle">Pipeline — click any station to expand</div>
+
+  <div class="chain-wrap">
+    <div class="chain">
+
+      <div class="station" style="--sc:var(--c-req)" onclick="expand(this,0)">
+        <div class="s-dot">
+          <div class="s-num">1</div>
+          <div class="s-icon">REQ</div>
+        </div>
+        <div class="s-name">Requirements</div>
+        <div class="s-tool">doorstop<br>ReqIF 1.2</div>
+        <div class="s-aspice">SWE.1</div>
+      </div>
+
+      <div class="station" style="--sc:var(--c-sys)" onclick="expand(this,1)">
+        <div class="s-dot">
+          <div class="s-num">2</div>
+          <div class="s-icon">SYS</div>
+        </div>
+        <div class="s-name">Architecture</div>
+        <div class="s-tool">Capella<br>SysML XMI</div>
+        <div class="s-aspice">SWE.2</div>
+      </div>
+
+      <div class="station" style="--sc:var(--c-arxml)" onclick="expand(this,2)">
+        <div class="s-dot">
+          <div class="s-num">3</div>
+          <div class="s-icon">ARXML</div>
+        </div>
+        <div class="s-name">ARXML Engine</div>
+        <div class="s-tool">arxmlgen<br>autosar-data</div>
+        <div class="s-aspice">SWE.2/3</div>
+      </div>
+
+      <div class="station" style="--sc:var(--c-bsw)" onclick="expand(this,3)">
+        <div class="s-dot">
+          <div class="s-num">4</div>
+          <div class="s-icon">BSW</div>
+        </div>
+        <div class="s-name">BSW Codegen</div>
+        <div class="s-tool">Jinja2 + MISRA<br>cppcheck</div>
+        <div class="s-aspice">SWE.3</div>
+      </div>
+
+      <div class="station" style="--sc:var(--c-sil)" onclick="expand(this,4)">
+        <div class="s-dot">
+          <div class="s-num">5</div>
+          <div class="s-icon">SIL</div>
+        </div>
+        <div class="s-name">SIL</div>
+        <div class="s-tool">Docker · pytest<br>gcov · LLVM</div>
+        <div class="s-aspice">SWE.4</div>
+      </div>
+
+      <div class="station" style="--sc:var(--c-pil)" onclick="expand(this,5)">
+        <div class="s-dot">
+          <div class="s-num">6</div>
+          <div class="s-icon">PIL</div>
+        </div>
+        <div class="s-name">PIL</div>
+        <div class="s-tool">OpenOCD<br>STM32 · TMS570</div>
+        <div class="s-aspice">SWE.5</div>
+      </div>
+
+      <div class="station" style="--sc:var(--c-hil)" onclick="expand(this,6)">
+        <div class="s-dot">
+          <div class="s-num">7</div>
+          <div class="s-icon">HIL</div>
+        </div>
+        <div class="s-name">HIL</div>
+        <div class="s-tool">PCAN · RPi4<br>7-ECU live bus</div>
+        <div class="s-aspice">SWE.5/6</div>
+      </div>
+
+      <div class="station" style="--sc:var(--c-ev)" onclick="expand(this,7)">
+        <div class="s-dot">
+          <div class="s-num">8</div>
+          <div class="s-icon">EVD</div>
+        </div>
+        <div class="s-name">Evidence</div>
+        <div class="s-tool">merge_xil<br>traceability</div>
+        <div class="s-aspice">SUP.1/9/10</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DETAIL PANEL -->
+  <div class="detail-panel" id="detail">
+    <div class="detail-inner" id="detail-inner"></div>
+  </div>
+
+  <!-- ── LOWER THREE COLUMNS ── -->
+  <div class="lower">
+
+    <!-- ARTIFACT TABLE -->
+    <div class="artifact-table">
+      <div class="at-head">
+        <div class="dot" style="background:var(--c-arxml)"></div>
+        Artifacts Produced
+      </div>
+      <div class="at-row header">
+        <div class="at-cell label">Artifact</div>
+        <div class="at-cell label">Format</div>
+        <div class="at-cell label">Imports Into</div>
+      </div>
+      <div class="at-row">
+        <div class="at-cell name">requirements.reqif</div>
+        <div class="at-cell fmt">ReqIF 1.2 XML</div>
+        <div class="at-cell dest">Polarion · DOORS · Codebeamer</div>
+      </div>
+      <div class="at-row">
+        <div class="at-cell name">Taktflow-SystemsSystem.arxml</div>
+        <div class="at-cell fmt">AUTOSAR 4.x</div>
+        <div class="at-cell dest">DaVinci · EB tresos ✓</div>
+      </div>
+      <div class="at-row">
+        <div class="at-cell name">Taktflow-Systems.dbc</div>
+        <div class="at-cell fmt">DBC / FIBEX</div>
+        <div class="at-cell dest">CANdb++ · CANoe · INCA</div>
+      </div>
+      <div class="at-row">
+        <div class="at-cell name">CanIf_Cfg.c / Com_Cfg.c</div>
+        <div class="at-cell fmt">AUTOSAR C</div>
+        <div class="at-cell dest">Any AUTOSAR BSW stack</div>
+      </div>
+      <div class="at-row">
+        <div class="at-cell name">results_sil/pil/hil.xml</div>
+        <div class="at-cell fmt">JUnit XML</div>
+        <div class="at-cell dest">Jenkins · Polarion · HP ALM</div>
+      </div>
+      <div class="at-row">
+        <div class="at-cell name">lcov.xml + MC/DC</div>
+        <div class="at-cell fmt">LCOV / LLVM</div>
+        <div class="at-cell dest">SonarQube · LDRA · Squish</div>
+      </div>
+      <div class="at-row">
+        <div class="at-cell name">candump_DATE.asc</div>
+        <div class="at-cell fmt">CANoe .asc log</div>
+        <div class="at-cell dest">CANoe · CANalyzer replay</div>
+      </div>
+      <div class="at-row">
+        <div class="at-cell name">coverage_report.html</div>
+        <div class="at-cell fmt">HTML + JUnit</div>
+        <div class="at-cell dest">Any browser · CI dashboard</div>
+      </div>
+      <div class="at-row">
+        <div class="at-cell name">Taktflow-Systems.a2l</div>
+        <div class="at-cell fmt">ASAM MCD-2</div>
+        <div class="at-cell dest">CANape · INCA · pyxcp</div>
+      </div>
+      <div class="at-row">
+        <div class="at-cell name">SysML XMI export</div>
+        <div class="at-cell fmt">SysML XMI</div>
+        <div class="at-cell dest">Simulink · Rhapsody · EA</div>
+      </div>
+    </div>
+
+    <!-- ASPICE MAP -->
+    <div class="aspice-map">
+      <div class="am-head">ASPICE + ISO 26262 Coverage</div>
+      <div class="am-row header">
+        <div class="am-cell label">Process</div>
+        <div class="am-cell label">Station</div>
+        <div class="am-cell label">Evidence Generated</div>
+      </div>
+      <div class="am-row">
+        <div class="am-cell pa">SWE.1 <span class="level-badge lv2">L2</span><span class="level-badge lv3">L3</span></div>
+        <div class="am-cell">S1 — Requirements</div>
+        <div class="am-cell ev">requirements.reqif + bidirectional traceability via doorstop</div>
+      </div>
+      <div class="am-row">
+        <div class="am-cell pa">SWE.2 <span class="level-badge lv3">L3</span></div>
+        <div class="am-cell">S2 — Architecture</div>
+        <div class="am-cell ev">Capella SysML XMI + ARXML interface spec</div>
+      </div>
+      <div class="am-row">
+        <div class="am-cell pa">SWE.3 <span class="level-badge lv2">L2</span><span class="level-badge lv3">L3</span></div>
+        <div class="am-cell">S3/4 — ARXML + BSW</div>
+        <div class="am-cell ev">Generated BSW configs + MISRA report per commit</div>
+      </div>
+      <div class="am-row">
+        <div class="am-cell pa">SWE.4 <span class="level-badge lv2">L2</span><span class="level-badge lv3">L3</span></div>
+        <div class="am-cell">S5 — SIL</div>
+        <div class="am-cell ev">JUnit XML + MC/DC LCOV + REQ-ID linkage</div>
+      </div>
+      <div class="am-row">
+        <div class="am-cell pa">SWE.5 <span class="level-badge lv2">L2</span><span class="level-badge lv3">L3</span></div>
+        <div class="am-cell">S6/7 — PIL + HIL</div>
+        <div class="am-cell ev">JUnit XML PIL + HIL, delta SIL↔PIL measured</div>
+      </div>
+      <div class="am-row">
+        <div class="am-cell pa">SWE.6 <span class="level-badge lv3">L3</span></div>
+        <div class="am-cell">S7/8 — HIL + Evidence</div>
+        <div class="am-cell ev">7-ECU system test + coverage_report.html</div>
+      </div>
+      <div class="am-row">
+        <div class="am-cell pa">SUP.1 QA <span class="level-badge lv2">L2</span></div>
+        <div class="am-cell">CI Gate</div>
+        <div class="am-cell ev">PR blocked on failure. SonarQube dashboard.</div>
+      </div>
+      <div class="am-row">
+        <div class="am-cell pa">SUP.9 Problem <span class="level-badge lv2">L2</span></div>
+        <div class="am-cell">S8 — Evidence</div>
+        <div class="am-cell ev">Failed test → GitHub Issue auto-created</div>
+      </div>
+      <div class="am-row">
+        <div class="am-cell pa">SUP.10 Change <span class="level-badge lv2">L2</span><span class="level-badge lv3">L3</span></div>
+        <div class="am-cell">CI / Git</div>
+        <div class="am-cell ev">PR = change request. CI shows impacted tests.</div>
+      </div>
+      <div class="am-row">
+        <div class="am-cell pa">26262 ASIL D</div>
+        <div class="am-cell">S5+S7</div>
+        <div class="am-cell ev">MC/DC + req-based test + fault injection HIL</div>
+      </div>
+      <div class="am-row">
+        <div class="am-cell pa">26262 Part 4 TSC</div>
+        <div class="am-cell">S7 — HIL</div>
+        <div class="am-cell ev">Measured reaction time vs safety goal, timestamped</div>
+      </div>
+    </div>
+
+    <!-- CI/CD FLOW -->
+    <div class="cicd">
+      <div class="cicd-head">CI/CD — What Runs on git push</div>
+      <div class="ci-step">
+        <div class="ci-num">1</div>
+        <div class="ci-body">
+          <div class="ci-name">ARXML Validation</div>
+          <div class="ci-cmd">autosar-data strict<br>armodel round-trip Δ≤20</div>
+          <div class="ci-out">→ 0 warnings required</div>
+        </div>
+        <div class="ci-gate gate-block">PR<br>BLOCKED<br>on fail</div>
+      </div>
+      <div class="ci-step">
+        <div class="ci-num">2</div>
+        <div class="ci-body">
+          <div class="ci-name">Requirements Check</div>
+          <div class="ci-cmd">doorstop check<br>validate_reqif.py</div>
+          <div class="ci-out">→ no suspect links</div>
+        </div>
+        <div class="ci-gate gate-block">PR<br>BLOCKED<br>on fail</div>
+      </div>
+      <div class="ci-step">
+        <div class="ci-num">3</div>
+        <div class="ci-body">
+          <div class="ci-name">BSW Codegen + MISRA</div>
+          <div class="ci-cmd">arxmlgen generate<br>cppcheck --misra</div>
+          <div class="ci-out">→ 0 violations</div>
+        </div>
+        <div class="ci-gate gate-block">PR<br>BLOCKED<br>on fail</div>
+      </div>
+      <div class="ci-step">
+        <div class="ci-num">4</div>
+        <div class="ci-body">
+          <div class="ci-name">SIL Test Suite</div>
+          <div class="ci-cmd">pytest --target=sil<br>llvm-cov MC/DC</div>
+          <div class="ci-out">→ JUnit XML + coverage</div>
+        </div>
+        <div class="ci-gate gate-block">PR<br>BLOCKED<br>on fail</div>
+      </div>
+      <div class="ci-step">
+        <div class="ci-num">5</div>
+        <div class="ci-body">
+          <div class="ci-name">PIL Test Suite</div>
+          <div class="ci-cmd">pytest --target=pil<br>OpenOCD flash</div>
+          <div class="ci-out">→ SIL↔PIL delta</div>
+        </div>
+        <div class="ci-gate gate-block">PR<br>BLOCKED<br>on fail</div>
+      </div>
+      <div class="ci-step">
+        <div class="ci-num">6</div>
+        <div class="ci-body">
+          <div class="ci-name">HIL Test Suite</div>
+          <div class="ci-cmd">pytest --target=hil<br>fault injection</div>
+          <div class="ci-out">→ JUnit + .asc log</div>
+        </div>
+        <div class="ci-gate gate-block">PR<br>BLOCKED<br>on fail</div>
+      </div>
+      <div class="ci-step">
+        <div class="ci-num">7</div>
+        <div class="ci-body">
+          <div class="ci-name">Traceability Merge</div>
+          <div class="ci-cmd">merge_xil_results.py<br>gen-traceability.sh</div>
+          <div class="ci-out">→ coverage_report.html</div>
+        </div>
+        <div class="ci-gate gate-pass">ASPICE<br>EVID.<br>READY</div>
+      </div>
+      <div class="ci-step">
+        <div class="ci-num">8</div>
+        <div class="ci-body">
+          <div class="ci-name">Quality Dashboard</div>
+          <div class="ci-cmd">sonar-scanner upload<br>SonarCloud gate</div>
+          <div class="ci-out">→ live quality metrics</div>
+        </div>
+        <div class="ci-gate gate-pass">PR<br>MERGE<br>OK</div>
+      </div>
+    </div>
+
+  </div><!-- /lower -->
+
+  <!-- ── VENDOR INTEGRATION ── -->
+  <div class="stitle">Integration points — your existing tools stay, factory feeds them</div>
+  <div class="vendor-strip">
+    <div class="vs-grid">
+      <div class="vs-card" style="--vc:var(--v-vec)">
+        <div class="vs-name">Vector</div>
+        <div class="vs-role">CANoe · DaVinci · CANdb++</div>
+        <ul class="vs-items">
+          <li>ARXML → DaVinci import ✓</li>
+          <li>DBC compatible with CANdb++</li>
+          <li>.asc log → CANoe replay</li>
+          <li>JUnit → Vector test reports</li>
+        </ul>
+      </div>
+      <div class="vs-card" style="--vc:var(--v-dsp)">
+        <div class="vs-name">dSpace</div>
+        <div class="vs-role">SCALEXIO · VEOS · SystemDesk</div>
+        <ul class="vs-items">
+          <li>ARXML → SystemDesk compat.</li>
+          <li>JUnit XML → VEOS format</li>
+          <li>Early HIL → SCALEXIO path</li>
+          <li>Same test cases, both platforms</li>
+        </ul>
+      </div>
+      <div class="vs-card" style="--vc:var(--v-pol)">
+        <div class="vs-name">Polarion / DOORS</div>
+        <div class="vs-role">ALM · Requirements · Test Mgmt</div>
+        <ul class="vs-items">
+          <li>requirements.reqif → native import</li>
+          <li>JUnit XML → Polarion Test</li>
+          <li>coverage_report → ALM evidence</li>
+          <li>Traceability matrix auto-fed</li>
+        </ul>
+      </div>
+      <div class="vs-card" style="--vc:var(--v-son)">
+        <div class="vs-name">SonarQube</div>
+        <div class="vs-role">Quality Gate · MISRA · Coverage</div>
+        <ul class="vs-items">
+          <li>LCOV XML → coverage trends</li>
+          <li>cppcheck MISRA → violations</li>
+          <li>Quality gate → CI gate</li>
+          <li>Historical trend per project</li>
+        </ul>
+      </div>
+      <div class="vs-card" style="--vc:var(--v-gh)">
+        <div class="vs-name">GitHub / Jenkins</div>
+        <div class="vs-role">CI/CD · Change · Issue Tracking</div>
+        <ul class="vs-items">
+          <li>PR = SUP.10 change request</li>
+          <li>Failed test → Issue auto-created</li>
+          <li>Actions runs full pipeline</li>
+          <li>Artifact upload per run</li>
+        </ul>
+      </div>
+      <div class="vs-card" style="--vc:var(--v-db)">
+        <div class="vs-name">CANape / INCA</div>
+        <div class="vs-role">Calibration · XCP · A2L</div>
+        <ul class="vs-items">
+          <li>Taktflow-Systems.a2l → CANape import</li>
+          <li>XCPlite slave on ECU firmware</li>
+          <li>pyxcp master as pytest fixture</li>
+          <li>A2L auto-generated from ELF</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STATEMENT ── -->
+  <div class="statement">
+    <div class="stmt-text">
+      Every tool shown above already exists in your supply chain.<br>
+      <em>Taktflow-Systems is the pipeline that connects them — automatically, on every commit.</em><br>
+      No silos. Every constraint satisfied as a byproduct of building software.
+    </div>
+    <div class="stmt-right">
+      Taktflow-Systems.io<br>
+      contact@Taktflow-Systems.io<br>
+      Stuttgart · Germany<br>
+      Embedded World 2026
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+const details = [
+  {
+    color: 'var(--c-req)',
+    what: '<strong>Station 1 — Requirements</strong><br>doorstop stores requirements as YAML in git. Every requirement has a REQ-ID, ASIL tag, and verification method. Exported to ReqIF 1.2 for Polarion/DOORS import. <em>gen-traceability.sh</em> parses @requirement tags in test cases and builds the coverage matrix automatically.',
+    artifacts: ['requirements.reqif','coverage_report.html','trace_matrix.xml'],
+    vendors: [['Polarion ALM','var(--v-pol)'],['IBM DOORS','var(--v-pol)'],['Codebeamer','var(--v-pol)']],
+    aspice: 'SWE.1 — Software Requirements Analysis<br>Bidirectional traceability req. Suspect-link detection on every commit.'
+  },
+  {
+    color: 'var(--c-sys)',
+    what: '<strong>Station 2 — System Architecture</strong><br>Capella ARCADIA model: Operational → System → Logical → Physical. Exports SysML XMI for Simulink/Rhapsody import. Component interfaces feed the ARXML generator via <em>capella_to_arxml.py</em>. Physical architecture maps SW components to ECU hardware targets.',
+    artifacts: ['Capella .melodymodeller','SysML XMI export','Component interface XML'],
+    vendors: [['Simulink','var(--v-dsp)'],['Rhapsody','var(--v-pol)'],['Enterprise Architect','var(--v-pol)']],
+    aspice: 'SWE.2 — Software Architectural Design<br>Formal component decomposition. Interface specification. Consistency with SW requirements.'
+  },
+  {
+    color: 'var(--c-arxml)',
+    what: '<strong>Station 3 — ARXML Engine</strong><br>arxmlgen: Python + Jinja2 generator. Input: DBC + (Capella XMI when available). Output: AUTOSAR 4.x ARXML. Validated with <em>autosar-data strict — 0 warnings required</em>. armodel round-trip delta ≤20. DaVinci Configurator import confirmed.',
+    artifacts: ['Taktflow-SystemsSystem.arxml','validation_report.txt','armodel_delta.log'],
+    vendors: [['DaVinci Configurator','var(--v-vec)'],['EB tresos','var(--v-vec)'],['SystemDesk','var(--v-dsp)']],
+    aspice: 'SWE.2/3 — Architecture + Detailed Design<br>ARXML is the machine-readable architecture artifact. CI gate enforces schema compliance on every commit.'
+  },
+  {
+    color: 'var(--c-bsw)',
+    what: '<strong>Station 4 — BSW Codegen</strong><br>Generators: CanIf_Cfg.c, Com_Cfg.c, PduR_Cfg.c, E2E_Cfg.c, Rte_Cfg.c, SWC skeletons. All from ARXML via Jinja2 templates. MISRA C:2012 checked by cppcheck on every generated file. Violation = CI failure. Suppressions documented in suppressions.txt.',
+    artifacts: ['CanIf_Cfg.c','Com_Cfg.c','PduR_Cfg.c','Rte_Cfg.c','misra_report.xml'],
+    vendors: [['Any AUTOSAR stack','var(--v-vec)'],['SonarQube','var(--v-son)'],['LDRA','var(--v-son)']],
+    aspice: 'SWE.3 — Software Detailed Design & Unit Construction<br>Generated code is traceable to ARXML source. MISRA compliance documented per module.'
+  },
+  {
+    color: 'var(--c-sil)',
+    what: '<strong>Station 5 — SIL</strong><br>GCC ARM cross-compile. Docker container. pytest test suite with same test code that runs at PIL and HIL. MC/DC via LLVM 17 instrumentation. gcov branch and statement coverage. All tests tagged with @requirement REQ-ID. JUnit XML output per run.',
+    artifacts: ['results_sil.xml','lcov.xml','mcdc_report.html','SIL_coverage.html'],
+    vendors: [['Jenkins / GitHub Actions','var(--v-gh)'],['SonarQube','var(--v-son)'],['Polarion Test','var(--v-pol)']],
+    aspice: 'SWE.4 — Software Unit Verification<br>MC/DC satisfies ISO 26262-6 Table 10 ASIL D structural coverage requirement. REQ-ID linkage satisfies requirements-based test evidence.'
+  },
+  {
+    color: 'var(--c-pil)',
+    what: '<strong>Station 6 — PIL</strong><br>OpenOCD flashes ELF to STM32H743 or TMS570. pytest --target=pil selects PIL transport via semihosting UART. Same test cases as SIL, now running on real silicon, real FreeRTOS, real compiler optimisation. SIL↔PIL delta measured per test. Catches compiler artefacts and OS timing issues.',
+    artifacts: ['results_pil.xml','sil_pil_delta.csv','timing_measurements.csv'],
+    vendors: [['GitHub Actions','var(--v-gh)'],['Jenkins','var(--v-gh)'],['Polarion Test','var(--v-pol)']],
+    aspice: 'SWE.5 — Software Integration & Integration Test<br>Same test cases run across SIL and PIL — consistency with SWE.4 evidence. Delta report shows compiler/RTOS effects.'
+  },
+  {
+    color: 'var(--c-hil)',
+    what: '<strong>Station 7 — HIL</strong><br>7-ECU mixed HIL: TMS570LS3137, STM32H743×2, TMS570LS1224, 3× Docker vECUs. Shared live CAN bus via PEAK PCAN-USB FD. hil_restbus.py simulates non-test ECUs. Fault injection via relay boards + Korad KA3005P power simulation. CAN logged to .asc format.',
+    artifacts: ['results_hil.xml','candump_DATE.asc','fault_injection_log.csv','bus_load_report.html'],
+    vendors: [['CANoe .asc replay','var(--v-vec)'],['CANalyzer','var(--v-vec)'],['dSpace SCALEXIO path','var(--v-dsp)']],
+    aspice: 'SWE.5/6 — Integration + System Qualification<br>Full 7-ECU integration with live bus. Fault injection verifies safe state timing against HARA safety goals.'
+  },
+  {
+    color: 'var(--c-ev)',
+    what: '<strong>Station 8 — Evidence Merge</strong><br>merge_xil_results.py combines SIL + PIL + HIL JUnit XML into unified report. gen-traceability.sh maps each REQ-ID to its test result across all three levels. Output: coverage_report.html — the ASPICE audit artifact. SonarQube upload completes the quality chain.',
+    artifacts: ['coverage_report.html','trace_matrix.xml','aspice_evidence_package/'],
+    vendors: [['Polarion ALM','var(--v-pol)'],['SonarQube','var(--v-son)'],['GitHub Actions artifact','var(--v-gh)']],
+    aspice: 'SUP.1 + SUP.9 + SUP.10<br>QA evidence: CI gate log. Problem evidence: failed test → Issue. Change evidence: PR history with CI result attached.'
+  }
+];
+
+let activeStation = null;
+
+function expand(el, idx) {
+  const panel = document.getElementById('detail');
+  const inner = document.getElementById('detail-inner');
+  const d = details[idx];
+
+  if (activeStation === el) {
+    el.classList.remove('active');
+    panel.classList.remove('open');
+    panel.style.setProperty('--active-color', 'transparent');
+    activeStation = null;
+    return;
+  }
+
+  if (activeStation) activeStation.classList.remove('active');
+  el.classList.add('active');
+  activeStation = el;
+
+  panel.style.setProperty('--active-color', d.color);
+
+  const artifactHTML = d.artifacts.map(a =>
+    `<span class="artifact-pill" style="color:${d.color};border-color:${d.color}">${a}</span>`
+  ).join('');
+
+  const vendorHTML = d.vendors.map(([name, c]) =>
+    `<span class="vendor-tag" style="background:color-mix(in srgb,${c} 15%,transparent);color:${c}">${name}</span>`
+  ).join('');
+
+  inner.innerHTML = `
+    <div class="di-block">
+      <div class="di-label" style="color:${d.color}">What this station does</div>
+      <div class="di-content">${d.what}</div>
+    </div>
+    <div class="di-block">
+      <div class="di-label" style="color:${d.color}">Artifacts produced</div>
+      <div class="di-content">${artifactHTML}</div>
+    </div>
+    <div class="di-block">
+      <div class="di-label" style="color:${d.color}">Vendor integration</div>
+      <div class="di-content">${vendorHTML}</div>
+    </div>
+    <div class="di-block">
+      <div class="di-label" style="color:${d.color}">ASPICE / ISO 26262</div>
+      <div class="di-content">${d.aspice}</div>
+    </div>
+  `;
+
+  panel.classList.add('open');
+  setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+}
+</script>
+</body>
+</html>

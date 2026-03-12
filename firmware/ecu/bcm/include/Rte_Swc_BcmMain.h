@@ -28,7 +28,7 @@
  */
 static inline Rte_StatusType Rte_Read_DoorLockCmd(boolean *data)
 {
-    uint32 tmp;
+    uint32_t tmp;
     Rte_StatusType status = Rte_Read(BCM_SIG_DOOR_LOCK_CMD, &tmp);
     if (status == RTE_E_OK)
     {
@@ -38,97 +38,97 @@ static inline Rte_StatusType Rte_Read_DoorLockCmd(boolean *data)
 }
 
 /**
- * @brief  Read E2E_DataID (uint8)
+ * @brief  Read E2E_DataID (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_E2E_DataID(uint8 *data)
+static inline Rte_StatusType Rte_Read_E2E_DataID(uint8_t *data)
 {
-    uint32 tmp;
+    uint32_t tmp;
     Rte_StatusType status = Rte_Read(BCM_SIG_E_2_E_DATA_ID, &tmp);
     if (status == RTE_E_OK)
     {
-        *data = (uint8)tmp;
+        *data = (uint8_t)tmp;
     }
     return status;
 }
 
 /**
- * @brief  Read EStop_Active (uint8)
+ * @brief  Read EStop_Active (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_EStop_Active(uint8 *data)
+static inline Rte_StatusType Rte_Read_EStop_Active(uint8_t *data)
 {
-    uint32 tmp;
+    uint32_t tmp;
     Rte_StatusType status = Rte_Read(BCM_SIG_ESTOP_ACTIVE, &tmp);
     if (status == RTE_E_OK)
     {
-        *data = (uint8)tmp;
+        *data = (uint8_t)tmp;
     }
     return status;
 }
 
 /**
- * @brief  Read TurnSignalCmd (uint8)
+ * @brief  Read TurnSignalCmd (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_TurnSignalCmd(uint8 *data)
+static inline Rte_StatusType Rte_Read_TurnSignalCmd(uint8_t *data)
 {
-    uint32 tmp;
+    uint32_t tmp;
     Rte_StatusType status = Rte_Read(BCM_SIG_TURN_SIGNAL_CMD, &tmp);
     if (status == RTE_E_OK)
     {
-        *data = (uint8)tmp;
+        *data = (uint8_t)tmp;
     }
     return status;
 }
 
 /**
- * @brief  Read E2E_AliveCounter (uint8)
+ * @brief  Read E2E_AliveCounter (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_E2E_AliveCounter(uint8 *data)
+static inline Rte_StatusType Rte_Read_E2E_AliveCounter(uint8_t *data)
 {
-    uint32 tmp;
+    uint32_t tmp;
     Rte_StatusType status = Rte_Read(BCM_SIG_E_2_E_ALIVE_COUNTER, &tmp);
     if (status == RTE_E_OK)
     {
-        *data = (uint8)tmp;
+        *data = (uint8_t)tmp;
     }
     return status;
 }
 
 /**
- * @brief  Read VehicleState (uint8)
+ * @brief  Read VehicleState (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_VehicleState(uint8 *data)
+static inline Rte_StatusType Rte_Read_VehicleState(uint8_t *data)
 {
-    uint32 tmp;
+    uint32_t tmp;
     Rte_StatusType status = Rte_Read(BCM_SIG_VEHICLE_STATE, &tmp);
     if (status == RTE_E_OK)
     {
-        *data = (uint8)tmp;
+        *data = (uint8_t)tmp;
     }
     return status;
 }
 
 /**
- * @brief  Read FaultMask (uint16)
+ * @brief  Read FaultMask (uint16_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_FaultMask(uint16 *data)
+static inline Rte_StatusType Rte_Read_FaultMask(uint16_t *data)
 {
-    uint32 tmp;
+    uint32_t tmp;
     Rte_StatusType status = Rte_Read(BCM_SIG_FAULT_MASK, &tmp);
     if (status == RTE_E_OK)
     {
-        *data = (uint16)tmp;
+        *data = (uint16_t)tmp;
     }
     return status;
 }
@@ -140,7 +140,7 @@ static inline Rte_StatusType Rte_Read_FaultMask(uint16 *data)
  */
 static inline Rte_StatusType Rte_Read_TailLightCmd(boolean *data)
 {
-    uint32 tmp;
+    uint32_t tmp;
     Rte_StatusType status = Rte_Read(BCM_SIG_TAIL_LIGHT_CMD, &tmp);
     if (status == RTE_E_OK)
     {
@@ -150,49 +150,49 @@ static inline Rte_StatusType Rte_Read_TailLightCmd(boolean *data)
 }
 
 /**
- * @brief  Read E2E_CRC8 (uint8)
+ * @brief  Read E2E_CRC8 (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_E2E_CRC8(uint8 *data)
+static inline Rte_StatusType Rte_Read_E2E_CRC8(uint8_t *data)
 {
-    uint32 tmp;
+    uint32_t tmp;
     Rte_StatusType status = Rte_Read(BCM_SIG_E_2_E_CRC_8, &tmp);
     if (status == RTE_E_OK)
     {
-        *data = (uint8)tmp;
+        *data = (uint8_t)tmp;
     }
     return status;
 }
 
 /**
- * @brief  Read EStop_Source (uint8)
+ * @brief  Read EStop_Source (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_EStop_Source(uint8 *data)
+static inline Rte_StatusType Rte_Read_EStop_Source(uint8_t *data)
 {
-    uint32 tmp;
+    uint32_t tmp;
     Rte_StatusType status = Rte_Read(BCM_SIG_ESTOP_SOURCE, &tmp);
     if (status == RTE_E_OK)
     {
-        *data = (uint8)tmp;
+        *data = (uint8_t)tmp;
     }
     return status;
 }
 
 /**
- * @brief  Read HeadlightCmd (uint8)
+ * @brief  Read HeadlightCmd (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_HeadlightCmd(uint8 *data)
+static inline Rte_StatusType Rte_Read_HeadlightCmd(uint8_t *data)
 {
-    uint32 tmp;
+    uint32_t tmp;
     Rte_StatusType status = Rte_Read(BCM_SIG_HEADLIGHT_CMD, &tmp);
     if (status == RTE_E_OK)
     {
-        *data = (uint8)tmp;
+        *data = (uint8_t)tmp;
     }
     return status;
 }
@@ -204,7 +204,7 @@ static inline Rte_StatusType Rte_Read_HeadlightCmd(uint8 *data)
  */
 static inline Rte_StatusType Rte_Read_HazardCmd(boolean *data)
 {
-    uint32 tmp;
+    uint32_t tmp;
     Rte_StatusType status = Rte_Read(BCM_SIG_HAZARD_CMD, &tmp);
     if (status == RTE_E_OK)
     {
@@ -214,11 +214,11 @@ static inline Rte_StatusType Rte_Read_HazardCmd(boolean *data)
 }
 
 /**
- * @brief  Read UDS_Data (uint32)
+ * @brief  Read UDS_Data (uint32_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_UDS_Data(uint32 *data)
+static inline Rte_StatusType Rte_Read_UDS_Data(uint32_t *data)
 {
     return Rte_Read(BCM_SIG_UDS_DATA, data);
 }
@@ -230,7 +230,7 @@ static inline Rte_StatusType Rte_Read_UDS_Data(uint32 *data)
  */
 static inline Rte_StatusType Rte_Write_RearLeftLock(boolean value)
 {
-    return Rte_Write(BCM_SIG_REAR_LEFT_LOCK, (uint32)value);
+    return Rte_Write(BCM_SIG_REAR_LEFT_LOCK, (uint32_t)value);
 }
 
 /**
@@ -240,7 +240,7 @@ static inline Rte_StatusType Rte_Write_RearLeftLock(boolean value)
  */
 static inline Rte_StatusType Rte_Write_CentralLock(boolean value)
 {
-    return Rte_Write(BCM_SIG_CENTRAL_LOCK, (uint32)value);
+    return Rte_Write(BCM_SIG_CENTRAL_LOCK, (uint32_t)value);
 }
 
 /**
@@ -250,7 +250,7 @@ static inline Rte_StatusType Rte_Write_CentralLock(boolean value)
  */
 static inline Rte_StatusType Rte_Write_RearRightLock(boolean value)
 {
-    return Rte_Write(BCM_SIG_REAR_RIGHT_LOCK, (uint32)value);
+    return Rte_Write(BCM_SIG_REAR_RIGHT_LOCK, (uint32_t)value);
 }
 
 /**
@@ -260,7 +260,7 @@ static inline Rte_StatusType Rte_Write_RearRightLock(boolean value)
  */
 static inline Rte_StatusType Rte_Write_FogLightOn(boolean value)
 {
-    return Rte_Write(BCM_SIG_FOG_LIGHT_ON, (uint32)value);
+    return Rte_Write(BCM_SIG_FOG_LIGHT_ON, (uint32_t)value);
 }
 
 /**
@@ -270,7 +270,7 @@ static inline Rte_StatusType Rte_Write_FogLightOn(boolean value)
  */
 static inline Rte_StatusType Rte_Write_BrakeLightOn(boolean value)
 {
-    return Rte_Write(BCM_SIG_BRAKE_LIGHT_ON, (uint32)value);
+    return Rte_Write(BCM_SIG_BRAKE_LIGHT_ON, (uint32_t)value);
 }
 
 /**
@@ -280,7 +280,7 @@ static inline Rte_StatusType Rte_Write_BrakeLightOn(boolean value)
  */
 static inline Rte_StatusType Rte_Write_RightIndicator(boolean value)
 {
-    return Rte_Write(BCM_SIG_RIGHT_INDICATOR, (uint32)value);
+    return Rte_Write(BCM_SIG_RIGHT_INDICATOR, (uint32_t)value);
 }
 
 /**
@@ -290,7 +290,7 @@ static inline Rte_StatusType Rte_Write_RightIndicator(boolean value)
  */
 static inline Rte_StatusType Rte_Write_HeadlightOn(boolean value)
 {
-    return Rte_Write(BCM_SIG_HEADLIGHT_ON, (uint32)value);
+    return Rte_Write(BCM_SIG_HEADLIGHT_ON, (uint32_t)value);
 }
 
 /**
@@ -300,7 +300,7 @@ static inline Rte_StatusType Rte_Write_HeadlightOn(boolean value)
  */
 static inline Rte_StatusType Rte_Write_LeftIndicator(boolean value)
 {
-    return Rte_Write(BCM_SIG_LEFT_INDICATOR, (uint32)value);
+    return Rte_Write(BCM_SIG_LEFT_INDICATOR, (uint32_t)value);
 }
 
 /**
@@ -310,7 +310,7 @@ static inline Rte_StatusType Rte_Write_LeftIndicator(boolean value)
  */
 static inline Rte_StatusType Rte_Write_BlinkState(boolean value)
 {
-    return Rte_Write(BCM_SIG_BLINK_STATE, (uint32)value);
+    return Rte_Write(BCM_SIG_BLINK_STATE, (uint32_t)value);
 }
 
 /**
@@ -320,7 +320,7 @@ static inline Rte_StatusType Rte_Write_BlinkState(boolean value)
  */
 static inline Rte_StatusType Rte_Write_FrontLeftLock(boolean value)
 {
-    return Rte_Write(BCM_SIG_FRONT_LEFT_LOCK, (uint32)value);
+    return Rte_Write(BCM_SIG_FRONT_LEFT_LOCK, (uint32_t)value);
 }
 
 /**
@@ -330,17 +330,17 @@ static inline Rte_StatusType Rte_Write_FrontLeftLock(boolean value)
  */
 static inline Rte_StatusType Rte_Write_FrontRightLock(boolean value)
 {
-    return Rte_Write(BCM_SIG_FRONT_RIGHT_LOCK, (uint32)value);
+    return Rte_Write(BCM_SIG_FRONT_RIGHT_LOCK, (uint32_t)value);
 }
 
 /**
- * @brief  Write HeadlightLevel (uint8)
+ * @brief  Write HeadlightLevel (uint8_t)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_HeadlightLevel(uint8 value)
+static inline Rte_StatusType Rte_Write_HeadlightLevel(uint8_t value)
 {
-    return Rte_Write(BCM_SIG_HEADLIGHT_LEVEL, (uint32)value);
+    return Rte_Write(BCM_SIG_HEADLIGHT_LEVEL, (uint32_t)value);
 }
 
 /**
@@ -350,7 +350,7 @@ static inline Rte_StatusType Rte_Write_HeadlightLevel(uint8 value)
  */
 static inline Rte_StatusType Rte_Write_HazardActive(boolean value)
 {
-    return Rte_Write(BCM_SIG_HAZARD_ACTIVE, (uint32)value);
+    return Rte_Write(BCM_SIG_HAZARD_ACTIVE, (uint32_t)value);
 }
 
 /**
@@ -360,7 +360,7 @@ static inline Rte_StatusType Rte_Write_HazardActive(boolean value)
  */
 static inline Rte_StatusType Rte_Write_TailLightOn(boolean value)
 {
-    return Rte_Write(BCM_SIG_TAIL_LIGHT_ON, (uint32)value);
+    return Rte_Write(BCM_SIG_TAIL_LIGHT_ON, (uint32_t)value);
 }
 
 #endif /* RTE_SWC_BCMMAIN_H */

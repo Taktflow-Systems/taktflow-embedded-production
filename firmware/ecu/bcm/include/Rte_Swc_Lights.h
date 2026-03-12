@@ -28,7 +28,7 @@
  */
 static inline Rte_StatusType Rte_Read_TailLightCmd(boolean *data)
 {
-    uint32 tmp;
+    uint32_t tmp;
     Rte_StatusType status = Rte_Read(BCM_SIG_TAIL_LIGHT_CMD, &tmp);
     if (status == RTE_E_OK)
     {
@@ -38,17 +38,17 @@ static inline Rte_StatusType Rte_Read_TailLightCmd(boolean *data)
 }
 
 /**
- * @brief  Read HeadlightCmd (uint8)
+ * @brief  Read HeadlightCmd (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_HeadlightCmd(uint8 *data)
+static inline Rte_StatusType Rte_Read_HeadlightCmd(uint8_t *data)
 {
-    uint32 tmp;
+    uint32_t tmp;
     Rte_StatusType status = Rte_Read(BCM_SIG_HEADLIGHT_CMD, &tmp);
     if (status == RTE_E_OK)
     {
-        *data = (uint8)tmp;
+        *data = (uint8_t)tmp;
     }
     return status;
 }
@@ -60,7 +60,7 @@ static inline Rte_StatusType Rte_Read_HeadlightCmd(uint8 *data)
  */
 static inline Rte_StatusType Rte_Write_FogLightOn(boolean value)
 {
-    return Rte_Write(BCM_SIG_FOG_LIGHT_ON, (uint32)value);
+    return Rte_Write(BCM_SIG_FOG_LIGHT_ON, (uint32_t)value);
 }
 
 /**
@@ -70,7 +70,7 @@ static inline Rte_StatusType Rte_Write_FogLightOn(boolean value)
  */
 static inline Rte_StatusType Rte_Write_BrakeLightOn(boolean value)
 {
-    return Rte_Write(BCM_SIG_BRAKE_LIGHT_ON, (uint32)value);
+    return Rte_Write(BCM_SIG_BRAKE_LIGHT_ON, (uint32_t)value);
 }
 
 /**
@@ -80,17 +80,17 @@ static inline Rte_StatusType Rte_Write_BrakeLightOn(boolean value)
  */
 static inline Rte_StatusType Rte_Write_HeadlightOn(boolean value)
 {
-    return Rte_Write(BCM_SIG_HEADLIGHT_ON, (uint32)value);
+    return Rte_Write(BCM_SIG_HEADLIGHT_ON, (uint32_t)value);
 }
 
 /**
- * @brief  Write HeadlightLevel (uint8)
+ * @brief  Write HeadlightLevel (uint8_t)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_HeadlightLevel(uint8 value)
+static inline Rte_StatusType Rte_Write_HeadlightLevel(uint8_t value)
 {
-    return Rte_Write(BCM_SIG_HEADLIGHT_LEVEL, (uint32)value);
+    return Rte_Write(BCM_SIG_HEADLIGHT_LEVEL, (uint32_t)value);
 }
 
 /**
@@ -100,7 +100,7 @@ static inline Rte_StatusType Rte_Write_HeadlightLevel(uint8 value)
  */
 static inline Rte_StatusType Rte_Write_TailLightOn(boolean value)
 {
-    return Rte_Write(BCM_SIG_TAIL_LIGHT_ON, (uint32)value);
+    return Rte_Write(BCM_SIG_TAIL_LIGHT_ON, (uint32_t)value);
 }
 
 #endif /* RTE_SWC_LIGHTS_H */
