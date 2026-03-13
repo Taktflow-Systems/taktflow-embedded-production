@@ -22,6 +22,14 @@
 #undef  TCU_DTC_AGING_CLEAR_CYCLES
 #define TCU_DTC_AGING_CLEAR_CYCLES  40u
 
+/* --- UDS security / session constants --- */
+#define TCU_UDS_SESSION_TIMEOUT_TICKS   500u
+#define TCU_UDS_SECURITY_LOCKOUT_TICKS 1000u
+#define TCU_UDS_MAX_SECURITY_ATTEMPTS     3u
+
+#define TCU_SECURITY_LEVEL1_XOR  0xA5A5A5A5u
+#define TCU_SECURITY_LEVEL3_XOR  0x5A5A5A5Au
+
 /* --- VIN constants --- */
 #define TCU_VIN_LENGTH             17u
 #define TCU_VIN_DEFAULT            "TAKTFLOW000000001"
