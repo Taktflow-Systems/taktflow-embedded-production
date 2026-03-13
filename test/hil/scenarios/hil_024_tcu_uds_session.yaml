@@ -31,7 +31,7 @@ steps:
 verdicts:
   - type: can_message
     can_id: 0x644
-    timeout_ms: 2000
+    timeout_sec: 2
     description: "TCU UDS response present within 2s"
 
 teardown:

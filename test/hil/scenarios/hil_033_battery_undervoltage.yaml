@@ -30,12 +30,11 @@ steps:
 
 verdicts:
   - type: vehicle_state
-    can_id: 0x100
-    expected_state:
+    expected:
       - DEGRADED
       - LIMP
       - SAFE_STOP
-    timeout_ms: 8000
+    within_ms: 8000
     description: "Vehicle state transitions to DEGRADED, LIMP, or SAFE_STOP within 8s"
 
 teardown:
