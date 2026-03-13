@@ -18,7 +18,8 @@
 #define TCU_SIG_MOTOR_RPM         21u
 #define TCU_SIG_DTC_BROADCAST     22u
 
-/* --- DTC aging threshold --- */
+/* --- DTC aging threshold (override codegen DTC event ID with actual cycle count) --- */
+#undef  TCU_DTC_AGING_CLEAR_CYCLES
 #define TCU_DTC_AGING_CLEAR_CYCLES  40u
 
 #endif /* TCU_APP_H */

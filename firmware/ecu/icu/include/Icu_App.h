@@ -24,6 +24,28 @@
 #define ICU_SIG_INDICATOR_STATE   27u
 #define ICU_SIG_DTC_BROADCAST     28u
 
+/* --- TX PDU aliases (icu_main.c uses short names) --- */
+#define ICU_COM_TX_HEARTBEAT      ICU_COM_TX_ICU_HEARTBEAT
+
+/* --- RX PDU aliases --- */
+#define ICU_COM_RX_ESTOP          ICU_COM_RX_ESTOP_BROADCAST
+#define ICU_COM_RX_HB_CVC         ICU_COM_RX_CVC_HEARTBEAT
+#define ICU_COM_RX_HB_FZC         ICU_COM_RX_FZC_HEARTBEAT
+#define ICU_COM_RX_HB_RZC         ICU_COM_RX_RZC_HEARTBEAT
+#define ICU_COM_RX_TORQUE_REQ     ICU_COM_RX_TORQUE_REQUEST
+#define ICU_COM_RX_MOTOR_TEMP     ICU_COM_RX_MOTOR_TEMPERATURE
+#define ICU_COM_RX_BATTERY        ICU_COM_RX_BATTERY_STATUS
+#define ICU_COM_RX_INDICATOR      ICU_COM_RX_INDICATOR_STATE
+#define ICU_COM_RX_DOOR_LOCK      ICU_COM_RX_DOOR_LOCK_STATUS
+#define ICU_COM_RX_DTC_BCAST      ICU_COM_RX_DTC_BROADCAST
+
+/* --- ncurses color pair indices --- */
+#define ICU_COLOR_GREEN            1
+#define ICU_COLOR_YELLOW           2
+#define ICU_COLOR_ORANGE           3
+#define ICU_COLOR_RED              4
+#define ICU_COLOR_WHITE            5
+
 /* --- Temperature zone thresholds (°C raw counts) --- */
 #define ICU_TEMP_GREEN_MAX        59u   /* GREEN: 0-59    */
 #define ICU_TEMP_YELLOW_MAX       79u   /* YELLOW: 60-79  */

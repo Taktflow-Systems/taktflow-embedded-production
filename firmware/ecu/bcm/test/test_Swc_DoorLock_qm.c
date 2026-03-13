@@ -49,6 +49,12 @@ typedef uint8          boolean;
 #define BCM_SIG_BODY_CONTROL_CMD    18u
 #define BCM_SIG_DOOR_LOCK_STATE     24u
 
+/* ARXML-generated signal IDs used by Swc_DoorLock.c (mirrors Bcm_Cfg.h) */
+#define BCM_SIG_BODY_CONTROL_CMD_DOOR_LOCK_CMD      26u
+#define BCM_SIG_MOTOR_STATUS_MOTOR_SPEED_RPM       119u
+#define BCM_SIG_VEHICLE_STATE_VEHICLE_STATE        182u
+#define BCM_SIG_DOOR_LOCK_STATUS_FRONT_LEFT_LOCK    64u
+
 /* Vehicle state values */
 #define BCM_VSTATE_INIT             0u
 #define BCM_VSTATE_READY            1u
