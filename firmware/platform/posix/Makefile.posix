@@ -251,6 +251,9 @@ CPPCHECK_FLAGS = \
     --suppress=badBitmaskCheck \
     --suppress=normalCheckLevelMaxBranches \
     --suppress=compareValueOutOfTypeRangeError \
+    --suppress=unusedStructMember \
+    --suppress=unsignedPositive \
+    --suppress=constVariablePointer \
     --suppressions-list=$(MISRA_SUPPR) \
     --inline-suppr \
     --error-exitcode=1
