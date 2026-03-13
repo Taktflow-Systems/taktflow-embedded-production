@@ -51,3 +51,4 @@ misra-c2012-20.1:rzc/src/main.c
 misra-c2012-11.4:*/sc_main.c
 misra-c2012-12.2:*/*_hw_tms570.c
 misra-c2012-17.3:*/Swc_RzcSelfTest.c
+misra-c2012-20.1:*/Det.h
