@@ -1,0 +1,33 @@
+name: "BCM Vehicle State Reception"
+id: "HIL-014"
+description: >
+  Verifies that the Vehicle_State frame (CAN ID 0x100) is present on the
+  bus so that the BCM can consume it.  Confirms the CVC publishes
+  vehicle state for downstream consumers.
+verifies:
+  - "SWR-BCM-002"
+asil: "QM"
+aspice: "SWE.6"
+iso_reference: "ISO 26262 Part 4, Section 7"
+timeout_sec: 30
+requires_mqtt: false
+
+setup:
+  - action: wait_state
+    state: SAFE_STOP
+    timeout: 20
+    description: "Wait for system to reach SAFE_STOP (no SC on bus)"
+
+steps:
+  - action: wait
+    seconds: 5
+    description: "Allow CVC to publish vehicle state"
+
+verdicts:
+  - type: can_message
+    can_id: 0x100
+    description: "Vehicle_State frame present (consumed by BCM)"
+
+teardown:
+  - action: reset
+    description: "Reset to idle"

@@ -1,0 +1,246 @@
+"""Dashboard E2E test specifications — verdict definitions for 8 testable scenarios.
+
+Each spec defines the scenario ID, safety goal reference, observe window,
+and verdict checks (expected state transitions, DTCs, fault flags).
+
+These specs are consumed by test_runner.py to drive automated E2E testing
+from the dashboard with real-time pass/fail verdicts.
+"""
+
+from dataclasses import dataclass, field
+
+
+@dataclass
+class VerdictCheck:
+    """Single verdict check within a scenario."""
+    description: str
+    check_type: str          # "vehicle_state", "dtc", "fault_flag", "motor_stop", "torque_zero", "state_stays"
+    expected: str            # human-readable expected value
+    field: str = ""          # MQTT field to monitor
+    value: object = None     # expected value (int, str, etc.)
+    timeout_ms: int = 5000   # max time to wait for this verdict
+
+
+@dataclass
+class TestSpec:
+    """Full specification for one testable scenario."""
+    id: str
+    label: str
+    scenario: str            # fault_inject scenario name to trigger
+    sg: str                  # Safety Goal ID
+    asil: str                # ASIL level
+    he: str                  # Hazardous Event ID
+    description: str = ""    # What the test proves (HARA context)
+    injection: str = ""      # What CAN/fault is injected
+    prep: str = "normal_drive"  # scenario to run before injection
+    post_run_settle_sec: float = 0.0  # wait after RUN before injection
+    observe_sec: float = 5.0
+    verdicts: list[VerdictCheck] = field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# 8 testable scenarios (injectable via CAN, clear MQTT-observable verdicts)
+# ---------------------------------------------------------------------------
+
+TEST_SPECS: list[TestSpec] = [
+    TestSpec(
+        id="overcurrent",
+        label="Overcurrent",
+        scenario="overcurrent",
+        sg="SG-001", asil="D", he="HE-001",
+        description="Verifies motor overcurrent triggers SAFE_STOP and DTC. "
+                    "Safety Goal SG-001: prevent unintended vehicle acceleration from motor fault.",
+        injection="SPI pedal 95% + MQTT inject_overcurrent to plant-sim",
+        post_run_settle_sec=10.0,
+        observe_sec=5.0,
+        verdicts=[
+            VerdictCheck(
+                description="Vehicle enters SAFE_STOP",
+                check_type="vehicle_state",
+                expected="SAFE_STOP",
+                value=4,       # SAFE_STOP enum
+                timeout_ms=5000,
+            ),
+            VerdictCheck(
+                description="DTC 0xE301 broadcast",
+                check_type="dtc",
+                expected="DTC 0xE301 received",
+                value=0xE301,
+                timeout_ms=5000,
+            ),
+        ],
+    ),
+    TestSpec(
+        id="estop",
+        label="E-Stop",
+        scenario="estop",
+        sg="SG-008", asil="C", he="HE-011/013",
+        description="Verifies emergency stop brings vehicle to SAFE_STOP. "
+                    "Safety Goal SG-008: immediate halt on E-Stop activation. "
+                    "HW target: 200ms. SIL budget: 2000ms (Docker scheduling overhead).",
+        injection="CAN frame EStop_Command (0x010) with EStop_Active=1",
+        observe_sec=3.0,
+        verdicts=[
+            VerdictCheck(
+                description="Vehicle enters SAFE_STOP within 2000ms (SIL)",
+                check_type="vehicle_state",
+                expected="SAFE_STOP",
+                value=4,       # SAFE_STOP enum
+                timeout_ms=2000,
+            ),
+        ],
+    ),
+    TestSpec(
+        id="steer_fault",
+        label="Steer Fault",
+        scenario="steer_fault",
+        sg="SG-003", asil="D", he="HE-003/004",
+        description="Verifies steering fault triggers SAFE_STOP and DTC. "
+                    "Safety Goal SG-003: prevent unintended steering from actuator malfunction.",
+        injection="MQTT inject_steer_fault to plant-sim",
+        post_run_settle_sec=10.0,
+        observe_sec=5.0,
+        verdicts=[
+            VerdictCheck(
+                description="Vehicle enters SAFE_STOP",
+                check_type="vehicle_state",
+                expected="SAFE_STOP",
+                value=4,       # SAFE_STOP enum
+                timeout_ms=5000,
+            ),
+            VerdictCheck(
+                description="DTC 0xD001 broadcast",
+                check_type="dtc",
+                expected="DTC 0xD001 received",
+                value=0xD001,
+                timeout_ms=5000,
+            ),
+        ],
+    ),
+    TestSpec(
+        id="brake_fault",
+        label="Brake Fault",
+        scenario="brake_fault",
+        sg="SG-004", asil="D", he="HE-005",
+        description="Verifies brake fault triggers SAFE_STOP and DTC. "
+                    "Safety Goal SG-004: prevent loss of braking from actuator malfunction.",
+        injection="MQTT inject_brake_fault to plant-sim",
+        post_run_settle_sec=10.0,
+        observe_sec=5.0,
+        verdicts=[
+            VerdictCheck(
+                description="Vehicle enters SAFE_STOP",
+                check_type="vehicle_state",
+                expected="SAFE_STOP",
+                value=4,       # SAFE_STOP enum
+                timeout_ms=5000,
+            ),
+            VerdictCheck(
+                description="DTC 0xE202 broadcast",
+                check_type="dtc",
+                expected="DTC 0xE202 received",
+                value=0xE202,
+                timeout_ms=5000,
+            ),
+        ],
+    ),
+    TestSpec(
+        id="battery_low",
+        label="Battery Drain",
+        scenario="battery_low",
+        sg="SG-006", asil="A", he="HE-015",
+        description="Verifies low battery voltage triggers DEGRADED/LIMP and DTC. "
+                    "Safety Goal SG-006: prevent loss of vehicle control from power loss.",
+        injection="CAN frame Battery_Status (0x400) with BatteryVoltage=9V (<10V threshold)",
+        observe_sec=8.0,
+        verdicts=[
+            VerdictCheck(
+                description="DTC 0xE401 broadcast",
+                check_type="dtc",
+                expected="DTC 0xE401 received",
+                value=0xE401,
+                timeout_ms=8000,
+            ),
+            VerdictCheck(
+                description="Vehicle enters DEGRADED or LIMP",
+                check_type="vehicle_state",
+                expected="DEGRADED or LIMP",
+                value=[2, 3],  # DEGRADED=2 or LIMP=3
+                timeout_ms=8000,
+            ),
+        ],
+    ),
+    TestSpec(
+        id="runaway_accel",
+        label="Runaway Acceleration",
+        scenario="runaway_accel",
+        sg="SG-011", asil="C", he="HE-016",
+        description="Verifies excessive pedal input triggers DEGRADED with torque limiting. "
+                    "Safety Goal SG-011: prevent runaway acceleration from sensor/software fault.",
+        injection="SPI pedal override at 100% (enters CVC full pipeline)",
+        observe_sec=5.0,
+        verdicts=[
+            VerdictCheck(
+                description="Vehicle enters DEGRADED (torque limited)",
+                check_type="vehicle_state",
+                expected="DEGRADED",
+                value=2,
+                timeout_ms=5000,
+            ),
+        ],
+    ),
+    TestSpec(
+        id="motor_reversal",
+        label="Motor Reversal",
+        scenario="motor_reversal",
+        sg="SG-002", asil="C", he="HE-014",
+        description="Verifies motor blockage/reversal triggers SAFE_STOP and DTC. "
+                    "Safety Goal SG-002: prevent unintended motor reversal during forward motion.",
+        injection="SPI pedal 80% + MQTT inject_stall + inject_overcurrent to plant-sim",
+        post_run_settle_sec=10.0,
+        observe_sec=5.0,
+        verdicts=[
+            VerdictCheck(
+                description="Vehicle enters SAFE_STOP",
+                check_type="vehicle_state",
+                expected="SAFE_STOP",
+                value=4,       # SAFE_STOP enum
+                timeout_ms=5000,
+            ),
+            VerdictCheck(
+                description="DTC 0xE301 broadcast",
+                check_type="dtc",
+                expected="DTC 0xE301 received",
+                value=0xE301,
+                timeout_ms=5000,
+            ),
+        ],
+    ),
+    TestSpec(
+        id="creep_from_stop",
+        label="Creep from Stop",
+        scenario="creep_from_stop",
+        sg="SG-001", asil="D", he="HE-017",
+        description="Verifies SC creep guard detects BTS7960 FET short (MB-006) and "
+                    "kills relay. Fault model: motor draws 1000mA despite zero torque "
+                    "command. SC cross-plausibility (SSR-SC-018, SM-024) detects "
+                    "torque=0 AND current>500mA for 2 cycles → kill relay → SAFE_STOP. "
+                    "Safety Goal SG-001: prevent unintended vehicle motion from motor fault.",
+        injection="Plant-sim injects 1000mA motor current (BTS7960 FET short simulation)",
+        prep="",  # No pedal input — vehicle must be at standstill with torque=0
+        post_run_settle_sec=10.0,
+        observe_sec=5.0,
+        verdicts=[
+            VerdictCheck(
+                description="Vehicle enters SAFE_STOP (SC creep guard → kill relay)",
+                check_type="vehicle_state",
+                expected="SAFE_STOP",
+                value=4,       # SAFE_STOP enum
+                timeout_ms=5000,
+            ),
+        ],
+    ),
+]
+
+# Lookup by ID
+TEST_SPECS_BY_ID: dict[str, TestSpec] = {s.id: s for s in TEST_SPECS}

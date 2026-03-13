@@ -1,0 +1,9 @@
+# Raspberry Pi HIL edge gateway — serves dashboard + APIs locally
+# Access at http://192.168.0.195 from local network
+
+:80 {
+    reverse_proxy /ws/telemetry localhost:8080
+    reverse_proxy /api/sap/* localhost:8090
+    reverse_proxy /api/fault/* localhost:8091
+    reverse_proxy /api/test/* localhost:8091
+}

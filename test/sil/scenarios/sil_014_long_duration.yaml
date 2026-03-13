@@ -1,0 +1,113 @@
+# =============================================================================
+# @file    sil_014_long_duration.yaml
+# @brief   SIL scenario: Long-duration stability (60s drive + monitoring)
+# @aspice  SWE.5 — Software Component Verification & Integration
+# @iso     ISO 26262 Part 6, Section 10 — Software Integration & Testing
+# @date    2026-02-24
+#
+# Validates system stability under sustained operation.  Runs normal_drive
+# for 60 seconds while monitoring for timing drift, stuck CAN counters,
+# memory leaks (via telemetry), motor temperature stability, and battery
+# SOC monotonic decrease.  The 4-bit alive counter wraps every 150ms,
+# meaning ~160 wraps in 60 seconds — verifies correct wrapping behavior.
+# =============================================================================
+
+name: "Long-Duration Stability"
+id: "SIL-014"
+description: >
+  Run normal_drive scenario for 60 seconds of sustained operation.
+  Monitor for: alive counter wrap correctness (4-bit, ~160 wraps in 60s),
+  CAN frame timing jitter, motor temperature stability within physics
+  model bounds, battery SOC monotonic decrease, and no stuck/frozen
+  signal values.  This is the primary stability and regression test.
+verifies:
+  - "SWR-BSW-001"   # System stability under sustained operation
+aspice: "SWE.5"
+iso_reference: "ISO 26262 Part 6, Section 10"
+timeout_sec: 120
+
+setup:
+  - action: reset
+    description: "Start from clean idle state"
+  - action: wait_state
+    state: RUN
+    timeout: 15
+    description: "Wait for INIT hold (10s) + E2E stabilization"
+  - action: record_baseline
+    metric: battery_soc
+    description: "Record initial battery SOC for monotonic decrease check"
+  - action: record_baseline
+    metric: alive_counters
+    description: "Record initial alive counter values for wrap verification"
+
+steps:
+  - action: inject_scenario
+    name: normal_drive
+    description: "Start sustained 50% torque forward drive"
+  - action: wait
+    seconds: 60
+    description: "Run under load for 60 seconds (primary stability window)"
+
+verdicts:
+  - type: vehicle_state
+    expected: RUN
+    within_ms: 15000
+    continuous: true
+    description: "Vehicle must remain in RUN for the entire 60-second window"
+
+  - type: alive_counter_wrap
+    can_ids: [0x100, 0x300]
+    counter_bits: 4
+    interval_ms: 100
+    expected_wraps_min: 20
+    description: >
+      4-bit alive counters (0-15) in E2E-protected status frames.
+      Vehicle_Status (0x100) and Motor_Status (0x300) carry alive counter
+      in byte 0 upper nibble (plant-sim E2E layout).  At 100ms period,
+      counter wraps every 1.6s — expect at least 20 wraps in 60s.
+      Note: Battery_Status (0x303) excluded — RZC E2E layout uses byte 1
+      low nibble (AUTOSAR style), incompatible with this verdict type.
+
+  - type: can_timing_jitter
+    can_ids: [0x010, 0x011, 0x012]
+    nominal_interval_ms: 50
+    max_jitter_ms: 25
+    description: >
+      Heartbeat frames (50ms nominal) must not drift more than +/-25ms.
+      Docker scheduling adds ~15-20ms jitter beyond bare-metal.
+
+  - type: motor_temp_stable
+    can_id: 0x302
+    max_temp_c: 90
+    description: >
+      Motor temperature must remain below 90C at 50% duty over 60 seconds.
+      If temp exceeds this, the motor model or cooling model may have issues.
+
+  - type: battery_soc_monotonic
+    can_id: 0x303
+    field: battery_soc
+    direction: decreasing
+    description: >
+      Battery SOC must decrease monotonically over the 60-second drive.
+      Any increase (without reset) indicates a bug in the battery model.
+
+  - type: no_stuck_signals
+    can_ids: [0x300, 0x301, 0x302]
+    max_identical_frames: 200
+    description: >
+      Motor feedback signals should not produce more than 200 consecutive
+      identical frames (~2s at 100Hz).  Steer/brake status (0x200, 0x201)
+      excluded — they are constant at 0 during straight-line drive.
+
+  - type: can_message
+    can_id: 0x300
+    field: rpm
+    expected_above: 0
+    description: "Motor RPM must be non-zero during sustained drive"
+
+teardown:
+  - action: reset
+    description: "Stop drive and return to idle"
+  - action: wait
+    seconds: 5
+    description: "Allow motor to decelerate and temperature to stabilize"

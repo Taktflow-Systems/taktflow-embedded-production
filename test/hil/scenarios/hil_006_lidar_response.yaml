@@ -1,0 +1,34 @@
+name: "Lidar Distance Response"
+id: "HIL-006"
+description: >
+  Verifies that the FZC publishes lidar distance data on CAN ID 0x220
+  during normal HIL operation.  Confirms the lidar sensor model is
+  active on the bench.
+verifies:
+  - "TSR-018"
+  - "SSR-FZC-012"
+asil: "C"
+aspice: "SWE.6"
+iso_reference: "ISO 26262 Part 4, Section 7"
+timeout_sec: 30
+requires_mqtt: false
+
+setup:
+  - action: wait_state
+    state: SAFE_STOP
+    timeout: 20
+    description: "Wait for system to reach SAFE_STOP (no SC on bus)"
+
+steps:
+  - action: wait
+    seconds: 3
+    description: "Allow lidar model to publish"
+
+verdicts:
+  - type: can_message
+    can_id: 0x220
+    description: "Lidar distance frame present"
+
+teardown:
+  - action: reset
+    description: "Reset to idle"

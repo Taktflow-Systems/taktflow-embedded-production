@@ -1,0 +1,41 @@
+name: CVC Heartbeat Validation
+id: PIL-001
+description: >
+  Verify the physical CVC ECU transmits heartbeat messages on CAN ID 0x010
+  at the expected 50ms period with valid E2E protection (CRC-8 + alive counter).
+  This is the fundamental liveness check for PIL testing.
+verifies:
+  - SWR-CVC-001
+  - TSR-030
+asil: C
+aspice: SWE.5
+timeout_sec: 30
+
+setup:
+  - action: wait
+    seconds: 3
+    description: "Allow CVC to complete self-test and enter RUN"
+
+steps:
+  - action: poll
+    seconds: 5
+    description: "Observe CVC heartbeat for 5 seconds"
+
+verdicts:
+  - type: heartbeat
+    can_id: 0x010
+    period_ms: 50
+    tolerance_pct: 20
+    duration_sec: 3
+    description: "CVC heartbeat 0x010 arrives at 50ms period"
+
+  - type: e2e
+    can_id: 0x010
+    description: "CVC heartbeat has valid E2E CRC-8"
+
+  - type: e2e_alive_increment
+    can_id: 0x010
+    min_samples: 5
+    description: "CVC heartbeat alive counter increments correctly"
+
+teardown: []

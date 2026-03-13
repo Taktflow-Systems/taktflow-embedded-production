@@ -1,0 +1,49 @@
+{% include "common/file_header.j2" %}
+#ifndef {{ guard_name }}
+#define {{ guard_name }}
+
+#include "Rte.h"
+#include "{{ ecu.prefix | capitalize }}_Cfg.h"
+
+/* ====================================================================
+ * Typed RTE Wrappers for {{ swc.name }}
+ *
+ * Usage: #include "{{ filename }}" in {{ swc.name }} source files.
+ * Provides type-safe inline read/write instead of raw Rte_Read/Rte_Write.
+ * ==================================================================== */
+
+{% for port in read_ports %}
+/**
+ * @brief  Read {{ port.signal_name }} ({{ port.data_type }})
+ * @param  data  Pointer to receive the signal value
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Read_{{ port.signal_name }}({{ port.data_type }} *data)
+{
+{% if port.data_type == "uint32_t" %}
+    return Rte_Read({{ ecu.prefix }}_SIG_{{ port.signal_name | upper_snake }}, data);
+{% else %}
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read({{ ecu.prefix }}_SIG_{{ port.signal_name | upper_snake }}, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = ({{ port.data_type }})tmp;
+    }
+    return status;
+{% endif %}
+}
+
+{% endfor %}
+{% for port in write_ports %}
+/**
+ * @brief  Write {{ port.signal_name }} ({{ port.data_type }})
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_{{ port.signal_name }}({{ port.data_type }} value)
+{
+    return Rte_Write({{ ecu.prefix }}_SIG_{{ port.signal_name | upper_snake }}, (uint32_t)value);
+}
+
+{% endfor %}
+#endif /* {{ guard_name }} */

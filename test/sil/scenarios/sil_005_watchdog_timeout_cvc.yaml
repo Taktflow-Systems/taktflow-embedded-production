@@ -1,0 +1,80 @@
+# =============================================================================
+# @file    sil_005_watchdog_timeout_cvc.yaml
+# @brief   SIL scenario: CVC watchdog timeout — safety controller takeover
+# @aspice  SWE.5 — Software Component Verification & Integration
+# @iso     ISO 26262 Part 6, Section 10 — Software Integration & Testing
+# @date    2026-02-24
+#
+# Simulates a CVC (Central Vehicle Computer) failure by stopping its Docker
+# container.  The Safety Controller must detect the CVC heartbeat loss,
+# take over supervisory control, and transition the vehicle to SAFE_STOP
+# since the CVC is the primary vehicle computer.
+# =============================================================================
+
+name: "CVC Watchdog Timeout"
+id: "SIL-005"
+description: >
+  Stop the CVC Docker container to simulate a CVC processor lockup or
+  watchdog timeout.  Unlike FZC loss (DEGRADED), CVC loss requires
+  SAFE_STOP because the CVC is the central coordinator.  Verify the
+  Safety Controller detects CVC heartbeat loss, takes over, and
+  transitions to SAFE_STOP with all actuators at safe values.
+verifies:
+  - "SWR-SC-001"    # Safety controller heartbeat supervision
+  - "SWR-BSW-015"   # Watchdog monitoring — CVC supervision
+aspice: "SWE.5"
+iso_reference: "ISO 26262 Part 6, Section 10"
+timeout_sec: 90
+
+setup:
+  - action: reset
+    description: "Clear residual fault state"
+  - action: wait_state
+    state: RUN
+    timeout: 15
+    description: "Wait for INIT hold (10s) + E2E stabilization to ensure all ECUs are running normally"
+  - action: verify_heartbeat
+    ecu: cvc
+    can_id: 0x010
+    description: "Confirm CVC heartbeat is active before test"
+
+steps:
+  - action: docker_stop
+    container: cvc
+    description: "Stop CVC container to simulate CVC failure / watchdog timeout"
+  - action: wait
+    seconds: 3
+    description: "Allow SC to detect CVC heartbeat loss and trigger safe-stop"
+
+verdicts:
+  - type: heartbeat_loss
+    can_id: 0x010
+    within_ms: 200
+    description: "SC must detect CVC heartbeat loss within 200ms"
+
+  # Note: vehicle_state verdict removed — CVC sends 0x100 (Vehicle_Status),
+  # so when CVC dies, no ECU can report SAFE_STOP on CAN.  Instead we verify
+  # CVC heartbeat loss + motor shutdown (SC relay activation) as proof of
+  # safe-stop behavior.  Future: SC fallback broadcast on 0x100.
+
+  - type: motor_shutdown
+    within_ms: 500
+    description: "Motor must be de-energized after CVC loss (SC relay activation)"
+
+  - type: can_message
+    can_id: 0x011
+    description: "FZC heartbeat (0x011) still active — FZC independent of CVC"
+
+  - type: can_message
+    can_id: 0x012
+    description: "RZC heartbeat (0x012) still active — RZC independent of CVC"
+
+teardown:
+  - action: docker_start
+    container: cvc
+    description: "Restart CVC container"
+  - action: wait
+    seconds: 5
+    description: "Allow CVC to rejoin the network"
+  - action: reset
+    description: "Clear fault state and return system to idle"

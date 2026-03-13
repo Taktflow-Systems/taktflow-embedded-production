@@ -1,0 +1,87 @@
+# =============================================================================
+# @file    sil_011_steering_sensor_failure.yaml
+# @brief   SIL scenario: Complete steering sensor failure -> SAFE_STOP
+# @aspice  SWE.5 — Software Component Verification & Integration
+# @iso     ISO 26262 Part 6, Section 10 — Software Integration & Testing
+# @date    2026-02-24
+#
+# Validates the escalation path from steering fault to full SAFE_STOP.
+# A steer_fault triggers DEGRADED, then an E-Stop is injected to force
+# SAFE_STOP.  Verify the steering servo is de-energized and the vehicle
+# is in a fully safe state.
+# =============================================================================
+
+name: "Complete Steering Sensor Failure"
+id: "SIL-011"
+description: >
+  Simulate a complete steering sensor failure: inject steer_fault (rapid
+  oscillation) to trigger DEGRADED mode, then inject E-Stop to force
+  SAFE_STOP.  Verify the steering servo is de-energized (steer command
+  returns to center/0 deg), vehicle reaches SAFE_STOP, and all actuators
+  are at safe values.  This tests the escalation path from partial fault
+  to full safety shutdown.
+verifies:
+  - "SWR-FZC-003"   # FZC complete steering failure handling
+aspice: "SWE.5"
+iso_reference: "ISO 26262 Part 6, Section 10"
+timeout_sec: 90
+
+setup:
+  - action: reset
+    description: "Clear residual fault state"
+  - action: wait_state
+    state: RUN
+    timeout: 15
+    description: "Wait for INIT hold (10s) + E2E stabilization with nominal steering"
+  - action: wait
+    seconds: 12
+    description: "Allow CVC post-INIT grace period (10s) to expire before fault injection"
+
+steps:
+  - action: inject_scenario
+    name: steer_fault
+    description: "Inject rapid steering oscillation to trigger DEGRADED"
+  - action: wait
+    seconds: 2
+    description: "Allow FZC to detect steering fault and enter DEGRADED"
+  - action: inject_scenario
+    name: estop
+    description: "Escalate to E-Stop (complete steering failure requires SAFE_STOP)"
+  - action: wait
+    seconds: 1
+    description: "Allow E-Stop to propagate"
+
+verdicts:
+  - type: vehicle_state
+    expected: SAFE_STOP
+    within_ms: 500
+    description: "Vehicle must reach SAFE_STOP after steering failure + E-Stop"
+
+  - type: can_message
+    can_id: 0x102
+    field: steer_angle
+    expected: 0
+    description: "Steering command must be at center (0 deg) — servo de-energized"
+
+  - type: motor_shutdown
+    within_ms: 200
+    description: "Motor must be de-energized in SAFE_STOP"
+
+  - type: dtc_broadcast
+    can_id: 0x500
+    dtc_code: 0xD001
+    ecu_source: 2
+    description: "DTC 0xD001 (steer plausibility) must have been broadcast from FZC"
+
+  - type: can_message
+    can_id: 0x001
+    field: estop_active
+    expected: 1
+    description: "EStop_Broadcast confirms E-Stop is active"
+
+teardown:
+  - action: reset
+    description: "Clear E-Stop and steering fault"
+  - action: wait
+    seconds: 5
+    description: "Allow full recovery"

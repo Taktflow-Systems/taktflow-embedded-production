@@ -1,0 +1,65 @@
+# =============================================================================
+# @file    sil_017_gateway_ml_anomaly.yaml
+# @brief   SIL scenario: Gateway edge ML anomaly detection
+# @aspice  SWE.5 — Software Component Verification & Integration
+# @date    2026-02-25
+#
+# Validates that the gateway loads the ML model on startup and detects
+# anomalous CAN bus patterns (injected overcurrent) by publishing an
+# alert to the vehicle/alerts MQTT topic.
+# =============================================================================
+
+name: "Gateway ML Anomaly Detection"
+id: "SIL-017"
+description: >
+  Verify that the gateway loads the Isolation Forest ML model on startup,
+  runs inference on CAN bus data, and publishes an anomaly alert when
+  abnormal motor current patterns are detected. Also validates graceful
+  degradation when the model file is missing.
+verifies:
+  - "SWR-GW-003"   # Edge ML Anomaly Detection
+  - "SWR-GW-004"   # ML Model Loading and Validation
+aspice: "SWE.5"
+iso_reference: "ISO 26262 Part 6, Section 10"
+timeout_sec: 90
+
+setup:
+  - action: reset
+    description: "Clear residual state from previous test runs"
+  - action: wait
+    seconds: 5
+    description: "Allow all containers to initialize and ML model to load"
+
+steps:
+  - action: wait_state
+    state: RUN
+    timeout: 15
+    description: "Wait for INIT hold (10s) + E2E stabilization with gateway ML model loaded"
+  - action: inject_fault
+    type: overcurrent
+    value: 25.0
+    description: "Inject sustained overcurrent (25A) to trigger ML anomaly"
+  - action: wait
+    seconds: 10
+    description: "Wait for ML inference cycle (5s interval) to detect anomaly"
+
+verdicts:
+  - type: mqtt_message
+    topic: "vehicle/alerts"
+    description: "Gateway publishes anomaly alert to vehicle/alerts topic"
+
+  - type: mqtt_payload_field
+    topic: "vehicle/alerts"
+    field: "anomaly_score"
+    operator: exists
+    description: "Alert contains anomaly score exceeding threshold"
+
+  - type: mqtt_payload_field
+    topic: "vehicle/alerts"
+    field: "anomaly_type"
+    operator: exists
+    description: "Alert identifies the anomaly type (motor current)"
+
+teardown:
+  - action: reset
+    description: "Return system to clean idle state"

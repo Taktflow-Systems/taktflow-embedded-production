@@ -1,0 +1,80 @@
+# =============================================================================
+# @file    sil_004_can_busoff_fzc.yaml
+# @brief   SIL scenario: FZC container loss — heartbeat timeout detection
+# @aspice  SWE.5 — Software Component Verification & Integration
+# @iso     ISO 26262 Part 6, Section 10 — Software Integration & Testing
+# @date    2026-02-24
+#
+# Simulates a CAN bus-off condition on the Front Zone Controller by stopping
+# its Docker container.  The Safety Controller detects the missing FZC
+# heartbeat, confirms the loss, and kills the relay — driving the vehicle
+# to SAFE_STOP via EVT_SC_KILL (SC is ASIL D, independent of CVC state machine).
+# =============================================================================
+
+name: "CAN Bus-Off FZC"
+id: "SIL-004"
+description: >
+  Stop the FZC Docker container to simulate CAN bus-off / ECU failure.
+  Verify the Safety Controller detects the FZC heartbeat loss within 200ms
+  (3 missed heartbeats at 50ms interval + margin), kills the relay via
+  EVT_SC_KILL, and the vehicle transitions to SAFE_STOP.  The RZC (rear
+  zone controller) heartbeat must remain active (independent of FZC).
+verifies:
+  - "SWR-FZC-005"   # FZC heartbeat monitoring and timeout detection
+  - "SWR-SC-001"    # Safety controller heartbeat supervision
+aspice: "SWE.5"
+iso_reference: "ISO 26262 Part 6, Section 10"
+timeout_sec: 90
+
+setup:
+  - action: reset
+    description: "Clear residual fault state"
+  - action: wait_state
+    state: RUN
+    timeout: 15
+    description: "Wait for INIT hold (10s) + E2E stabilization to ensure all ECUs are running normally"
+  - action: verify_heartbeat
+    ecu: fzc
+    can_id: 0x011
+    description: "Confirm FZC heartbeat is active before test"
+
+steps:
+  - action: docker_stop
+    container: fzc
+    description: "Stop FZC container to simulate ECU failure / CAN bus-off"
+  - action: wait
+    seconds: 3
+    description: "Allow SC to detect heartbeat loss and transition vehicle state"
+
+verdicts:
+  - type: heartbeat_loss
+    can_id: 0x011
+    within_ms: 200
+    description: "SC must detect FZC heartbeat loss within 200ms (3 missed @ 50ms)"
+
+  - type: vehicle_state
+    expected: SAFE_STOP
+    within_ms: 500
+    description: "Vehicle must enter SAFE_STOP after FZC loss (SC relay kill on confirmed heartbeat timeout)"
+
+  - type: can_message
+    can_id: 0x012
+    description: "RZC heartbeat (0x012) must still be active during FZC outage"
+
+  - type: can_message
+    can_id: 0x201
+    description: "BrakeStatus (0x201) still present — RZC brake path operational"
+
+  - type: can_message
+    can_id: 0x010
+    description: "CVC heartbeat (0x010) still active"
+
+teardown:
+  - action: docker_start
+    container: fzc
+    description: "Restart FZC container"
+  - action: wait
+    seconds: 5
+    description: "Allow FZC to rejoin and heartbeat to resume"
+  - action: reset
+    description: "Clear fault state and return to RUN"

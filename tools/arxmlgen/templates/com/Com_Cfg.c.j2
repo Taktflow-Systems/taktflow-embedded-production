@@ -1,0 +1,89 @@
+{% include "common/file_header.j2" %}
+#include "Com.h"
+#include "{{ ecu.prefix | pascal_case }}_Cfg.h"
+
+/* ==================================================================
+ * Shadow Buffers (static RAM for signal read/write)
+ * ================================================================== */
+
+/* TX signal buffers */
+{% for pdu in ecu.tx_pdus %}
+{% for sig in pdu.signals %}
+static {{ sig | c_type }}  sig_tx_{{ sig.name | lower }};
+{% endfor %}
+{% endfor %}
+
+/* RX signal buffers */
+{% for pdu in ecu.rx_pdus %}
+{% for sig in pdu.signals %}
+static {{ sig | c_type }}  sig_rx_{{ sig.name | lower }};
+{% endfor %}
+{% endfor %}
+
+/* ==================================================================
+ * Signal Configuration Table
+ * Maps signal ID -> bit position, size, type, parent PDU, shadow buffer
+ * ================================================================== */
+
+static const Com_SignalConfigType {{ ecu.name }}_signal_config[] = {
+    /* TX signals */
+    /* id, bitPos, bitSize, type,       pduId,                      shadowBuf */
+{% set ns = namespace(com_id=0) %}
+{% for pdu in ecu.tx_pdus %}
+{% for sig in pdu.signals %}
+    { {{ "%2d"|format(ns.com_id) }}u, {{ "%4d"|format(sig.bit_position) }}u, {{ "%5d"|format(sig.bit_size) }}u, {{ sig | com_type }}, {{ ecu.prefix }}_COM_TX_{{ pdu.name | upper_snake }}, &sig_tx_{{ sig.name | lower }} },
+{% set ns.com_id = ns.com_id + 1 %}
+{% endfor %}
+{% endfor %}
+
+    /* RX signals */
+{% for pdu in ecu.rx_pdus %}
+{% for sig in pdu.signals %}
+    { {{ "%2d"|format(ns.com_id) }}u, {{ "%4d"|format(sig.bit_position) }}u, {{ "%5d"|format(sig.bit_size) }}u, {{ sig | com_type }}, {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }}, &sig_rx_{{ sig.name | lower }} },
+{% set ns.com_id = ns.com_id + 1 %}
+{% endfor %}
+{% endfor %}
+};
+
+#define {{ ecu.prefix }}_COM_SIGNAL_COUNT  (sizeof({{ ecu.name }}_signal_config) / sizeof({{ ecu.name }}_signal_config[0]))
+
+/* ==================================================================
+ * TX PDU Configuration Table
+ * Maps PDU ID -> DLC, cycle time
+ * PDU ID to CAN ID routing is handled by CanIf
+ * ================================================================== */
+
+static const Com_TxPduConfigType {{ ecu.name }}_tx_pdu_config[] = {
+    /* pduId,                      dlc, cycleMs */
+{% for pdu in ecu.tx_pdus %}
+    { {{ ecu.prefix }}_COM_TX_{{ pdu.name | upper_snake }}, {{ "%5d"|format(pdu.dlc) }}u, {{ "%5d"|format(pdu.cycle_ms) }}u },   /* CAN {{ pdu.can_id | hex3 }} */
+{% endfor %}
+};
+
+#define {{ ecu.prefix }}_COM_TX_PDU_COUNT  (sizeof({{ ecu.name }}_tx_pdu_config) / sizeof({{ ecu.name }}_tx_pdu_config[0]))
+
+/* ==================================================================
+ * RX PDU Configuration Table
+ * ================================================================== */
+
+static const Com_RxPduConfigType {{ ecu.name }}_rx_pdu_config[] = {
+    /* pduId,                     dlc, timeoutMs */
+{% for pdu in ecu.rx_pdus %}
+    { {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }}, {{ "%5d"|format(pdu.dlc) }}u, {{ "%5d"|format(pdu.timeout_ms) }}u },   /* CAN {{ pdu.can_id | hex3 }} */
+{% endfor %}
+};
+
+#define {{ ecu.prefix }}_COM_RX_PDU_COUNT  (sizeof({{ ecu.name }}_rx_pdu_config) / sizeof({{ ecu.name }}_rx_pdu_config[0]))
+
+/* ==================================================================
+ * Aggregate Com Configuration
+ * ================================================================== */
+
+const Com_ConfigType {{ ecu.name }}_com_config = {
+    .signalConfig = {{ ecu.name }}_signal_config,
+    .signalCount  = (uint8){{ ecu.prefix }}_COM_SIGNAL_COUNT,
+    .txPduConfig  = {{ ecu.name }}_tx_pdu_config,
+    .txPduCount   = (uint8){{ ecu.prefix }}_COM_TX_PDU_COUNT,
+    .rxPduConfig  = {{ ecu.name }}_rx_pdu_config,
+    .rxPduCount   = (uint8){{ ecu.prefix }}_COM_RX_PDU_COUNT,
+};

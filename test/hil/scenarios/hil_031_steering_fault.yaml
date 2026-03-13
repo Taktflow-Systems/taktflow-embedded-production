@@ -1,0 +1,45 @@
+name: "Steering Fault Injection"
+id: "HIL-031"
+description: >
+  Injects a steering fault via MQTT and verifies that the system
+  broadcasts the corresponding DTC and transitions to SAFE_STOP,
+  as steering faults are ASIL D safety-critical.
+verifies:
+  - "TSR-011"
+  - "SSR-FZC-002"
+asil: "D"
+aspice: "SWE.6"
+iso_reference: "ISO 26262 Part 4, Section 7"
+timeout_sec: 30
+requires_mqtt: true
+
+setup:
+  - action: wait_state
+    state: SAFE_STOP
+    timeout: 20
+    description: "Wait for system steady state"
+
+steps:
+  - action: inject_mqtt
+    topic: "taktflow/command/plant_inject"
+    payload: '{"fault":"steer_fault"}'
+    description: "Inject steering fault via MQTT"
+  - action: wait
+    seconds: 5
+    description: "Wait for system to detect and react to steering fault"
+
+verdicts:
+  - type: dtc_broadcast
+    can_id: 0x500
+    dtc_code: 0xD001
+    description: "DTC 0xD001 broadcast for steering fault"
+  - type: vehicle_state
+    can_id: 0x100
+    expected_state:
+      - SAFE_STOP
+    timeout_ms: 5000
+    description: "Vehicle state transitions to SAFE_STOP within 5s"
+
+teardown:
+  - action: reset
+    description: "Reset"

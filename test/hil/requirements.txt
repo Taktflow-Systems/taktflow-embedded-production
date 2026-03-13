@@ -1,0 +1,4 @@
+python-can>=4.3.0
+paho-mqtt>=2.0.0
+PyYAML>=6.0
+junit-xml>=1.9

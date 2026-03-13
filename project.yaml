@@ -1,0 +1,53 @@
+# ============================================================
+# arxmlgen Project Configuration — Taktflow Embedded
+# ============================================================
+
+project:
+  name: "TaktflowSystem"
+  version: "1.0.0"
+  standard: "AUTOSAR_00051"
+
+input:
+  arxml:
+    - "arxml/TaktflowSystem.arxml"
+  dbc: "gateway/taktflow.dbc"
+  sidecar: "model/ecu_sidecar.yaml"
+
+output:
+  base_dir: "firmware/ecu"
+  header_dir: "include"
+  cfg_dir: "cfg"
+  src_dir: "src"
+
+ecus:
+  cvc: { prefix: "CVC" }
+  fzc: { prefix: "FZC" }
+  rzc: { prefix: "RZC" }
+  sc:  { prefix: "SC", include_in: ["cfg", "canif", "e2e"] }
+  bcm: { prefix: "BCM" }
+  icu: { prefix: "ICU" }
+  tcu: { prefix: "TCU" }
+
+generators:
+  com:
+    enabled: true
+    bsw_reserved_signals: 16
+  rte:
+    enabled: true
+    typed_wrappers: true
+    signal_type: "uint32_t"
+  canif:
+    enabled: true
+  pdur:
+    enabled: true
+  e2e:
+    enabled: true
+    profile: "P01"
+  swc:
+    enabled: true
+    overwrite: false
+  cfg:
+    enabled: true
+
+templates:
+  search_path: null

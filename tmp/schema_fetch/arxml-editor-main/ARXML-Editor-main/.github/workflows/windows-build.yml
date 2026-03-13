@@ -1,0 +1,61 @@
+name: Windows Qt6 Build
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      BUILD_TYPE: Release
+      APP_NAME: arxml_editor
+      DEPLOY_DIR: deploy
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Install Qt 6 + qttools; we must use the arch that exists on Windows 2022 runners
+      - name: Install Qt (6.7.2 MSVC 2022)
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: 6.7.2           # or 6.6.3 / 6.5.6 (LTS)
+          host: windows
+          target: desktop
+          arch: win64_msvc2022_64
+          modules: qttools         # qtbase comes by default; qttools provides windeployqt
+          cache: true
+
+      - name: Setup CMake + Ninja
+        uses: lukka/get-cmake@v3.29.3
+
+      # If your CMakeLists.txt is at repo root, keep -S .
+      # If it is in another dir, change -S accordingly.
+      - name: Configure (Ninja + MSVC)
+        run: cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+
+      - name: Build
+        run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
+
+      - name: Prepare deploy dir
+        run: |
+          mkdir ${{ env.DEPLOY_DIR }}
+          copy build\\${{ env.APP_NAME }}.exe ${{ env.DEPLOY_DIR }}\\${{ env.APP_NAME }}.exe
+
+      - name: Bundle Qt runtime (windeployqt)
+        shell: cmd
+        run: |
+          windeployqt.exe ${{ env.DEPLOY_DIR }}\\${{ env.APP_NAME }}.exe --compiler-runtime --verbose 1
+
+      - name: Zip
+        run: powershell -Command "Compress-Archive -Path '${{ env.DEPLOY_DIR }}\\*' -DestinationPath '${{ env.APP_NAME }}-windows.zip' -Force"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-windows
+          path: ${{ env.APP_NAME }}-windows.zip
+          if-no-files-found: error

@@ -1,0 +1,294 @@
+# =============================================================================
+# Makefile.posix — Linux/POSIX build for simulated ECUs (all 7)
+#
+# Production repo layout. Builds AUTOSAR-like BSW + ECU application code
+# using gcc with SocketCAN backend (Can_Posix.c).
+#
+# Run from project root:
+#   make -f firmware/platform/posix/Makefile.posix TARGET=cvc
+#   make -f firmware/platform/posix/Makefile.posix TARGET=sc
+#   make -f firmware/platform/posix/Makefile.posix TARGET=cvc test
+#   make -f firmware/platform/posix/Makefile.posix TARGET=cvc test-asild
+# =============================================================================
+
+CC      = gcc
+CFLAGS  = -Wall -Wextra -Werror -std=c99 -D_DEFAULT_SOURCE -DPLATFORM_POSIX -DCANTP_ENABLED
+LDFLAGS =
+COV_CFLAGS  =
+COV_LDFLAGS =
+CFLAGS += -Og -g3 -DDEBUG
+
+ifdef DIAG
+  CFLAGS += -DSIL_DIAG
+endif
+
+VALID_TARGETS = bcm icu tcu cvc fzc rzc sc
+# TARGET validation deferred — misra/misra-report targets iterate all ECUs internally
+ifneq ($(filter misra misra-report,$(MAKECMDGOALS)),)
+  TARGET ?= cvc
+else
+  ifndef TARGET
+    $(error TARGET is required. Usage: make -f firmware/platform/posix/Makefile.posix TARGET=bcm|icu|tcu|cvc|fzc|rzc|sc)
+  endif
+  ifeq ($(filter $(TARGET),$(VALID_TARGETS)),)
+    $(error Invalid TARGET='$(TARGET)'. Must be one of: $(VALID_TARGETS))
+  endif
+endif
+
+# --- Directories (production layout) ---
+FW        = firmware
+BSW       = $(FW)/bsw
+ECU       = $(FW)/ecu
+PLAT      = $(FW)/platform/posix
+UNITY     = $(FW)/lib/vendor/unity
+BUILD     = build
+
+# --- BSW include paths ---
+BSW_INC = \
+    -I$(BSW)/include \
+    -I$(BSW)/services/Com/include \
+    -I$(BSW)/services/Det/include \
+    -I$(BSW)/services/Dem/include \
+    -I$(BSW)/services/E2E/include \
+    -I$(BSW)/services/WdgM/include \
+    -I$(BSW)/services/SchM/include \
+    -I$(BSW)/services/Dcm/include \
+    -I$(BSW)/services/BswM/include \
+    -I$(BSW)/services/NvM/include \
+    -I$(BSW)/services/CanTp/include \
+    -I$(BSW)/services/Sil/include \
+    -I$(BSW)/ecual/CanIf/include \
+    -I$(BSW)/ecual/PduR/include \
+    -I$(BSW)/ecual/IoHwAb/include \
+    -I$(BSW)/mcal/Can/include \
+    -I$(BSW)/mcal/Spi/include \
+    -I$(BSW)/mcal/Adc/include \
+    -I$(BSW)/mcal/Dio/include \
+    -I$(BSW)/mcal/Gpt/include \
+    -I$(BSW)/mcal/Pwm/include \
+    -I$(BSW)/mcal/Uart/include \
+    -I$(BSW)/rte/include \
+    -I$(BSW)/os/include \
+    -I$(PLAT)/include
+
+# =============================================================================
+ifeq ($(TARGET),sc)
+# --- SC: bare-metal TMS570, no AUTOSAR BSW ---
+CFLAGS += -I$(PLAT)/include -I$(ECU)/sc/include
+SC_SRCS = $(wildcard $(ECU)/sc/src/*.c) $(PLAT)/src/sc_hw_posix.c
+APP_SRCS = $(filter-out %_tms570.c %startup.S,$(SC_SRCS))
+else
+# --- AUTOSAR BSW ECUs ---
+CFLAGS += $(BSW_INC) -I$(ECU)/$(TARGET)/include -I$(ECU)/$(TARGET)/cfg -I$(ECU)/$(TARGET)/cfg/platform_posix
+
+BSW_SRCS = \
+    $(BSW)/mcal/Can/src/Can.c \
+    $(BSW)/mcal/Spi/src/Spi.c \
+    $(BSW)/mcal/Adc/src/Adc.c \
+    $(BSW)/mcal/Dio/src/Dio.c \
+    $(BSW)/mcal/Pwm/src/Pwm.c \
+    $(PLAT)/src/Can_Posix.c \
+    $(PLAT)/src/Gpt_Posix.c \
+    $(PLAT)/src/Dio_Posix.c \
+    $(PLAT)/src/Adc_Posix.c \
+    $(PLAT)/src/Pwm_Posix.c \
+    $(PLAT)/src/Spi_Posix.c \
+    $(BSW)/ecual/CanIf/src/CanIf.c \
+    $(BSW)/ecual/PduR/src/PduR.c \
+    $(BSW)/ecual/IoHwAb/src/IoHwAb_Posix.c \
+    $(BSW)/services/Com/src/Com.c \
+    $(BSW)/services/Dcm/src/Dcm.c \
+    $(BSW)/services/Dem/src/Dem.c \
+    $(BSW)/services/E2E/src/E2E.c \
+    $(BSW)/services/E2E/src/E2E_Sm.c \
+    $(BSW)/services/WdgM/src/WdgM.c \
+    $(BSW)/services/BswM/src/BswM.c \
+    $(BSW)/services/NvM/src/NvM.c \
+    $(BSW)/services/Det/src/Det.c \
+    $(BSW)/services/Det/src/Det_Callout_Sil.c \
+    $(BSW)/services/SchM/src/SchM.c \
+    $(BSW)/services/CanTp/src/CanTp.c \
+    $(BSW)/rte/src/Rte.c \
+    $(BSW)/services/Sil/src/Sil_Time.c
+
+ifeq ($(TARGET),fzc)
+  BSW_SRCS += $(BSW)/mcal/Uart/src/Uart.c $(PLAT)/src/Uart_Posix.c
+endif
+
+ECU_SRCS_ALL = $(wildcard $(ECU)/$(TARGET)/src/*.c) $(wildcard $(ECU)/$(TARGET)/cfg/*.c)
+ECU_HW_POSIX = $(wildcard $(PLAT)/src/$(TARGET)_hw_posix.c)
+ECU_SRCS = $(filter-out %_stm32.c %_tms570.c,$(ECU_SRCS_ALL)) $(ECU_HW_POSIX)
+APP_SRCS = $(BSW_SRCS) $(ECU_SRCS)
+endif
+
+# --- Object files and output ---
+APP_OBJS = $(patsubst %.c,$(BUILD)/%.o,$(APP_SRCS))
+OUTPUT = $(BUILD)/$(TARGET)_posix
+
+ifeq ($(TARGET),icu)
+  LDFLAGS += -lncurses
+endif
+
+# --- Tests ---
+TEST_SRCS = $(wildcard $(ECU)/$(TARGET)/test/*.c)
+TEST_BINS = $(patsubst $(ECU)/$(TARGET)/test/%.c,$(BUILD)/test/$(TARGET)/%,$(TEST_SRCS))
+UNITY_SRC = $(UNITY)/unity.c
+
+TEST_ASILD  = $(filter %_asild, $(TEST_BINS))
+TEST_ASILC  = $(filter %_asilc, $(TEST_BINS))
+TEST_ASILB  = $(filter %_asilb, $(TEST_BINS))
+TEST_ASILA  = $(filter %_asila, $(TEST_BINS))
+TEST_QM     = $(filter %_qm,    $(TEST_BINS))
+TEST_SAFETY = $(TEST_ASILD) $(TEST_ASILC) $(TEST_ASILB) $(TEST_ASILA)
+
+# =============================================================================
+.PHONY: all test test-asild test-asilc test-asilb test-asila test-qm test-safety clean coverage
+
+all: $(OUTPUT)
+
+$(OUTPUT): $(APP_OBJS) | $(BUILD)
+	$(CC) $(CFLAGS) $(COV_CFLAGS) -o $@ $(APP_OBJS) $(LDFLAGS) $(COV_LDFLAGS)
+	@echo "=== Built $(OUTPUT) ==="
+
+$(BUILD)/%.o: %.c | $(BUILD)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(COV_CFLAGS) -c $< -o $@
+
+$(BUILD):
+	mkdir -p $(BUILD)
+
+test: $(OUTPUT) $(TEST_BINS)
+	@echo "=== Running $(TARGET) tests ==="
+	@passed=0; failed=0; total=0; \
+	for t in $(TEST_BINS); do \
+		total=$$((total + 1)); \
+		echo "--- Running $$t ---"; \
+		if ./$$t; then passed=$$((passed + 1)); else failed=$$((failed + 1)); fi; \
+	done; \
+	echo "=== Results: $$passed/$$total passed, $$failed failed ==="; \
+	if [ $$failed -ne 0 ]; then exit 1; fi
+
+$(BUILD)/test/$(TARGET)/%: $(ECU)/$(TARGET)/test/%.c $(UNITY_SRC) | $(BUILD)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(COV_CFLAGS) -DUNIT_TEST -I$(UNITY) \
+		-I$(ECU)/$(TARGET)/src -I$(ECU)/$(TARGET)/cfg \
+		$< $(UNITY_SRC) -o $@ $(COV_LDFLAGS)
+
+test-asild: $(OUTPUT) $(TEST_ASILD)
+	@for t in $(TEST_ASILD); do ./$$t || exit 1; done
+test-asilc: $(OUTPUT) $(TEST_ASILC)
+	@for t in $(TEST_ASILC); do ./$$t || exit 1; done
+test-asilb: $(OUTPUT) $(TEST_ASILB)
+	@for t in $(TEST_ASILB); do ./$$t || exit 1; done
+test-asila: $(OUTPUT) $(TEST_ASILA)
+	@for t in $(TEST_ASILA); do ./$$t || exit 1; done
+test-qm: $(OUTPUT) $(TEST_QM)
+	@for t in $(TEST_QM); do ./$$t || exit 1; done
+test-safety: $(OUTPUT) $(TEST_SAFETY)
+	@for t in $(TEST_SAFETY); do ./$$t || exit 1; done
+
+coverage: COV_CFLAGS  = -fprofile-arcs -ftest-coverage
+coverage: COV_LDFLAGS = -lgcov --coverage
+coverage: clean $(OUTPUT) $(TEST_BINS)
+	@for t in $(TEST_BINS); do ./$$t || true; done
+	mkdir -p coverage/$(TARGET)
+	lcov --capture --directory $(BUILD) --output-file coverage/$(TARGET)/raw.info \
+		--rc branch_coverage=1 --ignore-errors mismatch
+	lcov --remove coverage/$(TARGET)/raw.info '*/test/*' '/usr/*' \
+		--output-file coverage/$(TARGET)/filtered.info --rc branch_coverage=1
+	genhtml coverage/$(TARGET)/filtered.info \
+		--output-directory coverage/$(TARGET)/html \
+		--branch-coverage --title "$(TARGET) Test Coverage"
+	@lcov --summary coverage/$(TARGET)/filtered.info --rc branch_coverage=1
+
+clean:
+	rm -rf $(BUILD) coverage
+	@echo "=== Cleaned ==="
+
+# =============================================================================
+# MISRA C:2012 Static Analysis (cppcheck + MISRA addon)
+#
+# Checks all firmware sources (BSW + 7 ECUs). SC checked separately since
+# it has no AUTOSAR BSW includes.
+#
+# Requires: cppcheck >= 2.13 with MISRA addon
+# Setup:    bash scripts/build/setup-misra-rules.sh  (downloads rule texts)
+# =============================================================================
+
+.PHONY: misra misra-report
+
+# --- MISRA addon config (relative to project root) ---
+MISRA_ADDON    = tools/misra/misra.json
+MISRA_SUPPR    = tools/misra/suppressions.txt
+
+# --- All BSW sources (excluding POSIX backends and tests) ---
+MISRA_BSW_SRCS = \
+    $(BSW)/mcal/Can/src/Can.c $(BSW)/mcal/Spi/src/Spi.c $(BSW)/mcal/Adc/src/Adc.c \
+    $(BSW)/mcal/Dio/src/Dio.c $(BSW)/mcal/Pwm/src/Pwm.c \
+    $(BSW)/mcal/Uart/src/Uart.c \
+    $(BSW)/ecual/CanIf/src/CanIf.c $(BSW)/ecual/PduR/src/PduR.c $(BSW)/ecual/IoHwAb/src/IoHwAb.c \
+    $(BSW)/services/Com/src/Com.c $(BSW)/services/Dcm/src/Dcm.c $(BSW)/services/Dem/src/Dem.c \
+    $(BSW)/services/E2E/src/E2E.c $(BSW)/services/E2E/src/E2E_Sm.c \
+    $(BSW)/services/WdgM/src/WdgM.c $(BSW)/services/BswM/src/BswM.c \
+    $(BSW)/services/NvM/src/NvM.c $(BSW)/services/Det/src/Det.c \
+    $(BSW)/services/SchM/src/SchM.c $(BSW)/services/CanTp/src/CanTp.c \
+    $(BSW)/rte/src/Rte.c
+
+# --- ECU application sources (src/ + cfg/, no test/) ---
+MISRA_ECU_TARGETS = bcm icu tcu cvc fzc rzc
+
+# --- Common cppcheck flags ---
+CPPCHECK_FLAGS = \
+    --addon=$(MISRA_ADDON) \
+    --enable=style,warning \
+    --std=c99 \
+    --platform=unix32 \
+    --suppress=missingIncludeSystem \
+    --suppress=variableScope \
+    --suppress=redundantAssignment \
+    --suppress=unreadVariable \
+    --suppress=knownConditionTrueFalse \
+    --suppress=badBitmaskCheck \
+    --suppress=normalCheckLevelMaxBranches \
+    --suppressions-list=$(MISRA_SUPPR) \
+    --inline-suppr \
+    --error-exitcode=1
+
+# --- misra: Run MISRA check on all sources, output to terminal ---
+misra: $(BUILD)
+	@echo "=== MISRA C:2012 Analysis — BSW ==="
+	cppcheck $(CPPCHECK_FLAGS) $(BSW_INC) $(MISRA_BSW_SRCS) 2>&1
+	@for ecu in $(MISRA_ECU_TARGETS); do \
+		echo ""; \
+		echo "=== MISRA C:2012 Analysis — $$ecu ==="; \
+		cppcheck $(CPPCHECK_FLAGS) $(BSW_INC) -I$(ECU)/$$ecu/include \
+			$$(find $(ECU)/$$ecu/src $(ECU)/$$ecu/cfg -name '*.c' 2>/dev/null) 2>&1; \
+	done
+	@echo ""
+	@echo "=== MISRA C:2012 Analysis — sc (no BSW) ==="
+	cppcheck $(CPPCHECK_FLAGS) -I$(ECU)/sc/include \
+		$$(find $(ECU)/sc/src -name '*.c' 2>/dev/null) 2>&1
+	@echo ""
+	@echo "=== MISRA analysis complete ==="
+
+# --- misra-report: Same check, output to file ---
+misra-report: $(BUILD)
+	@echo "=== MISRA C:2012 Analysis → $(BUILD)/misra-report.txt ==="
+	@echo "MISRA C:2012 Compliance Report — $$(date -u '+%Y-%m-%d %H:%M UTC')" > $(BUILD)/misra-report.txt
+	@echo "Tool: cppcheck $$(cppcheck --version 2>&1)" >> $(BUILD)/misra-report.txt
+	@echo "========================================" >> $(BUILD)/misra-report.txt
+	@echo "" >> $(BUILD)/misra-report.txt
+	@echo "--- BSW ---" >> $(BUILD)/misra-report.txt
+	cppcheck $(CPPCHECK_FLAGS) $(BSW_INC) $(MISRA_BSW_SRCS) >> $(BUILD)/misra-report.txt 2>&1
+	@for ecu in $(MISRA_ECU_TARGETS); do \
+		echo "" >> $(BUILD)/misra-report.txt; \
+		echo "--- $$ecu ---" >> $(BUILD)/misra-report.txt; \
+		cppcheck $(CPPCHECK_FLAGS) $(BSW_INC) -I$(ECU)/$$ecu/include \
+			$$(find $(ECU)/$$ecu/src $(ECU)/$$ecu/cfg -name '*.c' 2>/dev/null) >> $(BUILD)/misra-report.txt 2>&1; \
+	done
+	@echo "" >> $(BUILD)/misra-report.txt
+	@echo "--- sc (no BSW) ---" >> $(BUILD)/misra-report.txt
+	cppcheck $(CPPCHECK_FLAGS) -I$(ECU)/sc/include \
+		$$(find $(ECU)/sc/src -name '*.c' 2>/dev/null) >> $(BUILD)/misra-report.txt 2>&1
+	@echo ""
+	@echo "=== Report written to $(BUILD)/misra-report.txt ==="

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SDV Platform — Architecture & Tool Stack</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap');
+
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e3a5f;
+    --accent: #00d4ff;
+    --accent2: #0066cc;
+    --green: #00e676;
+    --yellow: #ffd740;
+    --red: #ff5252;
+    --orange: #ff9100;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* subtle grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  /* HEADER */
+  header { margin-bottom: 36px; }
+  .header-top { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; }
+  h1 {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+  h1 span { color: var(--muted); }
+  .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 2px;
+    border: 1px solid;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .badge-proto { border-color: var(--yellow); color: var(--yellow); }
+  .badge-asild { border-color: var(--red); color: var(--red); }
+  .subtitle { color: var(--muted); font-size: 12px; font-family: var(--mono); }
+
+  /* PIPELINE FLOW */
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 36px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .pipe-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 88px;
+  }
+  .pipe-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-align: center;
+    color: var(--accent);
+    white-space: nowrap;
+    width: 80px;
+    transition: border-color 0.2s;
+  }
+  .pipe-box:hover { border-color: var(--accent); }
+  .pipe-label { font-size: 9px; color: var(--muted); margin-top: 4px; text-align: center; font-family: var(--mono); }
+  .pipe-arrow {
+    color: var(--border);
+    font-size: 16px;
+    padding: 0 2px;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+  }
+  .pipe-box.active { border-color: var(--green); color: var(--green); }
+  .pipe-box.partial { border-color: var(--yellow); color: var(--yellow); }
+  .pipe-box.planned { border-color: var(--muted); color: var(--muted); }
+
+  /* MAIN GRID */
+  .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-full { margin-bottom: 16px; }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .card-body { padding: 12px 14px; }
+
+  /* layer color accents */
+  .layer-req .card-header { border-left: 3px solid #a78bfa; }
+  .layer-req .card-title { color: #a78bfa; }
+  .layer-model .card-header { border-left: 3px solid var(--accent); }
+  .layer-model .card-title { color: var(--accent); }
+  .layer-arxml .card-header { border-left: 3px solid var(--orange); }
+  .layer-arxml .card-title { color: var(--orange); }
+  .layer-bsw .card-header { border-left: 3px solid var(--yellow); }
+  .layer-bsw .card-title { color: var(--yellow); }
+  .layer-xil .card-header { border-left: 3px solid var(--green); }
+  .layer-xil .card-title { color: var(--green); }
+  .layer-ci .card-header { border-left: 3px solid #f472b6; }
+  .layer-ci .card-title { color: #f472b6; }
+  .layer-hil .card-header { border-left: 3px solid #34d399; }
+  .layer-hil .card-title { color: #34d399; }
+  .layer-int .card-header { border-left: 3px solid #fb923c; }
+  .layer-int .card-title { color: #fb923c; }
+
+  /* TOOL ROW */
+  .tool-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(30,58,95,0.4);
+  }
+  .tool-row:last-child { border-bottom: none; }
+  .tool-name {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text);
+    min-width: 140px;
+    flex-shrink: 0;
+  }
+  .tool-desc { font-size: 11px; color: var(--muted); }
+  .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    flex-shrink: 0; margin-top: 4px;
+  }
+  .dot-green { background: var(--green); }
+  .dot-yellow { background: var(--yellow); }
+  .dot-red { background: var(--red); }
+  .dot-blue { background: var(--accent); }
+
+  /* STATUS LEGEND */
+  .legend { display: flex; gap: 16px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; font-family: var(--mono); color: var(--muted); }
+
+  /* INTEGRATION POINTS TABLE */
+  .int-table { width: 100%; border-collapse: collapse; }
+  .int-table th {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .int-table td {
+    padding: 6px 10px;
+    font-size: 11px;
+    border-bottom: 1px solid rgba(30,58,95,0.3);
+    vertical-align: top;
+  }
+  .int-table tr:last-child td { border-bottom: none; }
+  .int-table td:first-child { font-family: var(--mono); color: var(--accent); font-size: 11px; white-space: nowrap; }
+  .int-table td:nth-child(2) { color: var(--text); }
+  .int-table td:nth-child(3) { color: var(--muted); }
+  .int-table td:nth-child(4) { font-family: var(--mono); font-size: 10px; }
+
+  .tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 2px;
+    letter-spacing: 0.5px;
+    margin: 1px 2px 1px 0;
+  }
+  .tag-vendor { background: rgba(0,102,204,0.2); color: #60a5fa; border: 1px solid rgba(0,102,204,0.3); }
+  .tag-format { background: rgba(255,145,0,0.15); color: var(--orange); border: 1px solid rgba(255,145,0,0.3); }
+  .tag-oss { background: rgba(0,230,118,0.1); color: var(--green); border: 1px solid rgba(0,230,118,0.2); }
+  .tag-gap { background: rgba(255,82,82,0.1); color: var(--red); border: 1px solid rgba(255,82,82,0.2); }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    padding-left: 2px;
+  }
+
+  /* ARCH DIAGRAM */
+  .arch-diagram {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    line-height: 1.8;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .arch-diagram .hl { color: var(--accent); }
+  .arch-diagram .hl2 { color: var(--green); }
+  .arch-diagram .hl3 { color: var(--orange); }
+  .arch-diagram .hl4 { color: var(--yellow); }
+
+  /* FOOTER */
+  footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  footer span { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+
+  @media (max-width: 768px) {
+    .grid { grid-template-columns: 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .pipeline { gap: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-top">
+      <h1>SDV Platform <span>/ Architecture & Tool Stack</span></h1>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="badge badge-proto">Prototype · 3-ECU</span>
+        <span class="badge badge-asild">ASIL-D Target</span>
+      </div>
+    </div>
+    <div class="subtitle">Open-source-first · Vendor-portable artifacts · SIL → PIL → HIL pipeline</div>
+  </header>
+
+  <!-- PIPELINE FLOW -->
+  <div class="section-label">Pipeline Flow</div>
+  <div class="pipeline">
+    <div class="pipe-stage">
+      <div class="pipe-box planned">REQ</div>
+      <div class="pipe-label">Requirements<br>ReqIF</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-stage">
+      <div class="pipe-box planned">MODEL</div>
+      <div class="pipe-label">System Model<br>SysML/Capella</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-stage">
+      <div class="pipe-box active">DBC</div>
+      <div class="pipe-label">Signal DB<br>cantools</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-stage">
+      <div class="pipe-box active">ARXML</div>
+      <div class="pipe-label">SW Architecture<br>AUTOSAR 4.x</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-stage">
+      <div class="pipe-box active">CODEGEN</div>
+      <div class="pipe-label">BSW + RTE<br>Jinja2</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-stage">
+      <div class="pipe-box active">SIL</div>
+      <div class="pipe-label">Docker vECU<br>native GCC</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-stage">
+      <div class="pipe-box partial">PIL</div>
+      <div class="pipe-label">STM32/TMS570<br>OpenOCD</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-stage">
+      <div class="pipe-box partial">HIL</div>
+      <div class="pipe-label">RPi + PCAN<br>real CAN</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-stage">
+      <div class="pipe-box active">REPORT</div>
+      <div class="pipe-label">merge_xil<br>pytest HTML</div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span class="legend-item"><span class="dot dot-green"></span>implemented</span>
+    <span class="legend-item"><span class="dot dot-yellow"></span>in progress</span>
+    <span class="legend-item"><span class="dot dot-red"></span>gap / planned</span>
+  </div>
+
+  <!-- LAYER CARDS ROW 1 -->
+  <div class="section-label">Tool Stack by Layer</div>
+  <div class="grid">
+
+    <!-- REQUIREMENTS -->
+    <div class="card layer-req">
+      <div class="card-header">
+        <span class="card-title">L0 · Requirements</span>
+      </div>
+      <div class="card-body">
+        <div class="tool-row"><span class="dot dot-red"></span><span class="tool-name">doorstop</span><span class="tool-desc">git-native req tracking, ReqIF export</span></div>
+        <div class="tool-row"><span class="dot dot-red"></span><span class="tool-name">ReqIF 1.2 XML</span><span class="tool-desc">portable format → Polarion / DOORS</span></div>
+        <div class="tool-row"><span class="dot dot-yellow"></span><span class="tool-name">suspect-links.py</span><span class="tool-desc">broken traceability detection in CI</span></div>
+        <div class="tool-row"><span class="dot dot-yellow"></span><span class="tool-name">gen-traceability.sh</span><span class="tool-desc">req ID → test case coverage map</span></div>
+      </div>
+    </div>
+
+    <!-- SYSTEM MODEL -->
+    <div class="card layer-model">
+      <div class="card-header">
+        <span class="card-title">L1 · System Model</span>
+      </div>
+      <div class="card-body">
+        <div class="tool-row"><span class="dot dot-red"></span><span class="tool-name">Capella MBSE</span><span class="tool-desc">free Eclipse-based, SysML XMI export</span></div>
+        <div class="tool-row"><span class="dot dot-red"></span><span class="tool-name">SysML XMI</span><span class="tool-desc">interface defs feed ARXML generator</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">cantools DBC</span><span class="tool-desc">signal DB, 3-ECU network defined</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">dbc2arxml.py</span><span class="tool-desc">DBC → ARXML signal mapping</span></div>
+      </div>
+    </div>
+
+    <!-- ARXML -->
+    <div class="card layer-arxml">
+      <div class="card-header">
+        <span class="card-title">L2 · ARXML Engine</span>
+      </div>
+      <div class="card-body">
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">arxmlgen/reader.py</span><span class="tool-desc">ARXML parser → internal model</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">arxmlgen/model.py</span><span class="tool-desc">typed AUTOSAR data model</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">arxmlgen/engine.py</span><span class="tool-desc">generation orchestrator</span></div>
+        <div class="tool-row"><span class="dot dot-red"></span><span class="tool-name">XSD validation</span><span class="tool-desc">AUTOSAR 4.x schema CI check — GAP</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LAYER CARDS ROW 2 -->
+  <div class="grid">
+
+    <!-- BSW / CODEGEN -->
+    <div class="card layer-bsw">
+      <div class="card-header">
+        <span class="card-title">L3 · BSW Codegen</span>
+      </div>
+      <div class="card-body">
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">canif_cfg.py</span><span class="tool-desc">→ CanIf_Cfg.c</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">com_cfg.py</span><span class="tool-desc">→ Com_Cfg.c/h</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">pdur_cfg.py</span><span class="tool-desc">→ PduR_Cfg.c</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">e2e_cfg.py</span><span class="tool-desc">→ E2E_Cfg.c (profile 2/5)</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">rte_cfg.py</span><span class="tool-desc">→ Rte_Cfg.c + Rte_Swc.h</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">swc_skeleton.py</span><span class="tool-desc">→ SWC .c/.h stubs</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">Jinja2 templates</span><span class="tool-desc">all generators use .j2 templates</span></div>
+      </div>
+    </div>
+
+    <!-- SIL -->
+    <div class="card layer-xil">
+      <div class="card-header">
+        <span class="card-title">L4 · SIL</span>
+      </div>
+      <div class="card-body">
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">Docker</span><span class="tool-desc">vECU container, vecu-start/stop.sh</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">GCC native</span><span class="tool-desc">x86 compile, same source as target</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">python-can virtual</span><span class="tool-desc">in-process CAN bus simulation</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">pytest</span><span class="tool-desc">test runner, --target=sil flag</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">gcov + lcov</span><span class="tool-desc">structural coverage, LCOV HTML</span></div>
+        <div class="tool-row"><span class="dot dot-yellow"></span><span class="tool-name">trace-gen.py</span><span class="tool-desc">execution trace artifacts for audit</span></div>
+      </div>
+    </div>
+
+    <!-- PIL + HIL -->
+    <div class="card layer-hil">
+      <div class="card-header">
+        <span class="card-title">L5–6 · PIL + HIL</span>
+      </div>
+      <div class="card-body">
+        <div class="tool-row"><span class="dot dot-yellow"></span><span class="tool-name">STM32H7 / TMS570</span><span class="tool-desc">PIL target, FreeRTOS, CAN-FD</span></div>
+        <div class="tool-row"><span class="dot dot-yellow"></span><span class="tool-name">OpenOCD</span><span class="tool-desc">flash + semihosting transport</span></div>
+        <div class="tool-row"><span class="dot dot-yellow"></span><span class="tool-name">RPi4 + RT kernel</span><span class="tool-desc">HIL controller, SocketCAN</span></div>
+        <div class="tool-row"><span class="dot dot-yellow"></span><span class="tool-name">PEAK PCAN-USB FD</span><span class="tool-desc">CAN-FD interface to DUT</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">hil_restbus.py</span><span class="tool-desc">restbus sim, keeps non-DUT nodes alive</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">reset_4ecus.py</span><span class="tool-desc">coordinated multi-ECU reset</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">waveshare_sniffer.py</span><span class="tool-desc">CAN bus monitoring / debug</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CI + QUALITY ROW -->
+  <div class="grid-2">
+    <div class="card layer-ci">
+      <div class="card-header">
+        <span class="card-title">CI / Quality Pipeline</span>
+      </div>
+      <div class="card-body">
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">GitHub Actions</span><span class="tool-desc">SIL on every push, HIL nightly</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">merge_xil_results.py</span><span class="tool-desc">aggregates SIL + PIL + HIL JUnit XML</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">misra.json + suppressions</span><span class="tool-desc">cppcheck MISRA rule config</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">setup-misra-rules.sh</span><span class="tool-desc">CI MISRA checker bootstrap</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">baseline-tag.sh</span><span class="tool-desc">git-tag qualified builds</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">decision-audit.sh</span><span class="tool-desc">toolchain decision log</span></div>
+        <div class="tool-row"><span class="dot dot-green"></span><span class="tool-name">hil_preflight_audit.py</span><span class="tool-desc">HIL readiness check before test run</span></div>
+        <div class="tool-row"><span class="dot dot-yellow"></span><span class="tool-name">trace-slice.py</span><span class="tool-desc">coverage slice by component / req ID</span></div>
+        <div class="tool-row"><span class="dot dot-yellow"></span><span class="tool-name">pytest-html / Allure</span><span class="tool-desc">test report generation</span></div>
+        <div class="tool-row"><span class="dot dot-red"></span><span class="tool-name">SonarQube</span><span class="tool-desc">static analysis dashboard — planned</span></div>
+      </div>
+    </div>
+
+    <!-- INTEGRATION POINTS -->
+    <div class="card layer-int">
+      <div class="card-header">
+        <span class="card-title">Vendor Integration Points</span>
+      </div>
+      <div class="card-body">
+        <table class="int-table">
+          <thead>
+            <tr>
+              <th>Artifact</th>
+              <th>Format</th>
+              <th>Imports into</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Requirements</td>
+              <td><span class="tag tag-format">ReqIF 1.2</span></td>
+              <td><span class="tag tag-vendor">Polarion</span><span class="tag tag-vendor">DOORS</span></td>
+            </tr>
+            <tr>
+              <td>Signal DB</td>
+              <td><span class="tag tag-format">DBC</span><span class="tag tag-format">FIBEX</span></td>
+              <td><span class="tag tag-vendor">CANdb++</span><span class="tag tag-vendor">CANoe</span></td>
+            </tr>
+            <tr>
+              <td>SW Architecture</td>
+              <td><span class="tag tag-format">ARXML 4.x</span></td>
+              <td><span class="tag tag-vendor">DaVinci</span><span class="tag tag-vendor">EB tresos</span></td>
+            </tr>
+            <tr>
+              <td>System Model</td>
+              <td><span class="tag tag-format">SysML XMI</span></td>
+              <td><span class="tag tag-vendor">Simulink</span><span class="tag tag-vendor">Rhapsody</span></td>
+            </tr>
+            <tr>
+              <td>BSW Config</td>
+              <td><span class="tag tag-format">.c/.h AUTOSAR</span></td>
+              <td><span class="tag tag-vendor">any AUTOSAR stack</span></td>
+            </tr>
+            <tr>
+              <td>Test Results</td>
+              <td><span class="tag tag-format">JUnit XML</span></td>
+              <td><span class="tag tag-vendor">Jenkins</span><span class="tag tag-vendor">ALM</span></td>
+            </tr>
+            <tr>
+              <td>Coverage</td>
+              <td><span class="tag tag-format">LCOV</span></td>
+              <td><span class="tag tag-vendor">SonarQube</span><span class="tag tag-vendor">Squish</span></td>
+            </tr>
+            <tr>
+              <td>Calibration</td>
+              <td><span class="tag tag-format">A2L / DCM</span></td>
+              <td><span class="tag tag-vendor">INCA</span><span class="tag tag-vendor">CANape</span></td>
+            </tr>
+            <tr>
+              <td>CAN trace</td>
+              <td><span class="tag tag-format">ASC / BLF</span></td>
+              <td><span class="tag tag-vendor">CANalyzer</span><span class="tag tag-vendor">CANoe</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARCH DIAGRAM -->
+  <div class="section-label" style="margin-top:8px">Current 3-ECU Prototype Topology</div>
+  <div class="arch-diagram"><span class="hl">  DBC (3-node network)</span>
+       │
+       ▼ dbc2arxml.py
+  <span class="hl3">ARXML</span> ──── XSD validate (gap) ──── DaVinci / EB tresos import
+       │
+       ▼ arxmlgen engine
+  <span class="hl4">CanIf · Com · PduR · E2E · RTE · SWC stubs</span>
+       │
+       ├──▶ <span class="hl2">SIL</span>  Docker vECU  ←── pytest --target=sil  ──► JUnit XML ─┐
+       │                                                                    │
+       ├──▶ <span class="hl2">PIL</span>  STM32H7/TMS570 ← pytest --target=pil ──► JUnit XML ─┤
+       │         OpenOCD flash                                              │
+       │                                                                    ▼
+       └──▶ <span class="hl2">HIL</span>  RPi4 + PCAN                              <span class="hl">merge_xil_results.py</span>
+                 hil_restbus.py  (ECU2 + ECU3 simulated)                   │
+                 reset_4ecus.py  (coordinated reset)       ──► pytest HTML report
+                 pytest --target=hil  ──► JUnit XML ───────────► traceability matrix</div>
+
+  <!-- GAPS SUMMARY -->
+  <div class="section-label" style="margin-top:20px">Priority Gaps to Close</div>
+  <div class="grid">
+    <div class="card" style="border-color:#ff5252">
+      <div class="card-header" style="border-left:3px solid var(--red)">
+        <span class="card-title" style="color:var(--red)">Gap 1 · ARXML Validation</span>
+      </div>
+      <div class="card-body">
+        <div style="color:var(--muted);font-size:11px;margin-bottom:8px">Generated ARXML not yet validated against official schema. DaVinci import will fail on schema violations.</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--accent)">Fix: add validate_arxml.py to CI<br>Tool: lxml + AUTOSAR_4-3-1.xsd<br>Effort: 1–2 days</div>
+      </div>
+    </div>
+    <div class="card" style="border-color:#ff5252">
+      <div class="card-header" style="border-left:3px solid var(--red)">
+        <span class="card-title" style="color:var(--red)">Gap 2 · Requirements Layer</span>
+      </div>
+      <div class="card-body">
+        <div style="color:var(--muted);font-size:11px;margin-bottom:8px">No ReqIF file yet. Traceability scripts exist but have nothing to link to. Polarion import not possible.</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--accent)">Fix: reqif/ folder + req IDs in test cases<br>Tool: doorstop or raw ReqIF XML<br>Effort: 1 week</div>
+      </div>
+    </div>
+    <div class="card" style="border-color:#ffd740">
+      <div class="card-header" style="border-left:3px solid var(--yellow)">
+        <span class="card-title" style="color:var(--yellow)">Gap 3 · PIL Transport</span>
+      </div>
+      <div class="card-body">
+        <div style="color:var(--muted);font-size:11px;margin-bottom:8px">pytest --target=pil transport adapter not wired. Same test must run on real silicon without code change.</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--accent)">Fix: conftest.py transport fixture<br>Tool: OpenOCD + semihosting UART<br>Effort: 1 week</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>Taktflow SDV Platform · 3-ECU Prototype</span>
+    <span>open-source-first · vendor-portable · ASIL-D target</span>
+    <span>v0.1 · 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,73 @@
+# =============================================================================
+# @file    sil_016_gateway_telemetry.yaml
+# @brief   SIL scenario: Gateway MQTT telemetry publishing and CAN data acquisition
+# @aspice  SWE.5 — Software Component Verification & Integration
+# @date    2026-02-25
+#
+# Validates that the Raspberry Pi gateway container reads CAN bus data,
+# decodes messages per the CAN matrix, and publishes telemetry JSON to
+# the MQTT broker within the 5-second batch interval.
+# =============================================================================
+
+name: "Gateway MQTT Telemetry Publishing"
+id: "SIL-016"
+description: >
+  Verify that the gateway reads CAN bus data (motor status, vehicle state,
+  steering, brake, battery) and publishes a well-formed telemetry JSON
+  message to the MQTT broker within the configured 5-second interval.
+  Validates both CAN acquisition and MQTT publishing paths.
+verifies:
+  - "SWR-GW-001"   # MQTT Telemetry Publishing
+  - "SWR-GW-002"   # CAN Bus Data Acquisition
+aspice: "SWE.5"
+iso_reference: "ISO 26262 Part 6, Section 10"
+timeout_sec: 90
+
+setup:
+  - action: reset
+    description: "Clear residual state from previous test runs"
+  - action: wait
+    seconds: 30
+    description: "Allow all ECU containers and gateway to initialize (30 / scale=10 = 3s wall)"
+
+steps:
+  - action: wait_state
+    state: RUN
+    timeout: 15
+    description: "Wait for INIT hold (10s) + E2E stabilization with CAN traffic active"
+  - action: wait
+    seconds: 80
+    description: "Wait for at least one gateway telemetry publish cycle (5s wall-clock interval; 80 / SIL_TIME_SCALE=10 = 8s wall time)"
+
+verdicts:
+  - type: mqtt_message
+    topic: "vehicle/telemetry"
+    description: "Gateway publishes telemetry JSON to vehicle/telemetry topic"
+
+  - type: mqtt_payload_field
+    topic: "vehicle/telemetry"
+    field: "motor_speed_rpm"
+    operator: exists
+    description: "Telemetry contains motor speed (decoded from CAN 0x300)"
+
+  - type: mqtt_payload_field
+    topic: "vehicle/telemetry"
+    field: "battery_voltage_v"
+    operator: exists
+    description: "Telemetry contains battery voltage (decoded from CAN 0x303)"
+
+  - type: mqtt_payload_field
+    topic: "vehicle/telemetry"
+    field: "vehicle_state"
+    operator: exists
+    description: "Telemetry contains vehicle state (decoded from CAN 0x100)"
+
+  - type: mqtt_payload_field
+    topic: "vehicle/telemetry"
+    field: "timestamp"
+    operator: exists
+    description: "Telemetry contains ISO 8601 timestamp"
+
+teardown:
+  - action: reset
+    description: "Return system to clean idle state"

@@ -1,0 +1,46 @@
+name: "Motor Current Response"
+id: "HIL-001"
+description: >
+  Verifies that the RZC plant-sim produces a non-zero motor current on
+  CAN ID 0x301 when a 50 % torque request is injected on 0x101.
+  Confirms closed-loop current feedback through the HIL bench.
+verifies:
+  - "TSR-035"
+  - "SSR-RZC-003"
+asil: "B"
+aspice: "SWE.6"
+iso_reference: "ISO 26262 Part 4, Section 7"
+timeout_sec: 30
+requires_mqtt: false
+
+setup:
+  - action: wait_state
+    state: SAFE_STOP
+    timeout: 20
+    description: "Wait for system to reach SAFE_STOP (no SC on bus)"
+  - action: inject_can
+    can_id: 0x101
+    data: [0x00, 0x00, 0x32, 0x00, 0x00, 0x00, 0x00, 0x00]
+    description: "Inject 50 % torque request"
+
+steps:
+  - action: wait
+    seconds: 3
+    description: "Allow motor model to respond"
+
+verdicts:
+  - type: signal_range
+    can_id: 0x301
+    min: 100
+    description: "Motor current non-zero (min 100 counts)"
+  - type: can_message
+    can_id: 0x601
+    description: "RZC virtual sensors frame present"
+
+teardown:
+  - action: inject_can
+    can_id: 0x101
+    data: [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+    description: "Remove torque request"
+  - action: reset
+    description: "Reset to idle"

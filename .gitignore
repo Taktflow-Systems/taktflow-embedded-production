@@ -1,0 +1,45 @@
+# Build artifacts
+build/
+*.o
+*.elf
+*.bin
+*.hex
+*.map
+*.d
+
+# Generated configs (tracked but regenerated)
+# firmware/ecu/*/cfg/ — these ARE tracked
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test reports (generated)
+test/*/reports/*.xml
+test/*/reports/*.html
+
+# Secrets
+.env
+*.pem
+*.key
+credentials.*
+
+# Docker build cache
+docker/*.tar
+
+# AWS IoT Core certificates (provisioned per-device)
+docker/certs/

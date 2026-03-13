@@ -1,0 +1,54 @@
+name: CVC E2E Protection Integrity
+id: PIL-005
+description: >
+  Verify all critical CVC TX messages have valid E2E protection across
+  multiple consecutive frames. Checks CRC-8 validity and alive counter
+  monotonic increment on heartbeat, Vehicle_State, Torque_Request,
+  Steer_Command, and Brake_Command.
+verifies:
+  - SWR-CVC-030
+  - SWR-CVC-031
+  - TSR-050
+  - SSR-020
+asil: D
+aspice: SWE.5
+timeout_sec: 30
+
+setup:
+  - action: wait_state
+    state: RUN
+    timeout: 15
+    description: "Wait for CVC to enter RUN"
+
+steps:
+  - action: poll
+    seconds: 5
+    description: "Collect CVC TX messages for E2E validation"
+
+verdicts:
+  - type: e2e
+    can_id: 0x010
+    description: "Heartbeat (0x010) E2E CRC valid"
+
+  - type: e2e_alive_increment
+    can_id: 0x010
+    min_samples: 10
+    description: "Heartbeat alive counter increments correctly over 10+ frames"
+
+  - type: e2e
+    can_id: 0x100
+    description: "Vehicle_State (0x100) E2E CRC valid"
+
+  - type: e2e
+    can_id: 0x101
+    description: "Torque_Request (0x101) E2E CRC valid"
+
+  - type: e2e
+    can_id: 0x102
+    description: "Steer_Command (0x102) E2E CRC valid"
+
+  - type: e2e
+    can_id: 0x103
+    description: "Brake_Command (0x103) E2E CRC valid"
+
+teardown: []

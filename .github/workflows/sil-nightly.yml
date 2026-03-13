@@ -1,0 +1,132 @@
+name: SIL Nightly Tests
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      verbose:
+        description: 'Enable verbose SIL runner logs'
+        type: boolean
+        default: false
+
+env:
+  CAN_CHANNEL: vcan0
+  MQTT_HOST: localhost
+  FAULT_PORT: 8091
+  SIL_TIME_SCALE: "10"
+
+jobs:
+  sil-tests:
+    name: SIL Group ${{ matrix.group }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: 1
+            scenario: sil_001_normal_startup
+          - group: 2
+            scenario: sil_002_pedal_ramp
+          - group: 3
+            scenario: sil_003_emergency_stop
+          - group: 4
+            scenario: sil_004_can_busoff_fzc
+          - group: 5
+            scenario: sil_005_watchdog_timeout_cvc
+          - group: 6
+            scenario: sil_006_battery_undervoltage
+          - group: 7
+            scenario: sil_007_overcurrent_motor
+          - group: 8
+            scenario: sil_008_sensor_disagreement
+          - group: 9
+            scenario: sil_009_e2e_corruption
+          - group: 10
+            scenario: sil_010_overtemp_motor
+          - group: 11
+            scenario: sil_011_steering_sensor_failure
+          - group: 12
+            scenario: sil_012_multiple_faults
+          - group: 13
+            scenario: sil_013_recovery_from_safe
+          - group: 14
+            scenario: sil_014_long_duration
+          - group: 15
+            scenario: sil_015_power_cycle
+          - group: 16
+            scenario: sil_016_gateway_telemetry
+          - group: 17
+            scenario: sil_017_gateway_ml_anomaly
+          - group: 18
+            scenario: sil_018_gateway_sap_qm
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            can-utils \
+            iproute2 \
+            linux-modules-extra-$(uname -r) || true
+
+      - name: Set up vcan0 virtual CAN interface
+        run: |
+          sudo modprobe vcan
+          sudo ip link add dev vcan0 type vcan
+          sudo ip link set up vcan0
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r test/sil/requirements.txt
+
+      - name: Build Docker images
+        run: docker compose -f docker/docker-compose.sil.yml build
+        env:
+          DOCKER_BUILDKIT: 1
+
+      - name: Run SIL scenario ${{ matrix.scenario }}
+        id: sil_run
+        run: |
+          chmod +x test/sil/run_sil.sh
+          ARGS="--scenario=${{ matrix.scenario }} --timeout=${{ env.SIL_SCENARIO_TIMEOUT || '60' }}"
+          if [ "${{ inputs.verbose }}" = "true" ]; then
+            ARGS="$ARGS --verbose"
+          fi
+          ./test/sil/run_sil.sh $ARGS 2>&1 | tee sil_output.log
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+        continue-on-error: true
+
+      - name: Upload SIL test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sil-test-results-group-${{ matrix.group }}
+          path: |
+            test/sil/results/
+            sil_output.log
+          retention-days: 90
+
+      - name: Set job outcome
+        if: always()
+        run: |
+          EXIT_CODE="${{ steps.sil_run.outputs.exit_code }}"
+          if [ "$EXIT_CODE" = "0" ]; then
+            echo "SIL group ${{ matrix.group }} passed."
+          elif [ -z "$EXIT_CODE" ]; then
+            echo "::error::SIL group ${{ matrix.group }} did not produce an exit code."
+            exit 1
+          else
+            echo "::error::SIL group ${{ matrix.group }} failed with exit code $EXIT_CODE."
+            exit 1
+          fi

@@ -1,0 +1,13 @@
+# =============================================================================
+# @file    requirements.txt
+# @brief   Python dependencies for SIL test orchestrator and verdict checker
+# @aspice  SWE.5 — SW Component Verification & Integration
+# @date    2026-02-24
+#
+# Install:  pip install -r requirements.txt
+# =============================================================================
+pyyaml>=6.0
+requests>=2.31
+paho-mqtt>=2.0
+python-can>=4.3
+junit-xml>=1.9

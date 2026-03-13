@@ -1,0 +1,206 @@
+# =============================================================================
+# docker-compose.pi.yml — Raspberry Pi HIL Edge Gateway
+#
+# Runs on Pi with physical CAN bus (can0). Physical ECUs (CVC, FZC, RZC, SC)
+# are on the CAN bus via STM32/TMS570. Simulated ECUs (BCM, ICU, TCU) run
+# as Docker containers. Gateway services bridge CAN → MQTT → AWS IoT Core.
+#
+# Usage:
+#   docker compose -f docker-compose.pi.yml up --build -d
+#   docker compose -f docker-compose.pi.yml down
+#
+# Prerequisites:
+#   - Physical CAN interface (can0) configured via Waveshare CAN HAT
+#   - AWS certs in ./certs/ (run scripts/aws-iot-setup.sh first)
+#   - .env file with AWS_IOT_ENDPOINT (printed by setup script)
+# =============================================================================
+
+services:
+  # --- Mosquitto MQTT Broker (local only) ---
+  mqtt-broker:
+    image: eclipse-mosquitto:2
+    network_mode: host
+    volumes:
+      - ../gateway/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    restart: unless-stopped
+
+  # --- Simulated ECUs (BCM, ICU, TCU on physical can0) ---
+  bcm:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.vecu
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      - CAN_INTERFACE=can0
+      - ECU_NAME=bcm
+    restart: unless-stopped
+
+  icu:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.vecu
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      - CAN_INTERFACE=can0
+      - ECU_NAME=icu
+    restart: unless-stopped
+
+  tcu:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.vecu
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      - CAN_INTERFACE=can0
+      - ECU_NAME=tcu
+    restart: unless-stopped
+
+
+  # --- Plant Simulator (virtual vehicle peripherals on physical CAN) ---
+  plant-sim:
+    build:
+      context: ..
+      dockerfile: gateway/plant_sim/Dockerfile
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    depends_on:
+      mqtt-broker:
+        condition: service_started
+    environment:
+      - CAN_CHANNEL=can0
+      - DBC_PATH=/app/taktflow.dbc
+      - MQTT_HOST=localhost
+      - MQTT_PORT=1883
+    restart: unless-stopped
+
+  # --- CAN-to-MQTT Gateway ---
+  can-gateway:
+    build:
+      context: ..
+      dockerfile: gateway/can_gateway/Dockerfile
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    depends_on:
+      mqtt-broker:
+        condition: service_started
+    environment:
+      - CAN_CHANNEL=can0
+      - DBC_PATH=/app/taktflow.dbc
+      - MQTT_HOST=localhost
+      - MQTT_PORT=1883
+    restart: unless-stopped
+
+  # --- WebSocket Telemetry Bridge ---
+  ws-bridge:
+    build:
+      context: ..
+      dockerfile: gateway/ws_bridge/Dockerfile
+    network_mode: host
+    depends_on:
+      mqtt-broker:
+        condition: service_started
+    environment:
+      - MQTT_HOST=localhost
+      - MQTT_PORT=1883
+      - WS_PORT=8080
+    restart: unless-stopped
+
+  # --- Caddy Reverse Proxy (for HIL dashboard) ---
+  caddy:
+    image: caddy:2
+    network_mode: host
+    volumes:
+      - ../gateway/caddy/Caddyfile.pi:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      ws-bridge:
+        condition: service_started
+    restart: unless-stopped
+
+  # --- SAP QM Mock API ---
+  sap-qm-mock:
+    build:
+      context: ..
+      dockerfile: gateway/sap_qm_mock/Dockerfile
+    network_mode: host
+    depends_on:
+      mqtt-broker:
+        condition: service_started
+    environment:
+      - MQTT_HOST=localhost
+      - MQTT_PORT=1883
+      - SAP_PORT=8090
+    restart: unless-stopped
+
+  # --- ML Anomaly Detection (edge inference) ---
+  ml-inference:
+    build:
+      context: ..
+      dockerfile: gateway/ml_inference/Dockerfile
+    network_mode: host
+    depends_on:
+      mqtt-broker:
+        condition: service_started
+    environment:
+      - MQTT_HOST=localhost
+      - MQTT_PORT=1883
+    restart: unless-stopped
+
+  # --- Fault Injection API ---
+  fault-inject:
+    build:
+      context: ..
+      dockerfile: gateway/fault_inject/Dockerfile
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      mqtt-broker:
+        condition: service_started
+    environment:
+      - CAN_CHANNEL=can0
+      - FAULT_PORT=8091
+      - MQTT_HOST=localhost
+      - MQTT_PORT=1883
+    restart: unless-stopped
+
+  # --- Cloud Connector (local MQTT → AWS IoT Core) ---
+  cloud-connector:
+    build:
+      context: ..
+      dockerfile: gateway/cloud_connector/Dockerfile
+    network_mode: host
+    depends_on:
+      mqtt-broker:
+        condition: service_started
+    environment:
+      - MQTT_HOST=localhost
+      - MQTT_PORT=1883
+      - AWS_IOT_ENDPOINT=${AWS_IOT_ENDPOINT:-}
+      - AWS_IOT_PORT=8883
+      - AWS_CERT_DIR=/certs
+      - DEVICE_ID=taktflow-pi-001
+    volumes:
+      - ./certs:/certs:ro
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,14 @@
+{% include "common/file_header.j2" %}
+#ifndef RTE_PBCFG_H
+#define RTE_PBCFG_H
+
+/**
+ * @brief  Per-ECU RTE buffer limits — included by Rte.h via __has_include
+ *
+ * These values size the static signal buffer and runnable arrays in Rte.c.
+ * They MUST be consistent across all translation units that include Rte.h.
+ */
+#define RTE_MAX_SIGNALS    {{ sig_count }}u
+#define RTE_MAX_RUNNABLES  {{ runnable_count }}u
+
+#endif /* RTE_PBCFG_H */

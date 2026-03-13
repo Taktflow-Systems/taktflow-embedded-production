@@ -1,0 +1,59 @@
+name: CVC TX Schedule Validation
+id: PIL-003
+description: >
+  Verify all CVC cyclic TX messages are present on the bus with correct
+  timing. CVC should transmit Torque_Request (0x101), Steer_Command (0x102),
+  and Brake_Command (0x103) at 10ms alongside Vehicle_State.
+verifies:
+  - SWR-CVC-010
+  - SWR-CVC-011
+  - TSR-032
+asil: D
+aspice: SWE.5
+timeout_sec: 30
+
+setup:
+  - action: wait_state
+    state: RUN
+    timeout: 15
+    description: "Wait for CVC to enter RUN"
+
+steps:
+  - action: poll
+    seconds: 5
+    description: "Observe CVC TX messages for 5 seconds"
+
+verdicts:
+  - type: can_message
+    can_id: 0x100
+    timeout_sec: 3
+    description: "Vehicle_State (0x100) present"
+
+  - type: can_message
+    can_id: 0x101
+    timeout_sec: 3
+    description: "Torque_Request (0x101) present"
+
+  - type: can_message
+    can_id: 0x102
+    timeout_sec: 3
+    description: "Steer_Command (0x102) present"
+
+  - type: can_message
+    can_id: 0x103
+    timeout_sec: 3
+    description: "Brake_Command (0x103) present"
+
+  - type: e2e
+    can_id: 0x101
+    description: "Torque_Request E2E CRC valid"
+
+  - type: e2e
+    can_id: 0x102
+    description: "Steer_Command E2E CRC valid"
+
+  - type: e2e
+    can_id: 0x103
+    description: "Brake_Command E2E CRC valid"
+
+teardown: []

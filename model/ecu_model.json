@@ -1,0 +1,2196 @@
+{
+  "ecus": {
+    "cvc": {
+      "prefix": "CVC",
+      "cfg": {
+        "rte_signals": {
+          "CVC_SIG_PEDAL_RAW_1": 16,
+          "CVC_SIG_PEDAL_RAW_2": 17,
+          "CVC_SIG_PEDAL_POSITION": 18,
+          "CVC_SIG_PEDAL_FAULT": 19,
+          "CVC_SIG_VEHICLE_STATE": 20,
+          "CVC_SIG_TORQUE_REQUEST": 21,
+          "CVC_SIG_ESTOP_ACTIVE": 22,
+          "CVC_SIG_FZC_COMM_STATUS": 23,
+          "CVC_SIG_RZC_COMM_STATUS": 24,
+          "CVC_SIG_MOTOR_SPEED": 25,
+          "CVC_SIG_FAULT_MASK": 26,
+          "CVC_SIG_MOTOR_CURRENT": 27,
+          "CVC_SIG_MOTOR_CUTOFF": 28,
+          "CVC_SIG_STEERING_FAULT": 29,
+          "CVC_SIG_BRAKE_FAULT": 30,
+          "CVC_SIG_SC_RELAY_KILL": 31,
+          "CVC_SIG_BATTERY_STATUS": 32,
+          "CVC_SIG_MOTOR_FAULT_RZC": 33
+        },
+        "com_tx_pdus": {
+          "CVC_COM_TX_ESTOP": {
+            "pdu_id": 0,
+            "can_id": 1
+          },
+          "CVC_COM_TX_HEARTBEAT": {
+            "pdu_id": 1,
+            "can_id": 16
+          },
+          "CVC_COM_TX_VEHICLE_STATE": {
+            "pdu_id": 2,
+            "can_id": 256
+          },
+          "CVC_COM_TX_TORQUE_REQ": {
+            "pdu_id": 3,
+            "can_id": 257
+          },
+          "CVC_COM_TX_STEER_CMD": {
+            "pdu_id": 4,
+            "can_id": 258
+          },
+          "CVC_COM_TX_BRAKE_CMD": {
+            "pdu_id": 5,
+            "can_id": 259
+          },
+          "CVC_COM_TX_BODY_CMD": {
+            "pdu_id": 6,
+            "can_id": 848
+          },
+          "CVC_COM_TX_UDS_RSP": {
+            "pdu_id": 7,
+            "can_id": 2024
+          },
+          "CVC_COM_TX_DTC": {
+            "pdu_id": 8,
+            "can_id": 1280
+          }
+        },
+        "com_rx_pdus": {
+          "CVC_COM_RX_FZC_HB": {
+            "pdu_id": 0,
+            "can_id": 17
+          },
+          "CVC_COM_RX_RZC_HB": {
+            "pdu_id": 1,
+            "can_id": 18
+          },
+          "CVC_COM_RX_BRAKE_FAULT": {
+            "pdu_id": 2,
+            "can_id": 528
+          },
+          "CVC_COM_RX_MOTOR_CUTOFF": {
+            "pdu_id": 3,
+            "can_id": 529
+          },
+          "CVC_COM_RX_LIDAR": {
+            "pdu_id": 4,
+            "can_id": 544
+          },
+          "CVC_COM_RX_MOTOR_CURRENT": {
+            "pdu_id": 5,
+            "can_id": 769
+          },
+          "CVC_COM_RX_SC_RELAY": {
+            "pdu_id": 6,
+            "can_id": 19
+          },
+          "CVC_COM_RX_BATTERY_STATUS": {
+            "pdu_id": 7,
+            "can_id": 771
+          },
+          "CVC_COM_RX_ESTOP_INJECT": {
+            "pdu_id": 8,
+            "can_id": 1
+          },
+          "CVC_COM_RX_STEER_STATUS": {
+            "pdu_id": 9,
+            "can_id": 512
+          },
+          "CVC_COM_RX_MOTOR_STATUS": {
+            "pdu_id": 10,
+            "can_id": 768
+          }
+        },
+        "dtc_events": {
+          "CVC_DTC_PEDAL_PLAUSIBILITY": 0,
+          "CVC_DTC_PEDAL_SENSOR1_FAIL": 1,
+          "CVC_DTC_PEDAL_SENSOR2_FAIL": 2,
+          "CVC_DTC_PEDAL_STUCK": 3,
+          "CVC_DTC_CAN_FZC_TIMEOUT": 4,
+          "CVC_DTC_CAN_RZC_TIMEOUT": 5,
+          "CVC_DTC_CAN_BUS_OFF": 6,
+          "CVC_DTC_MOTOR_OVERCURRENT": 7,
+          "CVC_DTC_MOTOR_OVERTEMP": 8,
+          "CVC_DTC_MOTOR_CUTOFF_RX": 9,
+          "CVC_DTC_BRAKE_FAULT_RX": 10,
+          "CVC_DTC_STEERING_FAULT_RX": 11,
+          "CVC_DTC_ESTOP_ACTIVATED": 12,
+          "CVC_DTC_BATT_UNDERVOLT": 13,
+          "CVC_DTC_BATT_OVERVOLT": 14,
+          "CVC_DTC_NVM_CRC_FAIL": 15,
+          "CVC_DTC_SELF_TEST_FAIL": 16,
+          "CVC_DTC_DISPLAY_COMM": 17,
+          "CVC_DTC_CREEP_FAULT": 18
+        },
+        "e2e_data_ids": {
+          "CVC_E2E_ESTOP_DATA_ID": 1,
+          "CVC_E2E_HEARTBEAT_DATA_ID": 2,
+          "CVC_E2E_VEHSTATE_DATA_ID": 5,
+          "CVC_E2E_TORQUE_DATA_ID": 6
+        },
+        "enums": {
+          "CVC_STATE_INIT": 0,
+          "CVC_STATE_RUN": 1,
+          "CVC_STATE_DEGRADED": 2,
+          "CVC_STATE_LIMP": 3,
+          "CVC_STATE_SAFE_STOP": 4,
+          "CVC_STATE_SHUTDOWN": 5,
+          "CVC_STATE_COUNT": 6,
+          "CVC_PEDAL_NO_FAULT": 0,
+          "CVC_PEDAL_PLAUSIBILITY": 1,
+          "CVC_PEDAL_STUCK": 2,
+          "CVC_PEDAL_SENSOR1_FAIL": 3,
+          "CVC_PEDAL_SENSOR2_FAIL": 4,
+          "CVC_COMM_OK": 0,
+          "CVC_COMM_TIMEOUT": 1,
+          "CVC_PEDAL_PLAUS_THRESHOLD": 819,
+          "CVC_PEDAL_PLAUS_DEBOUNCE": 2,
+          "CVC_PEDAL_STUCK_THRESHOLD": 10,
+          "CVC_PEDAL_STUCK_CYCLES": 100,
+          "CVC_PEDAL_LATCH_CLEAR_CYCLES": 50,
+          "CVC_PEDAL_RAMP_LIMIT": 5,
+          "CVC_PEDAL_MAX_RUN": 1000,
+          "CVC_PEDAL_MAX_DEGRADED": 750,
+          "CVC_PEDAL_MAX_LIMP": 300,
+          "CVC_STATE_INVALID": 255
+        },
+        "thresholds": {
+          "CVC_RTE_PERIOD_MS": 10,
+          "CVC_HB_TX_PERIOD_MS": 50,
+          "CVC_HB_ALIVE_MAX": 15,
+          "CVC_E2E_SM_FZC_MIN_OK_INIT": 2,
+          "CVC_E2E_SM_FZC_MIN_OK_INV": 3,
+          "CVC_E2E_SM_RZC_MIN_OK_INIT": 3,
+          "CVC_E2E_SM_RZC_MIN_OK_INV": 3,
+          "CVC_EVT_CAN_TIMEOUT_SINGLE": 4,
+          "CVC_EVT_CAN_TIMEOUT_DUAL": 5,
+          "CVC_SAFE_STOP_RECOVERY_CYCLES": 200,
+          "CVC_FAULT_UNLATCH_CYCLES": 300
+        }
+      },
+      "runnables": [
+        {
+          "function": "Can_MainFunction_Read",
+          "period_ms": 1,
+          "priority": 9,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Com_MainFunction_Rx",
+          "period_ms": 10,
+          "priority": 8,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Swc_EStop_MainFunction",
+          "period_ms": 10,
+          "priority": 7,
+          "wdgm_se_id": 2
+        },
+        {
+          "function": "Swc_Pedal_MainFunction",
+          "period_ms": 10,
+          "priority": 6,
+          "wdgm_se_id": 0
+        },
+        {
+          "function": "Swc_VehicleState_MainFunction",
+          "period_ms": 10,
+          "priority": 5,
+          "wdgm_se_id": 1
+        },
+        {
+          "function": "Swc_Heartbeat_MainFunction",
+          "period_ms": 10,
+          "priority": 4,
+          "wdgm_se_id": 3
+        },
+        {
+          "function": "Swc_Dashboard_MainFunction",
+          "period_ms": 10,
+          "priority": 3,
+          "wdgm_se_id": 4
+        },
+        {
+          "function": "Com_MainFunction_Tx",
+          "period_ms": 10,
+          "priority": 2,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Can_MainFunction_BusOff",
+          "period_ms": 10,
+          "priority": 1,
+          "wdgm_se_id": 255
+        }
+      ],
+      "com_signals": [
+        {
+          "signal_id": 0,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "CVC_COM_TX_ESTOP",
+          "buffer_name": "sig_tx_estop_active"
+        },
+        {
+          "signal_id": 1,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "CVC_COM_TX_HEARTBEAT",
+          "buffer_name": "sig_tx_hb_alive"
+        },
+        {
+          "signal_id": 2,
+          "bit_pos": 24,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "CVC_COM_TX_HEARTBEAT",
+          "buffer_name": "sig_tx_hb_ecu_id"
+        },
+        {
+          "signal_id": 3,
+          "bit_pos": 32,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "CVC_COM_TX_HEARTBEAT",
+          "buffer_name": "sig_tx_hb_state"
+        },
+        {
+          "signal_id": 4,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "CVC_COM_TX_VEHICLE_STATE",
+          "buffer_name": "sig_tx_vehicle_state"
+        },
+        {
+          "signal_id": 5,
+          "bit_pos": 16,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "CVC_COM_TX_TORQUE_REQ",
+          "buffer_name": "sig_tx_torque_request"
+        },
+        {
+          "signal_id": 6,
+          "bit_pos": 16,
+          "bit_size": 16,
+          "type": "COM_SINT16",
+          "pdu_id_name": "CVC_COM_TX_STEER_CMD",
+          "buffer_name": "sig_tx_steer_angle"
+        },
+        {
+          "signal_id": 7,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "CVC_COM_TX_BRAKE_CMD",
+          "buffer_name": "sig_tx_brake_pressure"
+        },
+        {
+          "signal_id": 8,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "CVC_COM_TX_BODY_CMD",
+          "buffer_name": "sig_tx_body_cmd"
+        },
+        {
+          "signal_id": 9,
+          "bit_pos": 4,
+          "bit_size": 4,
+          "type": "COM_UINT8",
+          "pdu_id_name": "CVC_COM_RX_FZC_HB",
+          "buffer_name": "sig_rx_fzc_hb_alive"
+        },
+        {
+          "signal_id": 10,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "CVC_COM_RX_FZC_HB",
+          "buffer_name": "sig_rx_fzc_hb_ecu_id"
+        },
+        {
+          "signal_id": 11,
+          "bit_pos": 4,
+          "bit_size": 4,
+          "type": "COM_UINT8",
+          "pdu_id_name": "CVC_COM_RX_RZC_HB",
+          "buffer_name": "sig_rx_rzc_hb_alive"
+        },
+        {
+          "signal_id": 12,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "CVC_COM_RX_RZC_HB",
+          "buffer_name": "sig_rx_rzc_hb_ecu_id"
+        },
+        {
+          "signal_id": 13,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "CVC_COM_RX_BRAKE_FAULT",
+          "buffer_name": "sig_rx_brake_fault"
+        },
+        {
+          "signal_id": 14,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "CVC_COM_RX_MOTOR_CUTOFF",
+          "buffer_name": "sig_rx_motor_cutoff"
+        },
+        {
+          "signal_id": 15,
+          "bit_pos": 16,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "CVC_COM_RX_LIDAR",
+          "buffer_name": "sig_rx_lidar_dist"
+        },
+        {
+          "signal_id": 16,
+          "bit_pos": 16,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "CVC_COM_RX_MOTOR_CURRENT",
+          "buffer_name": "sig_rx_motor_current"
+        },
+        {
+          "signal_id": 17,
+          "bit_pos": 24,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "CVC_COM_RX_SC_RELAY",
+          "buffer_name": "sig_rx_sc_relay_byte3"
+        },
+        {
+          "signal_id": 18,
+          "bit_pos": 32,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "CVC_COM_RX_BATTERY_STATUS",
+          "buffer_name": "sig_rx_battery_status"
+        },
+        {
+          "signal_id": 19,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "CVC_COM_RX_ESTOP_INJECT",
+          "buffer_name": "sig_rx_estop_inject"
+        },
+        {
+          "signal_id": 20,
+          "bit_pos": 48,
+          "bit_size": 4,
+          "type": "COM_UINT8",
+          "pdu_id_name": "CVC_COM_RX_STEER_STATUS",
+          "buffer_name": "sig_rx_steering_fault"
+        },
+        {
+          "signal_id": 21,
+          "bit_pos": 56,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "CVC_COM_RX_MOTOR_STATUS",
+          "buffer_name": "sig_rx_motor_fault_rzc"
+        }
+      ],
+      "swcs": [
+        {
+          "name": "Swc_CanMonitor",
+          "header": "../taktflow-embedded/firmware\\cvc\\include\\Swc_CanMonitor.h",
+          "functions": [
+            "Swc_CanMonitor_Init",
+            "Swc_CanMonitor_Check",
+            "Swc_CanMonitor_Recovery",
+            "Swc_CanMonitor_GetStatus"
+          ]
+        },
+        {
+          "name": "Swc_CvcCom",
+          "header": "../taktflow-embedded/firmware\\cvc\\include\\Swc_CvcCom.h",
+          "functions": [
+            "Swc_CvcCom_Init",
+            "Swc_CvcCom_E2eProtect",
+            "Swc_CvcCom_E2eCheck",
+            "Swc_CvcCom_Receive",
+            "Swc_CvcCom_TransmitSchedule",
+            "Swc_CvcCom_GetRxStatus",
+            "Swc_CvcCom_BridgeRxToRte"
+          ]
+        },
+        {
+          "name": "Swc_CvcDcm",
+          "header": "../taktflow-embedded/firmware\\cvc\\include\\Swc_CvcDcm.h",
+          "functions": [
+            "Swc_CvcDcm_Init",
+            "Swc_CvcDcm_ProcessRequest",
+            "Swc_CvcDcm_ReadDid",
+            "Swc_CvcDcm_ReportDtc",
+            "Swc_CvcDcm_ClearDtc"
+          ]
+        },
+        {
+          "name": "Swc_Dashboard",
+          "header": "../taktflow-embedded/firmware\\cvc\\include\\Swc_Dashboard.h",
+          "functions": [
+            "Swc_Dashboard_Init",
+            "Swc_Dashboard_MainFunction"
+          ]
+        },
+        {
+          "name": "Swc_EStop",
+          "header": "../taktflow-embedded/firmware\\cvc\\include\\Swc_EStop.h",
+          "functions": [
+            "Swc_EStop_Init",
+            "Swc_EStop_MainFunction",
+            "Swc_EStop_IsActive"
+          ]
+        },
+        {
+          "name": "Swc_Heartbeat",
+          "header": "../taktflow-embedded/firmware\\cvc\\include\\Swc_Heartbeat.h",
+          "functions": [
+            "Swc_Heartbeat_Init",
+            "Swc_Heartbeat_MainFunction",
+            "Swc_Heartbeat_RxIndication"
+          ]
+        },
+        {
+          "name": "Swc_Nvm",
+          "header": "../taktflow-embedded/firmware\\cvc\\include\\Swc_Nvm.h",
+          "functions": [
+            "Swc_Nvm_Init",
+            "Swc_Nvm_StoreDtc",
+            "Swc_Nvm_LoadDtc",
+            "Swc_Nvm_ReadCal",
+            "Swc_Nvm_WriteCal",
+            "Swc_Nvm_CalcCrc16"
+          ]
+        },
+        {
+          "name": "Swc_Pedal",
+          "header": "../taktflow-embedded/firmware\\cvc\\include\\Swc_Pedal.h",
+          "functions": [
+            "Swc_Pedal_Init",
+            "Swc_Pedal_MainFunction",
+            "Swc_Pedal_GetPosition"
+          ]
+        },
+        {
+          "name": "Swc_Scheduler",
+          "header": "../taktflow-embedded/firmware\\cvc\\include\\Swc_Scheduler.h",
+          "functions": [
+            "Swc_Scheduler_Init",
+            "Swc_Scheduler_GetRunnableCount"
+          ]
+        },
+        {
+          "name": "Swc_SelfTest",
+          "header": "../taktflow-embedded/firmware\\cvc\\include\\Swc_SelfTest.h",
+          "functions": [
+            "Swc_SelfTest_Startup",
+            "Swc_SelfTest_GetResults"
+          ]
+        },
+        {
+          "name": "Swc_VehicleState",
+          "header": "../taktflow-embedded/firmware\\cvc\\include\\Swc_VehicleState.h",
+          "functions": [
+            "Swc_VehicleState_Init",
+            "Swc_VehicleState_MainFunction",
+            "Swc_VehicleState_GetState",
+            "Swc_VehicleState_OnEvent"
+          ]
+        },
+        {
+          "name": "Swc_Watchdog",
+          "header": "../taktflow-embedded/firmware\\cvc\\include\\Swc_Watchdog.h",
+          "functions": [
+            "Swc_Watchdog_Init",
+            "Swc_Watchdog_Feed"
+          ]
+        }
+      ]
+    },
+    "fzc": {
+      "prefix": "FZC",
+      "cfg": {
+        "rte_signals": {
+          "FZC_SIG_STEER_CMD": 16,
+          "FZC_SIG_STEER_ANGLE": 17,
+          "FZC_SIG_STEER_FAULT": 18,
+          "FZC_SIG_BRAKE_CMD": 19,
+          "FZC_SIG_BRAKE_POS": 20,
+          "FZC_SIG_BRAKE_FAULT": 21,
+          "FZC_SIG_LIDAR_DIST": 22,
+          "FZC_SIG_LIDAR_SIGNAL": 23,
+          "FZC_SIG_LIDAR_ZONE": 24,
+          "FZC_SIG_LIDAR_FAULT": 25,
+          "FZC_SIG_VEHICLE_STATE": 26,
+          "FZC_SIG_ESTOP_ACTIVE": 27,
+          "FZC_SIG_BUZZER_PATTERN": 28,
+          "FZC_SIG_MOTOR_CUTOFF": 29,
+          "FZC_SIG_FAULT_MASK": 30,
+          "FZC_SIG_STEER_PWM_DISABLE": 31,
+          "FZC_SIG_BRAKE_PWM_DISABLE": 32,
+          "FZC_SIG_SELF_TEST_RESULT": 33,
+          "FZC_SIG_HEARTBEAT_ALIVE": 34,
+          "FZC_SIG_SAFETY_STATUS": 35
+        },
+        "com_tx_pdus": {
+          "FZC_COM_TX_HEARTBEAT": {
+            "pdu_id": 0,
+            "can_id": 17
+          },
+          "FZC_COM_TX_STEER_STATUS": {
+            "pdu_id": 1,
+            "can_id": 512
+          },
+          "FZC_COM_TX_BRAKE_STATUS": {
+            "pdu_id": 2,
+            "can_id": 513
+          },
+          "FZC_COM_TX_BRAKE_FAULT": {
+            "pdu_id": 3,
+            "can_id": 528
+          },
+          "FZC_COM_TX_MOTOR_CUTOFF": {
+            "pdu_id": 4,
+            "can_id": 529
+          },
+          "FZC_COM_TX_LIDAR": {
+            "pdu_id": 5,
+            "can_id": 544
+          },
+          "FZC_COM_TX_DTC_BROADCAST": {
+            "pdu_id": 6,
+            "can_id": 1280
+          }
+        },
+        "com_rx_pdus": {
+          "FZC_COM_RX_ESTOP": {
+            "pdu_id": 0,
+            "can_id": 1
+          },
+          "FZC_COM_RX_VEHICLE_STATE": {
+            "pdu_id": 1,
+            "can_id": 256
+          },
+          "FZC_COM_RX_STEER_CMD": {
+            "pdu_id": 2,
+            "can_id": 258
+          },
+          "FZC_COM_RX_BRAKE_CMD": {
+            "pdu_id": 3,
+            "can_id": 259
+          },
+          "FZC_COM_RX_VIRT_SENSORS": {
+            "pdu_id": 4,
+            "can_id": 1536
+          }
+        },
+        "dtc_events": {
+          "FZC_DTC_STEER_PLAUSIBILITY": 0,
+          "FZC_DTC_STEER_RANGE": 1,
+          "FZC_DTC_STEER_RATE": 2,
+          "FZC_DTC_STEER_TIMEOUT": 3,
+          "FZC_DTC_STEER_SPI_FAIL": 4,
+          "FZC_DTC_BRAKE_FAULT": 5,
+          "FZC_DTC_BRAKE_TIMEOUT": 6,
+          "FZC_DTC_BRAKE_PWM_FAIL": 7,
+          "FZC_DTC_LIDAR_TIMEOUT": 8,
+          "FZC_DTC_LIDAR_CHECKSUM": 9,
+          "FZC_DTC_LIDAR_STUCK": 10,
+          "FZC_DTC_LIDAR_SIGNAL_LOW": 11,
+          "FZC_DTC_CAN_BUS_OFF": 12,
+          "FZC_DTC_SELF_TEST_FAIL": 13,
+          "FZC_DTC_WATCHDOG_FAIL": 14,
+          "FZC_DTC_BRAKE_OSCILLATION": 15
+        },
+        "e2e_data_ids": {
+          "FZC_E2E_HEARTBEAT_DATA_ID": 3,
+          "FZC_E2E_STEER_STATUS_DATA_ID": 32,
+          "FZC_E2E_BRAKE_STATUS_DATA_ID": 33,
+          "FZC_E2E_LIDAR_DATA_ID": 34,
+          "FZC_E2E_ESTOP_DATA_ID": 1,
+          "FZC_E2E_VEHSTATE_DATA_ID": 16,
+          "FZC_E2E_STEER_CMD_DATA_ID": 18,
+          "FZC_E2E_BRAKE_CMD_DATA_ID": 19
+        },
+        "enums": {
+          "FZC_BRAKE_PWM_FAULT_THRESH": 2,
+          "FZC_STATE_INIT": 0,
+          "FZC_STATE_RUN": 1,
+          "FZC_STATE_DEGRADED": 2,
+          "FZC_STATE_LIMP": 3,
+          "FZC_STATE_SAFE_STOP": 4,
+          "FZC_STATE_SHUTDOWN": 5,
+          "FZC_STATE_COUNT": 6,
+          "FZC_STEER_NO_FAULT": 0,
+          "FZC_BRAKE_NO_FAULT": 0
+        },
+        "thresholds": {
+          "FZC_STEER_PLAUS_THRESHOLD_DEG": 5,
+          "FZC_STEER_RATE_LIMIT_DEG_10MS": 3,
+          "FZC_STEER_CMD_TIMEOUT_MS": 100,
+          "FZC_STEER_ANGLE_MAX": 45,
+          "FZC_STEER_PWM_MIN_US": 1000,
+          "FZC_STEER_PWM_MAX_US": 2000,
+          "FZC_STEER_LATCH_CLEAR_CYCLES": 50,
+          "FZC_BRAKE_AUTO_TIMEOUT_MS": 100,
+          "FZC_BRAKE_PWM_MIN": 0,
+          "FZC_BRAKE_PWM_MAX": 100,
+          "FZC_BRAKE_LATCH_CLEAR_CYCLES": 50,
+          "FZC_BRAKE_OSCILLATION_DEBOUNCE": 4,
+          "FZC_LIDAR_TIMEOUT_MS": 100,
+          "FZC_LIDAR_STUCK_CYCLES": 50,
+          "FZC_LIDAR_RANGE_MIN_CM": 2,
+          "FZC_LIDAR_RANGE_MAX_CM": 1200,
+          "FZC_LIDAR_SIGNAL_MIN": 100,
+          "FZC_LIDAR_DEGRADE_CYCLES": 200,
+          "FZC_RTE_PERIOD_MS": 10,
+          "FZC_HB_TX_PERIOD_MS": 50,
+          "FZC_HB_TIMEOUT_MS": 150,
+          "FZC_HB_MAX_MISS": 3,
+          "FZC_HB_ALIVE_MAX": 15,
+          "FZC_STEER_CMD_TIMEOUT": 4,
+          "FZC_BRAKE_CMD_TIMEOUT": 2
+        }
+      },
+      "runnables": [
+        {
+          "function": "Can_MainFunction_Read",
+          "period_ms": 10,
+          "priority": 14,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Com_MainFunction_Rx",
+          "period_ms": 10,
+          "priority": 13,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Swc_FzcCom_Receive",
+          "period_ms": 10,
+          "priority": 12,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Swc_FzcSensorFeeder_MainFunction",
+          "period_ms": 10,
+          "priority": 11,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Swc_Steering_MainFunction",
+          "period_ms": 10,
+          "priority": 10,
+          "wdgm_se_id": 0
+        },
+        {
+          "function": "Swc_Brake_MainFunction",
+          "period_ms": 10,
+          "priority": 9,
+          "wdgm_se_id": 1
+        },
+        {
+          "function": "Swc_Lidar_MainFunction",
+          "period_ms": 10,
+          "priority": 8,
+          "wdgm_se_id": 2
+        },
+        {
+          "function": "Swc_Heartbeat_MainFunction",
+          "period_ms": 10,
+          "priority": 7,
+          "wdgm_se_id": 3
+        },
+        {
+          "function": "Swc_FzcSafety_MainFunction",
+          "period_ms": 10,
+          "priority": 6,
+          "wdgm_se_id": 4
+        },
+        {
+          "function": "Swc_Buzzer_MainFunction",
+          "period_ms": 10,
+          "priority": 5,
+          "wdgm_se_id": 5
+        },
+        {
+          "function": "Swc_FzcCanMonitor_Check",
+          "period_ms": 10,
+          "priority": 4,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Swc_FzcCom_TransmitSchedule",
+          "period_ms": 10,
+          "priority": 3,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Com_MainFunction_Tx",
+          "period_ms": 10,
+          "priority": 2,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Can_MainFunction_BusOff",
+          "period_ms": 10,
+          "priority": 1,
+          "wdgm_se_id": 255
+        }
+      ],
+      "com_signals": [
+        {
+          "signal_id": 0,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "FZC_COM_TX_HEARTBEAT",
+          "buffer_name": "sig_tx_hb_alive"
+        },
+        {
+          "signal_id": 1,
+          "bit_pos": 24,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "FZC_COM_TX_HEARTBEAT",
+          "buffer_name": "sig_tx_hb_ecu_id"
+        },
+        {
+          "signal_id": 2,
+          "bit_pos": 32,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "FZC_COM_TX_HEARTBEAT",
+          "buffer_name": "sig_tx_hb_fault_mask"
+        },
+        {
+          "signal_id": 3,
+          "bit_pos": 16,
+          "bit_size": 16,
+          "type": "COM_SINT16",
+          "pdu_id_name": "FZC_COM_TX_STEER_STATUS",
+          "buffer_name": "sig_tx_steer_angle"
+        },
+        {
+          "signal_id": 4,
+          "bit_pos": 48,
+          "bit_size": 4,
+          "type": "COM_UINT8",
+          "pdu_id_name": "FZC_COM_TX_STEER_STATUS",
+          "buffer_name": "sig_tx_steer_fault"
+        },
+        {
+          "signal_id": 5,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "FZC_COM_TX_BRAKE_STATUS",
+          "buffer_name": "sig_tx_brake_pos"
+        },
+        {
+          "signal_id": 6,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "FZC_COM_TX_BRAKE_FAULT",
+          "buffer_name": "sig_tx_brake_fault"
+        },
+        {
+          "signal_id": 7,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "FZC_COM_TX_MOTOR_CUTOFF",
+          "buffer_name": "sig_tx_motor_cutoff"
+        },
+        {
+          "signal_id": 8,
+          "bit_pos": 16,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "FZC_COM_TX_LIDAR",
+          "buffer_name": "sig_tx_lidar_dist"
+        },
+        {
+          "signal_id": 9,
+          "bit_pos": 32,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "FZC_COM_TX_LIDAR",
+          "buffer_name": "sig_tx_lidar_zone"
+        },
+        {
+          "signal_id": 10,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "FZC_COM_RX_ESTOP",
+          "buffer_name": "sig_rx_estop_active"
+        },
+        {
+          "signal_id": 11,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "FZC_COM_RX_VEHICLE_STATE",
+          "buffer_name": "sig_rx_vehicle_state"
+        },
+        {
+          "signal_id": 12,
+          "bit_pos": 16,
+          "bit_size": 16,
+          "type": "COM_SINT16",
+          "pdu_id_name": "FZC_COM_RX_STEER_CMD",
+          "buffer_name": "sig_rx_steer_cmd"
+        },
+        {
+          "signal_id": 13,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "FZC_COM_RX_BRAKE_CMD",
+          "buffer_name": "sig_rx_brake_cmd"
+        },
+        {
+          "signal_id": 14,
+          "bit_pos": 0,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "FZC_COM_RX_VIRT_SENSORS",
+          "buffer_name": "sig_rx_virt_steer_angle"
+        },
+        {
+          "signal_id": 15,
+          "bit_pos": 16,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "FZC_COM_RX_VIRT_SENSORS",
+          "buffer_name": "sig_rx_virt_brake_pos"
+        },
+        {
+          "signal_id": 16,
+          "bit_pos": 32,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "FZC_COM_RX_VIRT_SENSORS",
+          "buffer_name": "sig_rx_virt_brake_current"
+        }
+      ],
+      "swcs": [
+        {
+          "name": "Swc_Brake",
+          "header": "../taktflow-embedded/firmware\\fzc\\include\\Swc_Brake.h",
+          "functions": [
+            "Swc_Brake_Init",
+            "Swc_Brake_MainFunction",
+            "Swc_Brake_GetPosition"
+          ]
+        },
+        {
+          "name": "Swc_Buzzer",
+          "header": "../taktflow-embedded/firmware\\fzc\\include\\Swc_Buzzer.h",
+          "functions": [
+            "Swc_Buzzer_Init",
+            "Swc_Buzzer_MainFunction"
+          ]
+        },
+        {
+          "name": "Swc_FzcCanMonitor",
+          "header": "../taktflow-embedded/firmware\\fzc\\include\\Swc_FzcCanMonitor.h",
+          "functions": [
+            "Swc_FzcCanMonitor_Init",
+            "Swc_FzcCanMonitor_Check",
+            "Swc_FzcCanMonitor_GetStatus",
+            "Swc_FzcCanMonitor_NotifyRx"
+          ]
+        },
+        {
+          "name": "Swc_FzcCom",
+          "header": "../taktflow-embedded/firmware\\fzc\\include\\Swc_FzcCom.h",
+          "functions": [
+            "Swc_FzcCom_Init",
+            "Swc_FzcCom_E2eProtect",
+            "Swc_FzcCom_E2eCheck",
+            "Swc_FzcCom_Receive",
+            "Swc_FzcCom_TransmitSchedule"
+          ]
+        },
+        {
+          "name": "Swc_FzcDcm",
+          "header": "../taktflow-embedded/firmware\\fzc\\include\\Swc_FzcDcm.h",
+          "functions": [
+            "Swc_FzcDcm_Init",
+            "Swc_FzcDcm_ProcessRequest",
+            "Swc_FzcDcm_IsServiceSupported"
+          ]
+        },
+        {
+          "name": "Swc_FzcNvm",
+          "header": "../taktflow-embedded/firmware\\fzc\\include\\Swc_FzcNvm.h",
+          "functions": [
+            "Swc_FzcNvm_Init",
+            "Swc_FzcNvm_StoreDtc",
+            "Swc_FzcNvm_LoadDtc",
+            "Swc_FzcNvm_LoadCal",
+            "Swc_FzcNvm_StoreCal",
+            "Swc_FzcNvm_Crc16"
+          ]
+        },
+        {
+          "name": "Swc_FzcSafety",
+          "header": "../taktflow-embedded/firmware\\fzc\\include\\Swc_FzcSafety.h",
+          "functions": [
+            "Swc_FzcSafety_Init",
+            "Swc_FzcSafety_MainFunction",
+            "Swc_FzcSafety_GetStatus"
+          ]
+        },
+        {
+          "name": "Swc_FzcScheduler",
+          "header": "../taktflow-embedded/firmware\\fzc\\include\\Swc_FzcScheduler.h",
+          "functions": [
+            "Swc_FzcScheduler_Init",
+            "Swc_FzcScheduler_GetCount"
+          ]
+        },
+        {
+          "name": "Swc_FzcSensorFeeder",
+          "header": "../taktflow-embedded/firmware\\fzc\\include\\Swc_FzcSensorFeeder.h",
+          "functions": [
+            "Swc_FzcSensorFeeder_Init",
+            "Swc_FzcSensorFeeder_MainFunction"
+          ]
+        },
+        {
+          "name": "Swc_Heartbeat",
+          "header": "../taktflow-embedded/firmware\\fzc\\include\\Swc_Heartbeat.h",
+          "functions": [
+            "Swc_Heartbeat_Init",
+            "Swc_Heartbeat_MainFunction"
+          ]
+        },
+        {
+          "name": "Swc_Lidar",
+          "header": "../taktflow-embedded/firmware\\fzc\\include\\Swc_Lidar.h",
+          "functions": [
+            "Swc_Lidar_Init",
+            "Swc_Lidar_MainFunction",
+            "Swc_Lidar_GetDistance"
+          ]
+        },
+        {
+          "name": "Swc_Steering",
+          "header": "../taktflow-embedded/firmware\\fzc\\include\\Swc_Steering.h",
+          "functions": [
+            "Swc_Steering_Init",
+            "Swc_Steering_MainFunction",
+            "Swc_Steering_GetAngle"
+          ]
+        }
+      ]
+    },
+    "rzc": {
+      "prefix": "RZC",
+      "cfg": {
+        "rte_signals": {
+          "RZC_SIG_TORQUE_CMD": 16,
+          "RZC_SIG_TORQUE_ECHO": 17,
+          "RZC_SIG_MOTOR_SPEED": 18,
+          "RZC_SIG_MOTOR_DIR": 19,
+          "RZC_SIG_MOTOR_ENABLE": 20,
+          "RZC_SIG_MOTOR_FAULT": 21,
+          "RZC_SIG_CURRENT_MA": 22,
+          "RZC_SIG_OVERCURRENT": 23,
+          "RZC_SIG_TEMP1_DC": 24,
+          "RZC_SIG_TEMP2_DC": 25,
+          "RZC_SIG_DERATING_PCT": 26,
+          "RZC_SIG_TEMP_FAULT": 27,
+          "RZC_SIG_BATTERY_MV": 28,
+          "RZC_SIG_BATTERY_STATUS": 29,
+          "RZC_SIG_ENCODER_SPEED": 30,
+          "RZC_SIG_ENCODER_DIR": 31,
+          "RZC_SIG_ENCODER_STALL": 32,
+          "RZC_SIG_VEHICLE_STATE": 33,
+          "RZC_SIG_ESTOP_ACTIVE": 34,
+          "RZC_SIG_FAULT_MASK": 35,
+          "RZC_SIG_SELF_TEST_RESULT": 36,
+          "RZC_SIG_HEARTBEAT_ALIVE": 37,
+          "RZC_SIG_SAFETY_STATUS": 38,
+          "RZC_SIG_CMD_TIMEOUT": 39,
+          "RZC_SIG_BATTERY_SOC": 40
+        },
+        "com_tx_pdus": {
+          "RZC_COM_TX_HEARTBEAT": {
+            "pdu_id": 0,
+            "can_id": 18
+          },
+          "RZC_COM_TX_MOTOR_STATUS": {
+            "pdu_id": 1,
+            "can_id": 768
+          },
+          "RZC_COM_TX_MOTOR_CURRENT": {
+            "pdu_id": 2,
+            "can_id": 769
+          },
+          "RZC_COM_TX_MOTOR_TEMP": {
+            "pdu_id": 3,
+            "can_id": 770
+          },
+          "RZC_COM_TX_BATTERY_STATUS": {
+            "pdu_id": 4,
+            "can_id": 771
+          },
+          "RZC_COM_TX_DTC_BROADCAST": {
+            "pdu_id": 5,
+            "can_id": 1280
+          }
+        },
+        "com_rx_pdus": {
+          "RZC_COM_RX_ESTOP": {
+            "pdu_id": 0,
+            "can_id": 1
+          },
+          "RZC_COM_RX_VEHICLE_TORQUE": {
+            "pdu_id": 1,
+            "can_id": 256
+          },
+          "RZC_COM_RX_VIRT_SENSORS": {
+            "pdu_id": 2,
+            "can_id": 1537
+          }
+        },
+        "dtc_events": {
+          "RZC_DTC_OVERCURRENT": 0,
+          "RZC_DTC_OVERTEMP": 1,
+          "RZC_DTC_STALL": 2,
+          "RZC_DTC_DIRECTION": 3,
+          "RZC_DTC_SHOOT_THROUGH": 4,
+          "RZC_DTC_CAN_BUS_OFF": 5,
+          "RZC_DTC_CMD_TIMEOUT": 6,
+          "RZC_DTC_SELF_TEST_FAIL": 7,
+          "RZC_DTC_WATCHDOG_FAIL": 8,
+          "RZC_DTC_BATTERY": 9,
+          "RZC_DTC_ENCODER": 10,
+          "RZC_DTC_ZERO_CAL": 11
+        },
+        "e2e_data_ids": {
+          "RZC_E2E_HEARTBEAT_DATA_ID": 4,
+          "RZC_E2E_MOTOR_STATUS_DATA_ID": 14,
+          "RZC_E2E_MOTOR_CURRENT_DATA_ID": 15,
+          "RZC_E2E_MOTOR_TEMP_DATA_ID": 16,
+          "RZC_E2E_BATTERY_DATA_ID": 17,
+          "RZC_E2E_ESTOP_DATA_ID": 1,
+          "RZC_E2E_VEHSTATE_DATA_ID": 5
+        },
+        "enums": {
+          "RZC_STATE_INIT": 0,
+          "RZC_STATE_RUN": 1,
+          "RZC_STATE_DEGRADED": 2,
+          "RZC_STATE_LIMP": 3,
+          "RZC_STATE_SAFE_STOP": 4,
+          "RZC_STATE_SHUTDOWN": 5,
+          "RZC_STATE_COUNT": 6
+        },
+        "thresholds": {
+          "RZC_MOTOR_MAX_DUTY_PCT": 95,
+          "RZC_MOTOR_LIMIT_RUN": 100,
+          "RZC_MOTOR_LIMIT_DEGRADED": 75,
+          "RZC_MOTOR_LIMIT_LIMP": 30,
+          "RZC_MOTOR_LIMIT_SAFE_STOP": 0,
+          "RZC_MOTOR_CMD_TIMEOUT_MS": 100,
+          "RZC_CURRENT_OC_DEBOUNCE": 10,
+          "RZC_TEMP_MAX_DDC": 1500,
+          "RZC_ENCODER_STALL_TIMEOUT_MS": 500,
+          "RZC_ENCODER_STALL_MIN_PWM": 10,
+          "RZC_BATT_NOMINAL_MV": 12600,
+          "RZC_RTE_PERIOD_MS": 50,
+          "RZC_HB_TX_PERIOD_MS": 50,
+          "RZC_HB_TIMEOUT_MS": 150,
+          "RZC_HB_MAX_MISS": 3,
+          "RZC_HB_ALIVE_MAX": 15,
+          "RZC_MOTOR_CMD_TIMEOUT": 2,
+          "RZC_CAN_SILENCE_TIMEOUT_MS": 200,
+          "RZC_CAN_ERR_WARN_TIMEOUT_MS": 500
+        }
+      },
+      "runnables": [
+        {
+          "function": "Swc_CurrentMonitor_MainFunction",
+          "period_ms": 1,
+          "priority": 11,
+          "wdgm_se_id": 0
+        },
+        {
+          "function": "Swc_Motor_MainFunction",
+          "period_ms": 10,
+          "priority": 10,
+          "wdgm_se_id": 1
+        },
+        {
+          "function": "Swc_Encoder_MainFunction",
+          "period_ms": 10,
+          "priority": 10,
+          "wdgm_se_id": 2
+        },
+        {
+          "function": "Can_MainFunction_Read",
+          "period_ms": 1,
+          "priority": 9,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Com_MainFunction_Rx",
+          "period_ms": 10,
+          "priority": 8,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Swc_RzcCom_Receive",
+          "period_ms": 10,
+          "priority": 7,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Swc_RzcSensorFeeder_MainFunction",
+          "period_ms": 10,
+          "priority": 6,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Swc_RzcCom_TransmitSchedule",
+          "period_ms": 10,
+          "priority": 5,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Com_MainFunction_Tx",
+          "period_ms": 10,
+          "priority": 4,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Swc_TempMonitor_MainFunction",
+          "period_ms": 100,
+          "priority": 4,
+          "wdgm_se_id": 3
+        },
+        {
+          "function": "Swc_Battery_MainFunction",
+          "period_ms": 100,
+          "priority": 4,
+          "wdgm_se_id": 4
+        },
+        {
+          "function": "Swc_Heartbeat_MainFunction",
+          "period_ms": 50,
+          "priority": 3,
+          "wdgm_se_id": 5
+        },
+        {
+          "function": "Can_MainFunction_BusOff",
+          "period_ms": 10,
+          "priority": 2,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Swc_RzcSafety_MainFunction",
+          "period_ms": 100,
+          "priority": 2,
+          "wdgm_se_id": 6
+        }
+      ],
+      "com_signals": [
+        {
+          "signal_id": 0,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "RZC_COM_TX_HEARTBEAT",
+          "buffer_name": "sig_tx_hb_alive"
+        },
+        {
+          "signal_id": 1,
+          "bit_pos": 24,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "RZC_COM_TX_HEARTBEAT",
+          "buffer_name": "sig_tx_hb_ecu_id"
+        },
+        {
+          "signal_id": 2,
+          "bit_pos": 32,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "RZC_COM_TX_HEARTBEAT",
+          "buffer_name": "sig_tx_hb_fault_mask"
+        },
+        {
+          "signal_id": 3,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "RZC_COM_TX_MOTOR_STATUS",
+          "buffer_name": "sig_tx_torque_echo"
+        },
+        {
+          "signal_id": 4,
+          "bit_pos": 24,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "RZC_COM_TX_MOTOR_STATUS",
+          "buffer_name": "sig_tx_motor_speed"
+        },
+        {
+          "signal_id": 5,
+          "bit_pos": 40,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "RZC_COM_TX_MOTOR_STATUS",
+          "buffer_name": "sig_tx_motor_dir"
+        },
+        {
+          "signal_id": 6,
+          "bit_pos": 48,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "RZC_COM_TX_MOTOR_STATUS",
+          "buffer_name": "sig_tx_motor_enable"
+        },
+        {
+          "signal_id": 7,
+          "bit_pos": 56,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "RZC_COM_TX_MOTOR_STATUS",
+          "buffer_name": "sig_tx_motor_fault"
+        },
+        {
+          "signal_id": 8,
+          "bit_pos": 16,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "RZC_COM_TX_MOTOR_CURRENT",
+          "buffer_name": "sig_tx_current_mA"
+        },
+        {
+          "signal_id": 9,
+          "bit_pos": 32,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "RZC_COM_TX_MOTOR_CURRENT",
+          "buffer_name": "sig_tx_overcurrent"
+        },
+        {
+          "signal_id": 10,
+          "bit_pos": 16,
+          "bit_size": 16,
+          "type": "COM_SINT16",
+          "pdu_id_name": "RZC_COM_TX_MOTOR_TEMP",
+          "buffer_name": "sig_tx_temp1"
+        },
+        {
+          "signal_id": 11,
+          "bit_pos": 32,
+          "bit_size": 16,
+          "type": "COM_SINT16",
+          "pdu_id_name": "RZC_COM_TX_MOTOR_TEMP",
+          "buffer_name": "sig_tx_temp2"
+        },
+        {
+          "signal_id": 12,
+          "bit_pos": 48,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "RZC_COM_TX_MOTOR_TEMP",
+          "buffer_name": "sig_tx_derating_pct"
+        },
+        {
+          "signal_id": 13,
+          "bit_pos": 16,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "RZC_COM_TX_BATTERY_STATUS",
+          "buffer_name": "sig_tx_battery_mV"
+        },
+        {
+          "signal_id": 14,
+          "bit_pos": 32,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "RZC_COM_TX_BATTERY_STATUS",
+          "buffer_name": "sig_tx_battery_status"
+        },
+        {
+          "signal_id": 15,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "RZC_COM_RX_ESTOP",
+          "buffer_name": "sig_rx_estop_active"
+        },
+        {
+          "signal_id": 16,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "RZC_COM_RX_VEHICLE_TORQUE",
+          "buffer_name": "sig_rx_vehicle_state"
+        },
+        {
+          "signal_id": 17,
+          "bit_pos": 32,
+          "bit_size": 16,
+          "type": "COM_SINT16",
+          "pdu_id_name": "RZC_COM_RX_VEHICLE_TORQUE",
+          "buffer_name": "sig_rx_torque_cmd"
+        },
+        {
+          "signal_id": 18,
+          "bit_pos": 0,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "RZC_COM_RX_VIRT_SENSORS",
+          "buffer_name": "sig_rx_virt_motor_current"
+        },
+        {
+          "signal_id": 19,
+          "bit_pos": 16,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "RZC_COM_RX_VIRT_SENSORS",
+          "buffer_name": "sig_rx_virt_motor_temp"
+        },
+        {
+          "signal_id": 20,
+          "bit_pos": 32,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "RZC_COM_RX_VIRT_SENSORS",
+          "buffer_name": "sig_rx_virt_battery_voltage"
+        },
+        {
+          "signal_id": 21,
+          "bit_pos": 48,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "RZC_COM_RX_VIRT_SENSORS",
+          "buffer_name": "sig_rx_virt_motor_rpm"
+        }
+      ],
+      "swcs": [
+        {
+          "name": "Swc_Battery",
+          "header": "../taktflow-embedded/firmware\\rzc\\include\\Swc_Battery.h",
+          "functions": [
+            "Swc_Battery_Init",
+            "Swc_Battery_MainFunction"
+          ]
+        },
+        {
+          "name": "Swc_CurrentMonitor",
+          "header": "../taktflow-embedded/firmware\\rzc\\include\\Swc_CurrentMonitor.h",
+          "functions": [
+            "Swc_CurrentMonitor_Init",
+            "Swc_CurrentMonitor_MainFunction"
+          ]
+        },
+        {
+          "name": "Swc_Encoder",
+          "header": "../taktflow-embedded/firmware\\rzc\\include\\Swc_Encoder.h",
+          "functions": [
+            "Swc_Encoder_Init",
+            "Swc_Encoder_MainFunction"
+          ]
+        },
+        {
+          "name": "Swc_Heartbeat",
+          "header": "../taktflow-embedded/firmware\\rzc\\include\\Swc_Heartbeat.h",
+          "functions": [
+            "Swc_Heartbeat_Init",
+            "Swc_Heartbeat_MainFunction"
+          ]
+        },
+        {
+          "name": "Swc_Motor",
+          "header": "../taktflow-embedded/firmware\\rzc\\include\\Swc_Motor.h",
+          "functions": [
+            "Swc_Motor_Init",
+            "Swc_Motor_MainFunction"
+          ]
+        },
+        {
+          "name": "Swc_RzcCom",
+          "header": "../taktflow-embedded/firmware\\rzc\\include\\Swc_RzcCom.h",
+          "functions": [
+            "Swc_RzcCom_Init",
+            "Swc_RzcCom_E2eProtect",
+            "Swc_RzcCom_E2eCheck",
+            "Swc_RzcCom_Receive",
+            "Swc_RzcCom_TransmitSchedule"
+          ]
+        },
+        {
+          "name": "Swc_RzcDcm",
+          "header": "../taktflow-embedded/firmware\\rzc\\include\\Swc_RzcDcm.h",
+          "functions": [
+            "Swc_RzcDcm_Init",
+            "Swc_RzcDcm_HandleRequest"
+          ]
+        },
+        {
+          "name": "Swc_RzcNvm",
+          "header": "../taktflow-embedded/firmware\\rzc\\include\\Swc_RzcNvm.h",
+          "functions": [
+            "Swc_RzcNvm_Init",
+            "Swc_RzcNvm_StoreDtc",
+            "Swc_RzcNvm_LoadDtc",
+            "Swc_RzcNvm_GetWriteIndex"
+          ]
+        },
+        {
+          "name": "Swc_RzcSafety",
+          "header": "../taktflow-embedded/firmware\\rzc\\include\\Swc_RzcSafety.h",
+          "functions": [
+            "Swc_RzcSafety_Init",
+            "Swc_RzcSafety_MainFunction",
+            "Swc_RzcSafety_GetStatus",
+            "Swc_RzcSafety_NotifyCanRx"
+          ]
+        },
+        {
+          "name": "Swc_RzcScheduler",
+          "header": "../taktflow-embedded/firmware\\rzc\\include\\Swc_RzcScheduler.h",
+          "functions": [
+            "Swc_RzcScheduler_Init",
+            "Swc_RzcScheduler_Tick",
+            "Swc_RzcScheduler_GetUtilPct"
+          ]
+        },
+        {
+          "name": "Swc_RzcSelfTest",
+          "header": "../taktflow-embedded/firmware\\rzc\\include\\Swc_RzcSelfTest.h",
+          "functions": [
+            "Swc_RzcSelfTest_Init",
+            "Swc_RzcSelfTest_Startup",
+            "Swc_RzcSelfTest_GetResultMask"
+          ]
+        },
+        {
+          "name": "Swc_RzcSensorFeeder",
+          "header": "../taktflow-embedded/firmware\\rzc\\include\\Swc_RzcSensorFeeder.h",
+          "functions": [
+            "Swc_RzcSensorFeeder_Init",
+            "Swc_RzcSensorFeeder_MainFunction"
+          ]
+        },
+        {
+          "name": "Swc_TempMonitor",
+          "header": "../taktflow-embedded/firmware\\rzc\\include\\Swc_TempMonitor.h",
+          "functions": [
+            "Swc_TempMonitor_Init",
+            "Swc_TempMonitor_MainFunction"
+          ]
+        }
+      ]
+    },
+    "bcm": {
+      "prefix": "BCM",
+      "cfg": {
+        "rte_signals": {
+          "BCM_SIG_VEHICLE_SPEED": 16,
+          "BCM_SIG_VEHICLE_STATE": 17,
+          "BCM_SIG_BODY_CONTROL_CMD": 18,
+          "BCM_SIG_LIGHT_HEADLAMP": 19,
+          "BCM_SIG_LIGHT_TAIL": 20,
+          "BCM_SIG_INDICATOR_LEFT": 21,
+          "BCM_SIG_INDICATOR_RIGHT": 22,
+          "BCM_SIG_HAZARD_ACTIVE": 23,
+          "BCM_SIG_DOOR_LOCK_STATE": 24,
+          "BCM_SIG_ESTOP_ACTIVE": 25
+        },
+        "com_tx_pdus": {
+          "BCM_COM_TX_LIGHT_STATUS": {
+            "pdu_id": 0,
+            "can_id": 1024
+          },
+          "BCM_COM_TX_INDICATOR_STATE": {
+            "pdu_id": 1,
+            "can_id": 1025
+          },
+          "BCM_COM_TX_DOOR_LOCK": {
+            "pdu_id": 2,
+            "can_id": 1026
+          }
+        },
+        "com_rx_pdus": {
+          "BCM_COM_RX_VEHICLE_STATE": {
+            "pdu_id": 0,
+            "can_id": 256
+          },
+          "BCM_COM_RX_MOTOR_CURRENT": {
+            "pdu_id": 1,
+            "can_id": 769
+          },
+          "BCM_COM_RX_BODY_CMD": {
+            "pdu_id": 2,
+            "can_id": 848
+          }
+        },
+        "dtc_events": {},
+        "e2e_data_ids": {},
+        "enums": {},
+        "thresholds": {}
+      },
+      "runnables": [
+        {
+          "function": "Can_MainFunction_Read",
+          "period_ms": 10,
+          "priority": 8,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Com_MainFunction_Rx",
+          "period_ms": 10,
+          "priority": 7,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Bcm_ComBridge_10ms",
+          "period_ms": 10,
+          "priority": 6,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Swc_Lights_10ms",
+          "period_ms": 10,
+          "priority": 5,
+          "wdgm_se_id": 0
+        },
+        {
+          "function": "Swc_Indicators_10ms",
+          "period_ms": 10,
+          "priority": 4,
+          "wdgm_se_id": 1
+        },
+        {
+          "function": "Swc_DoorLock_100ms",
+          "period_ms": 100,
+          "priority": 3,
+          "wdgm_se_id": 2
+        },
+        {
+          "function": "Com_MainFunction_Tx",
+          "period_ms": 10,
+          "priority": 2,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Can_MainFunction_BusOff",
+          "period_ms": 10,
+          "priority": 1,
+          "wdgm_se_id": 255
+        }
+      ],
+      "com_signals": [
+        {
+          "signal_id": 0,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "BCM_COM_TX_LIGHT_STATUS",
+          "buffer_name": "sig_tx_light_headlamp"
+        },
+        {
+          "signal_id": 1,
+          "bit_pos": 24,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "BCM_COM_TX_LIGHT_STATUS",
+          "buffer_name": "sig_tx_light_tail"
+        },
+        {
+          "signal_id": 2,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "BCM_COM_TX_INDICATOR_STATE",
+          "buffer_name": "sig_tx_indicator_left"
+        },
+        {
+          "signal_id": 3,
+          "bit_pos": 24,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "BCM_COM_TX_INDICATOR_STATE",
+          "buffer_name": "sig_tx_indicator_right"
+        },
+        {
+          "signal_id": 4,
+          "bit_pos": 32,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "BCM_COM_TX_INDICATOR_STATE",
+          "buffer_name": "sig_tx_hazard_active"
+        },
+        {
+          "signal_id": 5,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "BCM_COM_TX_DOOR_LOCK",
+          "buffer_name": "sig_tx_door_lock_state"
+        },
+        {
+          "signal_id": 6,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "BCM_COM_RX_VEHICLE_STATE",
+          "buffer_name": "sig_rx_vehicle_state"
+        },
+        {
+          "signal_id": 7,
+          "bit_pos": 24,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "BCM_COM_RX_VEHICLE_STATE",
+          "buffer_name": "sig_rx_vehicle_speed"
+        },
+        {
+          "signal_id": 8,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "BCM_COM_RX_BODY_CMD",
+          "buffer_name": "sig_rx_body_cmd_byte0"
+        },
+        {
+          "signal_id": 9,
+          "bit_pos": 24,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "BCM_COM_RX_BODY_CMD",
+          "buffer_name": "sig_rx_body_cmd_byte1"
+        },
+        {
+          "signal_id": 10,
+          "bit_pos": 32,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "BCM_COM_RX_BODY_CMD",
+          "buffer_name": "sig_rx_estop_active"
+        },
+        {
+          "signal_id": 11,
+          "bit_pos": 16,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "BCM_COM_RX_MOTOR_CURRENT",
+          "buffer_name": "sig_rx_motor_current"
+        }
+      ],
+      "swcs": [
+        {
+          "name": "Swc_BcmCan",
+          "header": "../taktflow-embedded/firmware\\bcm\\include\\Swc_BcmCan.h",
+          "functions": []
+        },
+        {
+          "name": "Swc_BcmMain",
+          "header": "../taktflow-embedded/firmware\\bcm\\include\\Swc_BcmMain.h",
+          "functions": []
+        },
+        {
+          "name": "Swc_DoorLock",
+          "header": "../taktflow-embedded/firmware\\bcm\\include\\Swc_DoorLock.h",
+          "functions": [
+            "Swc_DoorLock_Init",
+            "Swc_DoorLock_100ms"
+          ]
+        },
+        {
+          "name": "Swc_Indicators",
+          "header": "../taktflow-embedded/firmware\\bcm\\include\\Swc_Indicators.h",
+          "functions": [
+            "Swc_Indicators_Init",
+            "Swc_Indicators_10ms"
+          ]
+        },
+        {
+          "name": "Swc_Lights",
+          "header": "../taktflow-embedded/firmware\\bcm\\include\\Swc_Lights.h",
+          "functions": [
+            "Swc_Lights_Init",
+            "Swc_Lights_10ms"
+          ]
+        }
+      ]
+    },
+    "icu": {
+      "prefix": "ICU",
+      "cfg": {
+        "rte_signals": {
+          "ICU_SIG_MOTOR_RPM": 16,
+          "ICU_SIG_TORQUE_PCT": 17,
+          "ICU_SIG_MOTOR_TEMP": 18,
+          "ICU_SIG_BATTERY_VOLTAGE": 19,
+          "ICU_SIG_VEHICLE_STATE": 20,
+          "ICU_SIG_ESTOP_ACTIVE": 21,
+          "ICU_SIG_HEARTBEAT_CVC": 22,
+          "ICU_SIG_HEARTBEAT_FZC": 23,
+          "ICU_SIG_HEARTBEAT_RZC": 24,
+          "ICU_SIG_OVERCURRENT_FLAG": 25,
+          "ICU_SIG_LIGHT_STATUS": 26,
+          "ICU_SIG_INDICATOR_STATE": 27,
+          "ICU_SIG_DTC_BROADCAST": 28
+        },
+        "com_tx_pdus": {
+          "ICU_COM_TX_HEARTBEAT": {
+            "pdu_id": 0,
+            "can_id": 20
+          }
+        },
+        "com_rx_pdus": {
+          "ICU_COM_RX_ESTOP": {
+            "pdu_id": 0,
+            "can_id": 1
+          },
+          "ICU_COM_RX_HB_CVC": {
+            "pdu_id": 1,
+            "can_id": 16
+          },
+          "ICU_COM_RX_HB_FZC": {
+            "pdu_id": 2,
+            "can_id": 17
+          },
+          "ICU_COM_RX_HB_RZC": {
+            "pdu_id": 3,
+            "can_id": 18
+          },
+          "ICU_COM_RX_VEHICLE_STATE": {
+            "pdu_id": 4,
+            "can_id": 256
+          },
+          "ICU_COM_RX_TORQUE_REQ": {
+            "pdu_id": 5,
+            "can_id": 257
+          },
+          "ICU_COM_RX_MOTOR_CURRENT": {
+            "pdu_id": 6,
+            "can_id": 769
+          },
+          "ICU_COM_RX_MOTOR_TEMP": {
+            "pdu_id": 7,
+            "can_id": 770
+          },
+          "ICU_COM_RX_BATTERY": {
+            "pdu_id": 8,
+            "can_id": 771
+          },
+          "ICU_COM_RX_LIGHT_STATUS": {
+            "pdu_id": 9,
+            "can_id": 1024
+          },
+          "ICU_COM_RX_INDICATOR": {
+            "pdu_id": 10,
+            "can_id": 1025
+          },
+          "ICU_COM_RX_DOOR_LOCK": {
+            "pdu_id": 11,
+            "can_id": 1026
+          },
+          "ICU_COM_RX_DTC_BCAST": {
+            "pdu_id": 12,
+            "can_id": 1280
+          },
+          "ICU_COM_RX_PDU_COUNT": {
+            "pdu_id": 13,
+            "can_id": null
+          }
+        },
+        "dtc_events": {},
+        "e2e_data_ids": {},
+        "enums": {},
+        "thresholds": {
+          "ICU_TEMP_GREEN_MAX": 59,
+          "ICU_TEMP_YELLOW_MAX": 79,
+          "ICU_TEMP_ORANGE_MAX": 99,
+          "ICU_BATT_GREEN_MIN": 11000,
+          "ICU_BATT_YELLOW_MIN": 10000,
+          "ICU_HB_TIMEOUT_TICKS": 4
+        }
+      },
+      "runnables": [
+        {
+          "function": "Can_MainFunction_Read",
+          "period_ms": 10,
+          "priority": 7,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Com_MainFunction_Rx",
+          "period_ms": 10,
+          "priority": 6,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Swc_Dashboard_50ms",
+          "period_ms": 50,
+          "priority": 5,
+          "wdgm_se_id": 0
+        },
+        {
+          "function": "Swc_DtcDisplay_50ms",
+          "period_ms": 50,
+          "priority": 4,
+          "wdgm_se_id": 1
+        },
+        {
+          "function": "Icu_Heartbeat_500ms",
+          "period_ms": 10,
+          "priority": 3,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Com_MainFunction_Tx",
+          "period_ms": 10,
+          "priority": 2,
+          "wdgm_se_id": 255
+        },
+        {
+          "function": "Can_MainFunction_BusOff",
+          "period_ms": 50,
+          "priority": 1,
+          "wdgm_se_id": 255
+        }
+      ],
+      "com_signals": [
+        {
+          "signal_id": 0,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "ICU_COM_RX_ESTOP",
+          "buffer_name": "sig_rx_estop_active"
+        },
+        {
+          "signal_id": 1,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "ICU_COM_RX_HB_CVC",
+          "buffer_name": "sig_rx_hb_cvc_alive"
+        },
+        {
+          "signal_id": 2,
+          "bit_pos": 24,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "ICU_COM_RX_HB_CVC",
+          "buffer_name": "sig_rx_hb_cvc_ecu_id"
+        },
+        {
+          "signal_id": 3,
+          "bit_pos": 32,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "ICU_COM_RX_HB_CVC",
+          "buffer_name": "sig_rx_hb_cvc_state"
+        },
+        {
+          "signal_id": 4,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "ICU_COM_RX_HB_FZC",
+          "buffer_name": "sig_rx_hb_fzc_alive"
+        },
+        {
+          "signal_id": 5,
+          "bit_pos": 24,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "ICU_COM_RX_HB_FZC",
+          "buffer_name": "sig_rx_hb_fzc_ecu_id"
+        },
+        {
+          "signal_id": 6,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "ICU_COM_RX_HB_RZC",
+          "buffer_name": "sig_rx_hb_rzc_alive"
+        },
+        {
+          "signal_id": 7,
+          "bit_pos": 24,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "ICU_COM_RX_HB_RZC",
+          "buffer_name": "sig_rx_hb_rzc_ecu_id"
+        },
+        {
+          "signal_id": 8,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "ICU_COM_RX_VEHICLE_STATE",
+          "buffer_name": "sig_rx_vehicle_state"
+        },
+        {
+          "signal_id": 9,
+          "bit_pos": 16,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "ICU_COM_RX_TORQUE_REQ",
+          "buffer_name": "sig_rx_torque_request"
+        },
+        {
+          "signal_id": 10,
+          "bit_pos": 16,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "ICU_COM_RX_MOTOR_CURRENT",
+          "buffer_name": "sig_rx_motor_current"
+        },
+        {
+          "signal_id": 11,
+          "bit_pos": 32,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "ICU_COM_RX_MOTOR_CURRENT",
+          "buffer_name": "sig_rx_motor_rpm"
+        },
+        {
+          "signal_id": 12,
+          "bit_pos": 48,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "ICU_COM_RX_MOTOR_CURRENT",
+          "buffer_name": "sig_rx_overcurrent_flag"
+        },
+        {
+          "signal_id": 13,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "ICU_COM_RX_MOTOR_TEMP",
+          "buffer_name": "sig_rx_motor_temp"
+        },
+        {
+          "signal_id": 14,
+          "bit_pos": 16,
+          "bit_size": 16,
+          "type": "COM_UINT16",
+          "pdu_id_name": "ICU_COM_RX_BATTERY",
+          "buffer_name": "sig_rx_battery_voltage"
+        },
+        {
+          "signal_id": 15,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "ICU_COM_RX_LIGHT_STATUS",
+          "buffer_name": "sig_rx_light_status"
+        },
+        {
+          "signal_id": 16,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "ICU_COM_RX_INDICATOR",
+          "buffer_name": "sig_rx_indicator_state"
+        },
+        {
+          "signal_id": 17,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "ICU_COM_RX_DOOR_LOCK",
+          "buffer_name": "sig_rx_door_lock"
+        },
+        {
+          "signal_id": 18,
+          "bit_pos": 16,
+          "bit_size": 32,
+          "type": "COM_UINT16",
+          "pdu_id_name": "ICU_COM_RX_DTC_BCAST",
+          "buffer_name": "sig_rx_dtc_broadcast"
+        },
+        {
+          "signal_id": 19,
+          "bit_pos": 16,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "ICU_COM_TX_HEARTBEAT",
+          "buffer_name": "sig_tx_hb_alive"
+        },
+        {
+          "signal_id": 20,
+          "bit_pos": 24,
+          "bit_size": 8,
+          "type": "COM_UINT8",
+          "pdu_id_name": "ICU_COM_TX_HEARTBEAT",
+          "buffer_name": "sig_tx_hb_ecu_id"
+        }
+      ],
+      "swcs": [
+        {
+          "name": "Swc_Dashboard",
+          "header": "../taktflow-embedded/firmware\\icu\\include\\Swc_Dashboard.h",
+          "functions": [
+            "Swc_Dashboard_Init",
+            "Swc_Dashboard_50ms"
+          ]
+        },
+        {
+          "name": "Swc_DtcDisplay",
+          "header": "../taktflow-embedded/firmware\\icu\\include\\Swc_DtcDisplay.h",
+          "functions": [
+            "Swc_DtcDisplay_Init",
+            "Swc_DtcDisplay_50ms",
+            "Swc_DtcDisplay_GetCount",
+            "Swc_DtcDisplay_ClearAll"
+          ]
+        }
+      ]
+    },
+    "tcu": {
+      "prefix": "TCU",
+      "cfg": {
+        "rte_signals": {
+          "TCU_SIG_VEHICLE_SPEED": 16,
+          "TCU_SIG_MOTOR_TEMP": 17,
+          "TCU_SIG_BATTERY_VOLTAGE": 18,
+          "TCU_SIG_MOTOR_CURRENT": 19,
+          "TCU_SIG_TORQUE_PCT": 20,
+          "TCU_SIG_MOTOR_RPM": 21,
+          "TCU_SIG_DTC_BROADCAST": 22
+        },
+        "com_tx_pdus": {
+          "TCU_COM_TX_UDS_RSP": {
+            "pdu_id": 0,
+            "can_id": null
+          },
+          "TCU_COM_TX_HEARTBEAT": {
+            "pdu_id": 1,
+            "can_id": null
+          },
+          "TCU_COM_TX_PDU_COUNT_ACTUAL": {
+            "pdu_id": 2,
+            "can_id": null
+          }
+        },
+        "com_rx_pdus": {
+          "TCU_COM_RX_UDS_FUNC": {
+            "pdu_id": 0,
+            "can_id": null
+          },
+          "TCU_COM_RX_UDS_PHYS": {
+            "pdu_id": 1,
+            "can_id": null
+          },
+          "TCU_COM_RX_VEHICLE_STATE": {
+            "pdu_id": 2,
+            "can_id": null
+          },
+          "TCU_COM_RX_MOTOR_CURRENT": {
+            "pdu_id": 3,
+            "can_id": null
+          },
+          "TCU_COM_RX_MOTOR_TEMP": {
+            "pdu_id": 4,
+            "can_id": null
+          },
+          "TCU_COM_RX_BATTERY": {
+            "pdu_id": 5,
+            "can_id": null
+          },
+          "TCU_COM_RX_DTC_BCAST": {
+            "pdu_id": 6,
+            "can_id": null
+          },
+          "TCU_COM_RX_HB_CVC": {
+            "pdu_id": 7,
+            "can_id": null
+          },
+          "TCU_COM_RX_HB_FZC": {
+            "pdu_id": 8,
+            "can_id": null
+          },
+          "TCU_COM_RX_HB_RZC": {
+            "pdu_id": 9,
+            "can_id": null
+          }
+        },
+        "dtc_events": {
+          "TCU_DTC_AGING_CLEAR_CYCLES": 40
+        },
+        "e2e_data_ids": {},
+        "enums": {},
+        "thresholds": {
+          "TCU_UDS_SESSION_TIMEOUT_TICKS": 500,
+          "TCU_UDS_MAX_SECURITY_ATTEMPTS": 3
+        }
+      },
+      "runnables": [],
+      "com_signals": [],
+      "swcs": [
+        {
+          "name": "Swc_DataAggregator",
+          "header": "../taktflow-embedded/firmware\\tcu\\include\\Swc_DataAggregator.h",
+          "functions": []
+        },
+        {
+          "name": "Swc_DtcStore",
+          "header": "../taktflow-embedded/firmware\\tcu\\include\\Swc_DtcStore.h",
+          "functions": [
+            "Swc_DtcStore_Init",
+            "Swc_DtcStore_10ms",
+            "Swc_DtcStore_GetCount",
+            "Swc_DtcStore_Clear",
+            "Swc_DtcStore_Add",
+            "Swc_DtcStore_GetByMask"
+          ]
+        },
+        {
+          "name": "Swc_Obd2Pids",
+          "header": "../taktflow-embedded/firmware\\tcu\\include\\Swc_Obd2Pids.h",
+          "functions": [
+            "Swc_Obd2Pids_Init",
+            "Swc_Obd2Pids_HandleRequest"
+          ]
+        },
+        {
+          "name": "Swc_UdsServer",
+          "header": "../taktflow-embedded/firmware\\tcu\\include\\Swc_UdsServer.h",
+          "functions": [
+            "Swc_UdsServer_Init",
+            "Swc_UdsServer_10ms",
+            "Swc_UdsServer_ProcessRequest",
+            "Swc_UdsServer_GetSession"
+          ]
+        }
+      ]
+    }
+  }
+}

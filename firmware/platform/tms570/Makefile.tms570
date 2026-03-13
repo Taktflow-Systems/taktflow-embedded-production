@@ -1,0 +1,210 @@
+# =============================================================================
+# Makefile.tms570 — TMS570LC4357 target build for SC (Safety Controller)
+#
+# Production repo layout. Builds SC bare-metal firmware using TI ARM Clang
+# (tiarmclang) from CCS 20.4.1, targeting TMS570LC4357 (LAUNCHXL2-570LC43
+# LaunchPad). Links HALCoGen-generated init code with SC application sources.
+#
+# Run from project root:
+#   make -f firmware/platform/tms570/Makefile.tms570
+#   make -f firmware/platform/tms570/Makefile.tms570 flash
+#   make -f firmware/platform/tms570/Makefile.tms570 size
+#   make -f firmware/platform/tms570/Makefile.tms570 clean
+#
+# Output:  build/tms570/sc.elf
+# =============================================================================
+
+# --- Toolchain (TI ARM Clang from CCS 20.4.1) ---
+TI_CGT_DIR = C:/ti/ccs2041/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS
+CC  = $(TI_CGT_DIR)/bin/tiarmclang
+SZ  = $(TI_CGT_DIR)/bin/tiarmsize
+
+# --- MCU flags (TMS570LC4357 = Cortex-R5F, VFPv3-D16, hard float, big-endian) ---
+MCU_FLAGS = -mcpu=cortex-r5 -marm -mfpu=vfpv3-d16 -mfloat-abi=hard -mbig-endian
+
+# --- Common compiler flags (shared by HALCoGen and SC) ---
+COMMON_CFLAGS  = $(MCU_FLAGS)
+COMMON_CFLAGS += -std=c99
+COMMON_CFLAGS += -DPLATFORM_TMS570
+COMMON_CFLAGS += -fdata-sections -ffunction-sections
+
+# --- Build mode (default: debug for bring-up phase) ---
+ifdef RELEASE
+  COMMON_CFLAGS += -Os -DNDEBUG
+else
+  COMMON_CFLAGS += -Og -g3 -DDEBUG
+endif
+
+# --- Diagnostic logging (pass DIAG=1 to enable) ---
+ifdef DIAG
+  COMMON_CFLAGS += -DSIL_DIAG
+endif
+
+# --- Directories (production layout) ---
+FW           = firmware
+ECU          = $(FW)/ecu
+PLAT         = $(FW)/platform/tms570
+SC_DIR       = $(ECU)/sc
+HALCOGEN_DIR = $(SC_DIR)/halcogen
+BUILD_DIR    = build/tms570
+
+# --- Include paths (shared) ---
+INC_FLAGS  = -I$(SC_DIR)/include
+INC_FLAGS += -I$(HALCOGEN_DIR)/include
+INC_FLAGS += -I$(PLAT)/include
+
+# --- SC code: strict warnings ---
+SC_CFLAGS  = $(COMMON_CFLAGS) $(INC_FLAGS)
+SC_CFLAGS += -Wall -Wextra -Werror
+
+# --- HALCoGen code: relaxed warnings (auto-generated, can't fix) ---
+HAL_CFLAGS  = $(COMMON_CFLAGS) $(INC_FLAGS)
+HAL_CFLAGS += -Wall -Wno-unused-parameter -Wno-unused-variable
+HAL_CFLAGS += -Wno-ti-macros -Wno-ti-pragmas
+
+# --- Linker script (HALCoGen-generated .cmd format) ---
+LDSCRIPT = $(HALCOGEN_DIR)/source/HL_sys_link.cmd
+
+# --- Linker flags (via tiarmclang driver -> tiarmlnk) ---
+# --rom_model: auto-init globals from flash (required for __TI_auto_init)
+# --be32: MANDATORY — TMS570 uses BE-32 byte ordering, linker defaults to BE-8.
+#         Without this, instructions are byte-swapped and CPU executes garbage.
+LDFLAGS  = $(MCU_FLAGS)
+LDFLAGS += -Wl,-m,$(BUILD_DIR)/sc.map
+LDFLAGS += -Wl,--rom_model
+LDFLAGS += -Wl,--be32
+
+# --- HALCoGen C sources (exclude files with conflicting symbols) ---
+# Excluded:
+#   HL_sys_main.c  — defines main() (conflicts with sc_main.c)
+#   HL_gio.c       — gioSetBit/gioSetDirection use (gioPORT_t*, uint32)
+#                     signatures, SC uses (uint8, uint8, uint8)
+#   HL_rti.c       — rtiStartCounter uses (rtiBASE_t*, uint32),
+#                     SC uses (void)
+# Replacement implementations in sc_hw_tms570.c.
+HALCOGEN_SRCS_ALL = $(wildcard $(HALCOGEN_DIR)/source/*.c)
+HALCOGEN_EXCLUDE  = $(HALCOGEN_DIR)/source/HL_sys_main.c \
+                    $(HALCOGEN_DIR)/source/HL_gio.c \
+                    $(HALCOGEN_DIR)/source/HL_rti.c \
+                    $(HALCOGEN_DIR)/source/HL_notification.c \
+                    $(HALCOGEN_DIR)/source/HL_emif.c
+HALCOGEN_SRCS = $(filter-out $(HALCOGEN_EXCLUDE),$(HALCOGEN_SRCS_ALL))
+
+# --- HALCoGen assembly (.asm — TI assembler syntax) ---
+# sc_startup.S replaces: HL_sys_core.asm, HL_sys_intvecs.asm, HL_sys_mpu.asm, HL_sys_pmu.asm
+# Exclude them to avoid duplicate symbol errors.
+HALCOGEN_ASM_ALL = $(wildcard $(HALCOGEN_DIR)/source/*.asm)
+HALCOGEN_ASM_EXCLUDE = $(HALCOGEN_DIR)/source/HL_sys_core.asm \
+                       $(HALCOGEN_DIR)/source/HL_sys_intvecs.asm \
+                       $(HALCOGEN_DIR)/source/HL_sys_mpu.asm \
+                       $(HALCOGEN_DIR)/source/HL_sys_pmu.asm
+HALCOGEN_ASM = $(filter-out $(HALCOGEN_ASM_EXCLUDE),$(HALCOGEN_ASM_ALL))
+
+# --- SC application sources (exclude POSIX backend) ---
+SC_SRCS_ALL = $(wildcard $(SC_DIR)/src/*.c)
+SC_HW_TMS570 = $(PLAT)/src/sc_hw_tms570.c
+SC_SRCS = $(filter-out %_posix.c,$(SC_SRCS_ALL)) $(SC_HW_TMS570)
+
+# --- SC GNU assembly (.S — preprocessed assembly, e.g. sc_startup.S) ---
+SC_ASM_GNU = $(wildcard $(SC_DIR)/src/*.S)
+
+# --- Object files ---
+HAL_OBJS     = $(patsubst %.c,$(BUILD_DIR)/%.o,$(HALCOGEN_SRCS))
+SC_OBJS      = $(patsubst %.c,$(BUILD_DIR)/%.o,$(SC_SRCS))
+ASM_OBJS     = $(patsubst %.asm,$(BUILD_DIR)/%.o,$(HALCOGEN_ASM))
+SC_ASM_OBJS  = $(patsubst %.S,$(BUILD_DIR)/%.o,$(SC_ASM_GNU))
+ALL_OBJS     = $(HAL_OBJS) $(SC_OBJS) $(ASM_OBJS) $(SC_ASM_OBJS)
+
+# --- Output files ---
+ELF = $(BUILD_DIR)/sc.elf
+MAP = $(BUILD_DIR)/sc.map
+
+# --- Flash size budget (TMS570LC4357: < 80% of 3MB = 2457600 bytes) ---
+FLASH_BUDGET = 2457600
+
+# --- Flash tool (DSLite from CCS — XDS110 built into LaunchPad) ---
+DSLITE = C:/ti/ccs2041/ccs/ccs_base/DebugServer/bin/DSLite.exe
+CCXML  = $(SC_DIR)/TMS570LC43xx_XDS110.ccxml
+
+# =============================================================================
+# Targets
+# =============================================================================
+
+.PHONY: all flash size clean check-halcogen blinky flash-blinky
+
+all: check-halcogen $(ELF)
+	@echo "=== Built $(ELF) ==="
+
+# --- Verify HALCoGen project exists ---
+check-halcogen:
+	@if [ ! -d "$(HALCOGEN_DIR)/source" ]; then \
+		echo "ERROR: HALCoGen project not found at $(HALCOGEN_DIR)/"; \
+		echo "Run HALCoGen GUI to generate TMS570LC43x init code first."; \
+		exit 1; \
+	fi
+
+# --- Link ELF (tiarmclang handles .cmd linker scripts + TI runtime) ---
+$(ELF): $(ALL_OBJS) | $(BUILD_DIR)
+	$(CC) $(LDFLAGS) $(ALL_OBJS) $(LDSCRIPT) -o $@
+
+# --- Compile HALCoGen sources (relaxed warnings) ---
+$(BUILD_DIR)/$(HALCOGEN_DIR)/%.o: $(HALCOGEN_DIR)/%.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(HAL_CFLAGS) -c $< -o $@
+
+# --- Compile SC sources (strict warnings) ---
+$(BUILD_DIR)/$(SC_DIR)/%.o: $(SC_DIR)/%.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(SC_CFLAGS) -c $< -o $@
+
+# --- Compile platform hw sources (strict warnings) ---
+$(BUILD_DIR)/$(PLAT)/%.o: $(PLAT)/%.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(SC_CFLAGS) -c $< -o $@
+
+# --- Assemble .asm (TI assembler syntax — requires -x ti-asm for LLVM) ---
+$(BUILD_DIR)/$(HALCOGEN_DIR)/%.o: $(HALCOGEN_DIR)/%.asm | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(MCU_FLAGS) -x ti-asm -c $< -o $@
+
+# --- Assemble .S (GNU syntax — preprocessed assembly, e.g. sc_startup.S) ---
+$(BUILD_DIR)/$(SC_DIR)/%.o: $(SC_DIR)/%.S | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(MCU_FLAGS) $(INC_FLAGS) -c $< -o $@
+
+# --- Build directory ---
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
+
+# --- Flash via DSLite (XDS110) ---
+flash: $(ELF)
+	@echo "=== Flashing SC via DSLite (XDS110) ==="
+	"$(DSLITE)" load -c "$(CCXML)" -f "$(ELF)"
+
+# --- Standalone LED blinky test (pure assembly, no C) ---
+BLINKY_SRC = $(SC_DIR)/test/test_blinky.S
+BLINKY_OBJ = $(BUILD_DIR)/test_blinky.o
+BLINKY_ELF = $(BUILD_DIR)/test_blinky.elf
+
+blinky: $(BLINKY_ELF)
+	@echo "=== Built $(BLINKY_ELF) (standalone blinky test) ==="
+
+$(BLINKY_ELF): $(BLINKY_OBJ) | $(BUILD_DIR)
+	$(CC) $(MCU_FLAGS) -Wl,-m,$(BUILD_DIR)/test_blinky.map -Wl,--ram_model -Wl,--be32 -Wl,-e,resetEntry $(BLINKY_OBJ) $(LDSCRIPT) -o $@
+
+$(BLINKY_OBJ): $(BLINKY_SRC) | $(BUILD_DIR)
+	$(CC) $(MCU_FLAGS) -c $< -o $@
+
+flash-blinky: $(BLINKY_ELF)
+	@echo "=== Flashing blinky test via DSLite (XDS110) ==="
+	"$(DSLITE)" load -c "$(CCXML)" -f "$(BLINKY_ELF)"
+
+# --- Firmware size report ---
+size: $(ELF)
+	@echo "=== Firmware size: SC (TMS570) ==="
+	$(SZ) $(ELF)
+
+# --- Clean ---
+clean:
+	rm -rf $(BUILD_DIR)
+	@echo "=== Cleaned TMS570 build directory ==="

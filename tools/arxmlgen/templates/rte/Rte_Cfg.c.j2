@@ -1,0 +1,57 @@
+{% include "common/file_header.j2" %}
+#include "Rte.h"
+#include "{{ ecu.prefix | pascal_case }}_Cfg.h"
+
+/* ==================================================================
+ * Forward declarations for SWC runnables
+ * ================================================================== */
+
+{% for swc in ecu.swcs %}
+{% for r in swc.runnables %}
+extern void {{ r.name }}(void);
+{% endfor %}
+{% endfor %}
+
+/* ==================================================================
+ * Signal Configuration Table
+ * ================================================================== */
+
+static const Rte_SignalConfigType {{ ecu.name }}_signal_config[{{ ecu.prefix }}_SIG_COUNT] = {
+    /* BSW well-known signals (0-15) — initial values */
+{% for i in range(10) %}
+    { {{ "%2d"|format(i) }}u, 0u },   /* {{ bsw_signal_names[i] }} */
+{% endfor %}
+{% for i in range(10, 16) %}
+    { {{ "%2d"|format(i) }}u, 0u },   /* Reserved                */
+{% endfor %}
+
+    /* {{ ecu.prefix }} application signals (16+) */
+{% for sig_name, sig_id in ecu_app_signals %}
+    { {{ ecu.prefix }}_SIG_{{ sig_name | upper_snake }}, 0u },   /* {{ sig_id }}: {{ sig_name }} */
+{% endfor %}
+};
+
+/* ==================================================================
+ * Runnable Configuration Table
+ * Priority: higher number = executes first within same period
+ * ================================================================== */
+
+static const Rte_RunnableConfigType {{ ecu.name }}_runnable_config[] = {
+    /* func,                        periodMs, priority, seId */
+{% for r in sorted_runnables %}
+    { {{ "%-40s"|format(r.name + ",") }} {{ "%5d"|format(r.period_ms) }}u, {{ "%5d"|format(r.priority) }}u, {{ r.wdgm_se_id | hex2 }}u },
+{% endfor %}
+};
+
+#define {{ ecu.prefix }}_RUNNABLE_COUNT  (sizeof({{ ecu.name }}_runnable_config) / sizeof({{ ecu.name }}_runnable_config[0]))
+
+/* ==================================================================
+ * Aggregate RTE Configuration
+ * ================================================================== */
+
+const Rte_ConfigType {{ ecu.name }}_rte_config = {
+    .signalConfig   = {{ ecu.name }}_signal_config,
+    .signalCount    = {{ ecu.prefix }}_SIG_COUNT,
+    .runnableConfig = {{ ecu.name }}_runnable_config,
+    .runnableCount  = (uint8){{ ecu.prefix }}_RUNNABLE_COUNT,
+};

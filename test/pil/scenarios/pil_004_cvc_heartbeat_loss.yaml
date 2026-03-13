@@ -1,0 +1,56 @@
+name: CVC Heartbeat Loss Detection
+id: PIL-004
+description: >
+  Verify CVC detects loss of FZC heartbeat and transitions to DEGRADED mode.
+  The heartbeat injector stops sending FZC (0x011) heartbeats while all
+  others continue. CVC should detect the timeout (100ms) and broadcast a
+  DTC indicating FZC communication loss.
+verifies:
+  - SWR-CVC-020
+  - SWR-CVC-021
+  - TSR-040
+  - SSR-015
+asil: D
+aspice: SWE.5
+timeout_sec: 30
+
+setup:
+  - action: wait_state
+    state: RUN
+    timeout: 15
+    description: "Wait for CVC to reach stable RUN state"
+  - action: wait
+    seconds: 2
+    description: "Let CVC run in normal mode for 2s"
+
+steps:
+  - action: exclude_ecu
+    ecu: FZC
+    description: "Stop sending FZC heartbeat (0x011) — simulate FZC loss"
+
+  - action: wait
+    seconds: 3
+    description: "Wait for CVC to detect FZC timeout (100ms + margin)"
+
+  - action: poll
+    seconds: 5
+    description: "Observe CVC response to FZC loss"
+
+verdicts:
+  - type: state_transition
+    from: RUN
+    to: DEGRADED
+    within_ms: 5000
+    description: "CVC transitions from RUN to DEGRADED on FZC loss"
+
+  - type: dtc_broadcast
+    within_ms: 8000
+    description: "CVC broadcasts a DTC for FZC communication loss"
+
+teardown:
+  - action: include_ecu
+    ecu: FZC
+    description: "Resume FZC heartbeat injection"
+  - action: wait
+    seconds: 2
+    description: "Allow CVC to recover"

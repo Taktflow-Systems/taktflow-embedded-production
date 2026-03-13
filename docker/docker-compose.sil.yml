@@ -1,0 +1,97 @@
+# SIL Docker Compose — Full 7-ECU + plant-sim + gateway simulation
+# Usage: docker compose -f docker/docker-compose.sil.yml up
+
+version: "3.8"
+
+networks:
+  canbus:
+    driver: bridge
+
+services:
+  # Central Vehicle Controller
+  cvc:
+    build:
+      context: ..
+      dockerfile: docker/ecu/Dockerfile.ecu
+      args:
+        ECU_NAME: cvc
+    networks: [canbus]
+    cap_add: [NET_ADMIN]
+
+  # Front Zone Controller
+  fzc:
+    build:
+      context: ..
+      dockerfile: docker/ecu/Dockerfile.ecu
+      args:
+        ECU_NAME: fzc
+    networks: [canbus]
+    cap_add: [NET_ADMIN]
+
+  # Rear Zone Controller
+  rzc:
+    build:
+      context: ..
+      dockerfile: docker/ecu/Dockerfile.ecu
+      args:
+        ECU_NAME: rzc
+    networks: [canbus]
+    cap_add: [NET_ADMIN]
+
+  # Safety Controller (POSIX simulation)
+  sc:
+    build:
+      context: ..
+      dockerfile: docker/ecu/Dockerfile.ecu
+      args:
+        ECU_NAME: sc
+    networks: [canbus]
+    cap_add: [NET_ADMIN]
+
+  # Body Control Module
+  bcm:
+    build:
+      context: ..
+      dockerfile: docker/ecu/Dockerfile.ecu
+      args:
+        ECU_NAME: bcm
+    networks: [canbus]
+    cap_add: [NET_ADMIN]
+
+  # Instrument Cluster Unit
+  icu:
+    build:
+      context: ..
+      dockerfile: docker/ecu/Dockerfile.ecu
+      args:
+        ECU_NAME: icu
+    networks: [canbus]
+    cap_add: [NET_ADMIN]
+
+  # Transmission Control Unit
+  tcu:
+    build:
+      context: ..
+      dockerfile: docker/ecu/Dockerfile.ecu
+      args:
+        ECU_NAME: tcu
+    networks: [canbus]
+    cap_add: [NET_ADMIN]
+
+  # Plant simulation (vehicle dynamics model)
+  plant-sim:
+    build:
+      context: ..
+      dockerfile: gateway/plant_sim_py/Dockerfile
+    networks: [canbus]
+    cap_add: [NET_ADMIN]
+
+  # CAN gateway (CAN <-> MQTT bridge)
+  gateway:
+    build:
+      context: ..
+      dockerfile: gateway/can_gateway/Dockerfile
+    networks: [canbus]
+    cap_add: [NET_ADMIN]
+    ports:
+      - "1883:1883"

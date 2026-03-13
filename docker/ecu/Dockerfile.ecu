@@ -1,0 +1,30 @@
+# Dockerfile for SIL ECU build
+# Build arg: ECU_NAME (cvc, fzc, rzc, sc, bcm, icu, tcu)
+
+ARG ECU_NAME=cvc
+
+FROM ubuntu:22.04 AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc make can-utils libsocketcan-dev libncurses-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+COPY firmware/ firmware/
+
+ARG ECU_NAME
+RUN make -f firmware/platform/posix/Makefile.posix TARGET=${ECU_NAME} DIAG=1
+
+FROM ubuntu:22.04
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    can-utils iproute2 libncurses6 \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG ECU_NAME
+COPY --from=builder /build/build/${ECU_NAME}_posix /app/${ECU_NAME}
+
+COPY docker/ecu/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+ENV ECU_NAME=${ECU_NAME}
+ENTRYPOINT ["/app/entrypoint.sh"]

@@ -1,0 +1,140 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_TIMESTREAM",
+      "label": "Amazon Timestream",
+      "description": "Taktflow telemetry data source",
+      "type": "datasource",
+      "pluginId": "grafana-timestream-datasource"
+    }
+  ],
+  "title": "Taktflow HIL Telemetry",
+  "uid": "taktflow-hil",
+  "tags": ["taktflow", "hil", "automotive", "can"],
+  "timezone": "browser",
+  "refresh": "5s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "title": "Motor Speed (RPM)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "datasource": "${DS_TIMESTREAM}",
+      "targets": [
+        {
+          "rawQuery": true,
+          "query": "SELECT time, measure_value::double AS rpm FROM \"taktflow-telemetry\".\"vehicle-data\" WHERE topic = 'vehicle/telemetry' AND measure_name = 'motor_speed_rpm' ORDER BY time DESC LIMIT 500"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rpm",
+          "color": {"mode": "fixed", "fixedColor": "blue"},
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 3000},
+              {"color": "red", "value": 3500}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Battery Voltage",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "datasource": "${DS_TIMESTREAM}",
+      "targets": [
+        {
+          "rawQuery": true,
+          "query": "SELECT time, measure_value::double AS voltage FROM \"taktflow-telemetry\".\"vehicle-data\" WHERE topic = 'vehicle/telemetry' AND measure_name = 'battery_voltage_v' ORDER BY time DESC LIMIT 500"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "volt",
+          "color": {"mode": "fixed", "fixedColor": "orange"},
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": null},
+              {"color": "yellow", "value": 11.0},
+              {"color": "green", "value": 11.5}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "ML Anomaly Score",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "datasource": "${DS_TIMESTREAM}",
+      "targets": [
+        {
+          "rawQuery": true,
+          "query": "SELECT time, measure_value::double AS score FROM \"taktflow-telemetry\".\"vehicle-data\" WHERE topic = 'vehicle/alerts' AND measure_name = 'anomaly_score' ORDER BY time DESC LIMIT 500"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "color": {"mode": "fixed", "fixedColor": "purple"},
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 0.5},
+              {"color": "red", "value": 0.7}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Vehicle State",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 8},
+      "datasource": "${DS_TIMESTREAM}",
+      "targets": [
+        {
+          "rawQuery": true,
+          "query": "SELECT time, measure_value::varchar AS state FROM \"taktflow-telemetry\".\"vehicle-data\" WHERE topic = 'vehicle/telemetry' AND measure_name = 'vehicle_state' ORDER BY time DESC LIMIT 1"
+        }
+      ]
+    },
+    {
+      "title": "Cloud Connector Status",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 8},
+      "datasource": "${DS_TIMESTREAM}",
+      "targets": [
+        {
+          "rawQuery": true,
+          "query": "SELECT time, measure_value::bigint AS msgs_sent FROM \"taktflow-telemetry\".\"vehicle-data\" WHERE device_id = 'taktflow-pi-001' ORDER BY time DESC LIMIT 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "title": "DTC Events",
+      "type": "table",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+      "datasource": "${DS_TIMESTREAM}",
+      "targets": [
+        {
+          "rawQuery": true,
+          "query": "SELECT time, measure_value::varchar AS dtc_data FROM \"taktflow-telemetry\".\"vehicle-data\" WHERE topic LIKE 'vehicle/dtc/%' ORDER BY time DESC LIMIT 50"
+        }
+      ]
+    }
+  ]
+}

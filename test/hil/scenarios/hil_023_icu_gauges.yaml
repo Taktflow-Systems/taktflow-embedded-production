@@ -1,0 +1,45 @@
+name: "ICU Gauge Data Availability"
+id: "HIL-023"
+description: >
+  Verifies that the ICU can read the CAN messages it needs for gauge
+  display: Vehicle_State (0x100), Motor Current (0x301), Motor Temp
+  (0x302), and Battery (0x303) are all present on the bus.
+verifies:
+  - "SWR-ICU-002"
+  - "SWR-ICU-003"
+  - "SWR-ICU-004"
+  - "SWR-ICU-005"
+asil: "QM"
+aspice: "SWE.6"
+iso_reference: "ISO 26262 Part 4, Section 7"
+timeout_sec: 30
+requires_mqtt: false
+
+setup:
+  - action: wait_state
+    state: SAFE_STOP
+    timeout: 20
+    description: "Wait for system steady state"
+
+steps:
+  - action: wait
+    seconds: 3
+    description: "Wait for ICU to process CAN data"
+
+verdicts:
+  - type: can_message
+    can_id: 0x100
+    description: "Vehicle_State frame present for ICU consumption"
+  - type: can_message
+    can_id: 0x301
+    description: "Motor Current frame present for ICU consumption"
+  - type: can_message
+    can_id: 0x302
+    description: "Motor Temp frame present for ICU consumption"
+  - type: can_message
+    can_id: 0x303
+    description: "Battery frame present for ICU consumption"
+
+teardown:
+  - action: reset
+    description: "Reset"

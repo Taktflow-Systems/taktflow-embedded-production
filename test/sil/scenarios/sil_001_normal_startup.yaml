@@ -1,0 +1,89 @@
+# =============================================================================
+# @file    sil_001_normal_startup.yaml
+# @brief   SIL scenario: Normal startup sequence INIT -> RUN with output verification
+# @aspice  SWE.5 — Software Component Verification & Integration
+# @iso     ISO 26262 Part 6, Section 10 — Software Integration & Testing
+# @date    2026-02-24
+#
+# Validates that all 7 ECU containers complete the startup sequence,
+# transition from INIT to RUN within the INIT hold deadline (10s on SIL),
+# and begin broadcasting their expected CAN messages (heartbeats, motor
+# status, steering status, brake status).
+# =============================================================================
+
+name: "Normal Startup Sequence"
+id: "SIL-001"
+description: >
+  Verify that the system completes a clean startup: all ECUs boot, transition
+  from INIT (state 0) to RUN (state 1) within the SIL INIT hold time
+  (CVC_INIT_HOLD_CYCLES=1000, 10s) plus margin, and all expected CAN feedback
+  messages are present on vcan0.  This is the baseline prerequisite for all
+  other SIL scenarios.
+verifies:
+  - "SWR-BSW-020"   # BswM mode transitions (INIT -> RUN)
+  - "SWR-BSW-001"   # System stability / startup sequence
+aspice: "SWE.5"
+iso_reference: "ISO 26262 Part 6, Section 10"
+timeout_sec: 90
+
+setup:
+  - action: reset
+    description: "Clear any residual fault state from previous test runs"
+  - action: wait
+    seconds: 5
+    description: "Allow reset to propagate and containers to boot"
+
+steps:
+  - action: wait_state
+    state: INIT
+    timeout: 10
+    description: "Confirm system enters INIT state after reset"
+  - action: wait_state
+    state: RUN
+    timeout: 15
+    description: "Wait for INIT -> RUN transition (SIL: 10s hold + 5s margin)"
+  - action: wait
+    seconds: 5
+    description: "Allow grace period + steady-state CAN traffic to establish"
+
+verdicts:
+  - type: vehicle_state
+    expected: RUN
+    within_ms: 15000
+    description: "Vehicle state must reach RUN within 15 seconds of boot (SIL INIT hold = 10s)"
+
+  - type: can_message
+    can_id: 0x100
+    description: "VehicleState frame present on CAN bus (state byte = 1 = RUN)"
+
+  - type: can_message
+    can_id: 0x010
+    description: "CVC heartbeat (0x010) broadcasting at 50ms interval"
+
+  - type: can_message
+    can_id: 0x011
+    description: "FZC heartbeat (0x011) broadcasting at 50ms interval"
+
+  - type: can_message
+    can_id: 0x012
+    description: "RZC heartbeat (0x012) broadcasting at 50ms interval"
+
+  - type: can_message
+    can_id: 0x300
+    description: "MotorStatus frame present (motor initialized, RPM = 0 at idle)"
+
+  - type: can_message
+    can_id: 0x200
+    description: "SteerStatus frame present (steering servo initialized)"
+
+  - type: can_message
+    can_id: 0x201
+    description: "BrakeStatus frame present (brake actuator initialized)"
+
+  - type: can_message
+    can_id: 0x303
+    description: "BatteryStatus frame present (voltage ~12.6V, SOC > 90%)"
+
+teardown:
+  - action: reset
+    description: "Return system to clean idle state"

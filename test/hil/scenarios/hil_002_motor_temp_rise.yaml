@@ -1,0 +1,47 @@
+name: "Motor Temperature Rise Under Load"
+id: "HIL-002"
+description: >
+  Verifies that sustained torque causes the plant-sim motor temperature
+  (CAN ID 0x302) to rise above ambient.  Validates the thermal model
+  feedback path in the RZC HIL loop.
+verifies:
+  - "TSR-038"
+  - "SSR-RZC-006"
+asil: "B"
+aspice: "SWE.6"
+iso_reference: "ISO 26262 Part 4, Section 7"
+timeout_sec: 30
+requires_mqtt: false
+
+setup:
+  - action: wait_state
+    state: SAFE_STOP
+    timeout: 20
+    description: "Wait for system to reach SAFE_STOP (no SC on bus)"
+
+steps:
+  - action: inject_can
+    can_id: 0x101
+    data: [0x00, 0x00, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00]
+    description: "Inject sustained torque request"
+  - action: wait
+    seconds: 3
+    description: "Allow thermal model to accumulate heat"
+
+verdicts:
+  - type: can_message
+    can_id: 0x302
+    description: "Motor temperature frame present"
+  - type: signal_range
+    can_id: 0x302
+    byte_offset: 2
+    min: 250
+    description: "Motor temp above ambient (min 250 counts at byte 2)"
+
+teardown:
+  - action: inject_can
+    can_id: 0x101
+    data: [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+    description: "Remove torque request"
+  - action: reset
+    description: "Reset to idle"

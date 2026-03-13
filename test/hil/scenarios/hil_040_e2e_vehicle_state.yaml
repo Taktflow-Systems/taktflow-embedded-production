@@ -1,0 +1,33 @@
+name: "E2E Protection on Vehicle State"
+id: "HIL-040"
+description: >
+  Verifies that the Vehicle_State message (0x100) carries valid E2E
+  protection with correct CRC-8 and an incrementing alive counter.
+verifies:
+  - "TSR-022"
+  - "SSR-CVC-008"
+asil: "D"
+aspice: "SWE.6"
+iso_reference: "ISO 26262 Part 4, Section 7"
+timeout_sec: 30
+requires_mqtt: false
+
+setup:
+  - action: wait_state
+    state: SAFE_STOP
+    timeout: 20
+    description: "Wait for system steady state"
+
+steps:
+  - action: wait
+    seconds: 2
+    description: "Observe Vehicle_State E2E-protected traffic"
+
+verdicts:
+  - type: e2e
+    can_id: 0x100
+    description: "Vehicle_State CRC-8 and alive counter are valid"
+
+teardown:
+  - action: reset
+    description: "Reset"

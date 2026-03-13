@@ -1,0 +1,45 @@
+name: "Steering Angle Tracking"
+id: "HIL-004"
+description: >
+  Verifies that the FZC plant-sim produces a steering status response
+  (CAN ID 0x200) and virtual sensor data (0x600) when a 45-degree steer
+  command is injected on 0x102.  Validates closed-loop steering tracking.
+verifies:
+  - "TSR-010"
+  - "SSR-FZC-002"
+asil: "D"
+aspice: "SWE.6"
+iso_reference: "ISO 26262 Part 4, Section 7"
+timeout_sec: 30
+requires_mqtt: false
+
+setup:
+  - action: wait_state
+    state: SAFE_STOP
+    timeout: 20
+    description: "Wait for system to reach SAFE_STOP (no SC on bus)"
+
+steps:
+  - action: inject_can
+    can_id: 0x102
+    data: [0x00, 0x2D, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+    description: "Inject 45-degree steer command"
+  - action: wait
+    seconds: 3
+    description: "Allow steering model to respond"
+
+verdicts:
+  - type: can_message
+    can_id: 0x200
+    description: "Steering status frame present"
+  - type: can_message
+    can_id: 0x600
+    description: "FZC virtual sensors frame present"
+
+teardown:
+  - action: inject_can
+    can_id: 0x102
+    data: [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+    description: "Centre steering command"
+  - action: reset
+    description: "Reset to idle"

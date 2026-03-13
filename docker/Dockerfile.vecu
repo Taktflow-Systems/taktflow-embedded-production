@@ -1,0 +1,66 @@
+# =============================================================================
+# Dockerfile.vecu — Multi-stage build for all 7 simulated ECUs
+#
+# Builds all 7 ECU binaries in a single builder stage, then copies them
+# into a minimal runtime image. The ECU_NAME env var selects which binary
+# to run at container startup.
+#
+# Build:  docker build -f Dockerfile.vecu -t taktflow/vecu .
+# Run:    docker run --network host --cap-add NET_ADMIN -e ECU_NAME=bcm taktflow/vecu
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Build stage — compile all 7 ECU binaries with POSIX/SocketCAN backend
+# ---------------------------------------------------------------------------
+FROM ubuntu:22.04 AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    can-utils \
+    libsocketcan-dev \
+    iproute2 \
+    libncurses-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY firmware/ /build/firmware/
+WORKDIR /build
+
+# Clean stale build artifacts, then build all 7 simulated ECU binaries
+# DIAG=1 enables SIL diagnostic printf for state machine tracing
+RUN rm -rf build && \
+    make -f firmware/platform/posix/Makefile.posix TARGET=bcm DIAG=1 && \
+    make -f firmware/platform/posix/Makefile.posix TARGET=icu DIAG=1 && \
+    make -f firmware/platform/posix/Makefile.posix TARGET=tcu DIAG=1 && \
+    make -f firmware/platform/posix/Makefile.posix TARGET=cvc DIAG=1 && \
+    make -f firmware/platform/posix/Makefile.posix TARGET=fzc DIAG=1 && \
+    make -f firmware/platform/posix/Makefile.posix TARGET=rzc DIAG=1 && \
+    make -f firmware/platform/posix/Makefile.posix TARGET=sc  DIAG=1
+
+# ---------------------------------------------------------------------------
+# Runtime stage — minimal image with CAN utilities
+# ---------------------------------------------------------------------------
+FROM ubuntu:22.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    can-utils \
+    iproute2 \
+    libncurses6 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy compiled binaries from builder
+COPY --from=builder /build/build/bcm_posix /usr/local/bin/bcm
+COPY --from=builder /build/build/icu_posix /usr/local/bin/icu
+COPY --from=builder /build/build/tcu_posix /usr/local/bin/tcu
+COPY --from=builder /build/build/cvc_posix /usr/local/bin/cvc
+COPY --from=builder /build/build/fzc_posix /usr/local/bin/fzc
+COPY --from=builder /build/build/rzc_posix /usr/local/bin/rzc
+COPY --from=builder /build/build/sc_posix  /usr/local/bin/sc
+
+# Default CAN interface (host vcan0 via network_mode: host)
+ENV CAN_INTERFACE=vcan0
+
+# ECU_NAME selects which binary to run (bcm|icu|tcu|cvc|fzc|rzc|sc)
+ARG ECU_NAME=bcm
+ENV ECU_NAME=${ECU_NAME}
+
+ENTRYPOINT ["/bin/sh", "-c", "/usr/local/bin/${ECU_NAME}"]

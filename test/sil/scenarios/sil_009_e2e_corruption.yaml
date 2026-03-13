@@ -1,0 +1,107 @@
+# =============================================================================
+# @file    sil_009_e2e_corruption.yaml
+# @brief   SIL scenario: E2E CRC corruption — frame rejection verification
+# @aspice  SWE.5 — Software Component Verification & Integration
+# @iso     ISO 26262 Part 6, Section 10 — Software Integration & Testing
+# @date    2026-03-05
+#
+# Validates the E2E (End-to-End) protection layer by injecting CAN 0x100
+# (Vehicle_State + Torque) frames with intentionally corrupted CRC-8 SAE
+# J1850 checksums.  The RZC CanIf E2E callback must detect the CRC mismatch,
+# reject all frames, and NOT apply the torque command.  After 3+ failures
+# the RZC must report DTC 0xE601 (CAN bus-off).
+# =============================================================================
+
+name: "E2E CRC Corruption"
+id: "SIL-009"
+description: >
+  Stop the CVC to eliminate valid E2E-protected 0x100 frames from the bus,
+  then inject Vehicle_State+Torque frames (0x100) with corrupted CRC bytes
+  via direct python-can injection on vcan0.  With no valid frames to reset
+  the E2E error counter, the RZC must reject all 4 corrupted frames
+  (exceeding RZCCOM_E2E_FAIL_LIMIT=3) and report DTC 0xE601 via Dem.
+  After verification the CVC is restarted and vehicle returns to RUN.
+  This tests AUTOSAR E2E protection per ISO 26262 Part 6.
+verifies:
+  - "SWR-BSW-010"   # E2E CRC-8 SAE J1850 protection on CAN frames
+  - "SWR-BSW-011"   # E2E frame rejection and error counter management
+  - "SWR-RZC-020"   # E2E receive verification
+aspice: "SWE.5"
+iso_reference: "ISO 26262 Part 6, Section 10"
+timeout_sec: 120
+
+setup:
+  - action: reset
+    description: "Clear residual state"
+  - action: wait_state
+    state: RUN
+    timeout: 15
+    description: "Wait for INIT hold (10s) + E2E stabilization for E2E test"
+  - action: record_baseline
+    metric: motor_rpm
+    description: "Record current motor RPM as baseline (should be 0 at idle)"
+
+steps:
+  # Stop CVC to eliminate valid E2E-protected 0x100 frames from the bus.
+  # Without valid frames, RzcCom_RxFailCount won't be reset to 0.
+  - action: docker_stop
+    container: cvc
+    description: "Stop CVC — isolate RZC from valid E2E frames on 0x100"
+  - action: wait
+    seconds: 0.5
+    description: "Let CAN bus quiet down after CVC stop"
+
+  # Inject 4 corrupted frames (exceeds RZCCOM_E2E_FAIL_LIMIT=3)
+  - action: inject_raw_can
+    can_id: 0x100
+    data: [0xFF, 0x01, 0x03, 0x00, 0x64, 0x00, 0x00, 0x00]
+    description: "Corrupted Vehicle_State+Torque: CRC=0xFF (wrong), alive=1, state=RUN, torque=100%"
+  - action: wait
+    seconds: 0.1
+  - action: inject_raw_can
+    can_id: 0x100
+    data: [0x00, 0x02, 0x03, 0x00, 0x50, 0x00, 0x00, 0x00]
+    description: "2nd corrupted frame: CRC=0x00 (wrong), alive=2"
+  - action: wait
+    seconds: 0.1
+  - action: inject_raw_can
+    can_id: 0x100
+    data: [0xAA, 0x03, 0x03, 0x00, 0x40, 0x00, 0x00, 0x00]
+    description: "3rd corrupted frame: triggers RZCCOM_E2E_FAIL_LIMIT"
+  - action: wait
+    seconds: 0.1
+  - action: inject_raw_can
+    can_id: 0x100
+    data: [0xBB, 0x04, 0x03, 0x00, 0x30, 0x00, 0x00, 0x00]
+    description: "4th corrupted frame: ensures DTC is reported"
+  - action: wait
+    seconds: 3
+    description: "Wait for Dem debounce (3 calls) + Dem_MainFunction (100ms) to broadcast DTC"
+
+  # Restart CVC to restore vehicle state
+  - action: docker_start
+    container: cvc
+    description: "Restart CVC — restore vehicle state broadcast"
+  - action: wait_state
+    state: RUN
+    timeout: 20
+    description: "Wait for CVC INIT hold (~10s) + transition to RUN"
+
+verdicts:
+  - type: motor_rpm_unchanged
+    within_ms: 500
+    description: "Motor RPM must NOT change — corrupted frames must be rejected"
+
+  - type: dtc_broadcast
+    dtc_code: 0x00E601
+    ecu_source: 3
+    description: "RZC must report DTC 0xE601 (CAN bus-off) after 3+ E2E failures"
+
+  - type: vehicle_state
+    expected: RUN
+    within_ms: 15000
+    description: "Vehicle must remain in RUN — E2E rejection is not a vehicle fault"
+
+teardown:
+  - action: reset
+    description: "Clear E2E error counters and return to idle"

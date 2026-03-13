@@ -1,0 +1,111 @@
+name: HIL Nightly Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      hil_channel:
+        description: 'CAN channel for HIL'
+        default: 'can0'
+      hil_mqtt_host:
+        description: 'MQTT broker for HIL fault injection'
+        default: 'localhost'
+      verbose:
+        description: 'Enable verbose HIL runner logs'
+        type: boolean
+        default: false
+
+jobs:
+  hil-tests:
+    name: HIL ${{ matrix.scenario }}
+    runs-on: self-hosted
+    timeout-minutes: 5
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - scenario: hil_001_motor_current_response
+          - scenario: hil_002_motor_temp_rise
+          - scenario: hil_003_battery_sag
+          - scenario: hil_004_steering_tracking
+          - scenario: hil_005_brake_tracking
+          - scenario: hil_006_lidar_response
+          - scenario: hil_007_vehicle_state_machine
+          - scenario: hil_010_cvc_heartbeat
+          - scenario: hil_011_fzc_heartbeat
+          - scenario: hil_012_rzc_heartbeat
+          - scenario: hil_013_icu_body_status
+          - scenario: hil_014_bcm_vehicle_state_rx
+          - scenario: hil_020_bcm_headlights
+          - scenario: hil_021_bcm_indicators
+          - scenario: hil_022_bcm_body_status
+          - scenario: hil_023_icu_gauges
+          - scenario: hil_024_tcu_uds_session
+          - scenario: hil_025_tcu_uds_read_did
+          - scenario: hil_030_overcurrent_injection
+          - scenario: hil_031_steering_fault
+          - scenario: hil_032_brake_fault
+          - scenario: hil_033_battery_undervoltage
+          - scenario: hil_034_motor_overtemp
+          - scenario: hil_040_e2e_vehicle_state
+          - scenario: hil_041_e2e_corrupt_reject
+          - scenario: hil_042_alive_counter
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install -r test/hil/requirements.txt
+
+      - name: Verify CAN interface
+        run: |
+          CHANNEL="${{ inputs.hil_channel || 'can0' }}"
+          if ! ip link show "$CHANNEL" 2>/dev/null | grep -q "UP"; then
+            echo "::error::CAN interface $CHANNEL is not UP."
+            exit 1
+          fi
+          echo "$CHANNEL is UP"
+
+      - name: Run HIL scenario ${{ matrix.scenario }}
+        id: hil_run
+        run: |
+          CHANNEL="${{ inputs.hil_channel || 'can0' }}"
+          MQTT="${{ inputs.hil_mqtt_host || 'localhost' }}"
+          ARGS="--channel $CHANNEL --interface socketcan --mqtt-host $MQTT"
+          ARGS="$ARGS --filter ${{ matrix.scenario }}"
+
+          if [ "${{ inputs.verbose }}" = "true" ]; then
+            ARGS="$ARGS --verbose"
+          fi
+
+          python3 test/hil/hil_runner.py $ARGS 2>&1 | tee hil_output.log
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+        continue-on-error: true
+
+      - name: Upload HIL test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hil-test-results-${{ matrix.scenario }}
+          path: |
+            test/hil/results/
+            hil_output.log
+          retention-days: 90
+
+      - name: Set job outcome
+        if: always()
+        run: |
+          EXIT_CODE="${{ steps.hil_run.outputs.exit_code }}"
+          if [ "$EXIT_CODE" = "0" ]; then
+            echo "HIL ${{ matrix.scenario }} passed."
+          elif [ -z "$EXIT_CODE" ]; then
+            echo "::error::HIL ${{ matrix.scenario }} did not produce an exit code."
+            exit 1
+          else
+            echo "::error::HIL ${{ matrix.scenario }} failed with exit code $EXIT_CODE."
+            exit 1
+          fi

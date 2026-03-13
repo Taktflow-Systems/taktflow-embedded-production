@@ -1,0 +1,67 @@
+{% include "common/file_header.j2" %}
+#include "E2E.h"
+#include "{{ ecu.prefix | pascal_case }}_Cfg.h"
+
+/* ==================================================================
+ * E2E PDU Protection Config Type
+ *
+ * Maps a PDU to its E2E parameters so the BSW can automatically
+ * apply E2E_Protect on TX and E2E_Check on RX.
+ * ================================================================== */
+
+typedef struct {
+    uint8 pdu_id;         /* Com PDU ID (TX or RX) */
+    uint8 data_id;        /* E2E data ID (4-bit) */
+    uint8 counter_bit;    /* Bit position of alive counter in PDU */
+    uint8 crc_bit;        /* Bit position of CRC8 in PDU */
+} E2E_PduProtectCfgType;
+
+/* ==================================================================
+ * TX E2E Protection Config — applied before CAN transmit
+ * ================================================================== */
+
+static const E2E_PduProtectCfgType {{ ecu.name }}_e2e_tx_config[] = {
+    /* pduId,                                      dataId,  counterBit, crcBit */
+{% for pdu in e2e_tx_pdus %}
+    { {{ ecu.prefix }}_COM_TX_{{ pdu.name | upper_snake }},  {{ pdu.e2e_data_id | hex2 }}u,  {{ pdu.e2e_counter_bit | default(4) }}u,  {{ pdu.e2e_crc_bit | default(56) }}u },   /* {{ pdu.name }} */
+{% endfor %}
+{% if not e2e_tx_pdus %}
+    { 0u, 0u, 0u, 0u },   /* placeholder — no E2E TX PDUs */
+{% endif %}
+};
+
+#define {{ ecu.prefix }}_E2E_TX_PROTECT_COUNT  {{ e2e_tx_pdus | length }}u
+
+/* ==================================================================
+ * RX E2E Protection Config — checked on CAN reception
+ * ================================================================== */
+
+static const E2E_PduProtectCfgType {{ ecu.name }}_e2e_rx_config[] = {
+    /* pduId,                                      dataId,  counterBit, crcBit */
+{% for pdu in e2e_rx_pdus %}
+    { {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }},  {{ pdu.e2e_data_id | hex2 }}u,  {{ pdu.e2e_counter_bit | default(4) }}u,  {{ pdu.e2e_crc_bit | default(56) }}u },   /* {{ pdu.name }} */
+{% endfor %}
+{% if not e2e_rx_pdus %}
+    { 0u, 0u, 0u, 0u },   /* placeholder — no E2E RX PDUs */
+{% endif %}
+};
+
+#define {{ ecu.prefix }}_E2E_RX_PROTECT_COUNT  {{ e2e_rx_pdus | length }}u
+
+/* ==================================================================
+ * Aggregate E2E Configuration
+ * ================================================================== */
+
+typedef struct {
+    const E2E_PduProtectCfgType *txConfig;
+    uint8                        txCount;
+    const E2E_PduProtectCfgType *rxConfig;
+    uint8                        rxCount;
+} E2E_ProtectConfigType;
+
+const E2E_ProtectConfigType {{ ecu.name }}_e2e_config = {
+    .txConfig = {{ ecu.name }}_e2e_tx_config,
+    .txCount  = {{ ecu.prefix }}_E2E_TX_PROTECT_COUNT,
+    .rxConfig = {{ ecu.name }}_e2e_rx_config,
+    .rxCount  = {{ ecu.prefix }}_E2E_RX_PROTECT_COUNT,
+};

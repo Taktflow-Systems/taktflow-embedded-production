@@ -1,0 +1,70 @@
+# =============================================================================
+# @file    sil_018_gateway_sap_qm.yaml
+# @brief   SIL scenario: Gateway SAP QM DTC forwarding and 8D report generation
+# @aspice  SWE.5 — Software Component Verification & Integration
+# @date    2026-02-25
+#
+# Validates that the gateway forwards DTC events to the SAP QM mock API
+# and generates an 8D report template upon receiving a Q-Meldung number.
+#
+# Data flow:
+#   ECU DTC → CAN 0x500 → can-gateway decodes → MQTT taktflow/alerts/dtc/0xXXXX
+#   → sap-qm-mock DTCConnector subscribes → creates OData notification
+#   → generates 8D report → publishes taktflow/sap/notification
+# =============================================================================
+
+name: "Gateway SAP QM DTC Forwarding"
+id: "SIL-018"
+description: >
+  Verify that when a DTC is raised (via overcurrent fault), the gateway
+  forwards the event via MQTT to the SAP QM mock DTCConnector, which
+  creates an OData quality notification and generates an 8D report template.
+verifies:
+  - "SWR-GW-005"   # SAP QM DTC Forwarding
+  - "SWR-GW-006"   # 8D Report Template Generation
+aspice: "SWE.5"
+iso_reference: "ISO 26262 Part 6, Section 10"
+timeout_sec: 90
+
+setup:
+  - action: reset
+    description: "Clear residual state and previous reports"
+  - action: wait
+    seconds: 30
+    description: "Allow all containers and SAP QM mock API to initialize (30 / scale=10 = 3s wall)"
+
+steps:
+  - action: wait_state
+    state: RUN
+    timeout: 15
+    description: "Wait for INIT hold (10s) + E2E stabilization"
+  - action: wait
+    seconds: 12
+    description: "Allow CVC post-INIT grace period (10s) to expire"
+  - action: inject_scenario
+    name: overcurrent
+    description: "Inject overcurrent to trigger DTC 0xE301 (via MQTT + direct CAN injection)"
+  - action: wait
+    seconds: 80
+    description: "Wait for DTC to propagate via CAN to gateway and SAP QM (80 / scale=10 = 8s wall)"
+
+verdicts:
+  - type: mqtt_message
+    topic: "vehicle/dtc/new"
+    description: "Gateway publishes DTC event to vehicle/dtc/new MQTT topic"
+
+  - type: http_request
+    url: "http://localhost:8090/sap/opu/odata/sap/API_QUALITYNOTIFICATION/QualityNotification"
+    method: GET
+    expected_status: 200
+    description: "SAP QM mock API reachable and has processed notifications via DTCConnector"
+
+  - type: mqtt_message
+    topic: "taktflow/sap/notification"
+    field: "event"
+    expected: "notification_created"
+    description: "DTCConnector publishes notification_created event after creating 8D report"
+
+teardown:
+  - action: reset
+    description: "Return system to clean idle state"

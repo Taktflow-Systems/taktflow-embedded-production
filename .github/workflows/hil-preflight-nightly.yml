@@ -1,0 +1,46 @@
+name: HIL Preflight Nightly
+
+on:
+  schedule:
+    - cron: "15 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  preflight-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run HIL preflight audit
+        run: |
+          python tools/ci/hil_preflight_audit.py --output-dir build
+
+      - name: Print summary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("build/hil-preflight-audit.json")
+          data = json.loads(p.read_text(encoding="utf-8"))
+          s = data["summary"]
+          print("=== HIL Preflight Summary ===")
+          print(f"Total: {s['total']}")
+          print(f"Critical: {s['critical']}")
+          print(f"High: {s['high']}")
+          print(f"Medium: {s['medium']}")
+          print(f"Low: {s['low']}")
+          PY
+
+      - name: Upload preflight artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hil-preflight-audit
+          path: |
+            build/hil-preflight-audit.json
+            build/hil-preflight-audit.md

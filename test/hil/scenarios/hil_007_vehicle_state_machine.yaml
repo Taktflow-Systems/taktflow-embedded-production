@@ -1,0 +1,34 @@
+name: "Vehicle State Machine — Boot to SAFE_STOP"
+id: "HIL-007"
+description: >
+  Observes the vehicle state machine from boot and verifies it reaches
+  SAFE_STOP.  Without the Safety Controller (TMS570) on the bus sending
+  relay confirmation, SAFE_STOP is the expected steady state.  Also
+  confirms the Vehicle_State frame (0x100) is present on the bus.
+verifies:
+  - "TSR-005"
+  - "SSR-CVC-016"
+asil: "D"
+aspice: "SWE.6"
+iso_reference: "ISO 26262 Part 4, Section 7"
+timeout_sec: 30
+requires_mqtt: false
+
+setup: []
+
+steps:
+  - action: wait
+    seconds: 5
+    description: "Observe state machine from boot"
+
+verdicts:
+  - type: vehicle_state
+    expected: SAFE_STOP
+    description: "Vehicle state reaches SAFE_STOP (expected without SC)"
+  - type: can_message
+    can_id: 0x100
+    description: "Vehicle_State frame present on the bus"
+
+teardown:
+  - action: reset
+    description: "Reset to idle"

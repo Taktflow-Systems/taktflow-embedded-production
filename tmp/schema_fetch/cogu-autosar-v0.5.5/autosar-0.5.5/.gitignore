@@ -1,0 +1,9 @@
+.venv/
+build/
+usage_tests/
+**/autosar.egg-info/
+**/__pycache__/
+**/data/*.xsd
+**/data/validate_all.sh
+**/generated/*.xsd
+**/generated/validate_all.sh

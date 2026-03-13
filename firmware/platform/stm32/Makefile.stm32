@@ -1,0 +1,278 @@
+# =============================================================================
+# Makefile.stm32 — ARM Cortex-M4 target build for physical ECUs (CVC, FZC, RZC)
+#
+# Production repo layout. Builds AUTOSAR-like BSW + ECU application code using
+# arm-none-eabi-gcc targeting STM32G474RE (Nucleo-64). Uses STM32 HAL from
+# CubeMX-generated project and platform-specific MCAL target drivers.
+#
+# Run from project root:
+#   make -f firmware/platform/stm32/Makefile.stm32 TARGET=cvc
+#   make -f firmware/platform/stm32/Makefile.stm32 TARGET=fzc
+#   make -f firmware/platform/stm32/Makefile.stm32 TARGET=rzc
+#   make -f firmware/platform/stm32/Makefile.stm32 TARGET=cvc flash
+#   make -f firmware/platform/stm32/Makefile.stm32 TARGET=cvc size
+#   make -f firmware/platform/stm32/Makefile.stm32 TARGET=cvc HIL=1
+#   make -f firmware/platform/stm32/Makefile.stm32 TARGET=cvc clean
+#
+# Output:  build/stm32/<TARGET>.elf, build/stm32/<TARGET>.bin
+# =============================================================================
+
+# --- Toolchain ---
+PREFIX  = arm-none-eabi-
+CC      = $(PREFIX)gcc
+AS      = $(PREFIX)gcc -x assembler-with-cpp
+CP      = $(PREFIX)objcopy
+SZ      = $(PREFIX)size
+OCD     = openocd
+
+# --- MCU flags (STM32G474RE = Cortex-M4 with FPU) ---
+MCU_FLAGS  = -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
+
+# --- Compiler flags ---
+CFLAGS  = $(MCU_FLAGS)
+CFLAGS += -Wall -Wextra -Werror -std=c99
+CFLAGS += -DPLATFORM_STM32 -DSTM32G474xx -DUSE_HAL_DRIVER -DUSE_NUCLEO_64 -DCANTP_ENABLED
+CFLAGS += -fdata-sections -ffunction-sections
+
+# --- Build mode (default: debug for bring-up phase) ---
+ifdef RELEASE
+  CFLAGS += -Os -DNDEBUG
+else
+  CFLAGS += -Og -g3 -DDEBUG
+endif
+
+# --- Diagnostic logging (pass DIAG=1 to enable) ---
+ifdef DIAG
+  CFLAGS += -DSIL_DIAG
+endif
+
+# --- HIL mode (pass HIL=1 to enable IoHwAb sensor override from CAN) ---
+ifdef HIL
+  CFLAGS += -DPLATFORM_HIL
+endif
+
+# --- Validate TARGET ---
+ifndef TARGET
+  $(error TARGET is required. Usage: make -f firmware/platform/stm32/Makefile.stm32 TARGET=cvc|fzc|rzc)
+endif
+
+VALID_TARGETS = cvc fzc rzc
+ifeq ($(filter $(TARGET),$(VALID_TARGETS)),)
+  $(error Invalid TARGET='$(TARGET)'. Must be one of: $(VALID_TARGETS))
+endif
+
+# --- Directories (production layout) ---
+FW        = firmware
+BSW       = $(FW)/bsw
+ECU       = $(FW)/ecu
+PLAT      = $(FW)/platform/stm32
+BUILD_DIR = build/stm32
+
+# --- CubeMX generated project paths ---
+# CubeMX output lives in the CVC ECU cfg dir (all 3 ECUs share STM32G474RETx).
+CUBEMX_DIR  = $(ECU)/cvc/cfg
+HAL_DIR     = $(CUBEMX_DIR)/Drivers/STM32G4xx_HAL_Driver
+CMSIS_DIR   = $(CUBEMX_DIR)/Drivers/CMSIS
+CUBEMX_INC  = $(CUBEMX_DIR)/Core/Inc
+CUBEMX_SRC  = $(CUBEMX_DIR)/Core/Src
+
+# --- Linker script and startup ---
+LDSCRIPT    = $(CUBEMX_DIR)/STM32G474XX_FLASH.ld
+STARTUP     = $(CUBEMX_DIR)/startup_stm32g474xx.s
+
+# --- BSW include paths (production nested layout) ---
+CFLAGS += -I$(ECU)/$(TARGET)/cfg/platform_target
+CFLAGS += -I$(BSW)/include
+CFLAGS += -I$(BSW)/mcal/Can/include
+CFLAGS += -I$(BSW)/mcal/Spi/include
+CFLAGS += -I$(BSW)/mcal/Adc/include
+CFLAGS += -I$(BSW)/mcal/Dio/include
+CFLAGS += -I$(BSW)/mcal/Pwm/include
+CFLAGS += -I$(BSW)/mcal/Gpt/include
+CFLAGS += -I$(BSW)/mcal/Uart/include
+CFLAGS += -I$(BSW)/ecual/CanIf/include
+CFLAGS += -I$(BSW)/ecual/PduR/include
+CFLAGS += -I$(BSW)/ecual/IoHwAb/include
+CFLAGS += -I$(BSW)/services/Com/include
+CFLAGS += -I$(BSW)/services/Det/include
+CFLAGS += -I$(BSW)/services/Dem/include
+CFLAGS += -I$(BSW)/services/E2E/include
+CFLAGS += -I$(BSW)/services/WdgM/include
+CFLAGS += -I$(BSW)/services/SchM/include
+CFLAGS += -I$(BSW)/services/Dcm/include
+CFLAGS += -I$(BSW)/services/BswM/include
+CFLAGS += -I$(BSW)/services/NvM/include
+CFLAGS += -I$(BSW)/services/CanTp/include
+CFLAGS += -I$(BSW)/rte/include
+CFLAGS += -I$(BSW)/os/include
+CFLAGS += -I$(PLAT)/include
+CFLAGS += -I$(ECU)/$(TARGET)/include
+
+# CubeMX / HAL include paths
+CFLAGS += -I$(CUBEMX_INC)
+CFLAGS += -I$(HAL_DIR)/Inc
+CFLAGS += -I$(HAL_DIR)/Inc/Legacy
+CFLAGS += -I$(CUBEMX_DIR)/Drivers/BSP/STM32G4xx_Nucleo
+CFLAGS += -I$(CMSIS_DIR)/Device/ST/STM32G4xx/Include
+CFLAGS += -I$(CMSIS_DIR)/Include
+
+# --- Linker flags ---
+LDFLAGS  = $(MCU_FLAGS)
+LDFLAGS += -T$(LDSCRIPT)
+LDFLAGS += -Wl,--gc-sections
+LDFLAGS += -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref
+LDFLAGS += --specs=nano.specs --specs=nosys.specs
+LDFLAGS += -lm
+
+# --- Shared BSW sources (production nested layout) ---
+BSW_SRCS = \
+    $(BSW)/mcal/Can/src/Can.c \
+    $(BSW)/mcal/Spi/src/Spi.c \
+    $(BSW)/mcal/Adc/src/Adc.c \
+    $(BSW)/mcal/Dio/src/Dio.c \
+    $(BSW)/mcal/Pwm/src/Pwm.c \
+    $(PLAT)/src/Can_Hw_STM32.c \
+    $(PLAT)/src/Gpt_Hw_STM32.c \
+    $(PLAT)/src/Dio_Hw_STM32.c \
+    $(PLAT)/src/Adc_Hw_STM32.c \
+    $(PLAT)/src/Pwm_Hw_STM32.c \
+    $(PLAT)/src/Spi_Hw_STM32.c \
+    $(BSW)/ecual/CanIf/src/CanIf.c \
+    $(BSW)/ecual/PduR/src/PduR.c \
+    $(BSW)/ecual/IoHwAb/src/IoHwAb.c \
+    $(BSW)/services/Com/src/Com.c \
+    $(BSW)/services/Dcm/src/Dcm.c \
+    $(BSW)/services/Dem/src/Dem.c \
+    $(BSW)/services/E2E/src/E2E.c \
+    $(BSW)/services/E2E/src/E2E_Sm.c \
+    $(BSW)/services/WdgM/src/WdgM.c \
+    $(BSW)/services/BswM/src/BswM.c \
+    $(BSW)/services/NvM/src/NvM.c \
+    $(BSW)/services/Det/src/Det.c \
+    $(BSW)/services/SchM/src/SchM.c \
+    $(BSW)/services/CanTp/src/CanTp.c \
+    $(BSW)/rte/src/Rte.c
+
+# --- FZC additionally needs Uart MCAL ---
+ifeq ($(TARGET),fzc)
+  BSW_SRCS += $(BSW)/mcal/Uart/src/Uart.c
+  BSW_SRCS += $(PLAT)/src/Uart_Hw_STM32.c
+endif
+
+# --- CubeMX HAL sources (matching CubeMX-generated Makefile) ---
+HAL_SRCS = \
+    $(HAL_DIR)/Src/stm32g4xx_hal.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_cortex.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_rcc.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_rcc_ex.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_gpio.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_exti.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_pwr.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_pwr_ex.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_fdcan.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_spi.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_spi_ex.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_dma.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_dma_ex.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_i2c.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_i2c_ex.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_uart.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_uart_ex.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_usart.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_usart_ex.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_flash.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_flash_ex.c \
+    $(HAL_DIR)/Src/stm32g4xx_hal_flash_ramfunc.c
+
+# Nucleo BSP
+BSP_SRCS = \
+    $(CUBEMX_DIR)/Drivers/BSP/STM32G4xx_Nucleo/stm32g4xx_nucleo.c
+
+# CubeMX-generated init code
+CUBEMX_SRCS = \
+    $(CUBEMX_SRC)/system_stm32g4xx.c \
+    $(CUBEMX_SRC)/stm32g4xx_hal_msp.c \
+    $(CUBEMX_SRC)/stm32g4xx_it.c
+
+# --- ECU-specific sources (wildcard, excludes *_posix.c) ---
+ECU_SRCS_ALL = $(wildcard $(ECU)/$(TARGET)/src/*.c) $(wildcard $(ECU)/$(TARGET)/cfg/*.c)
+ECU_HW_STM32 = $(wildcard $(PLAT)/src/$(TARGET)_hw_stm32.c)
+ECU_SRCS = $(filter-out %_posix.c %_tms570.c,$(ECU_SRCS_ALL)) $(ECU_HW_STM32)
+
+# --- All application sources ---
+APP_SRCS = $(BSW_SRCS) $(HAL_SRCS) $(BSP_SRCS) $(CUBEMX_SRCS) $(ECU_SRCS)
+
+# --- Object files ---
+APP_OBJS  = $(patsubst %.c,$(BUILD_DIR)/%.o,$(APP_SRCS))
+ASM_OBJS  = $(patsubst %.s,$(BUILD_DIR)/%.o,$(STARTUP))
+ALL_OBJS  = $(APP_OBJS) $(ASM_OBJS)
+
+# --- Output files ---
+ELF = $(BUILD_DIR)/$(TARGET).elf
+BIN = $(BUILD_DIR)/$(TARGET).bin
+MAP = $(BUILD_DIR)/$(TARGET).map
+
+# --- Flash size budget (SYS-054: < 80% of 512KB = 409600 bytes) ---
+FLASH_BUDGET = 409600
+
+# =============================================================================
+# Targets
+# =============================================================================
+
+.PHONY: all flash size clean
+
+all: $(BIN)
+	@echo "=== Built $(ELF) and $(BIN) ==="
+
+# --- Link ELF ---
+$(ELF): $(ALL_OBJS) | $(BUILD_DIR)
+	$(CC) $(ALL_OBJS) $(LDFLAGS) -o $@
+
+# --- Generate BIN from ELF ---
+$(BIN): $(ELF)
+	$(CP) -O binary $< $@
+
+# --- Compile C sources ---
+$(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# --- Assemble startup ---
+$(BUILD_DIR)/%.o: %.s | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(AS) $(MCU_FLAGS) -c $< -o $@
+
+# --- Build directory ---
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
+
+# --- Flash via OpenOCD ---
+flash: $(BIN)
+	@echo "=== Flashing $(TARGET) via OpenOCD ==="
+	$(OCD) -f $(PLAT)/openocd.cfg \
+		-c "program $(ELF) verify reset exit"
+
+# --- Firmware size report ---
+size: $(ELF)
+	@echo "=== Firmware size: $(TARGET) ==="
+	$(SZ) --format=berkeley $(ELF)
+	@echo ""
+	@echo "--- Section breakdown ---"
+	$(SZ) --format=sysv $(ELF) | head -20
+	@echo ""
+	@flash_used=$$($(SZ) --format=berkeley $(ELF) | tail -1 | awk '{print $$1 + $$2}'); \
+	echo "Flash used: $$flash_used bytes"; \
+	echo "Flash budget: $(FLASH_BUDGET) bytes (80% of 512KB)"; \
+	if [ $$flash_used -gt $(FLASH_BUDGET) ]; then \
+		echo "ERROR: Flash usage exceeds 80% budget!"; \
+		exit 1; \
+	else \
+		pct=$$(($$flash_used * 100 / 524288)); \
+		echo "Flash utilization: $$pct%"; \
+		echo "OK: Within budget"; \
+	fi
+
+# --- Clean ---
+clean:
+	rm -rf $(BUILD_DIR)
+	@echo "=== Cleaned STM32 build directory ==="

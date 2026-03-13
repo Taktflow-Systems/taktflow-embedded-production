@@ -1,0 +1,23 @@
+{% include "common/file_header.j2" %}
+#include "PduR.h"
+#include "{{ ecu.prefix | pascal_case }}_Cfg.h"
+
+/* ==================================================================
+ * RX Routing Table — CanIf RX PDU → Com RX PDU
+ * ================================================================== */
+
+static const PduR_RoutingTableType {{ ecu.name }}_pdur_routing[] = {
+    /* RxPduId (CanIf),                            Destination,       UpperPduId (Com) */
+{% for pdu in ecu.rx_pdus %}
+    { {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }},  PDUR_DEST_COM,  {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }} },   /* {{ pdu.can_id | hex3 }} {{ pdu.name }} */
+{% endfor %}
+};
+
+/* ==================================================================
+ * Aggregate PduR Configuration
+ * ================================================================== */
+
+const PduR_ConfigType {{ ecu.name }}_pdur_config = {
+    .routingTable = {{ ecu.name }}_pdur_routing,
+    .routingCount = (uint8)(sizeof({{ ecu.name }}_pdur_routing) / sizeof({{ ecu.name }}_pdur_routing[0])),
+};

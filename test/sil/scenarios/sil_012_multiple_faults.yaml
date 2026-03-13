@@ -1,0 +1,95 @@
+# =============================================================================
+# @file    sil_012_multiple_faults.yaml
+# @brief   SIL scenario: Multiple simultaneous faults — prioritized handling
+# @aspice  SWE.5 — Software Component Verification & Integration
+# @iso     ISO 26262 Part 6, Section 10 — Software Integration & Testing
+# @date    2026-02-24
+#
+# Validates the system's ability to handle multiple simultaneous faults.
+# Overcurrent and steering faults are injected in rapid succession.
+# Both DTCs must be broadcast, and the system must handle fault priority
+# correctly (overcurrent + steer fault together should escalate to
+# SAFE_STOP since multiple subsystems are compromised).
+# =============================================================================
+
+name: "Multiple Simultaneous Faults"
+id: "SIL-012"
+description: >
+  Inject overcurrent (95% torque + brake) and steer_fault (rapid oscillation)
+  in rapid succession (within 500ms).  Verify both DTC 0xE301 (overcurrent,
+  from RZC) and DTC 0xD001 (steer plausibility, from FZC) are broadcast on CAN.
+  Verify the Safety Controller handles multiple faults with correct priority
+  and the vehicle enters DEGRADED (possibly escalating to SAFE_STOP when
+  both motor and steering subsystems are simultaneously faulted).
+verifies:
+  - "SWR-SC-002"    # Safety controller multi-fault prioritization
+aspice: "SWE.5"
+iso_reference: "ISO 26262 Part 6, Section 10"
+timeout_sec: 90
+
+setup:
+  - action: reset
+    description: "Clear all prior fault state"
+  - action: wait_state
+    state: RUN
+    timeout: 15
+    description: "Wait for INIT hold (10s) + E2E stabilization before multi-fault injection"
+  - action: wait
+    seconds: 12
+    description: "Allow CVC post-INIT grace period (10s) to expire before fault injection"
+
+steps:
+  - action: inject_scenario
+    name: overcurrent
+    description: "Inject overcurrent: 95% torque + 100% emergency brake"
+  - action: wait
+    seconds: 0.5
+    description: "Brief delay between fault injections"
+  - action: inject_scenario
+    name: steer_fault
+    description: "Inject steering fault: rapid +/-40 deg oscillations"
+  - action: wait
+    seconds: 5
+    description: "Allow both fault chains to complete detection and reporting"
+
+verdicts:
+  - type: dtc_broadcast
+    can_id: 0x500
+    dtc_code: 0xE301
+    ecu_source: 3
+    description: "DTC 0xE301 (overcurrent) broadcast from RZC (source=3)"
+
+  - type: dtc_broadcast
+    can_id: 0x500
+    dtc_code: 0xD001
+    ecu_source: 2
+    description: "DTC 0xD001 (steer plausibility) broadcast from FZC (source=2)"
+
+  - type: vehicle_state
+    expected: SAFE_STOP
+    within_ms: 3000
+    description: "Vehicle enters SAFE_STOP (overcurrent → motor cutoff is critical)"
+
+  - type: vehicle_state
+    expected: SAFE_STOP
+    within_ms: 5000
+    description: >
+      Vehicle remains in SAFE_STOP after both faults — motor cutoff
+      and steering disable both warrant safe shutdown
+
+  - type: motor_shutdown
+    within_ms: 5000
+    description: "Motor must be shut down (overcurrent cutoff)"
+
+  - type: fault_priority
+    description: >
+      Safety Controller must process both faults — overcurrent triggers
+      motor cutoff (RZC), steer fault triggers steering disable (FZC).
+      Neither fault must mask the other.
+
+teardown:
+  - action: reset
+    description: "Clear all fault conditions"
+  - action: wait
+    seconds: 5
+    description: "Allow complete fault state reset"

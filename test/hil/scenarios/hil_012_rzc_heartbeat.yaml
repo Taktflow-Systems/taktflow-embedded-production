@@ -1,0 +1,35 @@
+name: "RZC Heartbeat Liveness"
+id: "HIL-012"
+description: >
+  Verifies that the RZC publishes its heartbeat on CAN ID 0x012 at the
+  specified 50 ms period with no more than 15 % jitter.
+verifies:
+  - "TSR-027"
+  - "SSR-RZC-011"
+asil: "C"
+aspice: "SWE.6"
+iso_reference: "ISO 26262 Part 4, Section 7"
+timeout_sec: 30
+requires_mqtt: false
+
+setup:
+  - action: wait_state
+    state: SAFE_STOP
+    timeout: 20
+    description: "Wait for system to reach SAFE_STOP (no SC on bus)"
+
+steps:
+  - action: wait
+    seconds: 5
+    description: "Collect heartbeat samples"
+
+verdicts:
+  - type: heartbeat
+    can_id: 0x012
+    period_ms: 50
+    tolerance_pct: 15
+    description: "RZC heartbeat at 50 ms ±15 %"
+
+teardown:
+  - action: reset
+    description: "Reset to idle"

@@ -1,0 +1,82 @@
+# =============================================================================
+# @file    sil_007_overcurrent_motor.yaml
+# @brief   SIL scenario: Motor overcurrent — mechanical jam simulation
+# @aspice  SWE.5 — Software Component Verification & Integration
+# @iso     ISO 26262 Part 6, Section 10 — Software Integration & Testing
+# @date    2026-02-24
+#
+# Validates the overcurrent protection chain.  The overcurrent scenario
+# sends 95% torque with 100% emergency brake (mechanical jam), causing
+# the plant sim motor model to generate sustained overcurrent (>20A).
+# The RZC detects the condition, broadcasts DTC 0xE301, and triggers
+# motor cutoff.
+# =============================================================================
+
+name: "Motor Overcurrent"
+id: "SIL-007"
+description: >
+  Inject overcurrent scenario: 95% torque + 100% emergency brake simulates
+  a mechanical jam.  Motor current stays above 20A threshold (load factor
+  ~1.0 at zero RPM).  Verify DTC 0xE301 is broadcast from RZC (source 3),
+  motor is cut off (RPM -> 0), and vehicle enters SAFE_STOP state.
+verifies:
+  - "SWR-RZC-002"   # RZC motor overcurrent detection and cutoff
+  - "SWR-BSW-016"   # Overcurrent fault handling chain
+aspice: "SWE.5"
+iso_reference: "ISO 26262 Part 6, Section 10"
+timeout_sec: 90
+
+setup:
+  - action: reset
+    description: "Clear residual fault state"
+  - action: wait_state
+    state: RUN
+    timeout: 15
+    description: "Wait for INIT hold (10s SIL) + E2E SM stabilization + Docker jitter"
+  - action: wait
+    seconds: 12
+    description: "Allow CVC post-INIT grace period (10s) to expire before fault injection"
+
+steps:
+  - action: inject_scenario
+    name: overcurrent
+    description: >
+      Send 95% torque forward + 100% emergency brake.  Motor stalls,
+      current rises above 20A overcurrent threshold.
+  - action: wait
+    seconds: 5
+    description: "Allow overcurrent condition to be detected (plant sim response time)"
+
+verdicts:
+  - type: dtc_broadcast
+    can_id: 0x500
+    dtc_code: 0xE301
+    ecu_source: 3
+    description: "DTC 0xE301 (overcurrent) broadcast from RZC (source=3)"
+
+  - type: vehicle_state
+    expected: SAFE_STOP
+    within_ms: 3000
+    description: "Vehicle enters SAFE_STOP after motor cutoff (critical fault)"
+
+  - type: motor_shutdown
+    within_ms: 3000
+    description: "Motor RPM must reach 0 (cutoff) after overcurrent"
+
+  - type: can_message
+    can_id: 0x301
+    field: motor_current
+    description: "MotorCurrent frame (0x301) shows current spike before cutoff"
+
+  - type: can_message
+    can_id: 0x300
+    field: rpm
+    expected: 0
+    description: "MotorStatus (0x300) shows RPM = 0 after cutoff"
+
+teardown:
+  - action: reset
+    description: "Clear overcurrent condition and return to idle"
+  - action: wait
+    seconds: 5
+    description: "Allow fault state to fully clear"

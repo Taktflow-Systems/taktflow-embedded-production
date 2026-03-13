@@ -1,0 +1,78 @@
+# =============================================================================
+# @file    sil_006_battery_undervoltage.yaml
+# @brief   SIL scenario: Battery undervoltage drain — graceful shutdown
+# @aspice  SWE.5 — Software Component Verification & Integration
+# @iso     ISO 26262 Part 6, Section 10 — Software Integration & Testing
+# @date    2026-02-24
+#
+# Validates the battery undervoltage protection chain.  The fault injection
+# API sends progressive voltage drops via MQTT to the plant-sim battery model
+# (12.6V -> 7.0V over 5 seconds), triggering UV_warn at 10.5V (RZC threshold)
+# and critical_UV / DISABLE_LOW at 8.0V.  A DTC 0xE401 is broadcast, and the
+# vehicle must transition through DEGRADED to SAFE_STOP.
+# =============================================================================
+
+name: "Battery Undervoltage"
+id: "SIL-006"
+description: >
+  Inject battery_low scenario: voltage drops from 12.6V to 7.0V over 5
+  seconds via MQTT plant-sim injection at 100ms intervals.  Verify
+  DTC 0xE401 (battery UV) is broadcast from RZC (source 3), vehicle
+  transitions DEGRADED -> SAFE_STOP, and the shutdown sequence is graceful
+  (motor de-energized before power loss).
+verifies:
+  - "SWR-RZC-004"   # RZC battery undervoltage detection
+  - "SWR-BSW-017"   # Graceful shutdown on battery critical
+aspice: "SWE.5"
+iso_reference: "ISO 26262 Part 6, Section 10"
+timeout_sec: 90
+
+setup:
+  - action: reset
+    description: "Clear residual fault state"
+  - action: wait_state
+    state: RUN
+    timeout: 15
+    description: "Wait for INIT hold (10s) + E2E stabilization with normal battery voltage"
+  - action: wait
+    seconds: 12
+    description: "Allow CVC post-INIT grace period (10s) to expire before fault injection"
+
+steps:
+  - action: inject_scenario
+    name: battery_low
+    description: >
+      Phase 1 (2s): 12.6V -> 10.2V (UV_warn zone, status=1).
+      Phase 2 (3s): 10.2V -> 7.0V (critical_UV zone, status=0) + DTC 0xE401.
+  - action: wait
+    seconds: 2
+    description: "Allow fault chain to complete after injection finishes"
+
+verdicts:
+  - type: dtc_broadcast
+    can_id: 0x500
+    dtc_code: 0xE401
+    ecu_source: 3
+    description: "DTC 0xE401 (battery_UV) broadcast from RZC (source=3)"
+
+  - type: vehicle_state
+    expected: SAFE_STOP
+    within_ms: 8000
+    description: "Vehicle enters SAFE_STOP during battery undervoltage (SC relay kill)"
+
+  - type: motor_shutdown
+    within_ms: 7000
+    description: "Motor must be de-energized before critical voltage reached"
+
+  - type: can_message
+    can_id: 0x303
+    field: battery_voltage_mv
+    expected_below: 8000
+    description: "Battery voltage frames show values below 8.0V at end of drain"
+
+teardown:
+  - action: reset
+    description: "Clear fault state; plant sim restores normal battery within ~1s"
+  - action: wait
+    seconds: 5
+    description: "Allow battery voltage to recover to normal (plant sim default)"

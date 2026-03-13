@@ -1,0 +1,8 @@
+sil.taktflow-systems.com {
+    reverse_proxy /ws/telemetry localhost:8080
+    reverse_proxy /api/sap/* localhost:8090
+    reverse_proxy /api/fault/* localhost:8091
+    reverse_proxy /api/test/* localhost:8091
+
+    redir / https://taktflow-systems.com/embedded permanent
+}

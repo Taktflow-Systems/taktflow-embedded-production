@@ -1,0 +1,62 @@
+# =============================================================================
+# MISRA C:2012 Compliance Check — GitHub Actions
+#
+# Runs cppcheck with MISRA addon on all firmware sources.
+# BLOCKING — error-exitcode=1. New violations will fail CI.
+# =============================================================================
+
+name: MISRA C Check
+
+on:
+  push:
+    paths:
+      - 'firmware/**'
+      - 'tools/misra/**'
+      - '.github/workflows/misra.yml'
+  pull_request:
+    paths:
+      - 'firmware/**'
+      - 'tools/misra/**'
+      - '.github/workflows/misra.yml'
+
+jobs:
+  misra:
+    name: MISRA C:2012 Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install cppcheck
+        run: |
+          pip install cppcheck
+          cppcheck --version
+
+      - name: Download MISRA rule texts
+        run: bash scripts/build/setup-misra-rules.sh
+
+      - name: Run MISRA analysis
+        run: make -f firmware/platform/posix/Makefile.posix misra-report
+
+      - name: Upload MISRA report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: misra-report
+          path: build/misra-report.txt
+          retention-days: 30
+
+      - name: Print report summary
+        if: always()
+        run: |
+          echo "=== MISRA Report Summary ==="
+          if [ -f build/misra-report.txt ]; then
+            VIOLATIONS=$(grep -c '\[misra-' build/misra-report.txt 2>/dev/null || echo "0")
+            echo "Total MISRA violations found: $VIOLATIONS"
+            echo ""
+            echo "--- First 50 violations ---"
+            grep '\[misra-' build/misra-report.txt | head -50 || echo "(none)"
+          else
+            echo "No report file generated."
+          fi

@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taktflow-Systems — Automotive Software Factory</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800&family=Barlow:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:       #0B1120;
+    --ink2:      #141D2F;
+    --ink3:      #1C2842;
+    --steel:     #2A3F5F;
+    --mid:       #3D5A80;
+    --accent:    #4A9EE0;
+    --accent2:   #00D4AA;
+    --warn:      #FF6B35;
+    --white:     #F0F4FF;
+    --white2:    #C8D8F0;
+    --dim:       #7A92B8;
+    --red:       #E05555;
+    --green:     #3DBA7E;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--ink);
+    color: var(--white);
+    font-family: 'Barlow', sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── OUTER FRAME ── */
+  .frame {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px 36px 28px;
+    position: relative;
+  }
+
+  /* blueprint grid background */
+  .frame::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(74,158,224,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(74,158,224,0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .frame > * { position: relative; z-index: 1; }
+
+  /* ── HEADER ── */
+  header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 14px;
+    margin-bottom: 20px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .logo-block {}
+  .logo-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .logo-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 48px;
+    color: var(--white);
+    letter-spacing: 0.03em;
+    line-height: 1;
+  }
+  .logo-sub {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 300;
+    font-size: 20px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    text-align: right;
+  }
+  .header-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: var(--ink);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    margin-bottom: 4px;
+  }
+  .header-meta {
+    font-size: 11px;
+    color: var(--dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── TAGLINE ── */
+  .tagline {
+    background: var(--ink2);
+    border-left: 4px solid var(--accent2);
+    padding: 12px 18px;
+    margin-bottom: 20px;
+    animation: fadeUp 0.5s 0.1s ease both;
+  }
+  .tagline p {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--white);
+    line-height: 1.5;
+  }
+  .tagline p em {
+    color: var(--accent2);
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  /* ── MAIN GRID ── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.5s 0.2s ease both;
+  }
+
+  .pain-card {
+    background: var(--ink2);
+    border: 1px solid var(--steel);
+    border-top: 3px solid var(--red);
+    padding: 14px;
+  }
+  .pain-card .role {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--red);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .pain-card .pain-text {
+    font-size: 12px;
+    color: var(--dim);
+    line-height: 1.55;
+    margin-bottom: 8px;
+  }
+  .pain-card .gain-text {
+    font-size: 12px;
+    color: var(--accent2);
+    line-height: 1.55;
+    padding-top: 8px;
+    border-top: 1px solid var(--steel);
+  }
+  .pain-card .gain-text::before {
+    content: '→ ';
+    color: var(--accent2);
+    font-weight: 700;
+  }
+
+  /* ── PIPELINE ── */
+  .pipeline-section {
+    margin-bottom: 16px;
+    animation: fadeUp 0.5s 0.3s ease both;
+  }
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--steel);
+  }
+
+  .pipeline {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 0;
+    position: relative;
+  }
+
+  .pipeline::before {
+    content: '';
+    position: absolute;
+    top: 22px;
+    left: 6%;
+    right: 6%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
+    z-index: 0;
+  }
+
+  .pipe-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+  .pipe-dot {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--ink3);
+    border: 2px solid var(--mid);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    transition: border-color 0.2s;
+  }
+  .pipe-dot:hover { border-color: var(--accent); }
+  .pipe-dot .num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--accent);
+  }
+  .pipe-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 10.5px;
+    color: var(--white2);
+    text-align: center;
+    letter-spacing: 0.04em;
+    line-height: 1.3;
+  }
+  .pipe-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    color: var(--dim);
+    text-align: center;
+    margin-top: 2px;
+    line-height: 1.3;
+  }
+
+  /* ── BOTTOM GRID ── */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 0.9fr;
+    gap: 12px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.5s 0.4s ease both;
+  }
+
+  /* deliverables */
+  .deliverables {
+    background: var(--ink2);
+    border: 1px solid var(--steel);
+    border-top: 3px solid var(--accent2);
+    padding: 14px;
+  }
+  .deliv-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--accent2);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .deliv-item {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 7px;
+    align-items: flex-start;
+  }
+  .deliv-week {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--accent);
+    background: var(--ink3);
+    border: 1px solid var(--mid);
+    padding: 2px 5px;
+    white-space: nowrap;
+    margin-top: 1px;
+    flex-shrink: 0;
+  }
+  .deliv-text {
+    font-size: 12px;
+    color: var(--white2);
+    line-height: 1.4;
+  }
+
+  /* what you provide */
+  .provide {
+    background: var(--ink2);
+    border: 1px solid var(--steel);
+    border-top: 3px solid var(--accent);
+    padding: 14px;
+  }
+  .provide-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .provide-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: var(--white2);
+    line-height: 1.4;
+  }
+  .provide-item::before {
+    content: '▸';
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* pricing */
+  .pricing {
+    background: var(--ink2);
+    border: 1px solid var(--steel);
+    border-top: 3px solid var(--warn);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .price-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--warn);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .price-main {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 38px;
+    color: var(--white);
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+  .price-sub {
+    font-size: 11px;
+    color: var(--dim);
+    margin-bottom: 12px;
+  }
+  .price-items {
+    margin-top: auto;
+  }
+  .price-item {
+    font-size: 11.5px;
+    color: var(--white2);
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .price-item .dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--green);
+    flex-shrink: 0;
+  }
+
+  /* ── CONSTRAINTS ROW ── */
+  .constraints {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.5s 0.5s ease both;
+  }
+  .constraint-chip {
+    background: var(--ink3);
+    border: 1px solid var(--steel);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .chip-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .chip-value {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--accent2);
+    letter-spacing: 0.03em;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--steel);
+    padding-top: 12px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    animation: fadeUp 0.5s 0.6s ease both;
+  }
+  .footer-statement {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--white2);
+    font-style: italic;
+  }
+  .footer-statement em {
+    color: var(--accent);
+    font-style: normal;
+  }
+  .footer-contact {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--dim);
+    text-align: right;
+    line-height: 1.7;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    body { background: white; color: #0B1120; }
+    .frame::before { display: none; }
+    * { animation: none !important; }
+
+    .pain-card, .deliverables, .provide, .pricing,
+    .constraint-chip, .tagline, .pipeline-section { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo-block">
+      <div class="logo-tag">Automotive Engineering</div>
+      <div class="logo-name">Taktflow-Systems</div>
+      <div class="logo-sub">The Software Factory</div>
+    </div>
+    <div class="header-right">
+      <div class="header-badge">Pilot Program 2026</div>
+      <div class="header-meta">4 weeks · fixed price · zero disruption</div>
+    </div>
+  </header>
+
+  <!-- TAGLINE -->
+  <div class="tagline">
+    <p>Every team in your supply chain has tools. The problem is they <em>do not talk to each other</em>.
+    Requirements sit in DOORS. BSW lives in DaVinci. Tests run in CANoe. Evidence is assembled in Excel — manually, two weeks before every audit.
+    Taktflow-Systems connects all of it. <em>One pipeline. No silos. Every constraint satisfied automatically.</em></p>
+  </div>
+
+  <!-- PAIN CARDS -->
+  <div class="section-label">Who feels this — and what changes</div>
+  <div class="main-grid">
+    <div class="pain-card">
+      <div class="role">Safety Manager</div>
+      <div class="pain-text">Traceability matrix updated manually in Excel. Two weeks before every ASPICE assessment the team stops feature work to compile evidence. It is always incomplete.</div>
+      <div class="gain-text">Traceability report generated on every commit. Audit prep is opening a URL. Evidence is always current because it is produced by the build, not maintained separately.</div>
+    </div>
+    <div class="pain-card">
+      <div class="role">Test / BSW Engineer</div>
+      <div class="pain-text">DBC changes require manual DaVinci update. CAPL scripts not linked to requirements. Integration failures discovered at week 36 when correction costs €50–200k.</div>
+      <div class="gain-text">DBC change triggers ARXML regen, BSW codegen, SIL run, and traceability update — automatically. Failures surface in week 2 at a cost of €500, not €200k.</div>
+    </div>
+    <div class="pain-card">
+      <div class="role">Project / Program Manager</div>
+      <div class="pain-text">"We need 3 more weeks for testing" — but nobody has data. ASPICE level-up blocked. OEM pushing for Level 3. No bandwidth to fix the process during the project.</div>
+      <div class="gain-text">CI dashboard shows every requirement: covered, failing, or not yet tested. ASPICE Level 3 evidence is a byproduct of normal development — not a separate campaign.</div>
+    </div>
+  </div>
+
+  <!-- PIPELINE -->
+  <div class="pipeline-section">
+    <div class="section-label">The factory line — runs on every commit</div>
+    <div class="pipeline">
+      <div class="pipe-node">
+        <div class="pipe-dot"><span class="num">1</span></div>
+        <div class="pipe-label">Requirements</div>
+        <div class="pipe-sub">ReqIF · doorstop<br>REQ-IDs · ASIL</div>
+      </div>
+      <div class="pipe-node">
+        <div class="pipe-dot"><span class="num">2</span></div>
+        <div class="pipe-label">Architecture</div>
+        <div class="pipe-sub">Capella · SysML<br>interfaces defined</div>
+      </div>
+      <div class="pipe-node">
+        <div class="pipe-dot"><span class="num">3</span></div>
+        <div class="pipe-label">ARXML Engine</div>
+        <div class="pipe-sub">validated · 0 warn<br>DaVinci-ready</div>
+      </div>
+      <div class="pipe-node">
+        <div class="pipe-dot"><span class="num">4</span></div>
+        <div class="pipe-label">BSW Codegen</div>
+        <div class="pipe-sub">CanIf · Com · RTE<br>MISRA clean</div>
+      </div>
+      <div class="pipe-node">
+        <div class="pipe-dot"><span class="num">5</span></div>
+        <div class="pipe-label">SIL</div>
+        <div class="pipe-sub">Docker · pytest<br>MC/DC · coverage</div>
+      </div>
+      <div class="pipe-node">
+        <div class="pipe-dot"><span class="num">6</span></div>
+        <div class="pipe-label">PIL</div>
+        <div class="pipe-sub">real silicon<br>real RTOS · delta</div>
+      </div>
+      <div class="pipe-node">
+        <div class="pipe-dot"><span class="num">7</span></div>
+        <div class="pipe-label">HIL</div>
+        <div class="pipe-sub">7-ECU live bus<br>fault injection</div>
+      </div>
+      <div class="pipe-node">
+        <div class="pipe-dot"><span class="num">8</span></div>
+        <div class="pipe-label">Evidence</div>
+        <div class="pipe-sub">REQ→SIL→PIL→HIL<br>ASPICE · 26262</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM GRID -->
+  <div class="bottom-grid">
+    <div class="deliverables">
+      <div class="deliv-title">What you have at the end of 4 weeks</div>
+      <div class="deliv-item">
+        <div class="deliv-week">WK 1</div>
+        <div class="deliv-text">DBC → ARXML pipeline running. ARXML imports into your DaVinci. MISRA baseline clean.</div>
+      </div>
+      <div class="deliv-item">
+        <div class="deliv-week">WK 2</div>
+        <div class="deliv-text">SIL environment live. pytest replaces CAPL for your existing tests. Coverage report on every commit.</div>
+      </div>
+      <div class="deliv-item">
+        <div class="deliv-week">WK 3</div>
+        <div class="deliv-text">PIL on your silicon. HIL on your bench. First real assumption deviation report produced.</div>
+      </div>
+      <div class="deliv-item">
+        <div class="deliv-week">WK 4</div>
+        <div class="deliv-text">Full traceability chain live. Every requirement mapped to SIL + PIL + HIL result. One URL. ASPICE-ready.</div>
+      </div>
+    </div>
+
+    <div class="provide">
+      <div class="provide-title">What you provide</div>
+      <div class="provide-item">One ECU project and its DBC file</div>
+      <div class="provide-item">Existing test cases or CAPL scripts</div>
+      <div class="provide-item">Access to your target hardware or bench</div>
+      <div class="provide-item">One internal contact who answers questions</div>
+      <div class="provide-item">NDA — all your IP stays yours</div>
+      <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--steel);">
+        <div class="provide-title" style="color: var(--dim); margin-bottom: 6px;">Your tools stay exactly as they are</div>
+        <div style="font-size: 11.5px; color: var(--dim); line-height: 1.6;">
+          DaVinci · CANoe · Polarion · DOORS<br>
+          The factory feeds them. Nothing is replaced.
+        </div>
+      </div>
+    </div>
+
+    <div class="pricing">
+      <div>
+        <div class="price-title">Investment</div>
+        <div class="price-main">€8–10k</div>
+        <div class="price-sub">fixed price · 4 weeks · one ECU</div>
+      </div>
+      <div class="price-items">
+        <div class="price-item"><span class="dot"></span>No hourly billing surprises</div>
+        <div class="price-item"><span class="dot"></span>Second ECU: 2 weeks, factory reused</div>
+        <div class="price-item"><span class="dot"></span>Optional retainer: 2 days/month</div>
+        <div class="price-item"><span class="dot"></span>ASPICE L3 evidence from day 28</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONSTRAINTS -->
+  <div class="section-label">Constraints satisfied automatically — as a byproduct of building software</div>
+  <div class="constraints">
+    <div class="constraint-chip">
+      <div class="chip-label">Process compliance</div>
+      <div class="chip-value">ASPICE SWE.1–6 + SUP.1/9/10</div>
+    </div>
+    <div class="constraint-chip">
+      <div class="chip-label">Functional safety</div>
+      <div class="chip-value">ISO 26262 ASIL D evidence chain</div>
+    </div>
+    <div class="constraint-chip">
+      <div class="chip-label">SW quality</div>
+      <div class="chip-value">MISRA C:2012 · MC/DC coverage</div>
+    </div>
+    <div class="constraint-chip">
+      <div class="chip-label">OEM delivery</div>
+      <div class="chip-value">ARXML · ReqIF · JUnit · DBC · ASC</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-statement">
+      The tools exist. The <em>pipeline between them</em> does not.<br>
+      That is what Taktflow-Systems builds.
+    </div>
+    <div class="footer-contact">
+      Taktflow-Systems.com<br>
+      contact@Taktflow-Systems.com<br>
+      Stuttgart · Germany
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
