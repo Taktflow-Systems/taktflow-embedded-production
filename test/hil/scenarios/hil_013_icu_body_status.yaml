@@ -1,8 +1,8 @@
-name: "ICU Body Status Broadcast"
+name: "BCM Light Status Broadcast"
 id: "HIL-013"
 description: >
-  Verifies that the BCM body status frame (CAN ID 0x360) is present on
-  the bus, confirming the ICU publishes body status data.
+  Verifies that the BCM Light_Status frame (CAN ID 0x400) is present
+  on the bus, confirming the BCM publishes body lighting data.
 verifies:
   - "SWR-ICU-009"
 asil: "QM"
@@ -24,8 +24,8 @@ steps:
 
 verdicts:
   - type: can_message
-    can_id: 0x360
-    description: "BCM body status frame present"
+    can_id: 0x400
+    description: "BCM Light_Status frame present"
 
 teardown:
   - action: reset

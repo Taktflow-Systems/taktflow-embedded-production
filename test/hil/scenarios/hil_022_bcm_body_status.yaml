@@ -1,7 +1,7 @@
-name: "BCM Body Status Timing"
+name: "BCM Light Status Timing"
 id: "HIL-022"
 description: >
-  Verifies that the BCM broadcasts Body_Status (0x360) at the
+  Verifies that the BCM broadcasts Light_Status (0x400) at the
   specified 100ms period within acceptable tolerance.
 verifies:
   - "SWR-BCM-010"
@@ -24,10 +24,10 @@ steps:
 
 verdicts:
   - type: timing
-    can_id: 0x360
+    can_id: 0x400
     period_ms: 100
     tolerance_pct: 20
-    description: "Body_Status broadcast period is 100ms within 20% tolerance"
+    description: "Light_Status broadcast period is 100ms within 20% tolerance"
 
 teardown:
   - action: reset
