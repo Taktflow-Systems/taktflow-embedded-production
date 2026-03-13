@@ -74,7 +74,7 @@ SC_SRCS = $(wildcard $(ECU)/sc/src/*.c) $(PLAT)/src/sc_hw_posix.c
 APP_SRCS = $(filter-out %_tms570.c %startup.S,$(SC_SRCS))
 else
 # --- AUTOSAR BSW ECUs ---
-CFLAGS += $(BSW_INC) -I$(ECU)/$(TARGET)/include -I$(ECU)/$(TARGET)/cfg
+CFLAGS += $(BSW_INC) -I$(ECU)/$(TARGET)/include -I$(ECU)/$(TARGET)/cfg -I$(ECU)/$(TARGET)/cfg/platform_posix
 
 BSW_SRCS = \
     $(BSW)/mcal/Can/src/Can.c \
