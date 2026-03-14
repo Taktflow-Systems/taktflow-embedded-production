@@ -1,6 +1,6 @@
 # Plan: HIL Plant Simulator — Closed-Loop Environment on Pi
 
-**Status**: IN PROGRESS
+**Status**: DONE
 **Branch**: `feature/hil-plant-sim`
 **Traces**: TSR-035, TSR-038, TSR-046
 
@@ -83,7 +83,7 @@ HIL has none of this. The 3 simulated ECUs (BCM, ICU, TCU) run on the Pi with `P
 | 1 | Install plant-sim dependencies on Pi | DONE |
 | 2 | Create HIL launch script | DONE |
 | 3 | Test plant-sim on can0 with simulated ECUs | DONE |
-| 4 | MQTT broker for fault injection (optional) | PENDING |
+| 4 | MQTT broker for fault injection (optional) | DONE |
 | 5 | End-to-end verification — CAN monitor shows dynamics | DONE |
 
 ---

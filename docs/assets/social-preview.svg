@@ -1,0 +1,164 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <defs>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#c026d3;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- White background -->
+  <rect width="1280" height="640" fill="#ffffff" />
+
+  <!-- Subtle grid pattern -->
+  <g opacity="0.04" stroke="#7c3aed" stroke-width="1">
+    <line x1="0" y1="80" x2="1280" y2="80" />
+    <line x1="0" y1="160" x2="1280" y2="160" />
+    <line x1="0" y1="240" x2="1280" y2="240" />
+    <line x1="0" y1="320" x2="1280" y2="320" />
+    <line x1="0" y1="400" x2="1280" y2="400" />
+    <line x1="0" y1="480" x2="1280" y2="480" />
+    <line x1="0" y1="560" x2="1280" y2="560" />
+    <line x1="160" y1="0" x2="160" y2="640" />
+    <line x1="320" y1="0" x2="320" y2="640" />
+    <line x1="480" y1="0" x2="480" y2="640" />
+    <line x1="640" y1="0" x2="640" y2="640" />
+    <line x1="800" y1="0" x2="800" y2="640" />
+    <line x1="960" y1="0" x2="960" y2="640" />
+    <line x1="1120" y1="0" x2="1120" y2="640" />
+  </g>
+
+  <!-- Top accent bar -->
+  <rect x="0" y="0" width="1280" height="4" fill="url(#accent)" />
+
+  <!-- Title area -->
+  <text x="60" y="68" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-size="16" fill="#7c3aed" font-weight="700" letter-spacing="3">TAKTFLOW SYSTEMS</text>
+  <text x="60" y="115" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-size="36" fill="#18181b" font-weight="700">ISO 26262 ASIL D Zonal Vehicle Platform</text>
+  <text x="60" y="148" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-size="17" fill="#6b21a8" font-weight="400">7 ECUs  ·  AUTOSAR BSW  ·  Full Safety Lifecycle  ·  Live SIL Demo</text>
+
+  <!-- Architecture diagram -->
+  <!-- CAN Bus line -->
+  <line x1="100" y1="310" x2="740" y2="310" stroke="#7c3aed" stroke-width="2" opacity="0.5" />
+  <text x="380" y="300" font-family="'Segoe UI Mono', 'Cascadia Code', monospace" font-size="11" fill="#7c3aed" text-anchor="middle" opacity="0.6">CAN 500 kbps (E2E protected)</text>
+
+  <!-- CVC -->
+  <rect x="80" y="210" width="120" height="80" rx="8" fill="#faf5ff" stroke="#7c3aed" stroke-width="1.5" />
+  <text x="140" y="235" font-family="'Segoe UI Mono', monospace" font-size="14" fill="#7c3aed" font-weight="700" text-anchor="middle">CVC</text>
+  <text x="140" y="252" font-family="'Segoe UI Mono', monospace" font-size="9" fill="#9333ea" text-anchor="middle">STM32G474</text>
+  <text x="140" y="268" font-family="'Segoe UI', sans-serif" font-size="9" fill="#71717a" text-anchor="middle">Pedals · State</text>
+  <text x="140" y="280" font-family="'Segoe UI', sans-serif" font-size="9" fill="#71717a" text-anchor="middle">Machine</text>
+  <line x1="140" y1="290" x2="140" y2="310" stroke="#7c3aed" stroke-width="1.5" />
+
+  <!-- FZC -->
+  <rect x="240" y="210" width="120" height="80" rx="8" fill="#faf5ff" stroke="#7c3aed" stroke-width="1.5" />
+  <text x="300" y="235" font-family="'Segoe UI Mono', monospace" font-size="14" fill="#7c3aed" font-weight="700" text-anchor="middle">FZC</text>
+  <text x="300" y="252" font-family="'Segoe UI Mono', monospace" font-size="9" fill="#9333ea" text-anchor="middle">STM32G474</text>
+  <text x="300" y="268" font-family="'Segoe UI', sans-serif" font-size="9" fill="#71717a" text-anchor="middle">Steering · Brake</text>
+  <text x="300" y="280" font-family="'Segoe UI', sans-serif" font-size="9" fill="#71717a" text-anchor="middle">LiDAR</text>
+  <line x1="300" y1="290" x2="300" y2="310" stroke="#7c3aed" stroke-width="1.5" />
+
+  <!-- RZC -->
+  <rect x="400" y="210" width="120" height="80" rx="8" fill="#faf5ff" stroke="#7c3aed" stroke-width="1.5" />
+  <text x="460" y="235" font-family="'Segoe UI Mono', monospace" font-size="14" fill="#7c3aed" font-weight="700" text-anchor="middle">RZC</text>
+  <text x="460" y="252" font-family="'Segoe UI Mono', monospace" font-size="9" fill="#9333ea" text-anchor="middle">STM32G474</text>
+  <text x="460" y="268" font-family="'Segoe UI', sans-serif" font-size="9" fill="#71717a" text-anchor="middle">Motor · Current</text>
+  <text x="460" y="280" font-family="'Segoe UI', sans-serif" font-size="9" fill="#71717a" text-anchor="middle">Temp · Encoder</text>
+  <line x1="460" y1="290" x2="460" y2="310" stroke="#7c3aed" stroke-width="1.5" />
+
+  <!-- SC (highlighted differently — safety controller) -->
+  <rect x="560" y="210" width="120" height="80" rx="8" fill="#faf5ff" stroke="#c026d3" stroke-width="2" />
+  <text x="620" y="235" font-family="'Segoe UI Mono', monospace" font-size="14" fill="#c026d3" font-weight="700" text-anchor="middle">SC</text>
+  <text x="620" y="252" font-family="'Segoe UI Mono', monospace" font-size="9" fill="#c026d3" text-anchor="middle">TMS570 Lockstep</text>
+  <text x="620" y="268" font-family="'Segoe UI', sans-serif" font-size="9" fill="#71717a" text-anchor="middle">Watchdog · Kill</text>
+  <text x="620" y="280" font-family="'Segoe UI', sans-serif" font-size="9" fill="#71717a" text-anchor="middle">Relay · Heartbeat</text>
+  <line x1="620" y1="290" x2="620" y2="310" stroke="#c026d3" stroke-width="1.5" />
+
+  <!-- vECUs (dashed — simulated) -->
+  <rect x="720" y="210" width="80" height="80" rx="8" fill="#faf5ff" stroke="#a1a1aa" stroke-width="1" stroke-dasharray="5,3" />
+  <text x="760" y="240" font-family="'Segoe UI Mono', monospace" font-size="10" fill="#71717a" text-anchor="middle">BCM</text>
+  <text x="760" y="255" font-family="'Segoe UI Mono', monospace" font-size="10" fill="#71717a" text-anchor="middle">ICU</text>
+  <text x="760" y="270" font-family="'Segoe UI Mono', monospace" font-size="10" fill="#71717a" text-anchor="middle">TCU</text>
+  <text x="760" y="285" font-family="'Segoe UI', sans-serif" font-size="8" fill="#a1a1aa" text-anchor="middle">Docker</text>
+  <line x1="760" y1="290" x2="760" y2="310" stroke="#a1a1aa" stroke-width="1" stroke-dasharray="5,3" />
+
+  <!-- ASIL labels -->
+  <rect x="108" y="190" width="64" height="16" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="0.8" />
+  <text x="140" y="201" font-family="'Segoe UI', sans-serif" font-size="8" fill="#dc2626" font-weight="700" text-anchor="middle">ASIL D</text>
+  <rect x="268" y="190" width="64" height="16" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="0.8" />
+  <text x="300" y="201" font-family="'Segoe UI', sans-serif" font-size="8" fill="#dc2626" font-weight="700" text-anchor="middle">ASIL D</text>
+  <rect x="428" y="190" width="64" height="16" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="0.8" />
+  <text x="460" y="201" font-family="'Segoe UI', sans-serif" font-size="8" fill="#dc2626" font-weight="700" text-anchor="middle">ASIL D</text>
+  <rect x="588" y="190" width="64" height="16" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="0.8" />
+  <text x="620" y="201" font-family="'Segoe UI', sans-serif" font-size="8" fill="#dc2626" font-weight="700" text-anchor="middle">ASIL D</text>
+  <rect x="732" y="190" width="56" height="16" rx="8" fill="#f4f4f5" stroke="#a1a1aa" stroke-width="0.8" />
+  <text x="760" y="201" font-family="'Segoe UI', sans-serif" font-size="8" fill="#a1a1aa" font-weight="600" text-anchor="middle">QM</text>
+
+  <!-- Gateway + Cloud -->
+  <line x1="420" y1="310" x2="420" y2="355" stroke="#7c3aed" stroke-width="1" stroke-dasharray="5,3" />
+  <rect x="345" y="355" width="150" height="45" rx="8" fill="#faf5ff" stroke="#a1a1aa" stroke-width="1" />
+  <text x="420" y="375" font-family="'Segoe UI Mono', monospace" font-size="11" fill="#6b21a8" text-anchor="middle">Pi Gateway</text>
+  <text x="420" y="390" font-family="'Segoe UI', sans-serif" font-size="9" fill="#a1a1aa" text-anchor="middle">CAN → MQTT · Edge ML</text>
+
+  <line x1="420" y1="400" x2="420" y2="430" stroke="#a1a1aa" stroke-width="1" stroke-dasharray="5,3" />
+  <text x="420" y="428" font-family="'Segoe UI', sans-serif" font-size="8" fill="#a1a1aa" text-anchor="middle">MQTT/TLS</text>
+  <rect x="365" y="435" width="110" height="32" rx="8" fill="#faf5ff" stroke="#a1a1aa" stroke-width="1" />
+  <text x="420" y="456" font-family="'Segoe UI Mono', monospace" font-size="11" fill="#6b21a8" text-anchor="middle">AWS IoT</text>
+
+  <!-- Key metrics panel (right side) -->
+  <rect x="860" y="185" width="370" height="295" rx="12" fill="#faf5ff" stroke="#e9d5ff" stroke-width="1" />
+  <text x="1045" y="178" font-family="'Segoe UI', sans-serif" font-size="11" fill="#7c3aed" font-weight="600" text-anchor="middle" letter-spacing="2">KEY METRICS</text>
+
+  <!-- Metric rows -->
+  <text x="885" y="218" font-family="'Segoe UI', sans-serif" font-size="13" fill="#71717a">ECUs</text>
+  <text x="1200" y="218" font-family="'Segoe UI Mono', monospace" font-size="17" fill="#18181b" font-weight="700" text-anchor="end">7</text>
+  <line x1="885" y1="230" x2="1200" y2="230" stroke="#e9d5ff" stroke-width="1" />
+
+  <text x="885" y="252" font-family="'Segoe UI', sans-serif" font-size="13" fill="#71717a">Unit Tests</text>
+  <text x="1200" y="252" font-family="'Segoe UI Mono', monospace" font-size="17" fill="#18181b" font-weight="700" text-anchor="end">1,067</text>
+  <line x1="885" y1="264" x2="1200" y2="264" stroke="#e9d5ff" stroke-width="1" />
+
+  <text x="885" y="286" font-family="'Segoe UI', sans-serif" font-size="13" fill="#71717a">Safety Requirements</text>
+  <text x="1200" y="286" font-family="'Segoe UI Mono', monospace" font-size="17" fill="#18181b" font-weight="700" text-anchor="end">548</text>
+  <line x1="885" y1="298" x2="1200" y2="298" stroke="#e9d5ff" stroke-width="1" />
+
+  <text x="885" y="320" font-family="'Segoe UI', sans-serif" font-size="13" fill="#71717a">Traceability Links</text>
+  <text x="1200" y="320" font-family="'Segoe UI Mono', monospace" font-size="17" fill="#18181b" font-weight="700" text-anchor="end">440+</text>
+  <line x1="885" y1="332" x2="1200" y2="332" stroke="#e9d5ff" stroke-width="1" />
+
+  <text x="885" y="354" font-family="'Segoe UI', sans-serif" font-size="13" fill="#71717a">BSW Modules</text>
+  <text x="1200" y="354" font-family="'Segoe UI Mono', monospace" font-size="17" fill="#18181b" font-weight="700" text-anchor="end">18</text>
+  <line x1="885" y1="366" x2="1200" y2="366" stroke="#e9d5ff" stroke-width="1" />
+
+  <text x="885" y="388" font-family="'Segoe UI', sans-serif" font-size="13" fill="#71717a">MISRA Violations</text>
+  <text x="1200" y="388" font-family="'Segoe UI Mono', monospace" font-size="17" fill="#16a34a" font-weight="700" text-anchor="end">0</text>
+  <line x1="885" y1="400" x2="1200" y2="400" stroke="#e9d5ff" stroke-width="1" />
+
+  <text x="885" y="422" font-family="'Segoe UI', sans-serif" font-size="13" fill="#71717a">Test Coverage (MC/DC)</text>
+  <text x="1200" y="422" font-family="'Segoe UI Mono', monospace" font-size="17" fill="#16a34a" font-weight="700" text-anchor="end">100%</text>
+  <line x1="885" y1="434" x2="1200" y2="434" stroke="#e9d5ff" stroke-width="1" />
+
+  <text x="885" y="456" font-family="'Segoe UI', sans-serif" font-size="13" fill="#71717a">ASPICE Documents</text>
+  <text x="1200" y="456" font-family="'Segoe UI Mono', monospace" font-size="17" fill="#18181b" font-weight="700" text-anchor="end">70+</text>
+
+  <!-- Bottom badges -->
+  <rect x="60" y="540" width="130" height="30" rx="15" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5" />
+  <text x="125" y="560" font-family="'Segoe UI', sans-serif" font-size="12" fill="#7c3aed" font-weight="600" text-anchor="middle">ISO 26262</text>
+
+  <rect x="210" y="540" width="130" height="30" rx="15" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5" />
+  <text x="275" y="560" font-family="'Segoe UI', sans-serif" font-size="12" fill="#7c3aed" font-weight="600" text-anchor="middle">ASPICE 4.0</text>
+
+  <rect x="360" y="540" width="130" height="30" rx="15" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5" />
+  <text x="425" y="560" font-family="'Segoe UI', sans-serif" font-size="12" fill="#7c3aed" font-weight="600" text-anchor="middle">MISRA C:2012</text>
+
+  <rect x="510" y="540" width="100" height="30" rx="15" fill="#fdf2f8" stroke="#c026d3" stroke-width="1.5" />
+  <text x="560" y="560" font-family="'Segoe UI', sans-serif" font-size="12" fill="#c026d3" font-weight="700" text-anchor="middle">ASIL D</text>
+
+  <rect x="630" y="540" width="145" height="30" rx="15" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5" />
+  <text x="702" y="560" font-family="'Segoe UI', sans-serif" font-size="12" fill="#7c3aed" font-weight="600" text-anchor="middle">AUTOSAR BSW</text>
+
+  <!-- Live demo link (bottom right) -->
+  <text x="1045" y="548" font-family="'Segoe UI', sans-serif" font-size="12" fill="#71717a" text-anchor="middle">Live Demo</text>
+  <text x="1045" y="570" font-family="'Segoe UI Mono', monospace" font-size="14" fill="#7c3aed" font-weight="700" text-anchor="middle">sil.taktflow-systems.com</text>
+
+  <!-- Bottom accent bar -->
+  <rect x="0" y="636" width="1280" height="4" fill="url(#accent)" />
+</svg>

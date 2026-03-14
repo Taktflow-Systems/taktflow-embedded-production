@@ -1,6 +1,6 @@
 # Plan: HIL Test Suite — Closed-Loop Plant-Sim Verification
 
-**Status**: IN PROGRESS (Phases 1-3 DONE)
+**Status**: DONE — all 26 scenarios passed on Pi
 **Branch**: `feature/hil-test-suite`
 **Traces**: TSR-035, TSR-038, TSR-046, GAP-6
 **Prerequisite**: plan-hil-plant-sim (DONE — plant-sim running on Pi with can0)
@@ -126,7 +126,7 @@ These verify that the plant-sim produces correct physics on CAN, and POSIX ECU s
 | 1 | Create HIL test runner (`test/hil/hil_runner.py`) | DONE |
 | 2 | Write YAML scenario files (`test/hil/scenarios/`) | DONE |
 | 3 | Create CAN keyword helpers (`test/hil/can_helpers.py`) | DONE |
-| 4 | Run on Pi and validate all 26 tests | PENDING |
+| 4 | Run on Pi and validate all 26 tests | DONE |
 | 5 | Add to CI as manual trigger workflow | DONE |
 
 ---
