@@ -20,6 +20,11 @@
 
 #if defined(PLATFORM_TMS570)
 
+#if !defined(UNIT_TEST)
+#include "HL_sys_vim.h"
+#include "HL_reg_rti.h"
+#endif
+
 #define OS_PORT_TMS570_INITIAL_FRAME_BYTES 76u
 #define OS_PORT_TMS570_INITIAL_STACK_TYPE  1u
 #define OS_PORT_TMS570_INITIAL_CPSR        0x13u
@@ -3448,7 +3453,8 @@ StatusType Os_Port_Tms570_HalVimInit(void)
     os_port_tms570_state.VimChanctrl0 = 0u;
     os_port_tms570_state.VimConfigured = TRUE;
 #else
-    /* TODO:HARDWARE — call vimInit() from HALCoGen */
+    vimInit();
+    os_port_tms570_state.VimConfigured = TRUE;
 #endif
 
     return E_OK;
@@ -3470,8 +3476,10 @@ StatusType Os_Port_Tms570_HalVimMapTickChannel(uint32 VimChannel, uint32 Request
         (uintptr_t)&Os_Port_Tms570_RtiTickHandler;
     (void)RequestId;
 #else
-    /* TODO:HARDWARE — call vimChannelMap(RequestId, VimChannel, &rtiTickIsr) */
-    (void)RequestId;
+    vimChannelMap(RequestId, VimChannel,
+                  (t_isrFuncPTR)&Os_Port_Tms570_RtiTickHandler);
+    os_port_tms570_state.VimRtiCompare0HandlerAddress =
+        (uintptr_t)&Os_Port_Tms570_RtiTickHandler;
 #endif
 
     return E_OK;
@@ -3488,7 +3496,7 @@ StatusType Os_Port_Tms570_HalVimEnableChannel(uint32 VimChannel)
 #if defined(UNIT_TEST)
     os_port_tms570_state.VimReqmaskset0 |= ((uint32)1u << VimChannel);
 #else
-    /* TODO:HARDWARE — call vimEnableInterrupt(VimChannel, SYS_IRQ) */
+    vimEnableInterrupt(VimChannel, SYS_IRQ);
 #endif
 
     return E_OK;
@@ -3505,7 +3513,7 @@ StatusType Os_Port_Tms570_HalVimDisableChannel(uint32 VimChannel)
 #if defined(UNIT_TEST)
     os_port_tms570_state.VimReqmaskset0 &= ~((uint32)1u << VimChannel);
 #else
-    /* TODO:HARDWARE — call vimDisableInterrupt(VimChannel) */
+    vimDisableInterrupt(VimChannel);
 #endif
 
     return E_OK;
@@ -3524,8 +3532,11 @@ StatusType Os_Port_Tms570_HalRtiInit(uint32 Compare0Period)
     os_port_tms570_state.RtiSetintena = 0u;
     os_port_tms570_state.RtiConfigured = TRUE;
 #else
-    /* TODO:HARDWARE — call rtiInit(), rtiSetPeriod(rtiREG1, rtiCOMPARE0, Compare0Period) */
-    (void)Compare0Period;
+    rtiREG1->CMP[0u].COMPx = Compare0Period;
+    rtiREG1->CMP[0u].UDCPx = Compare0Period;
+    rtiREG1->INTFLAG = (uint32)1u;  /* Clear pending compare0 flag */
+    rtiREG1->CLEARINTENA = (uint32)1u;  /* Disable compare0 until start */
+    os_port_tms570_state.RtiConfigured = TRUE;
 #endif
 
     return E_OK;
@@ -3542,8 +3553,8 @@ StatusType Os_Port_Tms570_HalRtiStart(void)
     os_port_tms570_state.RtiGctrl |= OS_PORT_TMS570_RTI_GCTRL_COUNTER0_ENABLE;
     os_port_tms570_state.RtiSetintena |= OS_PORT_TMS570_RTI_COMPARE0_INTFLAG;
 #else
-    /* TODO:HARDWARE — call rtiStartCounter(rtiREG1, rtiCOUNTER_BLOCK0) +
-     *                      rtiEnableNotification(rtiREG1, rtiNOTIFICATION_COMPARE0) */
+    rtiREG1->GCTRL |= (uint32)1u;   /* Enable counter block 0 */
+    rtiREG1->SETINTENA = (uint32)1u; /* Enable compare0 interrupt */
 #endif
 
     return E_OK;
@@ -3559,7 +3570,7 @@ StatusType Os_Port_Tms570_HalRtiAcknowledgeCompare0(void)
 #if defined(UNIT_TEST)
     os_port_tms570_acknowledge_rti_compare0();
 #else
-    /* TODO:HARDWARE — write rtiREG1->INTFLAG = rtiNOTIFICATION_COMPARE0 */
+    rtiREG1->INTFLAG = (uint32)1u;   /* Acknowledge compare0 interrupt */
 #endif
 
     return E_OK;

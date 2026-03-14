@@ -20,6 +20,7 @@ void test_Os_Port_Tms570_RegisterCoreVimMapTests(void);
 void test_Os_Port_Tms570_RegisterCoreVimReadChannelTests(void);
 void test_Os_Port_Tms570_RegisterCoreVimReadVectorTests(void);
 void test_Os_Port_Tms570_RegisterCoreVimPulseMaskTests(void);
+void test_Os_Port_Tms570_RegisterCoreVimServiceChannelTests(void);
 void test_Os_Port_Tms570_RegisterCoreVimInvokeVectorTests(void);
 void test_Os_Port_Tms570_RegisterCoreVimEntryCoreTests(void);
 void test_Os_Port_Tms570_RegisterCoreVimEntryTests(void);
@@ -28,6 +29,8 @@ void test_Os_Port_Tms570_RegisterCoreVimServiceTests(void);
 void test_Os_Port_Tms570_RegisterCoreVimDispatchTests(void);
 void test_Os_Port_Tms570_RegisterCoreVimDispatchSelectedTests(void);
 void test_Os_Port_Tms570_RegisterCoreDispatchTests(void);
+void test_Os_Port_Tms570_RegisterCoreFirstTaskViewTests(void);
+void test_Os_Port_Tms570_RegisterCoreHalBridgeTests(void);
 
 void test_Os_Port_Tms570_RegisterCoreTests(void)
 {
@@ -46,6 +49,7 @@ void test_Os_Port_Tms570_RegisterCoreTests(void)
     test_Os_Port_Tms570_RegisterCoreVimReadChannelTests();
     test_Os_Port_Tms570_RegisterCoreVimReadVectorTests();
     test_Os_Port_Tms570_RegisterCoreVimPulseMaskTests();
+    test_Os_Port_Tms570_RegisterCoreVimServiceChannelTests();
     test_Os_Port_Tms570_RegisterCoreVimInvokeVectorTests();
     test_Os_Port_Tms570_RegisterCoreVimEntryCoreTests();
     test_Os_Port_Tms570_RegisterCoreVimEntryTests();
@@ -54,4 +58,6 @@ void test_Os_Port_Tms570_RegisterCoreTests(void)
     test_Os_Port_Tms570_RegisterCoreVimDispatchTests();
     test_Os_Port_Tms570_RegisterCoreVimDispatchSelectedTests();
     test_Os_Port_Tms570_RegisterCoreDispatchTests();
+    test_Os_Port_Tms570_RegisterCoreFirstTaskViewTests();
+    test_Os_Port_Tms570_RegisterCoreHalBridgeTests();
 }

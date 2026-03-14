@@ -225,19 +225,27 @@ Implemented bridge functions (declared in `Os_Port_Tms570.h`, implemented in `Os
 6. `Os_Port_Tms570_HalRtiStart()` — enables counter via RtiGctrl, enables compare0 interrupt via RtiSetintena. Target: `rtiStartCounter()` + `rtiEnableNotification()`.
 7. `Os_Port_Tms570_HalRtiAcknowledgeCompare0()` — calls existing `os_port_tms570_acknowledge_rti_compare0()`. Target: `rtiREG1->INTFLAG = rtiNOTIFICATION_COMPARE0`.
 
-All functions use `#if defined(UNIT_TEST)` / `#else` branches. Target-side branches have `TODO:HARDWARE` comments naming exact HALCoGen functions to call. 14 new tests in `test_Os_Port_Tms570_bootstrap_core_hal_bridge.c` covering state changes, boundary validation, and full lifecycle.
+All functions use `#if defined(UNIT_TEST)` / `#else` branches. Target-side branches now contain real hardware calls (see Phase 3 step 1). 14 new tests in `test_Os_Port_Tms570_bootstrap_core_hal_bridge.c` covering state changes, boundary validation, and full lifecycle.
 
 Done when:
 
 - [DONE] the repo has a clear bridge from bootstrap seam to real HALCoGen call sites
 
-### 3. Then do real target bring-up
+### 3. [IN PROGRESS] Then do real target bring-up
 
 Goal:
 
 - move from `model-tested` to `target-verified`
 
-Bring-up order:
+Step 1 — Fill in HAL bridge target branches: [DONE]
+
+- VIM functions (`HalVimInit`, `HalVimMapTickChannel`, `HalVimEnableChannel`, `HalVimDisableChannel`) call HALCoGen APIs directly via `#include "HL_sys_vim.h"` — `vimInit()`, `vimChannelMap()`, `vimEnableInterrupt()`, `vimDisableInterrupt()`.
+- RTI functions (`HalRtiInit`, `HalRtiStart`, `HalRtiAcknowledgeCompare0`) use direct register access via `rtiREG1` from `#include "HL_reg_rti.h"` — `HL_rti.c` is excluded from the target build due to signature conflicts with `sc_hw_tms570.c`.
+- HALCoGen includes are guarded by `#if !defined(UNIT_TEST)` to avoid polluting the host test build.
+- Host tests still pass: 210 tests, 0 failures.
+- Target build (`make -f Makefile.tms570 all`) still produces `sc.elf` — Os_Port_Tms570.c is not yet linked into the SC firmware build but all headers resolve.
+
+Bring-up order (remaining):
 
 1. Prove RTI compare0 fires.
 2. Prove VIM channel 2 routes to IRQ.
