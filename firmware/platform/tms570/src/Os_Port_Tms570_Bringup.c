@@ -65,7 +65,7 @@ static volatile uint32 bringup_rti_irq_count = 0u;
  * @note   This is NOT the bootstrap OS tick handler. It is a standalone
  *         proof-of-concept ISR used only during bring-up.
  */
-static void bringup_rti_compare0_isr(void)
+void __attribute__((interrupt("IRQ"))) bringup_rti_compare0_isr(void)
 {
     bringup_rti_irq_count++;
     rtiREG1->INTFLAG = (uint32)1u;  /* W1C: acknowledge compare0 */

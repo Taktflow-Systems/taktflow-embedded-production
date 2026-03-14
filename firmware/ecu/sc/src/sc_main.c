@@ -129,6 +129,7 @@ int main(void)
 
     /* ---- 1. System initialization ---- */
     systemInit();           /* PLL to 300 MHz (TMS570: HALCoGen, POSIX: no-op) */
+    sc_sci_init();          /* Re-init SCI after systemInit resets peripherals */
     gioInit();              /* GIO module init */
     sc_configure_gpio();    /* SC-specific pin config */
     rtiInit();              /* RTI 10ms tick timer */
