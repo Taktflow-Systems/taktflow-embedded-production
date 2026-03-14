@@ -71,3 +71,13 @@
 **Fix:** Made `SC_ESM_Init()` defensive: (1) clear residual Group 1 flags for ch2 (lockstep) and ch21 (DCC1) before enabling, (2) verify ch2 is clean — if persistent, latch error without enabling EEPAPR1, (3) set a runtime mode flag so `esmGroup3Notification()` triggers `SC_ESM_HighLevelInterrupt()` (relay off + halt) for runtime errors instead of clear-and-continue. Removed `#ifdef SC_ESM_ENABLED` guard.
 
 **Principle:** Always decode ESM channel numbers to their peripheral source before diagnosing. `0x00200000` = bit 21, not bit 2. The TMS570 ESM has 128+ channels across 3 groups — DCC, CCM, ADC, and other peripherals share the same status registers. Use the device TRM ESM channel mapping table, not assumptions.
+
+## 2026-03-14 — GIO DIN readback unreliable on TMS570 LaunchPad (N2HET muxing)
+
+**Context:** Implementing Phase 2 self-tests — `hw_gpio_readback_test` and `hw_watchdog_test` needed to verify GIO pins can be driven and read back.
+
+**Mistake:** Used `gioGetBit()` (reads DIN register) to verify output pin state after `gioSetBit()` (writes DSET/DCLR). GIOB[6:7] (user LEDs) and GIOA[0:5] (relay/LED/WDI) all read incorrect values from DIN. DINB=0xF0 regardless of DOUTB state. On the LAUNCHXL2-570LC43, these pins are routed through N2HET pads — GIO DOUT drives the pin correctly (LEDs toggle), but DIN reads the pad state from the N2HET input path, not the GIO output latch.
+
+**Fix:** Read DOUT register instead of DIN for output pin verification. DOUT reflects what was written via DSET/DCLR and confirms the GIO register bus and SET/CLR logic are functional. Production PCB with direct GIO pins will support true DIN readback.
+
+**Principle:** On TMS570 with multiplexed pads (GIO vs N2HET vs SPI etc.), DIN reads the physical pad, not the GIO output latch. If a pad is muxed as GIO for output, the output works, but the input path may be routed to a different peripheral's input register. Always verify DIN readback on the actual hardware before relying on it in self-tests.

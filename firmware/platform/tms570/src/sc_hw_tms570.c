@@ -29,6 +29,7 @@
 #include "Sc_Hw_Cfg.h"
 #include "sc_esm.h"       /* SC_ESM_HighLevelInterrupt — runtime safety response */
 
+
 /* ==================================================================
  * TMS570LC43x Register Base Addresses
  * ================================================================== */
@@ -160,6 +161,30 @@
  * For DCAN hardware, we use Interface Registers (IF1/IF2) to access
  * message object RAM. Direct RAM access is also possible on TMS570.
  * ================================================================== */
+
+/** GIOB LED bitmask for pins 6 and 7 (LaunchPad user LEDs) */
+#define LED_MASK  (((uint32)1u << 6u) | ((uint32)1u << 7u))
+
+/** DCAN control/status register offsets (from DCAN1_BASE) */
+#define DCAN_CTL                0x00u   /* Control */
+#define DCAN_ES                 0x04u   /* Error and Status */
+#define DCAN_TEST               0x14u   /* Test mode */
+
+/** DCAN CTL register bits */
+#define DCAN_CTL_INIT           ((uint32)1u << 0u)   /* Init mode */
+#define DCAN_CTL_CCE            ((uint32)1u << 6u)   /* Config Change Enable */
+#define DCAN_CTL_TEST           ((uint32)1u << 7u)   /* Test mode enable */
+
+/** DCAN TEST register bits */
+#define DCAN_TEST_LBACK         ((uint32)1u << 4u)   /* Internal loopback */
+
+/** DCAN MCTL TxRqst bit */
+#define DCAN_MCTL_TXRQST        ((uint32)1u << 8u)
+
+/** Self-test loopback mailboxes (unused in normal operation) */
+#define DCAN_SELFTEST_TX_MB     8u
+#define DCAN_SELFTEST_RX_MB     9u
+#define DCAN_SELFTEST_CAN_ID    0x7FFu
 
 /** DCAN IF1 command register offsets (from DCAN1_BASE) */
 #define DCAN_IF1CMD             0x100u
@@ -840,9 +865,9 @@ boolean esm_is_flag_set(uint8 group, uint8 channel)
 /* ==================================================================
  * Self-test hardware functions (from sc_selftest.c)
  *
- * Phase 1: All return TRUE (stubs) for bring-up.
- * Phase 2 (after CAN works): Implement real DCAN loopback,
- *          GPIO readback, lamp test.
+ * Phase 1: DONE — stubs for initial bring-up.
+ * Phase 2: DONE — real DCAN loopback, GPIO readback, lamp test,
+ *          watchdog toggle test.
  * Phase 3 (after validation): Implement STC, PBIST, flash CRC.
  * ================================================================== */
 
@@ -891,10 +916,120 @@ boolean hw_flash_crc_check(void)
  */
 boolean hw_dcan_loopback_test(void)
 {
-    /* TODO:HARDWARE — Put DCAN1 in internal loopback mode (TEST.Lback),
-     * transmit a frame, verify reception on another mailbox.
-     * This is the highest-priority real self-test. */
-    return TRUE;
+    uint32 ctl_saved;
+    uint32 arb;
+    uint32 mctl;
+    uint32 data_a;
+    uint32 mctl_rx;
+    volatile uint32 timeout;
+    boolean pass = FALSE;
+
+    /* Save current CTL state (should be 0x00 after SC_CAN_Init) */
+    ctl_saved = reg_read(DCAN1_BASE, DCAN_CTL);
+
+    /* --- Enter init mode with test enabled --- */
+    reg_write(DCAN1_BASE, DCAN_CTL,
+              DCAN_CTL_INIT | DCAN_CTL_CCE | DCAN_CTL_TEST);
+
+    /* Wait for Init to be acknowledged */
+    timeout = 10000u;
+    while (((reg_read(DCAN1_BASE, DCAN_CTL) & DCAN_CTL_INIT) == 0u) &&
+           (timeout > 0u)) {
+        timeout--;
+    }
+
+    /* Enable internal loopback */
+    reg_write(DCAN1_BASE, DCAN_TEST, DCAN_TEST_LBACK);
+
+    /* --- Configure RX mailbox (MB9) for test CAN ID --- */
+    dcan1_wait_if1_ready();
+    reg_write(DCAN1_BASE, DCAN_IF1MSK,
+              ((uint32)0x7FFu << 18u) | ((uint32)1u << 14u));
+    arb = ((uint32)DCAN_SELFTEST_CAN_ID << 18u) | DCAN_ARB_MSGVAL;
+    reg_write(DCAN1_BASE, DCAN_IF1ARB, arb);
+    mctl = 8u | DCAN_MCTL_UMASK | ((uint32)1u << 7u);  /* DLC=8, UMask, EOB */
+    reg_write(DCAN1_BASE, DCAN_IF1MCTL, mctl);
+    reg_write(DCAN1_BASE, DCAN_IF1CMD,
+              DCAN_IFCMD_WR | DCAN_IFCMD_MASK | DCAN_IFCMD_ARB |
+              DCAN_IFCMD_CONTROL | (uint32)DCAN_SELFTEST_RX_MB);
+    dcan1_wait_if1_ready();
+
+    /* --- Configure TX mailbox (MB8) for test CAN ID --- */
+    reg_write(DCAN1_BASE, DCAN_IF1MSK, 0xFFFFFFFFu);
+    arb = ((uint32)DCAN_SELFTEST_CAN_ID << 18u) |
+          DCAN_ARB_MSGVAL | DCAN_ARB_DIR;
+    reg_write(DCAN1_BASE, DCAN_IF1ARB, arb);
+    /* Write test pattern: 0xA5A5A5A5 */
+    reg_write(DCAN1_BASE, DCAN_IF1DATA, 0xA5A5A5A5u);
+    reg_write(DCAN1_BASE, DCAN_IF1DATB, 0x5A5A5A5Au);
+    /* DLC=8, TxRqst=1, EOB=1 */
+    mctl = 8u | DCAN_MCTL_TXRQST | ((uint32)1u << 7u);
+    reg_write(DCAN1_BASE, DCAN_IF1MCTL, mctl);
+    reg_write(DCAN1_BASE, DCAN_IF1CMD,
+              DCAN_IFCMD_WR | DCAN_IFCMD_MASK | DCAN_IFCMD_ARB |
+              DCAN_IFCMD_CONTROL | DCAN_IFCMD_DATAA | DCAN_IFCMD_DATAB |
+              (uint32)DCAN_SELFTEST_TX_MB);
+    dcan1_wait_if1_ready();
+
+    /* --- Exit init mode to allow loopback transmission --- */
+    reg_write(DCAN1_BASE, DCAN_CTL, DCAN_CTL_TEST);
+
+    /* Wait for transmission + internal loopback reception */
+    timeout = 100000u;
+    do {
+        /* Read RX mailbox (MB9) via IF2 */
+        dcan1_wait_if2_ready();
+        reg_write(DCAN1_BASE, DCAN_IF2CMD,
+                  DCAN_IFCMD_DATAA | DCAN_IFCMD_DATAB |
+                  DCAN_IFCMD_CONTROL | (uint32)DCAN_SELFTEST_RX_MB);
+        dcan1_wait_if2_ready();
+        mctl_rx = reg_read(DCAN1_BASE, DCAN_IF2MCTL);
+        if ((mctl_rx & DCAN_MCTL_NEWDAT) != 0u) {
+            break;
+        }
+        timeout--;
+    } while (timeout > 0u);
+
+    /* Verify received data */
+    if ((mctl_rx & DCAN_MCTL_NEWDAT) != 0u) {
+        data_a = reg_read(DCAN1_BASE, DCAN_IF2DATA);
+        if (data_a == 0xA5A5A5A5u) {
+            uint32 data_b = reg_read(DCAN1_BASE, DCAN_IF2DATB);
+            if (data_b == 0x5A5A5A5Au) {
+                pass = TRUE;
+            }
+        }
+    }
+
+    /* --- Cleanup: re-enter init, disable loopback, invalidate test MBs --- */
+    reg_write(DCAN1_BASE, DCAN_CTL,
+              DCAN_CTL_INIT | DCAN_CTL_CCE | DCAN_CTL_TEST);
+    timeout = 10000u;
+    while (((reg_read(DCAN1_BASE, DCAN_CTL) & DCAN_CTL_INIT) == 0u) &&
+           (timeout > 0u)) {
+        timeout--;
+    }
+
+    /* Disable loopback */
+    reg_write(DCAN1_BASE, DCAN_TEST, 0u);
+
+    /* Invalidate test mailboxes (MsgVal = 0) */
+    dcan1_wait_if1_ready();
+    reg_write(DCAN1_BASE, DCAN_IF1ARB, 0u);
+    reg_write(DCAN1_BASE, DCAN_IF1MCTL, 0u);
+    reg_write(DCAN1_BASE, DCAN_IF1CMD,
+              DCAN_IFCMD_WR | DCAN_IFCMD_ARB | DCAN_IFCMD_CONTROL |
+              (uint32)DCAN_SELFTEST_TX_MB);
+    dcan1_wait_if1_ready();
+    reg_write(DCAN1_BASE, DCAN_IF1CMD,
+              DCAN_IFCMD_WR | DCAN_IFCMD_ARB | DCAN_IFCMD_CONTROL |
+              (uint32)DCAN_SELFTEST_RX_MB);
+    dcan1_wait_if1_ready();
+
+    /* Restore original CTL — back to normal mode */
+    reg_write(DCAN1_BASE, DCAN_CTL, ctl_saved);
+
+    return pass;
 }
 
 /**
@@ -904,9 +1039,42 @@ boolean hw_dcan_loopback_test(void)
  */
 boolean hw_gpio_readback_test(void)
 {
-    /* TODO:HARDWARE — Write relay pin HIGH, read back DIN register,
-     * verify matches. Then restore original value. */
-    return TRUE;
+    uint32 saved_dout;
+    uint32 dout_val;
+    boolean pass = TRUE;
+
+    /* Verify GIO output register (DOUT) reflects DSET/DCLR writes.
+     *
+     * On TMS570 LaunchPad, GIOB[6:7] are muxed through N2HET pads —
+     * DIN reads the pad state, not the GIO output latch, so DIN-based
+     * readback is unreliable. Instead, verify the DOUT register itself
+     * responds to SET/CLR operations, which confirms the GIO module
+     * and register bus are functional.
+     *
+     * Production PCB will have direct GIO pins where DIN readback works. */
+
+    /* Save current output state */
+    saved_dout = reg_read(GIO_BASE, GIO_DOUTB);
+
+    /* Phase 1: SET bits, verify DOUT reflects HIGH */
+    reg_write(GIO_BASE, GIO_DSETB, LED_MASK);
+    dout_val = reg_read(GIO_BASE, GIO_DOUTB);
+    if ((dout_val & LED_MASK) != LED_MASK) {
+        pass = FALSE;
+    }
+
+    /* Phase 2: CLR bits, verify DOUT reflects LOW */
+    reg_write(GIO_BASE, GIO_DCLRB, LED_MASK);
+    dout_val = reg_read(GIO_BASE, GIO_DOUTB);
+    if ((dout_val & LED_MASK) != 0u) {
+        pass = FALSE;
+    }
+
+    /* Restore original state */
+    reg_write(GIO_BASE, GIO_DCLRB, LED_MASK);
+    reg_write(GIO_BASE, GIO_DSETB, saved_dout & LED_MASK);
+
+    return pass;
 }
 
 /**
@@ -916,9 +1084,23 @@ boolean hw_gpio_readback_test(void)
  */
 boolean hw_lamp_test(void)
 {
-    /* TODO:HARDWARE — Set all LED pins HIGH, ~200ms delay (busy-wait),
-     * set all LOW. Visual check by operator. Always returns TRUE
-     * (lamp test is visual, not electrical). */
+    volatile uint32 delay;
+
+    /* Use GIOB[6:7] user LEDs — guaranteed present on LaunchPad.
+     * GIOA fault LEDs are for production PCB only. */
+
+    /* Both user LEDs ON */
+    reg_write(GIO_BASE, GIO_DSETB, LED_MASK);
+
+    /* Busy-wait ~200ms at 300 MHz (Cortex-R5 pipeline ~3 cycles/iteration) */
+    for (delay = 0u; delay < 20000000u; delay++) {
+        /* spin */
+    }
+
+    /* Both user LEDs OFF */
+    reg_write(GIO_BASE, GIO_DCLRB, LED_MASK);
+
+    /* Lamp test is visual — always passes if we get here */
     return TRUE;
 }
 
@@ -929,8 +1111,31 @@ boolean hw_lamp_test(void)
  */
 boolean hw_watchdog_test(void)
 {
-    /* TODO:HARDWARE — Toggle WDI pin a few times, verify no reset
-     * occurs within the 1.6s TPS3823 timeout. */
+    uint32 dout_val;
+    uint32 wdi_mask = ((uint32)1u << SC_PIN_WDI);
+
+    /* Verify WDI pin (GIO_A5) output register responds to SET/CLR.
+     * DIN readback unreliable on LaunchPad (N2HET pad muxing) —
+     * verify DOUTA register instead. */
+
+    /* Drive WDI HIGH, verify DOUTA reflects */
+    reg_write(GIO_BASE, GIO_DSETA, wdi_mask);
+    dout_val = reg_read(GIO_BASE, GIO_DOUTA);
+    if ((dout_val & wdi_mask) == 0u) {
+        return FALSE;
+    }
+
+    /* Drive WDI LOW, verify DOUTA reflects */
+    reg_write(GIO_BASE, GIO_DCLRA, wdi_mask);
+    dout_val = reg_read(GIO_BASE, GIO_DOUTA);
+    if ((dout_val & wdi_mask) != 0u) {
+        return FALSE;
+    }
+
+    /* Toggle back HIGH — a valid watchdog feed pulse.
+     * TPS3823 timeout is 1.6s, so we are well within budget. */
+    reg_write(GIO_BASE, GIO_DSETA, wdi_mask);
+
     return TRUE;
 }
 
@@ -952,7 +1157,7 @@ boolean hw_flash_crc_incremental(void)
  */
 boolean hw_dcan_error_check(void)
 {
-    uint32 es = reg_read(DCAN1_BASE, 0x04u);  /* DCAN_ES */
+    uint32 es = reg_read(DCAN1_BASE, DCAN_ES);
 
     /* Check bus-off (bit 7) and error passive (bit 5) */
     if ((es & 0xA0u) != 0u) {
@@ -970,9 +1175,6 @@ boolean hw_dcan_error_check(void)
  *
  * Used for firmware execution verification during bring-up.
  * ================================================================== */
-
-/** LED bitmask for GIOB pins 6 and 7 */
-#define LED_MASK  (((uint32)1u << 6u) | ((uint32)1u << 7u))
 
 /**
  * @brief  Turn on LaunchPad user LEDs (LED2 + LED3) via GIOB[6:7]
