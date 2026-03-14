@@ -31,6 +31,7 @@ Thumbs.db
 # Test reports (generated)
 test/*/reports/*.xml
 test/*/reports/*.html
+firmware/bsw/os/bootstrap/test/*.exe
 
 # Secrets
 .env
@@ -40,6 +41,9 @@ credentials.*
 
 # Docker build cache
 docker/*.tar
+
+# Local private reference drops
+private/
 
 # AWS IoT Core certificates (provisioned per-device)
 docker/certs/
