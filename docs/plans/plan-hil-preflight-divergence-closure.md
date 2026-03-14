@@ -43,10 +43,11 @@ SIL can remain green while hardware behavior diverges when:
 - Steering plausibility: now compares previous rate-limited output vs actual
   feedback instead of raw command angle (HIL-PF-007).
 
-### WS5 — Timing and Calibration — PENDING
-- Requires hardware bench measurements.
-- TODO:HARDWARE Benchmark heartbeat/grace/timeout constants at 1x timing.
+### WS5 — Timing and Calibration — IN PROGRESS
+- Heartbeat/grace/timeout constants validated on physical ECU bench — DONE.
+  ECUs running at 1x timing confirm firmware constants are correct.
 - TODO:HARDWARE Create calibration dataset for SC torque-current plausibility LUT.
+  Blocked on electronic load (programmable current source, Gap 4 procurement).
 
 ## Execution Order
 1. Blockers first: recovery semantics, E-stop/relay bench proof, safety-path equivalence.
