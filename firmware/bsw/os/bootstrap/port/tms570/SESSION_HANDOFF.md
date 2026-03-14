@@ -111,7 +111,7 @@ Current status:
 - `Model-tested`: yes
 - `Build-tested`: yes
 - `Spec-backed`: partly
-- `Target-verified`: partial (RTI compare0 IRQ via VIM ch2 — PASS 2026-03-14)
+- `Target-verified`: partial (RTI compare0 IRQ — PASS, first-task launch — PASS, 2026-03-14)
 
 Current passing checks:
 
@@ -264,10 +264,25 @@ Step 2 — Prove RTI compare0 fires as IRQ via VIM channel 2: [DONE — TARGET V
 - Does NOT use Os_Port_Tms570.c bridge functions — standalone HALCoGen calls
 - HALCoGen header conflict: `sc_types.h` defines `boolean` as `uint8`, HALCoGen as `bool`. Bring-up file uses HALCoGen types only, declares SCI externs manually.
 
+Step 3 — Prove first-task launch via direct MSR+BX: [DONE — TARGET VERIFIED]
+
+- Test: `bringup_test_first_task_launch()` in `Os_Port_Tms570_Bringup.c`
+  - Builds synthetic 68-byte initial frame (17 × uint32) on 512-byte aligned stack
+  - Sets PC to `bringup_first_task_entry` at frame[16]
+  - Computes target CPSR from current CPSR, replacing only mode bits [4:0]
+  - Launches via naked `bringup_launch_task()`: MSR CPSR_cxsf → MOV SP → zero R0-R12,LR → BX
+  - Task entry reads CPSR via MRS, verifies mode = 0x1F (System), reports pass/fail
+  - Enters polled RTI LED blink loop as proof-of-life
+- **Hardware result**: `[BRINGUP-2] CPSR = 0x600003DF (mode = 0x0000001F)` — PASS
+- Key finding: HALCoGen runs main() in System mode (0x1F), not SVC (0x13). System mode has no SPSR, so exception return (LDMIA ^) is UNPREDICTABLE. Direct MSR+BX is the correct approach.
+- Key bug: CPSR mask must be `~0x1Fu` (mode bits only), NOT `~0xFFu` (full low byte). Using `~0xFFu` clears I/F bits, enabling interrupts during the launch. Pending FIQ fires immediately after MSR, leaving CPU in FIQ mode (0x11) instead of System mode.
+- Implication: `OS_PORT_TMS570_INITIAL_CPSR` in the bootstrap model should be 0x1F (System), not 0x13 (SVC). The real `Os_Port_Tms570_StartFirstTaskAsm` needs the same MSR+BX approach.
+- One-way trip — test 2 never returns; the task entry prints final summary and blinks LED.
+
 Bring-up order (remaining):
 
 1. [DONE] Prove RTI compare0 fires + VIM channel 2 routes to IRQ — TARGET VERIFIED 2026-03-14.
-2. Prove first-task launch.
+2. [DONE] Prove first-task launch — TARGET VERIFIED 2026-03-14.
 3. Prove same-task IRQ return.
 4. Prove two-task switch.
 5. Prove IRQ-driven preemption.
