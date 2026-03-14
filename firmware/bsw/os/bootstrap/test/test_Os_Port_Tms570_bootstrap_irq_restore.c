@@ -110,8 +110,8 @@ void test_Os_Port_Tms570_nested_irq_restore_returns_to_system_mode_with_nested_i
  * @requirement The bootstrap TMS570 port shall expose the runtime SP that a
  *              future assembly restore path should use for the current or
  *              selected task.
- * @verify PeekRestoreTaskSp returns the current task runtime SP when no
- *         switch is pending and the selected task runtime SP when dispatch
+ * @verify PeekRestoreTaskSp returns the current task saved-frame SP when no
+ *         switch is pending and the selected task saved-frame SP when dispatch
  *         has armed a handoff.
  */
 void test_Os_Port_Tms570_peek_restore_task_sp_prefers_selected_task_runtime_sp(void)
@@ -134,10 +134,10 @@ void test_Os_Port_Tms570_peek_restore_task_sp_prefers_selected_task_runtime_sp(v
 
     first_ctx = Os_Port_Tms570_GetTaskContext(OS_PORT_TMS570_FIRST_TASK_ID);
     second_ctx = Os_Port_Tms570_GetTaskContext(OS_PORT_TMS570_SECOND_TASK_ID);
-    TEST_ASSERT_EQUAL_PTR((void*)first_ctx->RuntimeSp, (void*)Os_Port_Tms570_PeekRestoreTaskSp());
+    TEST_ASSERT_EQUAL_PTR((void*)first_ctx->RuntimeFrame.Sp, (void*)Os_Port_Tms570_PeekRestoreTaskSp());
 
     TEST_ASSERT_EQUAL(E_OK, Os_Port_RequestConfiguredDispatch(OS_PORT_TMS570_SECOND_TASK_ID));
-    TEST_ASSERT_EQUAL_PTR((void*)second_ctx->RuntimeSp, (void*)Os_Port_Tms570_PeekRestoreTaskSp());
+    TEST_ASSERT_EQUAL_PTR((void*)second_ctx->RuntimeFrame.Sp, (void*)Os_Port_Tms570_PeekRestoreTaskSp());
 }
 
 /**

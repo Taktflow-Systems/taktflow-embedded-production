@@ -61,7 +61,7 @@ void test_Os_Port_Tms570_fiq_context_restore_does_not_complete_irq_style_dispatc
     TEST_ASSERT_TRUE(state->DispatchRequested);
     TEST_ASSERT_EQUAL(INVALID_TASK, state->CurrentTask);
     TEST_ASSERT_EQUAL(OS_PORT_TMS570_FIRST_TASK_ID, state->LastSavedTask);
-    TEST_ASSERT_EQUAL_PTR((void*)first_ctx->RuntimeSp, (void*)state->LastSavedTaskSp);
+    TEST_ASSERT_EQUAL_PTR((void*)first_ctx->SavedSp, (void*)state->LastSavedTaskSp);
     TEST_ASSERT_EQUAL_PTR(0, (void*)state->CurrentTaskSp);
     TEST_ASSERT_EQUAL(OS_PORT_TMS570_SECOND_TASK_ID, state->SelectedNextTask);
     TEST_ASSERT_EQUAL_UINT32(0u, state->TaskSwitchCount);
@@ -194,7 +194,8 @@ void test_Os_Port_Tms570_fiq_preempt_disable_blocks_scheduler_return_branch(void
     TEST_ASSERT_TRUE(state->DispatchRequested);
     TEST_ASSERT_EQUAL(OS_PORT_TMS570_FIRST_TASK_ID, state->CurrentTask);
     TEST_ASSERT_EQUAL(OS_PORT_TMS570_SECOND_TASK_ID, state->SelectedNextTask);
-    TEST_ASSERT_EQUAL_PTR((void*)state->FirstTaskSp, (void*)state->CurrentTaskSp);
+    TEST_ASSERT_EQUAL_PTR((void*)(state->FirstTaskSp - (uintptr_t)OS_PORT_TMS570_FIQ_MINIMAL_FRAME_BYTES),
+                          (void*)state->CurrentTaskSp);
     TEST_ASSERT_EQUAL_PTR((void*)0x79797970u, (void*)state->LastRestoredFiqReturnAddress);
 }
 

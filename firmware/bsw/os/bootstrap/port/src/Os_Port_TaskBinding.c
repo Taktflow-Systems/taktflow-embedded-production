@@ -103,6 +103,16 @@ StatusType Os_Port_CompleteConfiguredDispatch(void)
 #elif defined(PLATFORM_TMS570)
     const Os_Port_Tms570_StateType* state = Os_Port_Tms570_GetBootstrapState();
 
+    if (state->IrqSchedulerReturnInProgress == TRUE) {
+        Os_Port_Tms570_FinishIrqSchedulerReturn();
+        return E_OK;
+    }
+
+    if (state->FiqSchedulerReturnInProgress == TRUE) {
+        Os_Port_Tms570_FinishFiqSchedulerReturn();
+        return E_OK;
+    }
+
     if (state->DispatchRequested == FALSE) {
         return E_OS_NOFUNC;
     }

@@ -41,5 +41,8 @@ credentials.*
 # Docker build cache
 docker/*.tar
 
+# Local private reference drops
+private/
+
 # AWS IoT Core certificates (provisioned per-device)
 docker/certs/

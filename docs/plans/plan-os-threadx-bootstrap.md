@@ -84,23 +84,25 @@ For this work we will study ThreadX internals, not reuse its public API shape.
 
 ### TMS570 / Cortex-R5 Port
 
-Current local extracted-tree note:
+Current local vendor-tree note:
 
-- the archive currently extracted under `d:\workspace_ccstheia\.tmp_threadx\threadx-master`
-  does `not` contain `ports/cortex_r5`
-- for exact local interrupt/context study today, use the verified
-  `ports/arm11/gnu/src/*` files below
-- for upstream support status, use:
-  - https://github.com/eclipse-threadx/threadx
+- the local vendor copy under
+  `d:\workspace_ccstheia\taktflow-embedded-production\private\vendor\threadx-master`
+  does contain `ports/cortex_r5`
+- use the exact local `ports/cortex_r5/gnu/*` files first for new TMS570
+  low-level decisions
+- keep the matching local `ports/arm11/gnu/*` files as a secondary
+  cross-check for the earlier bootstrap slices that were shaped before the
+  vendor tree was tucked into the repo
 
 | Topic | ThreadX file | Lesson for our OS |
 |---|---|---|
-| Port constants and interrupt model | upstream Eclipse ThreadX support list plus local `ports/arm11/gnu/src/*` | The local extracted tree does not give a direct `cortex_r5` port contract file, so use local ARM-R interrupt/context files for mechanics and upstream support status as a planning anchor. |
-| Scheduler loop | `ports/arm11/gnu/src/tx_thread_schedule.S` | How the first runnable thread is selected and transferred in the closest local ARM-R port. |
-| Context save / restore | `ports/arm11/gnu/src/tx_thread_context_save.S` and `tx_thread_context_restore.S` | Interrupt entry, mode switching, and final-return branch rules for TMS570 bootstrap study. |
-| IRQ/FIQ nesting | `ports/arm11/gnu/src/tx_thread_irq_nesting_start.S`, `tx_thread_irq_nesting_end.S`, `tx_thread_fiq_context_save.S`, `tx_thread_fiq_context_restore.S`, `tx_thread_fiq_nesting_start.S`, and `tx_thread_fiq_nesting_end.S` | Exact local reference for keeping FIQ separate from IRQ-return dispatch completion. |
-| Tick ISR | `ports/arm11/gnu/src/tx_timer_interrupt.S` | Timer-interrupt-to-kernel handoff pattern. |
-| Stack build | `ports/arm11/gnu/src/tx_thread_stack_build.S` | Synthetic first-task frame ideas. |
+| Port constants and interrupt model | `ports/cortex_r5/gnu/inc/tx_port.h` | Direct local Cortex-R5 port contract and interrupt rules. |
+| Scheduler loop | `ports/cortex_r5/gnu/src/tx_thread_schedule.S` | How the first runnable thread is selected and transferred in the direct local ARM-R port. |
+| Context save / restore | `ports/cortex_r5/gnu/src/tx_thread_context_save.S` and `tx_thread_context_restore.S` | Interrupt entry, mode switching, and final-return branch rules for TMS570 bootstrap study. |
+| IRQ/FIQ nesting | `ports/cortex_r5/gnu/src/tx_thread_irq_nesting_start.S`, `tx_thread_irq_nesting_end.S`, `tx_thread_fiq_context_save.S`, `tx_thread_fiq_context_restore.S`, `tx_thread_fiq_nesting_start.S`, and `tx_thread_fiq_nesting_end.S` | Exact local reference for keeping FIQ separate from IRQ-return dispatch completion. |
+| Tick ISR | `ports/cortex_r5/gnu/src/tx_timer_interrupt.S` | Timer-interrupt-to-kernel handoff pattern. |
+| Stack build | `ports/cortex_r5/gnu/src/tx_thread_stack_build.S` | Synthetic first-task frame ideas. |
 
 ### SC3 / Protection Study
 
@@ -117,7 +119,7 @@ Notes:
 - The local archive contains strong ARMv7-M module-manager MPU references.
 - I did not find an equally direct Cortex-R5 module-manager MPU example in this
   archive, so TMS570 protection work should use:
-  - `ports/arm11/gnu/*` for exact local interrupt/context behavior study
+  - `ports/cortex_r5/gnu/*` for exact local interrupt/context behavior study
   - ARMv7-M module-manager files for protection-state design ideas only
 
 ## Architectural Direction for Our OS

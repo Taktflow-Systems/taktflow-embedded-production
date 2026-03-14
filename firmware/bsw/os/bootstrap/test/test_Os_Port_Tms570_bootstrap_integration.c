@@ -11,6 +11,7 @@ void test_Os_Port_Tms570_RegisterIntegrationTickTests(void);
 void test_Os_Port_Tms570_RegisterIntegrationTimeSliceTests(void);
 void test_Os_Port_Tms570_RegisterIntegrationTimeSliceServiceTests(void);
 void test_Os_Port_Tms570_RegisterIntegrationTimeSlicePolicyTests(void);
+void test_Os_Port_Tms570_RegisterIntegrationRoundTripTests(void);
 
 void test_Os_Port_Tms570_RegisterIntegrationTests(void)
 {
@@ -20,4 +21,5 @@ void test_Os_Port_Tms570_RegisterIntegrationTests(void)
     test_Os_Port_Tms570_RegisterIntegrationTimeSliceTests();
     test_Os_Port_Tms570_RegisterIntegrationTimeSliceServiceTests();
     test_Os_Port_Tms570_RegisterIntegrationTimeSlicePolicyTests();
+    test_Os_Port_Tms570_RegisterIntegrationRoundTripTests();
 }

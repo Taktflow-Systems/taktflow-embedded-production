@@ -19,21 +19,25 @@ Purpose:
 
 ## Exact Local References In Use
 
-Local extracted ThreadX tree:
+Local vendor ThreadX tree:
 
-- `d:\workspace_ccstheia\.tmp_threadx\threadx-master`
+- `d:\workspace_ccstheia\taktflow-embedded-production\private\vendor\threadx-master`
 
 Current interrupt/context references used repeatedly:
 
-- `ports/arm11/gnu/src/tx_thread_context_save.S`
-- `ports/arm11/gnu/src/tx_thread_context_restore.S`
-- `ports/arm11/gnu/src/tx_thread_irq_nesting_start.S`
-- `ports/arm11/gnu/src/tx_thread_irq_nesting_end.S`
-- `ports/arm11/gnu/src/tx_thread_fiq_context_save.S`
-- `ports/arm11/gnu/src/tx_thread_fiq_context_restore.S`
-- `ports/arm11/gnu/src/tx_thread_fiq_nesting_start.S`
-- `ports/arm11/gnu/src/tx_thread_fiq_nesting_end.S`
-- `ports/arm11/gnu/src/tx_timer_interrupt.S`
+- `ports/cortex_r5/gnu/src/tx_thread_context_save.S`
+- `ports/cortex_r5/gnu/src/tx_thread_context_restore.S`
+- `ports/cortex_r5/gnu/src/tx_thread_irq_nesting_start.S`
+- `ports/cortex_r5/gnu/src/tx_thread_irq_nesting_end.S`
+- `ports/cortex_r5/gnu/src/tx_thread_fiq_context_save.S`
+- `ports/cortex_r5/gnu/src/tx_thread_fiq_context_restore.S`
+- `ports/cortex_r5/gnu/src/tx_thread_fiq_nesting_start.S`
+- `ports/cortex_r5/gnu/src/tx_thread_fiq_nesting_end.S`
+- `ports/cortex_r5/gnu/src/tx_timer_interrupt.S`
+
+Older bootstrap slices were initially cross-checked against the matching
+`ports/arm11/gnu/src/*` files before this local vendor tree was tucked into the
+repo. From the next session onward, prefer the local `cortex_r5` files first.
 
 Current HALCoGen/TI references used repeatedly:
 
@@ -61,8 +65,8 @@ What is already modeled:
 1. First-task bootstrap frame and first-task start flow.
 2. IRQ save/restore lifecycle with nested IRQ handling.
 3. FIQ save/restore lifecycle kept separate from IRQ-return dispatch.
-4. Runtime SP ownership for prepared tasks.
-5. Selected-next-task and deferred dispatch bootstrap model.
+4. Explicit initial-frame versus runtime-frame ownership for prepared tasks, including runtime IRQ return-address capture, restore-frame metadata helpers, direct restore-block helpers for task-lower, scratch, preserved, and VFP snapshots, the first saved task-lower register block, the first saved IRQ scratch-register snapshot, dynamic saved CPSR capture, an expanded task-upper block that now reaches `R4-R12`, explicit saved task `LR` ownership, optional VFPv3-D16 runtime state, selected-task restore-side application on task switch, narrowed resume-current restore behavior for IRQ/FIQ, explicit interrupt-versus-solicited frame-byte footprints, saved-frame `SP` commit from the live running `SP`, the first matching FIQ runtime-metadata capture/resume path, explicit IRQ interrupt-context byte tracking with the exact local Cortex-R5 `32/32/0` save-shape split for running-thread, nested, and idle-system save paths, per-level IRQ saved `SPSR/CPSR` ownership in LIFO order instead of one flat live slot, per-level IRQ scratch-register ownership in LIFO order instead of one flat live scratch placeholder, matching stacked FIQ `SPSR/CPSR` plus scratch ownership, the exact minimal-FIQ `r0-r3`-only scratch restore split for `24-byte` first-entry frames, a fixed runtime-frame setter rule that preserves valid solicited `StackType = 0` across later field updates, coherent packed saved/restored IRQ/FIQ interrupt-context views plus asm-facing peek wrappers for the interrupt-context seam, save-side runtime-frame metadata refresh from the packed saved interrupt context object itself, switch-away capture that now prefers the packed restored IRQ/FIQ context over later mutated live restore-side fields, resume-current behavior that now prefers the packed restored IRQ/FIQ context for interrupt-state fields over corrupted saved-frame metadata, packed saved/restored task-frame views with `Frame + FrameBytes` payloads for the task-context seam, unified pending save/restore task-frame views plus unified pending save/restore interrupt-context views for the live save/restore windows, explicit restore-in-progress ownership so those pending views exist only during the live restore window, explicit save-in-progress ownership so the save seam can expose truthful in-flight save objects too, pending effective IRQ/FIQ save-context/save-task-frame views, direct pending-save scalar getters for the asm seam, explicit solicited-system-return begin/finish ownership with a truthful pending solicited save-task-frame view during the live save window, the new frozen solicited-save snapshot behavior so `FinishSolicitedSystemReturn()` consumes one fixed frame object instead of later-mutated live state, explicit first-task-start begin/finish ownership with a truthful pending first-task frame view during the live launch window, the removal of the old dedicated prepared-`SP` first-task shortcut in favor of the generic restore seam, the start-path use of generic restore `StackType/CPSR` metadata instead of the old synthetic-frame header shortcut, the new explicit IRQ idle-system restore branch, the new explicit IRQ switch-task scheduler-return marker plus asm-side scheduler-placeholder return branch for non-resume IRQ restore paths, the new explicit `IrqSchedulerReturnInProgress` window plus a truthful pending scheduler-return task-frame view, the post-`Os_PortExitIsr2()` upgrade path that can turn an originally computed IRQ `resume current` into a real `switch task` once the selected prepared task becomes known before restore finishes, and the matching explicit `FiqSchedulerReturnInProgress` window plus truthful pending FIQ scheduler-return task-frame view for the local `preempt scheduler` branch, including the new asm-side split between ordinary exception return and scheduler-return placeholder flow.
+5. Selected-next-task and deferred dispatch bootstrap model, including the new post-exit IRQ upgrade path that keeps ISR/tick-triggered handoff timing aligned with the local Cortex-R5 restore shape without collapsing back into one opaque restore helper, plus the new FIQ scheduler-return completion paths through both the shared configured-dispatch completion helper and the kernel-dispatch observe hook.
 6. Time-slice bookkeeping and timer-side service seam.
 7. RTI compare0 source model with notification gate, counter gate, pending flag, acknowledge, and periodic compare update.
 8. VIM request path with:
@@ -74,6 +78,10 @@ What is already modeled:
    - `REQMASKCLR/REQMASKSET` pulse
    - mapped-vector invocation
    - wrapper/core split around IRQ entry
+9. Solicited system-return modeling from the local `tx_thread_system_return.S` path, including minimal `StackType = 0` runtime-frame capture, cleared live task ownership, and a task-switch restore path that now honors the interrupt-versus-solicited frame split from the local `tx_thread_schedule.S` logic.
+10. Save-time full task register capture: `FinishIrqContextSave` (CAPTURE_CURRENT) and `FinishFiqContextSave` (FIRST_ENTRY) now capture lower (R0-R3), preserved (R4-R12), LR, and VFP into the task RuntimeFrame at save-finish time instead of deferring to scheduler-return. Scheduler-return no longer re-captures these — it only updates interrupt metadata from the restored context, commits time slice, and commits SP. RuntimeFrame is now the single authoritative source of captured task state right after save.
+12. HALCoGen bring-up glue: 7 bridge functions (`HalVimInit`, `HalVimMapTickChannel`, `HalVimEnableChannel`, `HalVimDisableChannel`, `HalRtiInit`, `HalRtiStart`, `HalRtiAcknowledgeCompare0`) with `UNIT_TEST` model paths and `TODO:HARDWARE` target stubs. Full lifecycle tested: VIM init → map → enable → RTI init → start → ack.
+11. Phase 1 completion: restore-side `PeekRestore*` functions read directly from the target task's RuntimeFrame (via `PeekRestoreTaskFrame()`). Flat state variables (`CurrentTaskLower`, `CurrentTaskPreserved`, `CurrentTaskVfp`, `CurrentTaskLinkRegister`) serve as the live CPU register file — populated during restore, consumed during the next save. Round-trip integration tests verify: (a) `PeekRestoreTaskFrame` returns the target task's RuntimeFrame during switch, (b) scheduler-return does not re-capture lower/preserved/LR/VFP (save-time capture is authoritative), (c) FIQ scheduler-return preserves save-time register values.
 
 Current VIM/RTI runtime seam now looks like this:
 
@@ -84,9 +92,11 @@ Current VIM/RTI runtime seam now looks like this:
 5. `Os_Port_Tms570_ReadActiveIrqChannel()` decodes `IRQINDEX - 1U`.
 6. `Os_Port_Tms570_ReadActiveIrqVector()` reads the mapped handler from the VIM RAM-style table.
 7. `Os_Port_Tms570_PulseActiveIrqMask()` pulses `REQMASKCLR/REQMASKSET`.
-8. `Os_Port_Tms570_InvokeActiveIrqVectorCore()` invokes the mapped service core.
-9. `Os_Port_Tms570_VimIrqEntryCore()` owns core entry behavior.
-10. `Os_Port_Tms570_VimIrqEntry()` owns the IRQ wrapper.
+8. `Os_Port_Tms570_ServiceActiveIrqChannelCore()` dispatches by decoded channel plus mapped vector.
+9. `Os_Port_Tms570_InvokeActiveIrqVectorCore()` reuses that channel-driven service seam.
+10. The Cortex-R5 bootstrap `.S` file now exposes thin asm-facing labels for mapped-channel read, active-vector read, mask pulse, channel-driven service, mapped-vector invoke, and VIM entry/service flow.
+11. `Os_Port_Tms570_VimIrqEntryCore()` owns core entry behavior.
+12. `Os_Port_Tms570_VimIrqEntry()` owns the IRQ wrapper.
 
 Why this matters:
 
@@ -105,7 +115,7 @@ Current status:
 
 Current passing checks:
 
-- TMS570 split bootstrap suite: `106 tests, 0 failures`
+- TMS570 split bootstrap suite: `210 tests, 0 failures`
 - TMS570 assembly build check: passed
 - shared SchM regression: `11 tests, 0 failures`
 
@@ -171,45 +181,7 @@ Do not overclaim:
 
 Do these in order.
 
-### 1. Finish the VIM-side decomposition
-
-Goal:
-
-- remove the last remaining hidden assumptions in the IRQ service flow
-
-Next slices:
-
-1. Add an explicit `service active IRQ by channel` seam so the service core branches from decoded channel, not just from the RTI compare0 happy path.
-2. Add a tiny per-channel dispatch table or branch seam in C, still only for channel 2 at first.
-3. Make `InvokeActiveIrqVectorCore()` use the decoded channel and the mapped vector together, not only the RTI handler-address equality check.
-
-Done when:
-
-- service does not rely on a direct `channel == 2` shortcut except at the final leaf
-- channel decode, vector fetch, and service dispatch are all explicit seams
-
-### 2. Move more of the IRQ wrapper shape into assembly-facing ownership
-
-Goal:
-
-- make the `.S` file mirror the runtime C flow one-to-one
-
-Next slices:
-
-1. Add explicit asm-facing wrappers for:
-   - mapped channel read
-   - active vector read
-   - mask pulse
-   - mapped vector invoke
-2. Keep them thin at first.
-3. Verify the C path still remains the source of truth.
-
-Done when:
-
-- every important VIM runtime seam has a matching asm-facing label
-- there is no hidden C-only ownership step in the vector-entry path
-
-### 3. Start replacing model-only context ownership with live task-context ownership
+### 1. [DONE] Start replacing model-only context ownership with live task-context ownership
 
 Goal:
 
@@ -217,39 +189,49 @@ Goal:
 
 Next slices:
 
-1. Introduce explicit saved-register frame ownership per prepared task context.
-2. Separate:
-   - initial prepared frame
-   - last saved runtime frame
+1. Expand the current `{InitialFrame, RuntimeFrame}` model from `SP + TimeSlice + ReturnAddress + LinkRegister + CPSR + StackType + task-lower snapshot + IRQ/FIQ scratch snapshots + task-upper block through R12 + optional VFP state + restore-applied live-state handoff` into the next real saved-register runtime context fields and then make save/restore consume even more of that object directly.
+ - Keep the new packed saved IRQ/FIQ interrupt-context views aligned with the exact local Cortex-R5 save/restore files if any future asm-facing change touches `LastSavedIrqContext`, `LastRestoredIrqContext`, `LastSavedFiqContext`, or `LastRestoredFiqContext`.
+ - Keep the new packed saved/restored task-frame views, restore-in-progress ownership, unified pending save/restore task-frame views, and unified pending save/restore interrupt-context views aligned with the same local Cortex-R5 save/restore split if any future asm-facing change touches the task-context seam.
+ - Keep the new explicit IRQ scheduler-return window, the pending scheduler-return task-frame view, and the post-`Os_PortExitIsr2()` resume-to-switch upgrade aligned with the local `tx_thread_context_restore.S` scheduler-return branch whenever future work changes how deferred dispatch becomes a live selected-task handoff.
+ - Keep the new explicit FIQ scheduler-return window, the pending FIQ scheduler-return task-frame view, and the new completion hooks aligned with the local `tx_thread_fiq_context_restore.S` scheduler-return branch whenever future work changes how that FIQ preempt branch hands control back to the scheduler model.
+2. Keep the initial prepared frame immutable once a task is prepared.
 3. Move IRQ save toward writing that runtime frame object directly.
+5. Keep the new solicited system-return seam aligned with the local `tx_thread_system_return.S` save shape instead of falling back to manual stack-type test overrides.
 4. Move restore toward reading the selected task’s runtime frame directly.
+6. Keep the new IRQ interrupt-context byte tracking aligned with the exact local `tx_thread_context_save.S` shape if any future save-path change touches `LastSavedIrqContextBytes`, `LastRestoredIrqContextBytes`, or `IrqInterruptStackBytes`.
+7. Keep the new stacked IRQ `SPSR/CPSR` ownership aligned with the same local save file if any future restore-path change touches `LastSavedIrqContextCpsr`, `LastRestoredIrqContextCpsr`, or the per-level IRQ restore order.
+8. Keep the new stacked IRQ scratch ownership aligned with the same local save file if any future restore-path change touches `LastSavedIrqContextScratch`, `LastRestoredIrqContextScratch`, or the per-level IRQ restore order.
+9. Keep the new stacked FIQ `SPSR/CPSR` and scratch ownership aligned with the local `tx_thread_fiq_context_save.S` / `tx_thread_fiq_context_restore.S` pair, especially the `24-byte` first-entry rule where `r10/r12` are not part of the saved minimal FIQ frame.
+10. Keep the `StackType = 0` solicited-frame preservation fix intact in the runtime-frame setters, because `0` is a valid stack-type value in this model and must not be treated as "unset".
 
 Done when:
 
-- IRQ save/restore updates a real per-task runtime context object
-- switching tasks is no longer mostly synthetic state changes
+- [DONE] IRQ save/restore updates a real per-task runtime context object
+- [DONE] switching tasks is no longer mostly synthetic state changes
 
-### 4. Prepare real HALCoGen/TI bring-up glue
+### 2. [DONE] Prepare real HALCoGen/TI bring-up glue
 
 Goal:
 
 - make the bootstrap seams line up with the real hardware files we will call later
 
-Next slices:
+Implemented bridge functions (declared in `Os_Port_Tms570.h`, implemented in `Os_Port_Tms570.c`):
 
-1. Add a target-facing note or stub for:
-   - `vimInit()`
-   - `vimChannelMap()`
-   - `vimEnableInterrupt()`
-   - RTI compare0 init/start/ack path
-2. Keep it out of the live build if needed.
-3. Do not fake target verification.
+1. `Os_Port_Tms570_HalVimInit()` — resets ISR table, VimReqmaskset0, VimChanctrl0, sets VimConfigured. Target: `vimInit()`.
+2. `Os_Port_Tms570_HalVimMapTickChannel(VimChannel, RequestId)` — stores RtiTickHandler in ISR table slot, sets VimRtiCompare0HandlerAddress. Target: `vimChannelMap(RequestId, VimChannel, &handler)`. Rejects reserved channels 0-1 and >=96.
+3. `Os_Port_Tms570_HalVimEnableChannel(VimChannel)` — sets bit in VimReqmaskset0. Target: `vimEnableInterrupt(VimChannel, SYS_IRQ)`. Rejects channel >=32.
+4. `Os_Port_Tms570_HalVimDisableChannel(VimChannel)` — clears bit in VimReqmaskset0. Target: `vimDisableInterrupt(VimChannel)`. Rejects channel >=32.
+5. `Os_Port_Tms570_HalRtiInit(Compare0Period)` — sets RtiCmp0Comp/Udcp, clears flags, sets RtiConfigured. Target: `rtiInit()` + `rtiSetPeriod()`.
+6. `Os_Port_Tms570_HalRtiStart()` — enables counter via RtiGctrl, enables compare0 interrupt via RtiSetintena. Target: `rtiStartCounter()` + `rtiEnableNotification()`.
+7. `Os_Port_Tms570_HalRtiAcknowledgeCompare0()` — calls existing `os_port_tms570_acknowledge_rti_compare0()`. Target: `rtiREG1->INTFLAG = rtiNOTIFICATION_COMPARE0`.
+
+All functions use `#if defined(UNIT_TEST)` / `#else` branches. Target-side branches have `TODO:HARDWARE` comments naming exact HALCoGen functions to call. 14 new tests in `test_Os_Port_Tms570_bootstrap_core_hal_bridge.c` covering state changes, boundary validation, and full lifecycle.
 
 Done when:
 
-- the repo has a clear bridge from bootstrap seam to real HALCoGen call sites
+- [DONE] the repo has a clear bridge from bootstrap seam to real HALCoGen call sites
 
-### 5. Then do real target bring-up
+### 3. Then do real target bring-up
 
 Goal:
 
@@ -286,9 +268,9 @@ Start next session here:
 If there is doubt on interrupt/vector behavior, re-open:
 
 1. `firmware/ecu/sc/halcogen/source/HL_sys_vim.c`
-2. `d:\workspace_ccstheia\.tmp_threadx\threadx-master\ports\arm11\gnu\src\tx_thread_context_save.S`
-3. `d:\workspace_ccstheia\.tmp_threadx\threadx-master\ports\arm11\gnu\src\tx_thread_context_restore.S`
-4. `d:\workspace_ccstheia\.tmp_threadx\threadx-master\ports\arm11\gnu\src\tx_timer_interrupt.S`
+2. `d:\workspace_ccstheia\taktflow-embedded-production\private\vendor\threadx-master\ports\cortex_r5\gnu\src\tx_thread_context_save.S`
+3. `d:\workspace_ccstheia\taktflow-embedded-production\private\vendor\threadx-master\ports\cortex_r5\gnu\src\tx_thread_context_restore.S`
+4. `d:\workspace_ccstheia\taktflow-embedded-production\private\vendor\threadx-master\ports\cortex_r5\gnu\src\tx_timer_interrupt.S`
 
 ## Short Resume Prompt
 

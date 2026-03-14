@@ -8,10 +8,12 @@
 /**
  * @spec ThreadX reference: ports/cortex_r5/gnu/src/tx_thread_context_save.S
  * @requirement The bootstrap TMS570 port shall expose a save-current-SP hook
- *              that records the outermost interrupted task runtime SP for the
+ *              that preserves the live running SP while also recording the
+ *              outermost interrupted task's minimal saved-frame SP for the
  *              future assembly path.
- * @verify SaveCurrentTaskSp updates the current task runtime SP and capture
- *         on outermost use, while nested use leaves the outer capture intact.
+ * @verify SaveCurrentTaskSp keeps the current task runtime SP live, records a
+ *         minimal saved-frame SP on outermost use, and nested use leaves the
+ *         outer capture intact.
  */
 void test_Os_Port_Tms570_save_current_task_sp_updates_outermost_capture_only(void)
 {
@@ -21,6 +23,7 @@ void test_Os_Port_Tms570_save_current_task_sp_updates_outermost_capture_only(voi
     const Os_Port_Tms570_TaskContextType* first_ctx;
     uintptr_t outer_runtime_sp;
     uintptr_t nested_runtime_sp;
+    uintptr_t expected_outer_saved_sp;
 
     Os_PortTargetInit();
     TEST_ASSERT_EQUAL(E_OK,
@@ -31,14 +34,17 @@ void test_Os_Port_Tms570_save_current_task_sp_updates_outermost_capture_only(voi
     first_ctx = Os_Port_Tms570_GetTaskContext(OS_PORT_TMS570_FIRST_TASK_ID);
     outer_runtime_sp = first_ctx->SavedSp - (uintptr_t)32u;
     nested_runtime_sp = first_ctx->SavedSp - (uintptr_t)48u;
+    expected_outer_saved_sp = outer_runtime_sp - (uintptr_t)OS_PORT_TMS570_IRQ_MINIMAL_FRAME_BYTES;
 
     TEST_ASSERT_EQUAL(E_OK, Os_Port_Tms570_SaveCurrentTaskSp(outer_runtime_sp));
     state = Os_Port_Tms570_GetBootstrapState();
     first_ctx = Os_Port_Tms570_GetTaskContext(OS_PORT_TMS570_FIRST_TASK_ID);
     TEST_ASSERT_EQUAL_PTR((void*)outer_runtime_sp, (void*)state->CurrentTaskSp);
     TEST_ASSERT_EQUAL(OS_PORT_TMS570_FIRST_TASK_ID, state->IrqCapturedTask);
-    TEST_ASSERT_EQUAL_PTR((void*)outer_runtime_sp, (void*)state->IrqCapturedTaskSp);
+    TEST_ASSERT_EQUAL_PTR((void*)expected_outer_saved_sp, (void*)state->IrqCapturedTaskSp);
     TEST_ASSERT_EQUAL_PTR((void*)outer_runtime_sp, (void*)first_ctx->RuntimeSp);
+    TEST_ASSERT_EQUAL_PTR((void*)expected_outer_saved_sp, (void*)first_ctx->RuntimeFrame.Sp);
+    TEST_ASSERT_EQUAL_PTR((void*)expected_outer_saved_sp, (void*)first_ctx->SavedSp);
 
     Os_Port_Tms570_IrqContextSave();
     TEST_ASSERT_EQUAL(E_OK, Os_Port_Tms570_SaveCurrentTaskSp(nested_runtime_sp));
@@ -46,8 +52,9 @@ void test_Os_Port_Tms570_save_current_task_sp_updates_outermost_capture_only(voi
     first_ctx = Os_Port_Tms570_GetTaskContext(OS_PORT_TMS570_FIRST_TASK_ID);
     TEST_ASSERT_EQUAL_PTR((void*)outer_runtime_sp, (void*)state->CurrentTaskSp);
     TEST_ASSERT_EQUAL(OS_PORT_TMS570_FIRST_TASK_ID, state->IrqCapturedTask);
-    TEST_ASSERT_EQUAL_PTR((void*)outer_runtime_sp, (void*)state->IrqCapturedTaskSp);
+    TEST_ASSERT_EQUAL_PTR((void*)expected_outer_saved_sp, (void*)state->IrqCapturedTaskSp);
     TEST_ASSERT_EQUAL_PTR((void*)outer_runtime_sp, (void*)first_ctx->RuntimeSp);
+    TEST_ASSERT_EQUAL_PTR((void*)expected_outer_saved_sp, (void*)first_ctx->RuntimeFrame.Sp);
     Os_Port_Tms570_IrqContextRestore();
 }
 
@@ -64,6 +71,7 @@ void test_Os_Port_Tms570_irq_context_save_records_capture_then_nested_actions(vo
     uint8 first_stack[160];
     uintptr_t first_stack_top = (uintptr_t)(&first_stack[160]);
     const Os_Port_Tms570_StateType* state;
+    const Os_Port_Tms570_TaskContextType* first_ctx;
 
     Os_PortTargetInit();
     TEST_ASSERT_EQUAL(E_OK,
@@ -82,7 +90,8 @@ void test_Os_Port_Tms570_irq_context_save_records_capture_then_nested_actions(vo
     TEST_ASSERT_EQUAL_UINT32(1u, state->IrqProcessingEnterCount);
     TEST_ASSERT_EQUAL_UINT32(0u, state->NestedIrqReturnCount);
     TEST_ASSERT_EQUAL(OS_PORT_TMS570_FIRST_TASK_ID, state->IrqCapturedTask);
-    TEST_ASSERT_EQUAL_PTR((void*)state->CurrentTaskSp, (void*)state->IrqCapturedTaskSp);
+    first_ctx = Os_Port_Tms570_GetTaskContext(OS_PORT_TMS570_FIRST_TASK_ID);
+    TEST_ASSERT_EQUAL_PTR((void*)first_ctx->RuntimeFrame.Sp, (void*)state->IrqCapturedTaskSp);
 
     TEST_ASSERT_EQUAL_UINT8(OS_PORT_TMS570_SAVE_NESTED_IRQ, Os_Port_Tms570_PeekSaveAction());
     TEST_ASSERT_EQUAL_UINT8(OS_PORT_TMS570_SAVE_CONTINUE_NESTED_RETURN,
@@ -96,7 +105,8 @@ void test_Os_Port_Tms570_irq_context_save_records_capture_then_nested_actions(vo
     TEST_ASSERT_EQUAL_UINT32(1u, state->IrqProcessingEnterCount);
     TEST_ASSERT_EQUAL_UINT32(1u, state->NestedIrqReturnCount);
     TEST_ASSERT_EQUAL(OS_PORT_TMS570_FIRST_TASK_ID, state->IrqCapturedTask);
-    TEST_ASSERT_EQUAL_PTR((void*)state->CurrentTaskSp, (void*)state->IrqCapturedTaskSp);
+    first_ctx = Os_Port_Tms570_GetTaskContext(OS_PORT_TMS570_FIRST_TASK_ID);
+    TEST_ASSERT_EQUAL_PTR((void*)first_ctx->RuntimeFrame.Sp, (void*)state->IrqCapturedTaskSp);
 
     Os_Port_Tms570_IrqContextRestore();
     Os_Port_Tms570_IrqContextRestore();
@@ -132,7 +142,7 @@ void test_Os_Port_Tms570_irq_context_save_before_first_task_records_idle_system_
 
     Os_Port_Tms570_IrqContextRestore();
     state = Os_Port_Tms570_GetBootstrapState();
-    TEST_ASSERT_EQUAL_UINT8(OS_PORT_TMS570_RESTORE_RESUME_CURRENT, state->LastRestoreAction);
+    TEST_ASSERT_EQUAL_UINT8(OS_PORT_TMS570_RESTORE_IDLE_SYSTEM, state->LastRestoreAction);
     TEST_ASSERT_EQUAL_UINT8(0u, state->IrqContextDepth);
     TEST_ASSERT_EQUAL_UINT8(0u, state->IrqProcessingDepth);
     TEST_ASSERT_EQUAL_UINT8(0u, state->IrqNesting);

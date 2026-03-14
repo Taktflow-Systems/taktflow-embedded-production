@@ -143,9 +143,9 @@ void test_Os_Port_Tms570_irq_restore_switches_back_to_saved_runtime_sp(void)
 
     TEST_ASSERT_EQUAL(OS_PORT_TMS570_SECOND_TASK_ID, state->LastSavedTask);
     TEST_ASSERT_EQUAL(OS_PORT_TMS570_FIRST_TASK_ID, state->CurrentTask);
-    TEST_ASSERT_EQUAL_PTR((void*)second_runtime_sp, (void*)state->LastSavedTaskSp);
-    TEST_ASSERT_EQUAL_PTR((void*)first_runtime_sp, (void*)state->CurrentTaskSp);
-    TEST_ASSERT_EQUAL_PTR((void*)first_runtime_sp, (void*)state->LastRestoredTaskSp);
+    TEST_ASSERT_EQUAL_PTR((void*)second_ctx->SavedSp, (void*)state->LastSavedTaskSp);
+    TEST_ASSERT_EQUAL_PTR((void*)first_ctx->SavedSp, (void*)state->CurrentTaskSp);
+    TEST_ASSERT_EQUAL_PTR((void*)first_ctx->SavedSp, (void*)state->LastRestoredTaskSp);
     TEST_ASSERT_EQUAL_PTR((void*)first_runtime_sp, (void*)first_ctx->RuntimeSp);
     TEST_ASSERT_EQUAL_PTR((void*)second_runtime_sp, (void*)second_ctx->RuntimeSp);
 }

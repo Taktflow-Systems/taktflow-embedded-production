@@ -34,26 +34,27 @@ Purpose:
 
 ### TMS570LC43x / Cortex-R5 Port
 
-Current local extracted-tree note:
+Current local vendor-tree note:
 
-- the archive currently extracted under `d:\workspace_ccstheia\.tmp_threadx\threadx-master`
-  does `not` contain `ports/cortex_r5`
-- for exact local interrupt/context study today, we use the verified
-  `ports/arm11/gnu/src/*` files below
-- for planning/reference only, the official upstream Eclipse ThreadX repo
-  lists `cortex_r5` in its supported architecture set:
-  - https://github.com/eclipse-threadx/threadx
+- the local vendor copy under
+  `d:\workspace_ccstheia\taktflow-embedded-production\private\vendor\threadx-master`
+  does contain `ports/cortex_r5`
+- use the exact local `ports/cortex_r5/gnu/*` files first for new TMS570
+  low-level decisions
+- keep the matching local `ports/arm11/gnu/*` files as a historical
+  cross-check for the earlier bootstrap slices that were shaped before the
+  vendor tree was tucked into the repo
 
 | Our topic | Local verified ThreadX file | Why it matters |
 |---|---|---|
-| Port contract and upstream support planning | `threadx-master/ports/arm11/gnu/src/*` plus official upstream support list | The local archive does not give a direct `cortex_r5` port contract file, so treat upstream `cortex_r5` support as a planning anchor, not a locally verified file reference. |
-| First schedule | `threadx-master/ports/arm11/gnu/src/tx_thread_schedule.S` | Initial branch into first runnable task. |
-| IRQ context save | `threadx-master/ports/arm11/gnu/src/tx_thread_context_save.S` | Interrupt entry, nested-save split, and system-stack transfer pattern. |
-| IRQ context restore | `threadx-master/ports/arm11/gnu/src/tx_thread_context_restore.S` | Final-return branches for nested return, resume current, and switch task. |
-| IRQ nesting | `threadx-master/ports/arm11/gnu/src/tx_thread_irq_nesting_start.S` and `tx_thread_irq_nesting_end.S` | Nested IRQ bookkeeping. |
-| FIQ context and nesting | `threadx-master/ports/arm11/gnu/src/tx_thread_fiq_context_save.S`, `tx_thread_fiq_context_restore.S`, `tx_thread_fiq_nesting_start.S`, and `tx_thread_fiq_nesting_end.S` | Separate fast-interrupt handling model. |
-| Tick ISR | `threadx-master/ports/arm11/gnu/src/tx_timer_interrupt.S` | Timer interrupt integration pattern. |
-| Stack build | `threadx-master/ports/arm11/gnu/src/tx_thread_stack_build.S` | Synthetic first-task frame ideas. |
+| Port contract | `threadx-master/ports/cortex_r5/gnu/inc/tx_port.h` | Port-owned types, interrupt rules, and architectural constants for the direct local Cortex-R5 port. |
+| First schedule | `threadx-master/ports/cortex_r5/gnu/src/tx_thread_schedule.S` | Initial branch into first runnable task. |
+| IRQ context save | `threadx-master/ports/cortex_r5/gnu/src/tx_thread_context_save.S` | Interrupt entry, nested-save split, and system-stack transfer pattern. |
+| IRQ context restore | `threadx-master/ports/cortex_r5/gnu/src/tx_thread_context_restore.S` | Final-return branches for nested return, resume current, and switch task. |
+| IRQ nesting | `threadx-master/ports/cortex_r5/gnu/src/tx_thread_irq_nesting_start.S` and `tx_thread_irq_nesting_end.S` | Nested IRQ bookkeeping. |
+| FIQ context and nesting | `threadx-master/ports/cortex_r5/gnu/src/tx_thread_fiq_context_save.S`, `tx_thread_fiq_context_restore.S`, `tx_thread_fiq_nesting_start.S`, and `tx_thread_fiq_nesting_end.S` | Separate fast-interrupt handling model. |
+| Tick ISR | `threadx-master/ports/cortex_r5/gnu/src/tx_timer_interrupt.S` | Timer interrupt integration pattern. |
+| Stack build | `threadx-master/ports/cortex_r5/gnu/src/tx_thread_stack_build.S` | Synthetic first-task frame ideas. |
 
 ### Stack Monitoring
 
@@ -93,7 +94,7 @@ Important caveat:
 | `firmware/bsw/os/bootstrap/src/Os_Memory.c` | `ports_arch/ARMv7-M/threadx_modules/common/module_manager/src/txm_module_manager_mm_register_setup.c`, `txm_module_manager_memory_fault_handler.c` |
 | `firmware/bsw/os/bootstrap/port/src/Os_Port_TaskBinding.c` | `common/src/tx_thread_create.c`, `ports/cortex_m4/gnu/src/tx_thread_stack_build.S`, `ports/arm11/gnu/src/tx_thread_stack_build.S` |
 | `firmware/platform/stm32/src/Os_Port_Stm32.c` and `Os_Port_Stm32_Asm.S` | `ports/cortex_m4/gnu/*` |
-| `firmware/platform/tms570/src/Os_Port_Tms570.c` and `Os_Port_Tms570_Asm.S` | `ports/arm11/gnu/*` locally verified today; see `docs/reference/tms570-port-traceability.md` for the evidence split |
+| `firmware/platform/tms570/src/Os_Port_Tms570.c` and `Os_Port_Tms570_Asm.S` | `ports/cortex_r5/gnu/*` locally available now; keep `ports/arm11/gnu/*` as a secondary comparison reference for earlier bootstrap slices |
 
 ### Guardrails
 

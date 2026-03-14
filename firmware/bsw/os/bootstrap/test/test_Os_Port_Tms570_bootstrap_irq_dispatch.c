@@ -79,6 +79,7 @@ void test_Os_Port_Tms570_complete_configured_dispatch_uses_irq_context_when_no_a
     TEST_ASSERT_EQUAL_PTR((void*)first_ctx->SavedSp, (void*)state->LastSavedTaskSp);
     TEST_ASSERT_EQUAL_PTR((void*)second_ctx->SavedSp, (void*)state->CurrentTaskSp);
     TEST_ASSERT_EQUAL_PTR((void*)second_ctx->SavedSp, (void*)state->LastRestoredTaskSp);
+    TEST_ASSERT_EQUAL_UINT32(1u, state->IrqSchedulerReturnCount);
     TEST_ASSERT_EQUAL_UINT32(1u, state->TaskSwitchCount);
     TEST_ASSERT_EQUAL(INVALID_TASK, state->SelectedNextTask);
 }
@@ -176,6 +177,7 @@ void test_Os_Port_Tms570_nested_irq_context_restore_completes_dispatch_only_on_f
     TEST_ASSERT_EQUAL_UINT8(OS_PORT_TMS570_RESTORE_SWITCH_TASK, state->LastRestoreAction);
     TEST_ASSERT_EQUAL(OS_PORT_TMS570_FIRST_TASK_ID, state->LastSavedTask);
     TEST_ASSERT_EQUAL(OS_PORT_TMS570_SECOND_TASK_ID, state->CurrentTask);
+    TEST_ASSERT_EQUAL_UINT32(1u, state->IrqSchedulerReturnCount);
     TEST_ASSERT_EQUAL_UINT32(1u, state->TaskSwitchCount);
 }
 
@@ -215,14 +217,14 @@ void test_Os_Port_Tms570_nested_irq_save_captures_outermost_task_sp_once(void)
 
     TEST_ASSERT_EQUAL_UINT8(2u, state->IrqContextDepth);
     TEST_ASSERT_EQUAL(OS_PORT_TMS570_FIRST_TASK_ID, state->IrqCapturedTask);
-    TEST_ASSERT_EQUAL_PTR((void*)outer_runtime_sp, (void*)state->IrqCapturedTaskSp);
+    TEST_ASSERT_EQUAL_PTR((void*)first_ctx->RuntimeFrame.Sp, (void*)state->IrqCapturedTaskSp);
     TEST_ASSERT_EQUAL_PTR((void*)outer_runtime_sp, (void*)first_ctx->RuntimeSp);
 
     Os_Port_Tms570_IrqContextRestore();
     state = Os_Port_Tms570_GetBootstrapState();
     TEST_ASSERT_EQUAL_UINT8(1u, state->IrqContextDepth);
     TEST_ASSERT_EQUAL(OS_PORT_TMS570_FIRST_TASK_ID, state->IrqCapturedTask);
-    TEST_ASSERT_EQUAL_PTR((void*)outer_runtime_sp, (void*)state->IrqCapturedTaskSp);
+    TEST_ASSERT_EQUAL_PTR((void*)first_ctx->RuntimeFrame.Sp, (void*)state->IrqCapturedTaskSp);
 
     Os_Port_Tms570_IrqContextRestore();
     state = Os_Port_Tms570_GetBootstrapState();
@@ -238,7 +240,8 @@ void test_Os_Port_Tms570_nested_irq_save_captures_outermost_task_sp_once(void)
  *              interrupted task.
  * @verify If outer IRQ entry captures one SP and nested IRQ activity changes
  *         CurrentTaskSp before dispatch is requested, final restore still
- *         reports the outer captured SP as LastSavedTaskSp.
+ *         derives LastSavedTaskSp from the outer captured SP instead of the
+ *         nested live SP.
  */
 void test_Os_Port_Tms570_nested_irq_dispatch_uses_outermost_captured_runtime_sp(void)
 {
@@ -247,6 +250,7 @@ void test_Os_Port_Tms570_nested_irq_dispatch_uses_outermost_captured_runtime_sp(
     uintptr_t first_stack_top = (uintptr_t)(&first_stack[160]);
     uintptr_t second_stack_top = (uintptr_t)(&second_stack[160]);
     const Os_Port_Tms570_StateType* state;
+    const Os_Port_Tms570_TaskContextType* first_ctx;
     const Os_Port_Tms570_TaskContextType* second_ctx;
     uintptr_t outer_runtime_sp;
     uintptr_t nested_runtime_sp;
@@ -272,13 +276,14 @@ void test_Os_Port_Tms570_nested_irq_dispatch_uses_outermost_captured_runtime_sp(
     Os_Port_Tms570_IrqContextRestore();
     Os_Port_Tms570_IrqContextRestore();
     state = Os_Port_Tms570_GetBootstrapState();
+    first_ctx = Os_Port_Tms570_GetTaskContext(OS_PORT_TMS570_FIRST_TASK_ID);
     second_ctx = Os_Port_Tms570_GetTaskContext(OS_PORT_TMS570_SECOND_TASK_ID);
 
     TEST_ASSERT_EQUAL(OS_PORT_TMS570_FIRST_TASK_ID, state->LastSavedTask);
     TEST_ASSERT_EQUAL(OS_PORT_TMS570_SECOND_TASK_ID, state->CurrentTask);
-    TEST_ASSERT_EQUAL_PTR((void*)outer_runtime_sp, (void*)state->LastSavedTaskSp);
-    TEST_ASSERT_EQUAL_PTR((void*)second_ctx->RuntimeSp, (void*)state->CurrentTaskSp);
-    TEST_ASSERT_EQUAL_PTR((void*)second_ctx->RuntimeSp, (void*)state->LastRestoredTaskSp);
+    TEST_ASSERT_EQUAL_PTR((void*)first_ctx->SavedSp, (void*)state->LastSavedTaskSp);
+    TEST_ASSERT_EQUAL_PTR((void*)second_ctx->SavedSp, (void*)state->CurrentTaskSp);
+    TEST_ASSERT_EQUAL_PTR((void*)second_ctx->SavedSp, (void*)state->LastRestoredTaskSp);
     TEST_ASSERT_EQUAL(INVALID_TASK, state->IrqCapturedTask);
     TEST_ASSERT_EQUAL_PTR(0, (void*)state->IrqCapturedTaskSp);
 }

@@ -24,7 +24,13 @@
 
 /* CMSIS intrinsics for __disable_irq() / __enable_irq() on STM32 */
 #if defined(PLATFORM_STM32)
-#include "stm32g4xx.h"
+  #if defined(STM32G474xx)
+    #include "stm32g4xx.h"
+  #elif defined(STM32F413xx)
+    #include "stm32f4xx.h"
+  #else
+    #error "Unsupported STM32 variant — add CMSIS header here"
+  #endif
 #endif
 
 /* ---- Internal State ---- */

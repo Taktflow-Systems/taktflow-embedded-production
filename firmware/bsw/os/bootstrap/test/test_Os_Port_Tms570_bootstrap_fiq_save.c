@@ -93,7 +93,7 @@ void test_Os_Port_Tms570_fiq_context_save_before_first_task_records_idle_system_
  * @requirement The bootstrap TMS570 FIQ save/restore model shall distinguish
  *              the minimal first-entry frame from the larger nested-FIQ scratch
  *              frame used by the local ThreadX reference.
- * @verify First-entry save tracks an 8-byte FIQ interrupt frame, nested save
+ * @verify First-entry save tracks the modeled minimal FIQ interrupt frame, nested save
  *         adds a 32-byte FIQ interrupt frame, and restore removes them in LIFO
  *         order while preserving the peak byte count.
  */
@@ -146,10 +146,11 @@ void test_Os_Port_Tms570_fiq_save_restore_tracks_minimal_then_nested_interrupt_s
 
 /**
  * @spec ThreadX reference: ports/arm11/gnu/src/tx_thread_fiq_context_save.S
- * @requirement The bootstrap TMS570 first-entry FIQ save path shall capture
- *              the live running task stack pointer into the task context
- *              before switching into handler-side processing.
- * @verify A changed running-task SP is stored into the prepared task context
+ * @requirement The bootstrap TMS570 first-entry FIQ save path shall preserve
+ *              the live running task stack pointer while also committing the
+ *              task context's minimal saved-frame SP.
+ * @verify A changed running-task SP remains live in the runtime shadow while
+ *         the task context records the corresponding minimal saved-frame SP
  *         when first-entry FIQ save begins on a running task.
  */
 void test_Os_Port_Tms570_fiq_first_entry_save_captures_running_task_stack_pointer(void)
@@ -157,6 +158,7 @@ void test_Os_Port_Tms570_fiq_first_entry_save_captures_running_task_stack_pointe
     const Os_Port_Tms570_StateType* state;
     const Os_Port_Tms570_TaskContextType* first_ctx;
     uintptr_t live_sp = (uintptr_t)0x20001230u;
+    uintptr_t expected_saved_sp = live_sp - (uintptr_t)OS_PORT_TMS570_FIQ_MINIMAL_FRAME_BYTES;
 
     Os_PortTargetInit();
     prepare_running_first_task_for_fiq_tests();
@@ -170,6 +172,8 @@ void test_Os_Port_Tms570_fiq_first_entry_save_captures_running_task_stack_pointe
     TEST_ASSERT_EQUAL(OS_PORT_TMS570_FIRST_TASK_ID, state->CurrentTask);
     TEST_ASSERT_EQUAL_PTR((void*)live_sp, (void*)state->CurrentTaskSp);
     TEST_ASSERT_EQUAL_PTR((void*)live_sp, (void*)first_ctx->RuntimeSp);
+    TEST_ASSERT_EQUAL_PTR((void*)expected_saved_sp, (void*)first_ctx->RuntimeFrame.Sp);
+    TEST_ASSERT_EQUAL_PTR((void*)expected_saved_sp, (void*)first_ctx->SavedSp);
     TEST_ASSERT_EQUAL_UINT32(1u, state->FiqContextSaveCount);
 }
 
