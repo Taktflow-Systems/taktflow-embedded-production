@@ -786,6 +786,31 @@ TaskType Os_TestGetCurrentTask(void)
     return os_current_task;
 }
 
+StatusType Os_TestSetCurrentTaskRunning(TaskType TaskID)
+{
+    if ((os_started == FALSE) || (os_is_valid_task(TaskID) == FALSE)) {
+        return E_OS_STATE;
+    }
+
+    if ((os_current_task != INVALID_TASK) &&
+        (os_current_task != TaskID) &&
+        (os_tcb[os_current_task].State == RUNNING)) {
+        os_tcb[os_current_task].State = READY;
+        os_tcb[os_current_task].ReadyStamp = os_ready_stamp_counter++;
+    }
+
+    if (os_tcb[TaskID].PendingActivations == 0u) {
+        os_tcb[TaskID].PendingActivations = 1u;
+    }
+
+    os_current_task = TaskID;
+    os_tcb[TaskID].State = RUNNING;
+    os_tcb[TaskID].CurrentPriority = os_task_cfg[TaskID].Priority;
+    os_tcb[TaskID].ReadyStamp = 0u;
+    os_rebuild_ready_bitmap();
+    return E_OK;
+}
+
 uint32 Os_TestGetReadyBitmap(void)
 {
     return os_ready_bitmap;

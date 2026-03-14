@@ -232,6 +232,7 @@ StatusType Os_TestRunReadyTasks(void);
 StatusType Os_TestCompletePortDispatches(void);
 StatusType Os_TestRunToIdle(void);
 TaskType Os_TestGetCurrentTask(void);
+StatusType Os_TestSetCurrentTaskRunning(TaskType TaskID);
 uint32 Os_TestGetReadyBitmap(void);
 uint8 Os_TestGetPendingActivations(TaskType TaskID);
 uint32 Os_TestGetDispatchCount(void);
