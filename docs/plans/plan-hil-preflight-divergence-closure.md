@@ -22,10 +22,15 @@ SIL can remain green while hardware behavior diverges when:
   code paths are identical across platforms.
 - ESM guard documented with waiver (HIL-PF-008).
 
-### WS2 — MCAL Boundary Purity — PENDING
-- `Spi_Posix.c` still mixes plant dynamics + fault injection + MCAL transport.
-- Refactor deferred: 341-line file needs careful split without breaking SIL.
-- Plan: extract sensor model to `firmware/shared/plant/` module.
+### WS2 — MCAL Boundary Purity — DONE
+- `IoHwAb_Inject.h` / `IoHwAb_Posix.c` / `IoHwAb_Hil.c` provide the unified
+  sensor injection API — SWC code has zero `#ifdef` and zero direct MCAL calls.
+- `Swc_FzcSensorFeeder` and `Swc_RzcSensorFeeder` call only `IoHwAb_Inject_SetSensorValue`
+  and `IoHwAb_Inject_SetEncoderValue` — never `Spi_Posix_InjectAngle` or any MCAL stub.
+- `Spi_Posix_InjectAngle()` and its steering injection state removed from `Spi_Posix.c`
+  (dead code: no callers in SWC layer).
+- `Spi_Posix.c` reduced to thin transport stub with only default oscillation defaults
+  and UDP pedal override socket (direct fault-injection path, separate from SensorFeeder).
 
 ### WS3 — State/Recovery Correctness — DONE
 - Fixed relay-state semantic mismatch (HIL-PF-005, CRITICAL):

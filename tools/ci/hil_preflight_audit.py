@@ -70,23 +70,22 @@ def audit(repo_root: Path) -> List[Finding]:
     findings: List[Finding] = []
     seq = 1
 
-    # 1) MCAL boundary purity: SPI POSIX stub contains simulation + override behavior.
+    # 1) MCAL boundary purity: flag if Spi_Posix_InjectAngle reappears.
+    #    WS2 DONE: injection API moved to IoHwAb layer; Spi_Posix.c is transport-only.
     spi_posix = repo_root / "firmware/shared/bsw/mcal/posix/Spi_Posix.c"
     spi_lines = read_lines(spi_posix)
-    l_osc = find_first(spi_lines, r"oscillat|SPI_OVERRIDE_STEP|dead-zone")
-    l_udp = find_first(spi_lines, r"UDP|SPI_PEDAL_UDP_PORT|recv\(")
     l_inj = find_first(spi_lines, r"Spi_Posix_InjectAngle")
-    if l_osc and l_udp and l_inj:
+    if l_inj:
         seq = add(
             findings,
             seq,
             "high",
             "boundary",
             spi_posix.relative_to(repo_root).as_posix(),
-            min(l_osc, l_udp, l_inj),
-            "MCAL stub mixes simulation dynamics and fault-injection transport",
-            "Spi_Posix.c contains oscillation synthesis + UDP override + injection API in one MCAL unit.",
-            "Move plant dynamics and fault injection out of MCAL; keep MCAL transport-only.",
+            l_inj,
+            "Spi_Posix_InjectAngle reintroduced in MCAL stub",
+            "Injection API belongs in IoHwAb layer, not MCAL. SWC code must call IoHwAb_Inject_SetSensorValue.",
+            "Remove Spi_Posix_InjectAngle and migrate callers to IoHwAb_Inject_SetSensorValue.",
         )
 
     # 2) Platform-specific safety behavior in critical modules.

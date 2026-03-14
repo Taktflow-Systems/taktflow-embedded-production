@@ -64,48 +64,12 @@ static uint8  spi_sim_up    = 1u;
 static uint16 spi_steer_default_offset = 0u;
 static uint8  spi_steer_default_up     = 1u;
 
-/* ---- Steering angle injection state (SIL sensor feeder) ---- */
-
-/** Injected steering angle value (0xFFFF = no injection, use default) */
-static uint16 spi_steer_injected  = 0xFFFFu;
-/** Oscillation offset for stuck-detection bypass when injected */
-static uint16 spi_steer_osc_offset = 0u;
-/** Oscillation direction */
-static uint8  spi_steer_osc_up    = 1u;
-
 /* ---- UDP pedal override state ---- */
 
 static int    spi_udp_fd          = -1;      /**< UDP socket fd (-1=disabled)*/
 static uint16 spi_override_target = 0xFFFFu; /**< Target angle or CLEAR     */
 static uint16 spi_override_offset = 0u;      /**< Oscillation offset         */
 static uint8  spi_override_up     = 1u;      /**< Oscillation direction      */
-
-/* ---- Injection API (called by sensor feeder SWCs) ---- */
-
-/**
- * @brief  Inject a steering angle value for the SIL sensor feedback loop
- * @param  angle  14-bit raw angle (0..16383), or 0xFFFF to clear injection
- *
- * @details  When injection is active, Spi_Hw_Transmit on the steering
- *           channel returns this value (with small oscillation for
- *           stuck-detection bypass) instead of the default dead-zone.
- *           Called by Swc_FzcSensorFeeder_MainFunction.
- */
-void Spi_Posix_InjectAngle(uint16 angle)
-{
-    if (angle == SPI_OVERRIDE_CLEAR)
-    {
-        spi_steer_injected = SPI_OVERRIDE_CLEAR;
-        spi_steer_osc_offset = 0u;
-        spi_steer_osc_up = 1u;
-    }
-    else
-    {
-        spi_steer_injected = angle & 0x3FFFu;
-        spi_steer_osc_offset = 0u;
-        spi_steer_osc_up = 1u;
-    }
-}
 
 /* ---- Spi_Hw_* implementations ---- */
 
@@ -203,42 +167,7 @@ Std_ReturnType Spi_Hw_Transmit(uint8 Channel, const uint16* TxBuf,
     /* ---- Return simulated angle ---- */
     if ((RxBuf != NULL_PTR) && (Length > 0u))
     {
-        if (spi_steer_injected != SPI_OVERRIDE_CLEAR)
-        {
-            /* Steering injection active (from sensor feeder SWC) —
-             * oscillate around injected angle to pass stuck detection */
-            uint32 angle = (uint32)spi_steer_injected
-                         + (uint32)spi_steer_osc_offset;
-
-            if (angle > 0x3FFFu)
-            {
-                angle = 0x3FFFu;
-            }
-            RxBuf[0] = (uint16)(angle & 0x3FFFu);
-
-            /* Advance oscillation */
-            if (spi_steer_osc_up != 0u)
-            {
-                spi_steer_osc_offset += SPI_OVERRIDE_STEP;
-                if (spi_steer_osc_offset > SPI_OVERRIDE_RANGE)
-                {
-                    spi_steer_osc_up = 0u;
-                }
-            }
-            else
-            {
-                if (spi_steer_osc_offset >= SPI_OVERRIDE_STEP)
-                {
-                    spi_steer_osc_offset -= SPI_OVERRIDE_STEP;
-                }
-                else
-                {
-                    spi_steer_osc_offset = 0u;
-                    spi_steer_osc_up     = 1u;
-                }
-            }
-        }
-        else if (spi_override_target != SPI_OVERRIDE_CLEAR)
+        if (spi_override_target != SPI_OVERRIDE_CLEAR)
         {
             /* UDP pedal override active — oscillate around target angle */
             uint32 angle = (uint32)spi_override_target
