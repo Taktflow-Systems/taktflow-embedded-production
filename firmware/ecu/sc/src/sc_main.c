@@ -192,6 +192,15 @@ int main(void)
     /* ---- 5. Start RTI timer and enter main loop ---- */
     rtiStartCounter();
 
+#ifdef OS_BOOTSTRAP_BRINGUP
+    /* Run bootstrap OS hardware bring-up tests before entering main loop.
+     * Tests restore polled-RTI state on completion. */
+    {
+        extern void Os_Port_Tms570_BringupAll(void);
+        Os_Port_Tms570_BringupAll();
+    }
+#endif
+
     for (;;) {
         /* Wait for 10ms RTI tick */
         if (rtiIsTickPending() == FALSE) {

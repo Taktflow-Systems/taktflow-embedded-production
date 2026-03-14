@@ -40,6 +40,11 @@ ifdef DIAG
   COMMON_CFLAGS += -DSIL_DIAG
 endif
 
+# --- OS bootstrap bring-up tests (pass BRINGUP=1 to enable) ---
+ifdef BRINGUP
+  COMMON_CFLAGS += -DOS_BOOTSTRAP_BRINGUP
+endif
+
 # --- Directories (production layout) ---
 FW           = firmware
 ECU          = $(FW)/ecu
@@ -103,7 +108,8 @@ HALCOGEN_ASM = $(filter-out $(HALCOGEN_ASM_EXCLUDE),$(HALCOGEN_ASM_ALL))
 # --- SC application sources (exclude POSIX backend) ---
 SC_SRCS_ALL = $(wildcard $(SC_DIR)/src/*.c)
 SC_HW_TMS570 = $(PLAT)/src/sc_hw_tms570.c
-SC_SRCS = $(filter-out %_posix.c,$(SC_SRCS_ALL)) $(SC_HW_TMS570)
+SC_BRINGUP   = $(PLAT)/src/Os_Port_Tms570_Bringup.c
+SC_SRCS = $(filter-out %_posix.c,$(SC_SRCS_ALL)) $(SC_HW_TMS570) $(SC_BRINGUP)
 
 # --- SC GNU assembly (.S — preprocessed assembly, e.g. sc_startup.S) ---
 SC_ASM_GNU = $(wildcard $(SC_DIR)/src/*.S)
@@ -161,6 +167,11 @@ $(BUILD_DIR)/$(SC_DIR)/%.o: $(SC_DIR)/%.c | $(BUILD_DIR)
 $(BUILD_DIR)/$(PLAT)/%.o: $(PLAT)/%.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
 	$(CC) $(SC_CFLAGS) -c $< -o $@
+
+# --- Compile bring-up sources (relaxed — includes HALCoGen headers) ---
+$(BUILD_DIR)/$(PLAT)/src/Os_Port_Tms570_Bringup.o: $(PLAT)/src/Os_Port_Tms570_Bringup.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(HAL_CFLAGS) -c $< -o $@
 
 # --- Assemble .asm (TI assembler syntax — requires -x ti-asm for LLVM) ---
 $(BUILD_DIR)/$(HALCOGEN_DIR)/%.o: $(HALCOGEN_DIR)/%.asm | $(BUILD_DIR)
