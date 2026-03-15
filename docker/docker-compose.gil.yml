@@ -1,0 +1,296 @@
+# =============================================================================
+# docker-compose.gil.yml — GIL (Godot-in-the-Loop) on Raspberry Pi
+#
+# Full 7-ECU SIL stack on physical CAN (can0), with Godot providing vehicle
+# physics + user input (pedal/steering) over LAN UDP. The godot-bridge
+# replaces plant-sim: it relays CAN↔UDP between vECUs and Godot.
+#
+# System: GIL (Godot-in-the-Loop) — Pi + Godot on Windows PC
+# Counterpart: docker-compose.dev.yml — SIL (Software-in-the-Loop) — VPS
+#
+# Network topology:
+#   Pi (192.168.0.195)  ←── LAN UDP ──→  Windows PC (192.168.0.158, Godot)
+#
+# Usage:
+#   docker compose -f docker-compose.gil.yml up --build -d
+#   docker compose -f docker-compose.gil.yml down
+#
+# Prerequisites:
+#   - Physical CAN interface (can0) via Waveshare CAN HAT
+#   - Godot 4.6 running on Windows PC (192.168.0.158)
+#   - AWS certs in ./certs/ (for cloud-connector, optional)
+# =============================================================================
+
+services:
+  # --- Central Vehicle Computer ---
+  cvc:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.vecu
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      - CAN_INTERFACE=can0
+      - ECU_NAME=cvc
+      - SPI_PEDAL_UDP_PORT=9100
+      - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
+    volumes:
+      - nvm_cvc:/tmp
+    restart: unless-stopped
+
+  # --- Front Zone Controller ---
+  fzc:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.vecu
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      - CAN_INTERFACE=can0
+      - ECU_NAME=fzc
+      - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
+    volumes:
+      - nvm_fzc:/tmp
+    restart: unless-stopped
+
+  # --- Rear Zone Controller ---
+  rzc:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.vecu
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      - CAN_INTERFACE=can0
+      - ECU_NAME=rzc
+      - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
+    volumes:
+      - nvm_rzc:/tmp
+    restart: unless-stopped
+
+  # --- Safety Controller ---
+  sc:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.vecu
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      - CAN_INTERFACE=can0
+      - ECU_NAME=sc
+      - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
+    restart: unless-stopped
+
+  # --- Body Control Module ---
+  bcm:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.vecu
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      - CAN_INTERFACE=can0
+      - ECU_NAME=bcm
+      - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
+    restart: unless-stopped
+
+  # --- Instrument Cluster Unit ---
+  icu:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.vecu
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      - CAN_INTERFACE=can0
+      - ECU_NAME=icu
+      - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+  # --- Telematics Control Unit ---
+  tcu:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.vecu
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      - CAN_INTERFACE=can0
+      - ECU_NAME=tcu
+      - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
+    restart: unless-stopped
+
+  # --- Godot Bridge (replaces plant-sim) ---
+  # CAN↔UDP relay: vECU actuator commands → Godot, Godot sensor data → vECUs
+  # Godot provides: vehicle physics, pedal/steering user input, 3D rendering
+  godot-bridge:
+    build:
+      context: ..
+      dockerfile: gateway/godot_bridge/Dockerfile
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    depends_on:
+      mqtt-broker:
+        condition: service_started
+    environment:
+      - CAN_INTERFACE=can0
+      - GODOT_HOST=${GODOT_HOST:-192.168.0.158}
+      - BRIDGE_CARS=1
+      - BRIDGE_RATE=100
+      - BRIDGE_VCAN_START=0
+      - COMPOSE_FILE=/opt/taktflow-embedded/docker/docker-compose.gil.yml
+    restart: unless-stopped
+
+  # --- Mosquitto MQTT Broker (local only) ---
+  mqtt-broker:
+    image: eclipse-mosquitto:2
+    network_mode: host
+    volumes:
+      - ../gateway/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    restart: unless-stopped
+
+  # --- CAN-to-MQTT Gateway ---
+  can-gateway:
+    build:
+      context: ..
+      dockerfile: gateway/can_gateway/Dockerfile
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    depends_on:
+      mqtt-broker:
+        condition: service_started
+      sap-qm-mock:
+        condition: service_started
+    environment:
+      - CAN_CHANNEL=can0
+      - DBC_PATH=/app/taktflow.dbc
+      - MQTT_HOST=localhost
+      - MQTT_PORT=1883
+      - SAP_QM_API_URL=http://localhost:8090
+    restart: unless-stopped
+
+  # --- WebSocket Telemetry Bridge ---
+  ws-bridge:
+    build:
+      context: ..
+      dockerfile: gateway/ws_bridge/Dockerfile
+    network_mode: host
+    depends_on:
+      mqtt-broker:
+        condition: service_started
+    environment:
+      - MQTT_HOST=localhost
+      - MQTT_PORT=1883
+      - WS_PORT=8080
+    restart: unless-stopped
+
+  # --- Caddy Reverse Proxy (LAN access) ---
+  caddy:
+    image: caddy:2
+    network_mode: host
+    volumes:
+      - ../gateway/caddy/Caddyfile.pi:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      ws-bridge:
+        condition: service_started
+    restart: unless-stopped
+
+  # --- SAP QM Mock API ---
+  sap-qm-mock:
+    build:
+      context: ..
+      dockerfile: gateway/sap_qm_mock/Dockerfile
+    network_mode: host
+    depends_on:
+      mqtt-broker:
+        condition: service_started
+    environment:
+      - MQTT_HOST=localhost
+      - MQTT_PORT=1883
+      - SAP_PORT=8090
+    restart: unless-stopped
+
+  # --- ML Anomaly Detection (edge inference) ---
+  ml-inference:
+    build:
+      context: ..
+      dockerfile: gateway/ml_inference/Dockerfile
+    network_mode: host
+    depends_on:
+      mqtt-broker:
+        condition: service_started
+    environment:
+      - MQTT_HOST=localhost
+      - MQTT_PORT=1883
+    restart: unless-stopped
+
+  # --- Fault Injection API ---
+  fault-inject:
+    build:
+      context: ..
+      dockerfile: gateway/fault_inject/Dockerfile
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      mqtt-broker:
+        condition: service_started
+    environment:
+      - CAN_CHANNEL=can0
+      - FAULT_PORT=8091
+      - MQTT_HOST=localhost
+      - MQTT_PORT=1883
+      - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
+    restart: unless-stopped
+
+  # --- Cloud Connector (local MQTT → AWS IoT Core) ---
+  cloud-connector:
+    build:
+      context: ..
+      dockerfile: gateway/cloud_connector/Dockerfile
+    network_mode: host
+    depends_on:
+      mqtt-broker:
+        condition: service_started
+    environment:
+      - MQTT_HOST=localhost
+      - MQTT_PORT=1883
+      - AWS_IOT_ENDPOINT=${AWS_IOT_ENDPOINT:-}
+      - AWS_IOT_PORT=8883
+      - AWS_CERT_DIR=/certs
+      - DEVICE_ID=taktflow-pi-001
+    volumes:
+      - ./certs:/certs:ro
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
+  nvm_cvc:
+  nvm_fzc:
+  nvm_rzc:
