@@ -381,8 +381,9 @@ class CarBridge:
 # ── Standalone Echo Mode ─────────────────────────────────────
 
 class StandaloneEcho:
-    """When no CAN is available, echo sensor data back as fake actuator commands.
-    This lets Godot run standalone with keyboard controls + dashboard working."""
+    """Minimal vECU: reads pedal/steering from Godot, maps to actuator commands.
+    No CAN, no firmware — just direct pedal→torque, steer→angle passthrough.
+    This lets the car actually drive in Godot without the full ECU stack."""
 
     def __init__(self, car_index: int, sensor_port: int, actuator_port: int,
                  godot_host: str = "192.168.0.105"):
@@ -394,28 +395,39 @@ class StandaloneEcho:
         self.actuator_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.actuator_addr = (godot_host, actuator_port)
         self.start_time = time.time()
+        self.sensor_data = {}
 
     def tick(self) -> None:
-        sensor_data = None
         while True:
             try:
                 data, _ = self.sensor_sock.recvfrom(4096)
-                sensor_data = json.loads(data.decode("utf-8"))
+                self.sensor_data = json.loads(data.decode("utf-8"))
             except BlockingIOError:
                 break
             except (json.JSONDecodeError, UnicodeDecodeError):
                 continue
 
-        # Send minimal actuator response (car is in keyboard mode anyway)
-        state = "RUN" if time.time() - self.start_time > 3.0 else "INIT"
+        sd = self.sensor_data
+        state = "RUN" if time.time() - self.start_time > 2.0 else "INIT"
+
+        # Direct passthrough: pedal → torque, steer → angle, brake → brake
+        pedal_pct = sd.get("pedal_pct", 0.0)
+        steer_deg = sd.get("steer_input_deg", 0.0)
+        brake_pct = sd.get("brake_input_pct", 0.0)
+        estop = sd.get("estop_input", False)
+
+        # Map pedal 0-100% → torque 0-1.0
+        torque = pedal_pct / 100.0 if not estop else 0.0
+        brake = brake_pct / 100.0 if not estop else 1.0
+
         response = {
             "car_index": self.car_index,
-            "motor_torque_pct": 0.0,
-            "brake_force_pct": 0.0,
-            "steer_cmd_deg": 0.0,
-            "kill_relay": False,
+            "motor_torque_pct": torque,
+            "brake_force_pct": brake,
+            "steer_cmd_deg": steer_deg,
+            "kill_relay": estop,
             "vehicle_state": state,
-            "estop": False,
+            "estop": estop,
             "ecu_heartbeats": {"CVC": 1, "FZC": 1, "RZC": 1, "SC": 1},
         }
         payload = json.dumps(response).encode("utf-8")
