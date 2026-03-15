@@ -131,6 +131,7 @@ class CarBridge:
 
         # UDP: receive sensor data FROM Godot
         self.sensor_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sensor_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sensor_sock.bind(("0.0.0.0", godot_sensor_port))
         self.sensor_sock.setblocking(False)
 
@@ -387,6 +388,7 @@ class StandaloneEcho:
                  godot_host: str = "192.168.0.158"):
         self.car_index = car_index
         self.sensor_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sensor_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sensor_sock.bind(("0.0.0.0", sensor_port))
         self.sensor_sock.setblocking(False)
         self.actuator_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -472,6 +474,7 @@ def main():
 
     # Command socket — listens for reset/control commands from Godot on port 5099
     cmd_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    cmd_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     cmd_sock.bind(("0.0.0.0", 5099))
     cmd_sock.setblocking(False)
     compose_file = os.environ.get("COMPOSE_FILE", "/opt/taktflow-embedded/docker/docker-compose.gil.yml")
