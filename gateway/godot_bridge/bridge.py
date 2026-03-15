@@ -410,15 +410,28 @@ class StandaloneEcho:
         sd = self.sensor_data
         state = "RUN" if time.time() - self.start_time > 2.0 else "INIT"
 
-        # Direct passthrough: pedal → torque, steer → angle, brake → brake
+        # Direct passthrough: pedal → torque, steer → angle, brake → brake/reverse
         pedal_pct = sd.get("pedal_pct", 0.0)
         steer_deg = sd.get("steer_input_deg", 0.0)
         brake_pct = sd.get("brake_input_pct", 0.0)
         estop = sd.get("estop_input", False)
+        speed = sd.get("vehicle_speed_kmh", 0.0)
 
-        # Map pedal 0-100% → torque 0-1.0
-        torque = pedal_pct / 100.0 if not estop else 0.0
-        brake = brake_pct / 100.0 if not estop else 1.0
+        if estop:
+            torque = 0.0
+            brake = 1.0
+        elif brake_pct > 1.0 and speed < 3.0:
+            # Reverse: brake key at low speed → negative torque (like real car)
+            torque = -(brake_pct / 100.0) * 0.32  # 32% of max (max_reverse/max_engine)
+            brake = 0.0
+        elif brake_pct > 1.0:
+            # Normal braking at speed
+            torque = 0.0
+            brake = brake_pct / 100.0
+        else:
+            # Forward drive
+            torque = pedal_pct / 100.0
+            brake = 0.0
 
         response = {
             "car_index": self.car_index,
