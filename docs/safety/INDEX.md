@@ -46,9 +46,16 @@ Master index for all ISO 26262 safety work products.
 | Document | Path | Status |
 |----------|------|--------|
 | FMEA | [analysis/fmea.md](analysis/fmea.md) | Planned |
+| OS SW-FMEA | [analysis/os-fmea.md](analysis/os-fmea.md) | Draft |
 | DFA | [analysis/dfa.md](analysis/dfa.md) | Planned |
 | Hardware Metrics | [analysis/hardware-metrics.md](analysis/hardware-metrics.md) | Planned |
 | ASIL Decomposition | [analysis/asil-decomposition.md](analysis/asil-decomposition.md) | Planned |
+
+## Safety Manuals (Part 6, Clause 9)
+
+| Document | Path | Status |
+|----------|------|--------|
+| OS SC3 Protection Safety Manual | [os-sc3-safety-manual.md](os-sc3-safety-manual.md) | Draft |
 
 ## Safety Requirements (Parts 3-6)
 

@@ -68,6 +68,9 @@ BSW_INC = \
     -I$(BSW)/mcal/Pwm/include \
     -I$(BSW)/mcal/Uart/include \
     -I$(BSW)/rte/include \
+    -I$(BSW)/os/bootstrap/include \
+    -I$(BSW)/os/bootstrap/src \
+    -I$(BSW)/os/bootstrap/port/include \
     -I$(BSW)/os/include \
     -I$(PLAT)/include
 
@@ -109,7 +112,26 @@ BSW_SRCS = \
     $(BSW)/services/SchM/src/SchM.c \
     $(BSW)/services/CanTp/src/CanTp.c \
     $(BSW)/rte/src/Rte.c \
-    $(BSW)/services/Sil/src/Sil_Time.c
+    $(BSW)/services/Sil/src/Sil_Time.c \
+    $(BSW)/os/bootstrap/src/Os_Core.c \
+    $(BSW)/os/bootstrap/src/Os_Task.c \
+    $(BSW)/os/bootstrap/src/Os_Scheduler.c \
+    $(BSW)/os/bootstrap/src/Os_Resource.c \
+    $(BSW)/os/bootstrap/src/Os_Event.c \
+    $(BSW)/os/bootstrap/src/Os_Alarm.c \
+    $(BSW)/os/bootstrap/src/Os_Application.c \
+    $(BSW)/os/bootstrap/src/Os_Ioc.c \
+    $(BSW)/os/bootstrap/src/Os_Memory.c \
+    $(BSW)/os/bootstrap/src/Os_Stack.c \
+    $(BSW)/os/bootstrap/src/Os_ServiceProt.c \
+    $(BSW)/os/bootstrap/src/Os_TimingProt.c \
+    $(BSW)/os/bootstrap/src/Os_MemProt.c \
+    $(BSW)/os/bootstrap/src/Os_Interrupt.c \
+    $(BSW)/os/bootstrap/src/Os_ScheduleTable.c \
+    $(BSW)/os/bootstrap/src/Os_CounterDriver.c \
+    $(BSW)/os/bootstrap/src/Os_TaskMap.c \
+    $(BSW)/os/bootstrap/port/src/Os_Port_TaskBinding.c \
+    $(PLAT)/src/Os_Port_Posix.c
 
 ifeq ($(TARGET),fzc)
   BSW_SRCS += $(BSW)/mcal/Uart/src/Uart.c $(PLAT)/src/Uart_Posix.c

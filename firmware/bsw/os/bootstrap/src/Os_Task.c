@@ -8,10 +8,16 @@
 StatusType os_activate_task_internal(TaskType TaskID, boolean AllowPreemption)
 {
     Os_TaskControlBlockType* tcb_ptr;
+    StatusType tp_status;
 
     if (os_is_valid_task(TaskID) == FALSE) {
         os_report_service_error(OS_DET_API_ACTIVATE_TASK, DET_E_PARAM_VALUE, E_OS_ID);
         return E_OS_ID;
+    }
+
+    tp_status = Os_TimingProtCheckInterArrival(TaskID);
+    if (tp_status != E_OK) {
+        return tp_status;
     }
 
     tcb_ptr = &os_tcb[TaskID];
@@ -44,6 +50,10 @@ StatusType ActivateTask(TaskType TaskID)
 {
     OS_STACK_SAMPLE(OS_DET_API_ACTIVATE_TASK);
 
+    if (Os_ServiceProtCheck(OS_ALLOWED_TASK | OS_ALLOWED_ISR2) == FALSE) {
+        return E_OS_CALLEVEL;
+    }
+
     if (os_started == FALSE) {
         os_report_service_error(OS_DET_API_ACTIVATE_TASK, DET_E_UNINIT, E_OS_STATE);
         return E_OS_STATE;
@@ -60,6 +70,10 @@ StatusType ActivateTask(TaskType TaskID)
 StatusType TerminateTask(void)
 {
     OS_STACK_SAMPLE(OS_DET_API_TERMINATE_TASK);
+
+    if (Os_ServiceProtCheck(OS_ALLOWED_TASK) == FALSE) {
+        return E_OS_CALLEVEL;
+    }
 
     if ((os_started == FALSE) || (os_current_task == INVALID_TASK)) {
         os_report_service_error(OS_DET_API_TERMINATE_TASK, DET_E_PARAM_VALUE, E_OS_CALLEVEL);
@@ -78,6 +92,10 @@ StatusType TerminateTask(void)
 StatusType ChainTask(TaskType TaskID)
 {
     OS_STACK_SAMPLE(OS_DET_API_CHAIN_TASK);
+
+    if (Os_ServiceProtCheck(OS_ALLOWED_TASK) == FALSE) {
+        return E_OS_CALLEVEL;
+    }
 
     if ((os_started == FALSE) || (os_current_task == INVALID_TASK)) {
         os_report_service_error(OS_DET_API_CHAIN_TASK, DET_E_PARAM_VALUE, E_OS_CALLEVEL);

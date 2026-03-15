@@ -228,6 +228,10 @@ StatusType Schedule(void)
     TaskType next_task;
     OS_STACK_SAMPLE(OS_DET_API_SCHEDULE);
 
+    if (Os_ServiceProtCheck(OS_ALLOWED_TASK) == FALSE) {
+        return E_OS_CALLEVEL;
+    }
+
     if (os_started == FALSE) {
         os_report_service_error(OS_DET_API_SCHEDULE, DET_E_UNINIT, E_OS_STATE);
         return E_OS_STATE;

@@ -76,6 +76,13 @@ void Os_Port_Stm32_ObserveKernelDispatch(TaskType TaskID);
 void Os_Port_Stm32_StartFirstTaskAsm(void);
 void Os_Port_Stm32_PendSvHandler(void);
 void Os_Port_Stm32_SysTickHandler(void);
+void Os_Port_Stm32_PendSvSaveContext(uintptr_t SavedPsp);
+uintptr_t Os_Port_Stm32_PendSvGetNextContext(void);
+uintptr_t Os_Port_Stm32_GetPreparedFirstTaskPsp(void);
+uint32 Os_Port_Stm32_IsFirstTaskStarted(void);
+void Os_Port_Stm32_MarkFirstTaskStarted(uintptr_t ActivePsp);
+void Os_Port_Stm32_MarkPendSvComplete(uintptr_t ActivePsp);
+uintptr_t Os_Port_Stm32_ResolvePendSvTarget(uintptr_t CurrentActivePsp);
 
 #endif
 

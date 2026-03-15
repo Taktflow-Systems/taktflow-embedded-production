@@ -24,4 +24,18 @@ void Os_PortRequestContextSwitch(void);
 void Os_PortEnterIsr2(void);
 void Os_PortExitIsr2(void);
 
+void Os_PortTimingProtArmBudget(uint32 BudgetUs);
+void Os_PortTimingProtDisarm(void);
+uint32 Os_PortTimingProtElapsedUs(void);
+
+void Os_PortMemProtInit(void);
+void Os_PortMemProtConfigureRegions(const Os_MemProtRegionType* Regions, uint8 Count);
+void Os_PortMemProtEnablePrivileged(void);
+void Os_PortMemProtEnableUnprivileged(void);
+
+void Os_PortDisableAllInterrupts(void);
+void Os_PortEnableAllInterrupts(void);
+void Os_PortSuspendOSInterrupts(void);
+void Os_PortResumeOSInterrupts(void);
+
 #endif /* OS_PORT_H */

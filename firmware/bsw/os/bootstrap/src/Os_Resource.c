@@ -23,6 +23,10 @@ StatusType GetResource(ResourceType ResID)
     Os_TaskControlBlockType* current_tcb;
     OS_STACK_SAMPLE(OS_DET_API_GET_RESOURCE);
 
+    if (Os_ServiceProtCheck(OS_ALLOWED_TASK | OS_ALLOWED_ISR2) == FALSE) {
+        return E_OS_CALLEVEL;
+    }
+
     if (os_is_running_task_context() == FALSE) {
         os_report_service_error(OS_DET_API_GET_RESOURCE, DET_E_PARAM_VALUE, E_OS_CALLEVEL);
         return E_OS_CALLEVEL;
@@ -62,6 +66,10 @@ StatusType ReleaseResource(ResourceType ResID)
 {
     Os_TaskControlBlockType* current_tcb;
     OS_STACK_SAMPLE(OS_DET_API_RELEASE_RESOURCE);
+
+    if (Os_ServiceProtCheck(OS_ALLOWED_TASK | OS_ALLOWED_ISR2) == FALSE) {
+        return E_OS_CALLEVEL;
+    }
 
     if (os_is_running_task_context() == FALSE) {
         os_report_service_error(OS_DET_API_RELEASE_RESOURCE, DET_E_PARAM_VALUE, E_OS_CALLEVEL);

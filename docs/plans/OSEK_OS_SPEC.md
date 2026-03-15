@@ -56,7 +56,7 @@ Minimal viable scheduler. Prove the concept.
 | StartOS / ShutdownOS | OSEK §13.7 | BOOTSTRAP |
 | Error hook | OSEK §13.7.2 | BOOTSTRAP |
 | ISR Category 2 | OSEK §13.3 | BOOTSTRAP |
-| Context switch — Cortex-M4 | ARM Cortex-M TRM | TODO |
+| Context switch — Cortex-M4 | ARM Cortex-M TRM | DONE |
 
 ### Phase 2 — OSEK Full (BCC2 / ECC1 / ECC2)
 Extended tasks, multiple activations, events.
@@ -77,11 +77,11 @@ OSEK + AUTOSAR extensions, no memory protection yet.
 
 | Feature | Spec Reference | Status |
 |---|---|---|
-| Scalability Class 1 | AUTOSAR OS §7.9.1 | TODO |
-| Scalability Class 2 — timing protection | AUTOSAR OS §7.9.2 | TODO |
-| Execution time budget monitoring | AUTOSAR OS §7.6 | TODO |
-| Inter-arrival time protection | AUTOSAR OS §7.6.3 | TODO |
-| Schedule Tables | AUTOSAR OS §10 | TODO |
+| Scalability Class 1 — service protection | AUTOSAR OS §7.9.1 | DONE |
+| Scalability Class 2 — timing protection | AUTOSAR OS §7.9.2 | DONE |
+| Execution time budget monitoring | AUTOSAR OS §7.6 | DONE |
+| Inter-arrival time protection | AUTOSAR OS §7.6.3 | DONE |
+| Schedule Tables | AUTOSAR OS §10 | DONE |
 | OS-Application concept | AUTOSAR OS §7.10 | BOOTSTRAP |
 
 ### Phase 4 — AUTOSAR OS SC3
@@ -89,9 +89,14 @@ Memory protection. Full ASIL D decomposition.
 
 | Feature | Spec Reference | Status |
 |---|---|---|
-| Scalability Class 3 — memory protection | AUTOSAR OS §7.9.3 | BOOTSTRAP |
-| MPU configuration per OS-Application | AUTOSAR OS §7.10.5 | TODO |
-| Trusted / Non-trusted functions | AUTOSAR OS §7.10.3 | BOOTSTRAP |
+| Scalability Class 3 — memory protection | AUTOSAR OS §7.9.3 | DONE |
+| MPU configuration per OS-Application | AUTOSAR OS §7.10.5 | DONE |
+| Trusted / Non-trusted functions (SVC/SWI) | AUTOSAR OS §7.10.3 | DONE |
+| ProtectionHook wired to all 3 domains | AUTOSAR OS §7.7 | DONE |
+| Service protection in all OSEK APIs (Table 13.1) | OSEK §13.1 | DONE |
+| Inter-arrival time enforcement in ActivateTask | AUTOSAR OS §7.6.3 | DONE |
+| Hardware bringup (STM32 8/8, TMS570 8/8) | — | DONE |
+| Safety manual skeleton (ISO 26262-6 §9) | ISO 26262-6 §9 | DONE |
 | IOC — Inter-OS-Application Communication | AUTOSAR OS §8 | BOOTSTRAP |
 | Stack monitoring | AUTOSAR OS §7.6.5 | BOOTSTRAP |
 
@@ -100,9 +105,9 @@ Replace FreeRTOS / bare-metal BSW foundation with OsekRTOS.
 
 | Feature | Status |
 |---|---|
-| MCAL timer → OSEK Counter | TODO |
-| SchM → Schedule Table | TODO |
-| COM stack task mapping | TODO |
+| MCAL timer → OSEK Counter | DONE |
+| SchM → Schedule Table | DONE |
+| COM stack task mapping | DONE |
 | ASIL D decomposition documented | TODO |
 
 ---

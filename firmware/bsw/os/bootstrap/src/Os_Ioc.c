@@ -22,6 +22,10 @@ StatusType IocSend(IocType IocID, uint32 Data)
     uint8 queue_length;
     OS_STACK_SAMPLE(OS_DET_API_IOC_SEND);
 
+    if (Os_ServiceProtCheck(OS_ALLOWED_TASK | OS_ALLOWED_ISR2) == FALSE) {
+        return E_OS_CALLEVEL;
+    }
+
     if (os_started == FALSE) {
         os_report_service_error(OS_DET_API_IOC_SEND, DET_E_UNINIT, E_OS_STATE);
         return E_OS_STATE;
@@ -56,6 +60,10 @@ StatusType IocReceive(IocType IocID, uint32* Data)
     Os_IocControlBlockType* cb_ptr;
     uint8 queue_length;
     OS_STACK_SAMPLE(OS_DET_API_IOC_RECEIVE);
+
+    if (Os_ServiceProtCheck(OS_ALLOWED_TASK | OS_ALLOWED_ISR2) == FALSE) {
+        return E_OS_CALLEVEL;
+    }
 
     if (Data == NULL_PTR) {
         os_report_service_error(OS_DET_API_IOC_RECEIVE, DET_E_PARAM_POINTER, E_OS_VALUE);
@@ -94,6 +102,10 @@ StatusType IocReceive(IocType IocID, uint32* Data)
 StatusType IocEmptyQueue(IocType IocID)
 {
     OS_STACK_SAMPLE(OS_DET_API_IOC_EMPTY_QUEUE);
+
+    if (Os_ServiceProtCheck(OS_ALLOWED_TASK | OS_ALLOWED_ISR2) == FALSE) {
+        return E_OS_CALLEVEL;
+    }
 
     if (os_started == FALSE) {
         os_report_service_error(OS_DET_API_IOC_EMPTY_QUEUE, DET_E_UNINIT, E_OS_STATE);

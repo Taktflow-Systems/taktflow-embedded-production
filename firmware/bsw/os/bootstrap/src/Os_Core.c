@@ -197,6 +197,14 @@ void os_reset_runtime_state(void)
         }
     }
 
+    for (idx = 0u; idx < OS_MAX_SCHEDULE_TABLES; idx++) {
+        os_sched_table_cb[idx].Status = SCHEDULETABLE_STOPPED;
+        os_sched_table_cb[idx].StartTick = 0u;
+        os_sched_table_cb[idx].ElapsedTicks = 0u;
+        os_sched_table_cb[idx].InitialDelay = 0u;
+        os_sched_table_cb[idx].NextTable = INVALID_SCHEDULETABLE;
+    }
+
     os_current_task = INVALID_TASK;
     os_active_app_mode = OSDEFAULTAPPMODE;
     os_shutdown_error = E_OK;
@@ -209,6 +217,17 @@ void os_reset_runtime_state(void)
     os_isr_cat2_nesting = 0u;
     os_preempted_task_depth = 0u;
     os_counter_value = 0u;
+    os_all_interrupts_disabled = FALSE;
+    os_suspend_all_nesting = 0u;
+    os_suspend_os_nesting = 0u;
+#if defined(UNIT_TEST)
+    {
+        extern uint8 os_test_all_interrupts_disabled;
+        extern uint8 os_test_os_interrupts_disabled;
+        os_test_all_interrupts_disabled = 0u;
+        os_test_os_interrupts_disabled = 0u;
+    }
+#endif
 }
 
 boolean os_is_valid_task(TaskType TaskID)
@@ -413,6 +432,7 @@ AppModeType GetActiveApplicationMode(void)
 void Os_BootstrapEnterIsr2(void)
 {
     os_isr_cat2_nesting++;
+    Os_ServiceProtEnterIsr2();
 }
 
 void Os_BootstrapExitIsr2(void)
@@ -420,6 +440,8 @@ void Os_BootstrapExitIsr2(void)
     if (os_isr_cat2_nesting > 0u) {
         os_isr_cat2_nesting--;
     }
+
+    Os_ServiceProtExitIsr2();
 
     if (os_isr_cat2_nesting == 0u) {
         if (os_current_task != INVALID_TASK) {
@@ -441,6 +463,7 @@ void Os_TestReset(void)
     os_clear_stack_cfg();
     os_clear_memory_region_cfg();
     os_clear_trusted_function_cfg();
+    os_clear_sched_table_cfg();
     os_task_count = 0u;
     os_resource_count = 0u;
     os_alarm_count = 0u;
@@ -448,6 +471,7 @@ void Os_TestReset(void)
     os_ioc_count = 0u;
     os_memory_region_count = 0u;
     os_trusted_function_count = 0u;
+    os_sched_table_count = 0u;
     os_startup_hook = 0;
     os_error_hook = 0;
     os_pre_task_hook = 0;
@@ -456,6 +480,10 @@ void Os_TestReset(void)
     os_counter_base.maxallowedvalue = 0xFFFFFFFFu;
     os_counter_base.ticksperbase = 1u;
     os_counter_base.mincycle = 1u;
+    Os_TimingProtReset();
+    Os_MemProtReset();
+    Os_ServiceProtReset();
+    os_protection_hook = (Os_ProtectionHookType)0;
     os_reset_runtime_state();
 }
 
@@ -850,5 +878,21 @@ boolean Os_TestTaskHasStackViolation(TaskType TaskID)
     }
 
     return os_tcb[TaskID].StackViolation;
+}
+
+void Os_TestSetProtectionHook(Os_ProtectionHookType Hook)
+{
+    os_protection_hook = Hook;
+}
+
+void Os_TestSetCurrentTaskRunning(TaskType TaskID)
+{
+    if (os_is_valid_task(TaskID) == FALSE) {
+        return;
+    }
+
+    os_current_task = TaskID;
+    os_tcb[TaskID].State = RUNNING;
+    os_ready_bitmap |= (uint32)(1u << TaskID);
 }
 #endif

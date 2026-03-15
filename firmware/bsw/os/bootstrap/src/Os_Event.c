@@ -27,6 +27,10 @@ StatusType SetEvent(TaskType TaskID, EventMaskType Mask)
     Os_TaskControlBlockType* tcb_ptr;
     OS_STACK_SAMPLE(OS_DET_API_SET_EVENT);
 
+    if (Os_ServiceProtCheck(OS_ALLOWED_TASK | OS_ALLOWED_ISR2) == FALSE) {
+        return E_OS_CALLEVEL;
+    }
+
     if (os_is_valid_task(TaskID) == FALSE) {
         os_report_service_error(OS_DET_API_SET_EVENT, DET_E_PARAM_VALUE, E_OS_ID);
         return E_OS_ID;
@@ -64,6 +68,10 @@ StatusType SetEvent(TaskType TaskID, EventMaskType Mask)
 StatusType ClearEvent(EventMaskType Mask)
 {
     OS_STACK_SAMPLE(OS_DET_API_CLEAR_EVENT);
+
+    if (Os_ServiceProtCheck(OS_ALLOWED_TASK) == FALSE) {
+        return E_OS_CALLEVEL;
+    }
 
     if ((os_started == FALSE) || (os_current_task == INVALID_TASK)) {
         os_report_service_error(OS_DET_API_CLEAR_EVENT, DET_E_PARAM_VALUE, E_OS_CALLEVEL);
@@ -115,6 +123,10 @@ StatusType GetEvent(TaskType TaskID, EventMaskRefType Event)
 StatusType WaitEvent(EventMaskType Mask)
 {
     OS_STACK_SAMPLE(OS_DET_API_WAIT_EVENT);
+
+    if (Os_ServiceProtCheck(OS_ALLOWED_TASK) == FALSE) {
+        return E_OS_CALLEVEL;
+    }
 
     if ((os_started == FALSE) || (os_current_task == INVALID_TASK)) {
         os_report_service_error(OS_DET_API_WAIT_EVENT, DET_E_PARAM_VALUE, E_OS_CALLEVEL);

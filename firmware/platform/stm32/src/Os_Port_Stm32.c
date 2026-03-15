@@ -175,6 +175,55 @@ void Os_Port_Stm32_MarkPendSvComplete(uintptr_t ActivePsp)
     os_port_stm32_state.PendSvCompleteCount++;
 }
 
+/**
+ * @brief   Save current task's PSP after r4-r11 + EXC_RETURN push
+ * @param   SavedPsp  Task stack pointer after software context push
+ * @note    Called from PendSV assembly after STMDB
+ */
+void Os_Port_Stm32_PendSvSaveContext(uintptr_t SavedPsp)
+{
+    TaskType current = os_port_stm32_state.CurrentTask;
+
+    if ((current < OS_MAX_TASKS) &&
+        (os_port_stm32_task_context[current].Prepared == TRUE)) {
+        os_port_stm32_task_context[current].SavedPsp = SavedPsp;
+    }
+}
+
+/**
+ * @brief   Get next task's SavedPsp for context restore
+ * @return  SavedPsp of next task (or current if no switch), 0 on error
+ * @note    Called from PendSV assembly before LDMIA
+ */
+uintptr_t Os_Port_Stm32_PendSvGetNextContext(void)
+{
+    TaskType next = os_port_stm32_state.SelectedNextTask;
+    TaskType current = os_port_stm32_state.CurrentTask;
+
+    if ((next != INVALID_TASK) && (next < OS_MAX_TASKS) &&
+        (os_port_stm32_task_context[next].Prepared == TRUE) &&
+        (next != current)) {
+        os_port_stm32_state.LastSavedTask = current;
+        os_port_stm32_state.LastSavedPsp =
+            (current < OS_MAX_TASKS) ? os_port_stm32_task_context[current].SavedPsp : (uintptr_t)0u;
+        os_port_stm32_state.CurrentTask = next;
+        os_port_stm32_state.SelectedNextTask = INVALID_TASK;
+        os_port_stm32_state.SelectedNextTaskPsp = (uintptr_t)0u;
+        os_port_stm32_state.TaskSwitchCount++;
+        return os_port_stm32_task_context[next].SavedPsp;
+    }
+
+    os_port_stm32_state.SelectedNextTask = INVALID_TASK;
+    os_port_stm32_state.SelectedNextTaskPsp = (uintptr_t)0u;
+
+    if ((current < OS_MAX_TASKS) &&
+        (os_port_stm32_task_context[current].Prepared == TRUE)) {
+        return os_port_stm32_task_context[current].SavedPsp;
+    }
+
+    return (uintptr_t)0u;
+}
+
 static void os_port_stm32_reset_state(void)
 {
     os_port_stm32_reset_task_contexts();
@@ -440,19 +489,28 @@ void Os_Port_Stm32_StartFirstTaskAsm(void)
 
 void Os_Port_Stm32_PendSvHandler(void)
 {
-    uintptr_t next_active_psp;
+    uintptr_t next_psp;
 
-    if ((os_port_stm32_state.FirstTaskStarted == FALSE) ||
-        (os_port_stm32_state.PendSvPending == FALSE)) {
+    if (os_port_stm32_state.FirstTaskStarted == FALSE) {
+        /* First task launch — use prepared frame directly */
+        Os_Port_Stm32_MarkFirstTaskStarted(os_port_stm32_get_first_task_restore_psp());
         return;
     }
 
-    next_active_psp = Os_Port_Stm32_ResolvePendSvTarget(os_port_stm32_state.ActivePsp);
-    if (next_active_psp == (uintptr_t)0u) {
+    if (os_port_stm32_state.PendSvPending == FALSE) {
         return;
     }
 
-    Os_Port_Stm32_MarkPendSvComplete(next_active_psp);
+    /* Simulate save: store current task's ActivePsp as SavedPsp */
+    Os_Port_Stm32_PendSvSaveContext(os_port_stm32_state.ActivePsp);
+
+    /* Resolve next task */
+    next_psp = Os_Port_Stm32_PendSvGetNextContext();
+    if (next_psp == (uintptr_t)0u) {
+        return;
+    }
+
+    Os_Port_Stm32_MarkPendSvComplete(next_psp);
 }
 
 void Os_Port_Stm32_SysTickHandler(void)

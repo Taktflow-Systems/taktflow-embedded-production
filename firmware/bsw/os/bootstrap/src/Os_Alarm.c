@@ -142,6 +142,11 @@ StatusType GetAlarmBase(AlarmType AlarmID, AlarmBaseRefType Info)
 {
     OS_STACK_SAMPLE(OS_DET_API_GET_ALARM_BASE);
 
+    if (Os_ServiceProtCheck(OS_ALLOWED_TASK | OS_ALLOWED_ISR2 | OS_ALLOWED_ERROR_HOOK |
+                            OS_ALLOWED_PRE_TASK | OS_ALLOWED_POST_TASK) == FALSE) {
+        return E_OS_CALLEVEL;
+    }
+
     if (Info == NULL_PTR) {
         os_report_service_error(OS_DET_API_GET_ALARM_BASE, DET_E_PARAM_POINTER, E_OS_VALUE);
         return E_OS_VALUE;
@@ -166,6 +171,11 @@ StatusType GetAlarmBase(AlarmType AlarmID, AlarmBaseRefType Info)
 StatusType GetAlarm(AlarmType AlarmID, TickRefType Tick)
 {
     OS_STACK_SAMPLE(OS_DET_API_GET_ALARM);
+
+    if (Os_ServiceProtCheck(OS_ALLOWED_TASK | OS_ALLOWED_ISR2 | OS_ALLOWED_ERROR_HOOK |
+                            OS_ALLOWED_PRE_TASK | OS_ALLOWED_POST_TASK) == FALSE) {
+        return E_OS_CALLEVEL;
+    }
 
     if (Tick == NULL_PTR) {
         os_report_service_error(OS_DET_API_GET_ALARM, DET_E_PARAM_POINTER, E_OS_VALUE);
@@ -194,6 +204,10 @@ StatusType GetAlarm(AlarmType AlarmID, TickRefType Tick)
 StatusType SetRelAlarm(AlarmType AlarmID, TickType increment, TickType cycle)
 {
     OS_STACK_SAMPLE(OS_DET_API_SET_REL_ALARM);
+
+    if (Os_ServiceProtCheck(OS_ALLOWED_TASK | OS_ALLOWED_ISR2) == FALSE) {
+        return E_OS_CALLEVEL;
+    }
 
     if (os_started == FALSE) {
         os_report_service_error(OS_DET_API_SET_REL_ALARM, DET_E_UNINIT, E_OS_STATE);
@@ -235,6 +249,10 @@ StatusType SetAbsAlarm(AlarmType AlarmID, TickType start, TickType cycle)
 {
     OS_STACK_SAMPLE(OS_DET_API_SET_ABS_ALARM);
 
+    if (Os_ServiceProtCheck(OS_ALLOWED_TASK | OS_ALLOWED_ISR2) == FALSE) {
+        return E_OS_CALLEVEL;
+    }
+
     if (os_started == FALSE) {
         os_report_service_error(OS_DET_API_SET_ABS_ALARM, DET_E_UNINIT, E_OS_STATE);
         return E_OS_STATE;
@@ -275,6 +293,10 @@ StatusType CancelAlarm(AlarmType AlarmID)
 {
     OS_STACK_SAMPLE(OS_DET_API_CANCEL_ALARM);
 
+    if (Os_ServiceProtCheck(OS_ALLOWED_TASK | OS_ALLOWED_ISR2) == FALSE) {
+        return E_OS_CALLEVEL;
+    }
+
     if (os_started == FALSE) {
         os_report_service_error(OS_DET_API_CANCEL_ALARM, DET_E_UNINIT, E_OS_STATE);
         return E_OS_STATE;
@@ -305,6 +327,7 @@ boolean Os_BootstrapProcessCounterTick(void)
 {
     os_counter_value = os_counter_increment_one(os_counter_value);
     os_alarm_process_current_tick();
+    os_sched_table_process_tick();
     return os_bootstrap_ready_task_requires_dispatch();
 }
 
