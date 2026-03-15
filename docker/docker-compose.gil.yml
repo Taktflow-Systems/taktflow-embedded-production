@@ -1,9 +1,10 @@
 # =============================================================================
 # docker-compose.gil.yml — GIL (Godot-in-the-Loop) on Raspberry Pi
 #
-# Full 7-ECU SIL stack on physical CAN (can0), with Godot providing vehicle
+# Full 7-ECU stack on vcan1 (virtual CAN), with Godot providing vehicle
 # physics + user input (pedal/steering) over LAN UDP. The godot-bridge
 # replaces plant-sim: it relays CAN↔UDP between vECUs and Godot.
+# Uses vcan1 (not vcan0) to avoid conflict with VPS SIL.
 #
 # System: GIL (Godot-in-the-Loop) — Pi + Godot on Windows PC
 # Counterpart: docker-compose.dev.yml — SIL (Software-in-the-Loop) — VPS
@@ -16,12 +17,42 @@
 #   docker compose -f docker-compose.gil.yml down
 #
 # Prerequisites:
-#   - Physical CAN interface (can0) via Waveshare CAN HAT
+#   - vcan kernel module: sudo modprobe vcan
 #   - Godot 4.6 running on Windows PC (192.168.0.158)
 #   - AWS certs in ./certs/ (for cloud-connector, optional)
 # =============================================================================
 
 services:
+  # --- vcan1 setup (runs once, exits) ---
+  can-setup:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.can-setup
+    command: >
+      /bin/sh -c "
+        modprobe vcan 2>/dev/null || true;
+        if ip link show vcan1 > /dev/null 2>&1; then
+          ip link set vcan1 up;
+          echo '[can-setup] vcan1 already existed — set UP';
+        elif ip link add vcan1 type vcan; then
+          ip link set vcan1 up;
+          echo '[can-setup] created vcan1 — set UP';
+        else
+          echo '[can-setup] ERROR: cannot create vcan1 — vcan module not loaded';
+          echo '[can-setup] Run on host:  sudo modprobe vcan';
+          exit 1;
+        fi;
+        ip -d link show vcan1
+      "
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_MODULE
+    volumes:
+      - /lib/modules:/lib/modules:ro
+    network_mode: host
+    restart: "no"
+
   # --- Central Vehicle Computer ---
   cvc:
     build:
@@ -31,8 +62,11 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
+    depends_on:
+      can-setup:
+        condition: service_completed_successfully
     environment:
-      - CAN_INTERFACE=can0
+      - CAN_INTERFACE=vcan1
       - ECU_NAME=cvc
       - SPI_PEDAL_UDP_PORT=9100
       - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
@@ -49,8 +83,11 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
+    depends_on:
+      can-setup:
+        condition: service_completed_successfully
     environment:
-      - CAN_INTERFACE=can0
+      - CAN_INTERFACE=vcan1
       - ECU_NAME=fzc
       - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
     volumes:
@@ -66,8 +103,11 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
+    depends_on:
+      can-setup:
+        condition: service_completed_successfully
     environment:
-      - CAN_INTERFACE=can0
+      - CAN_INTERFACE=vcan1
       - ECU_NAME=rzc
       - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
     volumes:
@@ -83,8 +123,11 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
+    depends_on:
+      can-setup:
+        condition: service_completed_successfully
     environment:
-      - CAN_INTERFACE=can0
+      - CAN_INTERFACE=vcan1
       - ECU_NAME=sc
       - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
     restart: unless-stopped
@@ -98,8 +141,11 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
+    depends_on:
+      can-setup:
+        condition: service_completed_successfully
     environment:
-      - CAN_INTERFACE=can0
+      - CAN_INTERFACE=vcan1
       - ECU_NAME=bcm
       - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
     restart: unless-stopped
@@ -113,8 +159,11 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
+    depends_on:
+      can-setup:
+        condition: service_completed_successfully
     environment:
-      - CAN_INTERFACE=can0
+      - CAN_INTERFACE=vcan1
       - ECU_NAME=icu
       - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
     stdin_open: true
@@ -130,8 +179,11 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
+    depends_on:
+      can-setup:
+        condition: service_completed_successfully
     environment:
-      - CAN_INTERFACE=can0
+      - CAN_INTERFACE=vcan1
       - ECU_NAME=tcu
       - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
     restart: unless-stopped
@@ -148,10 +200,12 @@ services:
       - NET_ADMIN
       - NET_RAW
     depends_on:
+      can-setup:
+        condition: service_completed_successfully
       mqtt-broker:
         condition: service_started
     environment:
-      - CAN_INTERFACE=can0
+      - CAN_INTERFACE=vcan1
       - GODOT_HOST=${GODOT_HOST:-192.168.0.158}
       - BRIDGE_CARS=1
       - BRIDGE_RATE=100
@@ -177,12 +231,14 @@ services:
       - NET_ADMIN
       - NET_RAW
     depends_on:
+      can-setup:
+        condition: service_completed_successfully
       mqtt-broker:
         condition: service_started
       sap-qm-mock:
         condition: service_started
     environment:
-      - CAN_CHANNEL=can0
+      - CAN_CHANNEL=vcan1
       - DBC_PATH=/app/taktflow.dbc
       - MQTT_HOST=localhost
       - MQTT_PORT=1883
@@ -258,10 +314,12 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
+      can-setup:
+        condition: service_completed_successfully
       mqtt-broker:
         condition: service_started
     environment:
-      - CAN_CHANNEL=can0
+      - CAN_CHANNEL=vcan1
       - FAULT_PORT=8091
       - MQTT_HOST=localhost
       - MQTT_PORT=1883
