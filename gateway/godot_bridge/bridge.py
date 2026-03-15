@@ -262,21 +262,21 @@ class CarBridge:
 
     def send_heartbeats(self) -> None:
         """Send fake heartbeat frames so CVC sees FZC/RZC/SC as alive.
-        Workaround for firmware regression where ECUs don't TX heartbeats."""
+        Workaround for firmware regression where ECUs don't TX heartbeats.
+        DLC=4 to match CanIf_Cfg (generated config uses 4-byte heartbeats)."""
         if not self.can_bus:
             return
 
-        # Heartbeat format: E2E bytes 0-1, byte 2 = ECU_ID, byte 3 = [fault:4|state:4]
-        # CVC_HB=0x010 (ECU_ID=0x01), FZC_HB=0x011 (0x02), RZC_HB=0x012 (0x03)
-        vs = self.vehicle_state & 0x0F  # current vehicle state
-        for can_id, ecu_id, data_id in [
-            (CAN_ID_FZC_HB, 0x02, 0x03),
-            (CAN_ID_RZC_HB, 0x03, 0x04),
+        # Heartbeat format (4 bytes): E2E byte0 + CRC byte1 + ECU_ID + state/fault
+        # CanIf config: DLC=4 for heartbeat frames
+        vs = self.vehicle_state & 0x0F
+        for can_id, ecu_id in [
+            (CAN_ID_FZC_HB, 0x02),
+            (CAN_ID_RZC_HB, 0x03),
         ]:
-            payload = bytes([ecu_id, (0x00 << 4) | vs, 0, 0, 0, 0])
+            payload = bytes([ecu_id, vs])  # 2 bytes: ECU_ID + state
             data = e2e_pack(can_id, payload, self.get_alive(can_id))
-            # e2e_pack expects DataID in DATA_IDS — add temporarily
-            self._can_send(can_id, data[:8])
+            self._can_send(can_id, data[:4])
 
     def send_sensor_can(self) -> None:
         """Send virtual sensor data to ECUs (replaces plant_sim).
