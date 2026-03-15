@@ -8,6 +8,8 @@
 
 #if defined(PLATFORM_STM32)
 #include "Os_Port_Stm32.h"
+#elif defined(PLATFORM_STM32L5)
+#include "Os_Port_Stm32L5.h"
 #elif defined(PLATFORM_TMS570)
 #include "Os_Port_Tms570.h"
 #endif
@@ -20,6 +22,8 @@ StatusType Os_Port_PrepareConfiguredTask(TaskType TaskID, uintptr_t StackTop)
 
 #if defined(PLATFORM_STM32)
     return Os_Port_Stm32_PrepareTaskContext(TaskID, os_task_cfg[TaskID].Entry, StackTop);
+#elif defined(PLATFORM_STM32L5)
+    return Os_Port_Stm32L5_PrepareTaskContext(TaskID, os_task_cfg[TaskID].Entry, StackTop, (uintptr_t)0u);
 #elif defined(PLATFORM_TMS570)
     return Os_Port_Tms570_PrepareTaskContext(TaskID, os_task_cfg[TaskID].Entry, StackTop);
 #else
@@ -37,6 +41,8 @@ StatusType Os_Port_PrepareConfiguredFirstTask(TaskType TaskID, uintptr_t StackTo
 
 #if defined(PLATFORM_STM32)
     return Os_Port_Stm32_PrepareFirstTask(TaskID, os_task_cfg[TaskID].Entry, StackTop);
+#elif defined(PLATFORM_STM32L5)
+    return Os_Port_Stm32L5_PrepareFirstTask(TaskID, os_task_cfg[TaskID].Entry, StackTop, (uintptr_t)0u);
 #elif defined(PLATFORM_TMS570)
     return Os_Port_Tms570_PrepareFirstTask(TaskID, os_task_cfg[TaskID].Entry, StackTop);
 #else
@@ -54,6 +60,8 @@ StatusType Os_Port_SelectConfiguredTask(TaskType TaskID)
 
 #if defined(PLATFORM_STM32)
     return Os_Port_Stm32_SelectNextTask(TaskID);
+#elif defined(PLATFORM_STM32L5)
+    return Os_Port_Stm32L5_SelectNextTask(TaskID);
 #elif defined(PLATFORM_TMS570)
     return Os_Port_Tms570_SelectNextTask(TaskID);
 #else
@@ -70,6 +78,8 @@ void Os_Port_SynchronizeConfiguredTask(TaskType TaskID)
 
 #if defined(PLATFORM_STM32)
     Os_Port_Stm32_SynchronizeCurrentTask(TaskID);
+#elif defined(PLATFORM_STM32L5)
+    Os_Port_Stm32L5_SynchronizeCurrentTask(TaskID);
 #elif defined(PLATFORM_TMS570)
     Os_Port_Tms570_SynchronizeCurrentTask(TaskID);
 #else
@@ -100,6 +110,15 @@ StatusType Os_Port_CompleteConfiguredDispatch(void)
 
     Os_Port_Stm32_PendSvHandler();
     return E_OK;
+#elif defined(PLATFORM_STM32L5)
+    const Os_Port_Stm32L5_StateType* state = Os_Port_Stm32L5_GetBootstrapState();
+
+    if (state->PendSvPending == FALSE) {
+        return E_OS_NOFUNC;
+    }
+
+    Os_Port_Stm32L5_PendSvHandler();
+    return E_OK;
 #elif defined(PLATFORM_TMS570)
     const Os_Port_Tms570_StateType* state = Os_Port_Tms570_GetBootstrapState();
 
@@ -127,6 +146,8 @@ void Os_Port_ObserveConfiguredDispatch(TaskType TaskID)
 
 #if defined(PLATFORM_STM32)
     Os_Port_Stm32_ObserveKernelDispatch(TaskID);
+#elif defined(PLATFORM_STM32L5)
+    Os_Port_Stm32L5_ObserveKernelDispatch(TaskID);
 #elif defined(PLATFORM_TMS570)
     Os_Port_Tms570_ObserveKernelDispatch(TaskID);
 #else

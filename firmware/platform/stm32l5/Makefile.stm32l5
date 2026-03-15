@@ -1,0 +1,98 @@
+# =============================================================================
+# Makefile.stm32l5 — ARM Cortex-M33 target build for STM32L552ZE
+#
+# Skeleton Makefile for the L5 platform port (TrustZone-capable MCU).
+# Currently supports building the OS port and BSW stack. CubeMX HAL paths
+# will be added when the L552ZE CubeMX project is generated.
+#
+# Run from project root:
+#   make -f firmware/platform/stm32l5/Makefile.stm32l5 build
+#   make -f firmware/platform/stm32l5/Makefile.stm32l5 clean
+#
+# Output:  build/stm32l5/stm32l5.elf
+# =============================================================================
+
+# --- Toolchain ---
+PREFIX  = arm-none-eabi-
+CC      = $(PREFIX)gcc
+AS      = $(PREFIX)gcc -x assembler-with-cpp
+CP      = $(PREFIX)objcopy
+SZ      = $(PREFIX)size
+
+# --- MCU flags (STM32L552ZE = Cortex-M33 with FPv5-SP-D16) ---
+MCU_FLAGS  = -mcpu=cortex-m33 -mthumb -mfpu=fpv5-sp-d16 -mfloat-abi=hard
+
+# --- Compiler flags ---
+CFLAGS  = $(MCU_FLAGS)
+CFLAGS += -Wall -Wextra -Werror -std=c99
+CFLAGS += -DPLATFORM_STM32L5 -DSTM32L552xx
+CFLAGS += -fdata-sections -ffunction-sections
+
+# --- Build mode ---
+ifdef RELEASE
+  CFLAGS += -Os -DNDEBUG
+else
+  CFLAGS += -Og -g3 -DDEBUG
+endif
+
+# --- Directories ---
+FW        = firmware
+BSW       = $(FW)/bsw
+PLAT      = $(FW)/platform/stm32l5
+BUILD_DIR = build/stm32l5
+
+# --- Include paths ---
+CFLAGS += -I$(BSW)/include
+CFLAGS += -I$(BSW)/os/include
+CFLAGS += -I$(BSW)/os/bootstrap/port/include
+CFLAGS += -I$(PLAT)/include
+
+# --- Assembler flags ---
+ASFLAGS = $(MCU_FLAGS) -DPLATFORM_STM32L5
+
+# --- OS port sources ---
+PORT_C_SRCS = \
+    $(PLAT)/src/Os_Port_Stm32L5.c
+
+PORT_ASM_SRCS = \
+    $(PLAT)/src/Os_Port_Stm32L5_Asm.S
+
+# --- Object files ---
+C_OBJS   = $(patsubst %.c,$(BUILD_DIR)/%.o,$(PORT_C_SRCS))
+ASM_OBJS = $(patsubst %.S,$(BUILD_DIR)/%.o,$(PORT_ASM_SRCS))
+ALL_OBJS = $(C_OBJS) $(ASM_OBJS)
+
+# --- Linker flags ---
+LDFLAGS  = $(MCU_FLAGS)
+LDFLAGS += -Wl,--gc-sections
+LDFLAGS += --specs=nano.specs --specs=nosys.specs
+
+# --- Output ---
+ELF = $(BUILD_DIR)/stm32l5.elf
+
+# =============================================================================
+# Targets
+# =============================================================================
+
+.PHONY: build clean
+
+build: $(ALL_OBJS)
+	@echo "=== OS port objects built for STM32L5 (Cortex-M33) ==="
+	@echo "Note: Full ELF link requires CubeMX HAL + linker script"
+
+# --- Compile C ---
+$(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# --- Assemble ---
+$(BUILD_DIR)/%.o: %.S | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(AS) $(ASFLAGS) -c $< -o $@
+
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
+
+clean:
+	rm -rf $(BUILD_DIR)
+	@echo "=== Cleaned STM32L5 build directory ==="
