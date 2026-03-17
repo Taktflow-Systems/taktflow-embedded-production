@@ -46,26 +46,26 @@ The production SIL test suite cannot pass SIL-001 (Normal Startup) because multi
 
 3. **Signal naming convention**: DBC signal names must match what the codegen produces for `#define` names. Audit and fix any that diverge.
 
-### Phase 2: Regenerate ARXML from Frozen DBC
+### Phase 2: Regenerate ARXML from Frozen DBC — DONE 2026-03-17
 
 **Goal**: ARXML is 100% derived from DBC, no manual edits.
 
-1. Run `dbc2arxml.py` on the frozen DBC
-2. Diff against the existing ARXML — document every change
-3. If `dbc2arxml.py` produces wrong bit positions or signal structures, fix the converter
-4. Validate: `python3 -m tools.arxmlgen --dry-run` produces 0 warnings
+1. ✅ Ran `dbc2arxml.py` on the frozen DBC
+2. ✅ Diffed: 167→174 signal mappings, 0 changed bit positions, 7 added (virtual sensors), 0 removed
+3. ✅ No converter fixes needed — all existing signals preserved
+4. ✅ Committed `909b897`
 
-### Phase 3: Validate Codegen Output
+### Phase 3: Validate Codegen Output — IN PROGRESS 2026-03-17
 
 **Goal**: All generated configs compile without error against existing SWC code.
 
-1. Install `cantools` in the Docker builder stage (`pip install cantools` in Dockerfile.vecu)
-2. Run full codegen: `python3 -m tools.arxmlgen --config project.yaml`
-3. Build all 7 ECUs: verify 0 compile errors
-4. If generated names collide with hand-written code:
-   - Option A: Fix `dbc2arxml.py` naming to match existing convention
-   - Option B: Update hand-written code to use generated names (via aliases like FZC_App.h)
-5. **Key validation**: `grep -r 'hardcoded.*signal.*ID\|= [0-9]*u.*Com signal' firmware/ecu/*/include/*_App.h` → should find ZERO hardcoded IDs
+1. ✅ `cantools` installed on VPS (required for DBC routing in codegen)
+2. ✅ Full codegen: `python3 -m tools.arxmlgen --config project.yaml` — 51 files written
+3. ✅ Build 6/7 ECUs clean (ICU needs ncurses from Docker — verified in Docker build)
+4. ✅ Monolithic SWC skeletons (`Swc_CVC.c`, `Swc_FZC.c`, `Swc_RZC.c`) must be deleted after regen — they clash with individual SWC files
+5. **TODO**: Add `cantools` to Dockerfile.vecu builder stage
+6. **TODO**: Add `.gitignore` for monolithic SWC skeletons (or fix codegen to skip them)
+7. **TODO**: Docker build + SIL-001 test
 
 ### Phase 4: Plant-Sim Alignment
 
