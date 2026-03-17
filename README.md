@@ -10,166 +10,58 @@
 
 1. [Architecture Overview](#architecture-overview)
 2. [Layered Software Architecture](#layered-software-architecture)
-3. [AUTOSAR & ARXML — Model-Based Configuration](#autosar--arxml--model-based-configuration)
-4. [Automated Code Generation Pipeline](#automated-code-generation-pipeline)
-5. [Automotive SPICE (ASPICE) Process Compliance](#automotive-spice-aspice-process-compliance)
-6. [ISO 26262 — Functional Safety (ASIL D)](#iso-26262--functional-safety-asil-d)
-7. [Automated Traceability](#automated-traceability)
-8. [V-Model Verification (xIL Testing)](#v-model-verification-xil-testing)
-9. [MISRA C:2012 Static Analysis](#misra-c2012-static-analysis)
-10. [CI/CD Pipelines](#cicd-pipelines)
-11. [Quick Start](#quick-start)
-12. [Project Structure](#project-structure)
-13. [Key Principles](#key-principles)
-14. [Metrics](#metrics)
+3. [Code Generation Pipeline (DBC → ARXML → C)](#code-generation-pipeline-dbc--arxml--c)
+4. [Automotive SPICE (ASPICE) Process Compliance](#automotive-spice-aspice-process-compliance)
+5. [ISO 26262 — Functional Safety (ASIL D)](#iso-26262--functional-safety-asil-d)
+6. [Automated Traceability](#automated-traceability)
+7. [V-Model Verification (xIL Testing)](#v-model-verification-xil-testing)
+8. [MISRA C:2012 Static Analysis](#misra-c2012-static-analysis)
+9. [CI/CD Pipelines](#cicd-pipelines)
+10. [Quick Start](#quick-start)
+11. [Project Structure](#project-structure)
+12. [Key Principles](#key-principles)
+13. [Metrics](#metrics)
 
 ---
 
 ## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│                                    CLOUD / REMOTE                                       │
-│                                                                                         │
-│   ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐          │
-│   │   Grafana     │    │  AWS IoT     │    │  SAP QM      │    │  Godot 3D    │          │
-│   │  Dashboards   │    │  Core        │    │  (Quality)   │    │  Visualizer  │          │
-│   └──────┬───────┘    └──────┬───────┘    └──────┬───────┘    └──────┬───────┘          │
-│          │                   │                   │                   │                   │
-│          └───────────┬───────┴───────────┬───────┘                   │                   │
-│                      │     MQTT 8883     │                           │                   │
-│                      ▼    (TLS + auth)   ▼                           ▼                   │
-│              ┌───────────────┐   ┌───────────────┐          ┌───────────────┐            │
-│              │ cloud_        │   │ sap_qm/       │          │ godot_bridge/ │            │
-│              │ connector/    │   │ sap_qm_mock/  │          │ (Godot ↔ SIL) │            │
-│              └───────┬───────┘   └───────┬───────┘          └───────┬───────┘            │
-│                      │                   │                           │                   │
-│   ┌──────────────────┼───────────────────┼───────────────────────────┼────────────────┐  │
-│   │                  │        GATEWAY LAYER                         │                │  │
-│   │                  ▼                                              ▼                │  │
-│   │          ┌───────────────┐                              ┌───────────────┐        │  │
-│   │          │ mosquitto/    │◄──────── MQTT 1883 ─────────►│ mqtt_bridge/  │        │  │
-│   │          │ (MQTT broker) │         (internal)           │ (MQTT↔CAN)   │        │  │
-│   │          └───────────────┘                              └───────┬───────┘        │  │
-│   │                                                                 │                │  │
-│   │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐       │                │  │
-│   │  │ diagnostics/  │  │ ml_inference/ │  │ ws_bridge/    │       │                │  │
-│   │  │ (UDS server)  │  │ (anomaly det) │  │ (WebSocket    │       │                │  │
-│   │  │               │  │               │  │  → dashboard) │       │                │  │
-│   │  └───────┬───────┘  └───────┬───────┘  └───────┬───────┘       │                │  │
-│   │          │                  │                   │               │                │  │
-│   │          └──────────┬───────┴───────────┬───────┘               │                │  │
-│   │                     ▼                   ▼                       ▼                │  │
-│   │             ┌─────────────────────────────────────────────┐                      │  │
-│   │             │              can_gateway/                   │                      │  │
-│   │             │         (CAN ↔ cloud bridge)                │                      │  │
-│   │             │  Routes CAN frames to/from all services     │                      │  │
-│   │             └────────────────────┬────────────────────────┘                      │  │
-│   │                                  │                                               │  │
-│   │  ┌───────────────┐               │              ┌───────────────┐                │  │
-│   │  │ plant_sim_py/ │               │              │ fault_inject/ │                │  │
-│   │  │ (vehicle      │               │              │ (test fault   │                │  │
-│   │  │  physics)     ├───────────────┤──────────────┤  scenarios)   │                │  │
-│   │  │ motor/brake/  │               │              │ pedal_udp,    │                │  │
-│   │  │ steer/battery │               │              │ E-Stop, etc   │                │  │
-│   │  └───────────────┘               │              └───────────────┘                │  │
-│   │                                  │                                               │  │
-│   └──────────────────────────────────┼───────────────────────────────────────────────┘  │
-│                                      │                                                  │
-└──────────────────────────────────────┼──────────────────────────────────────────────────┘
-                                       │
-                          CAN 500 kbit/s (vCAN or physical)
-                          E2E Profile P01 (CRC-8 + alive counter)
-                                       │
-        ┌──────────────────────────────┬┴──────────────────────────────┐
-        │                              │                               │
-        ▼                              ▼                               ▼
-┌──── FRONT ZONE ────┐    ┌──── CENTRAL ─────┐    ┌──── REAR ZONE ────┐
-│                     │    │                   │    │                    │
-│  ┌───────────────┐  │    │  ┌─────────────┐  │    │  ┌──────────────┐ │
-│  │  FZC (ASIL D) │  │    │  │ CVC (ASIL D)│  │    │  │ RZC (ASIL C) │ │
-│  │  STM32F407    │  │    │  │ STM32F407   │  │    │  │ STM32F407    │ │
-│  │               │  │    │  │              │  │    │  │              │ │
-│  │ Swc_Steering  │  │    │  │ Swc_Vehicle  │  │    │  │ Swc_Motor    │ │
-│  │ Swc_Brake     │  │    │  │ Swc_Heartbeat│  │    │  │ Swc_RearSens │ │
-│  │ Swc_Lidar     │  │    │  │ Swc_Coord   │  │    │  │ Swc_Traction │ │
-│  │               │  │    │  │              │  │    │  │              │ │
-│  │ BSW: Com,E2E, │  │    │  │ BSW: Com,E2E│  │    │  │ BSW: Com,E2E │ │
-│  │ WdgM,Dem,Dcm  │  │    │  │ WdgM,Dem,Dcm│  │    │  │ WdgM,Dem,Dcm │ │
-│  └───────────────┘  │    │  └─────────────┘  │    │  └──────────────┘ │
-│                     │    │                   │    │                    │
-└─────────────────────┘    └───────────────────┘    └──────────────────┘
-        │                              │                        │
-        │         ┌────────────────────┤                        │
-        │         │                    │                        │
-        │         ▼                    │                        │
-        │  ┌──────────────┐            │                        │
-        │  │ SC (ASIL D)  │            │                        │
-        │  │ TMS570LS0432 │◄───────────┼────────────────────────┘
-        │  │ (lockstep)   │            │          heartbeat monitoring
-        │  │              │            │
-        │  │ Monitors:    │    watchdog │
-        │  │  heartbeats  │────────────┘
-        │  │  alive cnts  │
-        │  │  FTTI budget │    If ANY heartbeat lost or alive counter stale:
-        │  │              │    ──► SAFE STATE (torque cutoff, steer neutral)
-        │  └──────────────┘
-        │
-        │
-┌───────┴──────── BODY / COMFORT (Docker vECUs, SIL) ──────────────────┐
-│                                                                       │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐               │
-│  │ BCM (QM)    │    │ ICU (QM)    │    │ TCU (ASIL B)│               │
-│  │ C++ / CMake │    │ C++ / CMake │    │ C++ / CMake │               │
-│  │             │    │             │    │             │               │
-│  │ Lights,     │    │ Dashboard,  │    │ Gear logic, │               │
-│  │ doors,      │    │ telemetry   │    │ torque req  │               │
-│  │ comfort     │    │ display     │    │ routing     │               │
-│  └─────────────┘    └─────────────┘    └─────────────┘               │
-│                                                                       │
-│  Containerized in Docker — same BSW interfaces, POSIX MCAL            │
-│  Runs identically in SIL (local) and on Netcup VPS (live demo)       │
-└───────────────────────────────────────────────────────────────────────┘
-
-
-┌─── VERIFICATION ENVIRONMENTS ─────────────────────────────────────────┐
-│                                                                       │
-│  SIL (Software-in-the-Loop)          HIL (Hardware-in-the-Loop)       │
-│  ┌─────────────────────────┐         ┌─────────────────────────┐      │
-│  │ Docker Compose           │         │ Raspberry Pi 4           │      │
-│  │ 7 vECUs + gateway +     │         │ MCP2515 CAN (500k)       │      │
-│  │ plant sim + MQTT broker  │         │ Physical STM32 + TMS570  │      │
-│  │                          │         │ Real CAN bus wiring       │      │
-│  │ vCAN bus (socketcan)     │         │                           │      │
-│  │ ci: nightly + on-push    │         │ ci: nightly               │      │
-│  │ live: sil.taktflow-      │         │ bench: 192.168.0.195      │      │
-│  │   systems.com            │         │                           │      │
-│  └─────────────────────────┘         └─────────────────────────┘      │
-│                                                                       │
-│  MIL (Model-in-the-Loop)            PIL (Processor-in-the-Loop)       │
-│  ┌─────────────────────────┐         ┌─────────────────────────┐      │
-│  │ Python plant models      │         │ Real MCU running firmware │      │
-│  │ Control algorithm         │         │ Simulated plant via CAN   │      │
-│  │ validation before C code │         │ Validates timing + HW     │      │
-│  └─────────────────────────┘         └─────────────────────────┘      │
-│                                                                       │
-└───────────────────────────────────────────────────────────────────────┘
+                         ┌─── CLOUD ──────────────────────────────────┐
+                         │ Grafana · AWS IoT · SAP QM · Godot 3D     │
+                         └────────────────┬───────────────────────────┘
+                                     MQTT (TLS)
+                         ┌────────────────┴───────────────────────────┐
+                         │           GATEWAY LAYER (Docker)           │
+                         │  can_gateway · mqtt_bridge · ws_bridge     │
+                         │  diagnostics (UDS) · ml_inference          │
+                         │  plant_sim_py · fault_inject               │
+                         └────────────────┬───────────────────────────┘
+                              CAN 500 kbit/s · E2E P01 (CRC-8)
+               ┌──────────────────┼──────────────────┐
+               ▼                  ▼                   ▼
+        ┌─ FRONT ZONE ──┐ ┌── CENTRAL ──┐  ┌── REAR ZONE ──┐
+        │ FZC (ASIL D)   │ │ CVC (ASIL D) │  │ RZC (ASIL C)  │
+        │ STM32F407      │ │ STM32F407    │  │ STM32F407      │
+        │ Steer,Brake,   │ │ Vehicle,     │  │ Motor,Traction │
+        │ Lidar          │ │ Heartbeat,   │  │ RearSensors    │
+        │                │ │ Coordinator  │  │                │
+        └────────────────┘ └──────┬───────┘  └────────────────┘
+                                  │  heartbeat monitoring
+                           ┌──────┴───────┐
+                           │ SC (ASIL D)   │  ← TMS570 lockstep
+                           │ Monitors all  │    Heartbeat miss
+                           │ alive counters│    → SAFE STATE
+                           └──────────────┘
+        ┌─ BODY / COMFORT (Docker vECUs) ───────────────────┐
+        │ BCM (QM)  ·  ICU (QM)  ·  TCU (ASIL B)           │
+        │ C++ / CMake · POSIX MCAL · same BSW interfaces    │
+        └───────────────────────────────────────────────────┘
 ```
 
-### How data flows through the system
+**Data flow**: Sensors → SWC (via RTE) → Com (signal packing + E2E) → CAN bus → SC heartbeat monitoring → CAN gateway → MQTT → cloud services. Any heartbeat miss within FTTI budget → safe state (torque cutoff, steer neutral).
 
-1. **Physical sensors** (or plant simulator) generate signals → ECU SWCs read via RTE
-2. **SWCs process** vehicle logic (steering angle, motor torque, brake pressure)
-3. **Com packs** signals into CAN frames with E2E protection (CRC-8 + alive counter)
-4. **CAN bus** carries frames between ECUs at 500 kbit/s
-5. **SC monitors** heartbeats from all safety ECUs — any miss within FTTI budget → safe state
-6. **CAN gateway** bridges CAN frames to the cloud layer via MQTT
-7. **Cloud connector** publishes telemetry to Grafana dashboards and AWS IoT
-8. **SAP QM** connector feeds quality events (DEM faults, anomalies) into SAP for traceability
-9. **ML inference** runs anomaly detection on signal streams — flags deviations before faults occur
-10. **WebSocket bridge** streams live CAN data to the web dashboard at `sil.taktflow-systems.com`
-11. **Diagnostics server** exposes UDS (ISO 14229) for fault readout, ECU reset, and flash programming
-12. **Fault injection** service simulates sensor failures, CAN bus-off, E-Stop for verification scenarios
+**Verification**: SIL (7 Docker vECUs, live at `sil.taktflow-systems.com`) · HIL (Raspberry Pi + physical CAN) · PIL (real MCU, simulated plant) · MIL (Python plant models) · Unit tests (Unity)
 
 ---
 
@@ -217,75 +109,26 @@ The TMS570 Safety Controller runs a **lockstep dual-core CPU** and intentionally
 
 ---
 
-## AUTOSAR & ARXML — Model-Based Configuration
+## Code Generation Pipeline (DBC → ARXML → C)
 
-### What is ARXML?
-
-**ARXML** (AUTOSAR XML) is the standardized exchange format for the AUTOSAR architecture. It defines the entire vehicle software system as a machine-readable model: ECUs, software components, ports, signals, communication mappings, and data types — all in a single XML schema.
-
-### How this project uses ARXML
+The **single source of truth** for all CAN communication is `gateway/taktflow.dbc`. An automated pipeline generates all BSW configuration — no hand-editing of generated files, ever. This mirrors OEM toolchains (Vector DaVinci, EB tresos) using open Python tooling.
 
 ```
-arxml/TaktflowSystem.arxml     ← Master AUTOSAR model (AUTOSAR R22-11 / schema 00054)
-model/ecu_sidecar.yaml          ← Signal-to-ECU mapping overrides
-model/ecu_model.json            ← ECU metadata (names, prefixes, targets)
-project.yaml                    ← Code generator configuration
+gateway/taktflow.dbc                 ← CAN message matrix (source of truth)
+        │
+        ▼  tools/arxml/dbc2arxml.py
+arxml/TaktflowSystem.arxml           ← AUTOSAR model (R22-11, PDUs + signals + topology)
+        │
+        ▼  tools/arxmlgen/           (Python + Jinja2)
+        ├──► Com_Cfg.c/.h             Signal packing tables (byte offsets, bit positions)
+        ├──► Rte_Cfg.c/.h             Type-safe Rte_Read/Rte_Write wrappers
+        ├──► CanIf_Cfg.c/.h           CAN ID → PDU handle routing
+        ├──► PduR_Cfg.c/.h            PDU routing paths (fan-out to Com, Dcm, CanTp)
+        ├──► E2E_Cfg.c/.h             E2E Profile P01 parameters (CRC offset, DataID)
+        └──► Swc_*.c/.h               SWC skeletons (one-time, overwrite=false)
 ```
 
-The `TaktflowSystem.arxml` file defines:
-- **Platform base types** (uint8, uint16, uint32, sint types, boolean)
-- **Application data types** and implementation mappings
-- **I-PDU definitions** — every CAN message as an AUTOSAR PDU
-- **I-Signal definitions** — every signal with bit position, length, endianness
-- **ECU instances** and their software component mappings
-- **System topology** — which ECU sends/receives which PDU on which bus
-
-### Why ARXML matters
-
-In production AUTOSAR projects, tools like Vector DaVinci, ETAS ISOLAR, or EB tresos consume ARXML to generate BSW configuration code. This project replicates that workflow with custom open-source tooling, demonstrating the same model-driven development approach used in OEM and Tier-1 environments.
-
----
-
-## Automated Code Generation Pipeline
-
-### The DBC-first workflow
-
-The **single source of truth** for all CAN communication is the DBC file (`gateway/taktflow.dbc`). All configuration flows from it through an automated pipeline — no hand-editing of generated files, ever.
-
-```
-  gateway/taktflow.dbc          ← Single source of truth (CAN message matrix)
-          │
-          ▼
-  tools/arxml/dbc2arxml.py      ← Converts DBC → AUTOSAR ARXML model
-          │
-          ▼
-  arxml/TaktflowSystem.arxml    ← Complete AUTOSAR system description
-          │
-          ▼
-  tools/arxmlgen/                ← Code generator (Python + Jinja2 templates)
-          │
-          ├──► Com_Cfg.c/.h      Signal packing/unpacking tables
-          ├──► Rte_Cfg.c/.h      Typed RTE read/write wrappers
-          ├──► CanIf_Cfg.c/.h    CAN interface routing tables
-          ├──► PduR_Cfg.c/.h     PDU router path configuration
-          ├──► E2E_Cfg.c/.h      End-to-end protection parameters (CRC, DataID)
-          └──► Swc_*.c/.h        SWC skeletons (one-time, overwrite=false)
-```
-
-### What each generator produces
-
-| Generator | Output | Purpose |
-|-----------|--------|---------|
-| **Com** | `Com_Cfg.c/h` | Signal-to-PDU packing tables, byte offsets, bit positions, init values. Defines how signals like `SteerAngleCmd` map to CAN frame bytes. |
-| **Rte** | `Rte_Cfg.c/h` | Type-safe `Rte_Read_<Port>_<Signal>()` / `Rte_Write_<Port>_<Signal>()` wrappers. SWCs interact with the system only through these generated APIs. |
-| **CanIf** | `CanIf_Cfg.c/h` | Maps CAN message IDs to internal PDU handles. Routes incoming CAN frames to the correct upper-layer module (Com, CanTp, or Dcm). |
-| **PduR** | `PduR_Cfg.c/h` | PDU routing paths — which module sends/receives each PDU. Enables fan-out (one PDU to multiple consumers). |
-| **E2E** | `E2E_Cfg.c/h` | AUTOSAR E2E Profile P01 parameters per protected PDU: Data ID, CRC offset, counter offset. Sourced from DBC `BA_ "E2E_DataID"` attributes. |
-| **SWC** | `Swc_*.c/h` | Application component skeletons with init/main/shutdown stubs. Generated once (`overwrite: false`), then filled in by the developer. |
-
-### Why this matters
-
-This pipeline eliminates an entire class of bugs — CAN ID mismatches, signal bit-position errors, E2E DataID inconsistencies — by generating all configuration from one authoritative source. It mirrors the toolchain workflow at OEMs (Vector DaVinci Configurator, EB tresos Studio) but using open, auditable Python tooling.
+Eliminates CAN ID mismatches, signal bit-position errors, and E2E DataID inconsistencies by generating everything from one authoritative source.
 
 ---
 
