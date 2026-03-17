@@ -103,7 +103,7 @@ static const uint8 transition_table[CVC_STATE_COUNT][CVC_EVT_COUNT] = {
         CVC_STATE_INVALID,     /* EVT_SELF_TEST_FAIL     -> (invalid)    */
         CVC_STATE_DEGRADED,    /* EVT_PEDAL_FAULT_SINGLE -> DEGRADED     */
         CVC_STATE_SAFE_STOP,   /* EVT_PEDAL_FAULT_DUAL   -> SAFE_STOP    */
-        CVC_STATE_LIMP,        /* EVT_CAN_TIMEOUT_SINGLE -> LIMP         */
+        CVC_STATE_SAFE_STOP,   /* EVT_CAN_TIMEOUT_SINGLE -> SAFE_STOP (HARA: no backup zone) */
         CVC_STATE_SAFE_STOP,   /* EVT_CAN_TIMEOUT_DUAL   -> SAFE_STOP    */
         CVC_STATE_SAFE_STOP,   /* EVT_ESTOP              -> SAFE_STOP    */
         CVC_STATE_SAFE_STOP,   /* EVT_SC_KILL            -> SAFE_STOP    */
@@ -123,7 +123,7 @@ static const uint8 transition_table[CVC_STATE_COUNT][CVC_EVT_COUNT] = {
         CVC_STATE_INVALID,     /* EVT_SELF_TEST_FAIL     -> (invalid)    */
         CVC_STATE_INVALID,     /* EVT_PEDAL_FAULT_SINGLE -> (invalid)    */
         CVC_STATE_SAFE_STOP,   /* EVT_PEDAL_FAULT_DUAL   -> SAFE_STOP    */
-        CVC_STATE_LIMP,        /* EVT_CAN_TIMEOUT_SINGLE -> LIMP         */
+        CVC_STATE_SAFE_STOP,   /* EVT_CAN_TIMEOUT_SINGLE -> SAFE_STOP (HARA: no backup zone) */
         CVC_STATE_SAFE_STOP,   /* EVT_CAN_TIMEOUT_DUAL   -> SAFE_STOP    */
         CVC_STATE_SAFE_STOP,   /* EVT_ESTOP              -> SAFE_STOP    */
         CVC_STATE_SAFE_STOP,   /* EVT_SC_KILL            -> SAFE_STOP    */
