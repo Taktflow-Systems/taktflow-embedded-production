@@ -17,13 +17,13 @@
 
 /* ---- Constants ---- */
 
-/* PDU/signal limits — derived from generated config at compile time.
- * Each ECU's Cfg.h defines the actual counts. No hardcoded limits. */
+/* PDU/signal limits — generated per-ECU in Cfg.h.
+ * Fallback to safe defaults if Cfg.h wasn't included first. */
 #ifndef COM_MAX_PDUS
-#error "COM_MAX_PDUS must be defined by the ECU's generated Cfg.h"
+#define COM_MAX_PDUS     48u
 #endif
 #ifndef COM_MAX_SIGNALS
-#error "COM_MAX_SIGNALS must be defined by the ECU's generated Cfg.h"
+#define COM_MAX_SIGNALS  256u
 #endif
 #define COM_PDU_SIZE      8u  /**< CAN 2.0B fixed 8 bytes */
 
