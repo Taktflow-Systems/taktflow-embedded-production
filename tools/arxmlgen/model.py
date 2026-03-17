@@ -110,6 +110,7 @@ class Ecu:
     enums: dict[str, int] = field(default_factory=dict)
     thresholds: dict[str, int | str] = field(default_factory=dict)
     rte_aliases: dict[str, str] = field(default_factory=dict)
+    rte_internal_signal_count: int = 0
 
 
 @dataclass

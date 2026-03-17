@@ -20,35 +20,19 @@
 #define RZC_APP_H
 
 /* ====================================================================
- * RTE Signal IDs (SWC-level short names)
- * These map to internal RTE signal slots used by Rte_Read/Rte_Write.
+ * RTE Signal IDs — CAN-derived signals are generated in Rzc_Cfg.h
+ * via rte_aliases (sidecar). See model/ecu_sidecar.yaml.
+ *
+ * Internal-only signals (ECU-local, not on CAN) use IDs >= 200
+ * to avoid collision with DBC-generated IDs (16-199).
  * ==================================================================== */
-
-#define RZC_SIG_TORQUE_CMD         16u
-#define RZC_SIG_TORQUE_ECHO        17u
-#define RZC_SIG_MOTOR_SPEED        18u
-#define RZC_SIG_MOTOR_DIR          19u
-#define RZC_SIG_MOTOR_ENABLE       20u
-#define RZC_SIG_MOTOR_FAULT        21u
-#define RZC_SIG_CURRENT_MA         22u
-#define RZC_SIG_OVERCURRENT        23u
-#define RZC_SIG_TEMP1_DC           24u
-#define RZC_SIG_TEMP2_DC           25u
-#define RZC_SIG_DERATING_PCT       26u
-#define RZC_SIG_TEMP_FAULT         27u
-#define RZC_SIG_BATTERY_MV         28u
-#define RZC_SIG_BATTERY_STATUS     29u
-#define RZC_SIG_ENCODER_SPEED      30u
-#define RZC_SIG_ENCODER_DIR        31u
-#define RZC_SIG_ENCODER_STALL      32u
-#define RZC_SIG_VEHICLE_STATE      33u
-#define RZC_SIG_ESTOP_ACTIVE       34u
-#define RZC_SIG_FAULT_MASK         35u
-#define RZC_SIG_SELF_TEST_RESULT   36u
-#define RZC_SIG_HEARTBEAT_ALIVE    37u
-#define RZC_SIG_SAFETY_STATUS      38u
-#define RZC_SIG_CMD_TIMEOUT        39u
-#define RZC_SIG_BATTERY_SOC        40u
+/* Internal-only RTE signals (ECU-local, not on CAN).
+ * IDs start at RZC_SIG_COUNT (generated) to avoid collision. */
+#define RZC_SIG_ENCODER_SPEED      (RZC_SIG_COUNT + 0u)
+#define RZC_SIG_ENCODER_DIR        (RZC_SIG_COUNT + 1u)
+#define RZC_SIG_ENCODER_STALL      (RZC_SIG_COUNT + 2u)
+#define RZC_SIG_TEMP_FAULT         (RZC_SIG_COUNT + 3u)
+#define RZC_SIG_INTERNAL_COUNT     4u
 
 /* ====================================================================
  * Com Signal IDs for Virtual Sensors (RX from plant-sim, SIL only)

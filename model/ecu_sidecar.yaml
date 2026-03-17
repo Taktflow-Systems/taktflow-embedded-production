@@ -280,6 +280,10 @@ ecus:
       RZC_BATTERY_CRITICAL_MV: 2000
       RZC_ENCODER_TIMEOUT: 50
 
+    # Extra RTE signal slots for ECU-internal signals (not on CAN).
+    # These are defined in App.h as (RZC_SIG_COUNT + offset).
+    rte_internal_signal_count: 4
+
     # RTE signal aliases — maps application-level names to DBC signal names.
     # Codegen emits: #define RZC_SIG_BATTERY_MV  RZC_SIG_BATTERY_STATUS_BATTERY_VOLTAGE_M_V
     rte_aliases:

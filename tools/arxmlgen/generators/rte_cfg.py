@@ -114,7 +114,7 @@ class RteCfgGenerator:
             [(name, sid) for name, sid in ecu.rte_signal_map.items() if sid >= 16],
             key=lambda x: x[1],
         )
-        sig_count = 16 + len(ecu_app_signals)
+        sig_count = 16 + len(ecu_app_signals) + ecu.rte_internal_signal_count
 
         # Count periodic runnables (exclude init-only)
         runnable_count = 0

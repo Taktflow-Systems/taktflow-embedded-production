@@ -31,9 +31,9 @@ class CfgHeaderGenerator:
             key=lambda x: x[1],
         )
 
-        # Total signal count (16 BSW reserved + ECU-specific from map)
+        # Total signal count (16 BSW reserved + ECU-specific from map + internal)
         # rte_signal_map only contains app signals (ID >= 16)
-        sig_count = 16 + len(ecu_app_signals)
+        sig_count = 16 + len(ecu_app_signals) + ecu.rte_internal_signal_count
 
         # Count periodic runnables (exclude init-only) for RTE_MAX_RUNNABLES
         runnable_count = 0
