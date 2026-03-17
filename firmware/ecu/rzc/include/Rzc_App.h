@@ -294,7 +294,7 @@
 #define RZC_COM_RX_ESTOP           RZC_COM_RX_ESTOP_BROADCAST
 #define RZC_COM_RX_VEHICLE_TORQUE  RZC_COM_RX_VEHICLE_STATE  /* legacy alias */
 
-/* Virtual sensors PDU (SIL only, not in DBC/ARXML) */
-#define RZC_COM_RX_VIRT_SENSORS    28u   /* CAN 0x601 — plant-sim virtual sensors */
+/* Virtual sensors PDU — now in DBC/ARXML, use generated ID */
+#define RZC_COM_RX_VIRT_SENSORS    RZC_COM_RX_RZC_VIRTUAL_SENSORS
 
 #endif /* RZC_APP_H */

@@ -218,8 +218,8 @@
 #define FZC_COM_RX_STEER_CMD       FZC_COM_RX_STEER_COMMAND
 #define FZC_COM_RX_BRAKE_CMD       FZC_COM_RX_BRAKE_COMMAND
 
-/* Virtual sensors PDU (SIL only, not in DBC/ARXML) */
-#define FZC_COM_RX_VIRT_SENSORS    27u   /* CAN 0x600 — plant-sim virtual sensors */
+/* Virtual sensors PDU — now in DBC/ARXML, use generated ID */
+#define FZC_COM_RX_VIRT_SENSORS    FZC_COM_RX_FZC_VIRTUAL_SENSORS
 
 /* Det module and API IDs are in Det_ErrIds.h */
 
