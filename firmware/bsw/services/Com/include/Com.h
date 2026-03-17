@@ -17,8 +17,14 @@
 
 /* ---- Constants ---- */
 
-#define COM_MAX_PDUS     16u
-#define COM_MAX_SIGNALS  32u
+/* Per-ECU PDU/signal limits — override in Ecu_Cfg.h or Makefile.
+ * Must be >= actual count in Com_Cfg_*.c. Default safe for 7-ECU system. */
+#ifndef COM_MAX_PDUS
+#define COM_MAX_PDUS     48u
+#endif
+#ifndef COM_MAX_SIGNALS
+#define COM_MAX_SIGNALS  256u
+#endif
 #define COM_PDU_SIZE      8u  /**< CAN 2.0B fixed 8 bytes */
 
 /* ---- Types ---- */
