@@ -53,9 +53,9 @@ verdicts:
     description: "SC must detect FZC heartbeat loss within 200ms (3 missed @ 50ms)"
 
   - type: vehicle_state
-    expected: SAFE_STOP
+    expected: LIMP
     within_ms: 500
-    description: "Vehicle must enter SAFE_STOP after FZC loss (SC relay kill on confirmed heartbeat timeout)"
+    description: "Vehicle must enter LIMP after single-zone FZC loss (CVC EVT_CAN_TIMEOUT_SINGLE)"
 
   - type: can_message
     can_id: 0x012
