@@ -39,6 +39,9 @@ typedef enum {
     COM_UINT32 = 4u
 } Com_SignalType;
 
+/** Sentinel: no RTE signal bound to this Com signal */
+#define COM_RTE_SIGNAL_NONE  0xFFFFu
+
 /** Signal configuration (compile-time) */
 typedef struct {
     Com_SignalIdType SignalId;
@@ -47,6 +50,7 @@ typedef struct {
     Com_SignalType   Type;          /**< Data type                 */
     PduIdType        PduId;         /**< Parent PDU                */
     void*            ShadowBuffer;  /**< RAM buffer for signal     */
+    uint16           RteSignalId;   /**< RTE signal to update on RX (NONE=no binding) */
 } Com_SignalConfigType;
 
 /** TX PDU configuration */
