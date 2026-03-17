@@ -731,8 +731,11 @@ def _reset_all_containers() -> list[str]:
     except Exception as exc:
         log.warning("Failed to start %s: %s", _PLANT_CONTAINER, exc)
 
-    # Wait for plant-sim to publish at least one neutral physics cycle
-    _scaled_sleep(1)
+    # Wait for plant-sim to publish several neutral physics cycles on CAN.
+    # Docker's unless-stopped policy may auto-restart killed ECUs — the
+    # delay ensures plant-sim's neutral frames are on the bus before any
+    # ECU reads them.  3s covers plant-sim boot (~1s) + 2 physics cycles.
+    _scaled_sleep(3)
 
     # Phase 2b: start zone controllers (heartbeat senders)
     for name in _ZONE_CONTAINERS:
