@@ -11,12 +11,6 @@
 {% endfor %}
 #define {{ ecu.prefix }}_SIG_COUNT  {{ "%4d"|format(sig_count) }}u
 
-/* ====================================================================
- * Com Buffer Limits (derived from generated config — no hardcoded caps)
- * ==================================================================== */
-
-#define COM_MAX_PDUS     {{ "%4d"|format(ecu.tx_pdus | length + ecu.rx_pdus | length + 2) }}u
-#define COM_MAX_SIGNALS  {{ "%4d"|format(com_signal_count + 2) }}u
 
 /* ====================================================================
  * Com TX PDU IDs
