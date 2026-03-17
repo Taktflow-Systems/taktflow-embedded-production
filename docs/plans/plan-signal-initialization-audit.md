@@ -112,8 +112,12 @@ Create `scripts/validate-pipeline.sh`:
   - Root cause: Ecu_Cfg.h.j2 template deduplicated by signal name, skipping com_id increment for duplicates (DTC_Broadcast TX/RX has 6 duplicate signal names). Com_Cfg.c always increments → IDs diverge by 6.
   - Fix: always increment com_id, comment out duplicate #defines
 
-**Remaining blockers (next session)**:
-- **fault_inject MQTT publish** doesn't reach plant-sim (paho-mqtt event loop issue) — blocks SIL-006,007,008,010,011,012
+**Remaining blockers**:
+- ~~fault_inject MQTT publish~~ — was stale container, not a code bug. Fixed by `docker compose down + up`.
+- **Hand-written RTE signal IDs in App.h** — RZC has 25, FZC has 20. All potentially wrong values.
+  RZC_SIG_BATTERY_MV=28 reads wrong RTE slot → Swc_Battery gets garbage voltage → never detects UV.
+  Fix: replace all hand-written IDs with generated Cfg.h defines (same pattern as Com signal ID fix).
+  This is the ROOT CAUSE of DTC failures (SIL-006,007,008,010,011,012).
 - **E-Stop UDP recv** in Spi_Posix not triggered — blocks SIL-003,013
 - **Pedal→motor chain** — blocks SIL-002
 
