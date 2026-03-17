@@ -192,10 +192,12 @@ Std_ReturnType Spi_Hw_Transmit(uint8 Channel, const uint16* TxBuf,
             if (cmd == SPI_ESTOP_ACTIVATE)
             {
                 IoHwAb_Inject_SetDigitalPin(IOHWAB_PIN_ESTOP, STD_HIGH);
+                fprintf(stderr, "[SPI] UDP E-Stop ACTIVATE\n");
             }
             else if (cmd == SPI_ESTOP_CLEAR)
             {
                 IoHwAb_Inject_SetDigitalPin(IOHWAB_PIN_ESTOP, STD_LOW);
+                fprintf(stderr, "[SPI] UDP E-Stop CLEAR\n");
             }
             else if (cmd == SPI_OVERRIDE_CLEAR)
             {
