@@ -703,10 +703,14 @@ def _reset_all_containers() -> list[str]:
     import concurrent.futures
 
     client = docker.from_env()
-    all_ecu_names = [_PLANT_CONTAINER] + _ZONE_CONTAINERS + [_SC_CONTAINER, _CVC_CONTAINER]
+    # Plant-sim is NOT restarted — MQTT reset already cleared its physics.
+    # Only restart ECU firmware containers (stateless C binaries).
+    all_ecu_names = _ZONE_CONTAINERS + [_SC_CONTAINER, _CVC_CONTAINER]
     restarted: list[str] = []
 
-    # Phase 1: stop ALL containers in parallel.
+    # Phase 1: stop ALL ECU containers in parallel.
+    # Plant-sim stays running — it has already received the MQTT reset
+    # and is publishing neutral CAN frames (brake=0%, steer=0°).
     def _stop_container(name: str) -> None:
         try:
             c = client.containers.get(name)
@@ -721,23 +725,10 @@ def _reset_all_containers() -> list[str]:
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
         pool.map(_stop_container, all_ecu_names)
 
-    # Phase 2a: start plant-sim FIRST — must publish neutral CAN frames
-    # BEFORE zone controllers boot, otherwise FZC reads stale brake/steer
-    # values and triggers plausibility faults on the first cycle.
-    try:
-        c = client.containers.get(_PLANT_CONTAINER)
-        c.start()
-        restarted.append(_PLANT_CONTAINER)
-    except Exception as exc:
-        log.warning("Failed to start %s: %s", _PLANT_CONTAINER, exc)
+    # Brief pause — let plant-sim's neutral frames propagate on CAN bus
+    _scaled_sleep(1)
 
-    # Wait for plant-sim to publish several neutral physics cycles on CAN.
-    # Docker's unless-stopped policy may auto-restart killed ECUs — the
-    # delay ensures plant-sim's neutral frames are on the bus before any
-    # ECU reads them.  3s covers plant-sim boot (~1s) + 2 physics cycles.
-    _scaled_sleep(3)
-
-    # Phase 2b: start zone controllers (heartbeat senders)
+    # Phase 2: start zone controllers (heartbeat senders)
     for name in _ZONE_CONTAINERS:
         try:
             c = client.containers.get(name)
