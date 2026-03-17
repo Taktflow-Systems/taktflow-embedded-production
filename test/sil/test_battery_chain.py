@@ -20,6 +20,19 @@ import can
 
 CAN_CHANNEL = "vcan0"
 TIMEOUT = 3.0
+MQTT_HOST = "localhost"
+MQTT_PORT = 1883
+
+
+def _mqtt_inject(mv: int, soc: int):
+    """Publish voltage injection via paho-mqtt."""
+    import json
+    import paho.mqtt.publish as publish
+    publish.single(
+        "taktflow/command/plant_inject",
+        json.dumps({"type": "voltage", "mV": mv, "soc": soc}),
+        hostname=MQTT_HOST, port=MQTT_PORT,
+    )
 
 
 def recv_frame(sock, target_id, timeout=TIMEOUT):
@@ -52,11 +65,7 @@ def test_hop1_plant_sends_0x601():
 def test_hop2_inject_and_check_0x601():
     """Hop 2: After MQTT injection, does 0x601 show the injected value?"""
     # Send MQTT via mosquitto_pub (assumes broker on localhost)
-    import subprocess
-    subprocess.run([
-        "mosquitto_pub", "-t", "taktflow/command/plant_inject",
-        "-m", '{"type":"voltage","mV":4000,"soc":1}',
-    ], timeout=5, check=True)
+    _mqtt_inject(4000, 1)
     time.sleep(2)
 
     s = socket.socket(socket.AF_CAN, socket.SOCK_RAW, socket.CAN_RAW)
@@ -79,11 +88,7 @@ def test_hop5_com_rx_updates_0x303():
     If 0x303 still shows 12600mV after injection, the Com RX chain is broken.
     """
     # Inject low voltage
-    import subprocess
-    subprocess.run([
-        "mosquitto_pub", "-t", "taktflow/command/plant_inject",
-        "-m", '{"type":"voltage","mV":4000,"soc":1}',
-    ], timeout=5, check=True)
+    _mqtt_inject(4000, 1)
     time.sleep(3)
 
     s = socket.socket(socket.AF_CAN, socket.SOCK_RAW, socket.CAN_RAW)
@@ -105,11 +110,7 @@ def test_hop9_dtc_on_undervoltage():
 
     Inject below 8000mV threshold and wait for DTC on 0x500.
     """
-    import subprocess
-    subprocess.run([
-        "mosquitto_pub", "-t", "taktflow/command/plant_inject",
-        "-m", '{"type":"voltage","mV":5000,"soc":1}',
-    ], timeout=5, check=True)
+    _mqtt_inject(5000, 1)
     time.sleep(5)  # wait for debounce (3 cycles at 10ms = 30ms, but Dem needs confirmation)
 
     s = socket.socket(socket.AF_CAN, socket.SOCK_RAW, socket.CAN_RAW)
@@ -158,11 +159,7 @@ def main():
 
     # Restore normal voltage
     try:
-        import subprocess
-        subprocess.run([
-            "mosquitto_pub", "-t", "taktflow/command/plant_inject",
-            "-m", '{"type":"voltage","mV":12600,"soc":100}',
-        ], timeout=5, check=False)
+        _mqtt_inject(12600, 100)
     except Exception:
         pass
 
