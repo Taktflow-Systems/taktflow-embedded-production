@@ -398,4 +398,8 @@ BA_ "E2E_DataID" BO_ 544 13;
 BA_ "E2E_DataID" BO_ 768 14;
 BA_ "E2E_DataID" BO_ 769 15;
 BA_ "E2E_DataID" BO_ 770 0;
+BA_ "E2E_DataID" BO_ 20 16;
+BA_ "E2E_DataID" BO_ 21 17;
+BA_ "E2E_DataID" BO_ 22 18;
+BA_ "E2E_DataID" BO_ 771 19;
 
