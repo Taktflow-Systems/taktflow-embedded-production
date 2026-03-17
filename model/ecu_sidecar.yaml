@@ -30,22 +30,24 @@ ecus:
       CVC_DTC_WATCHDOG_FAULT: 17
       CVC_DTC_SC_RELAY_KILL: 18
 
+    # E2E DataIDs — MUST match DBC BA_ "E2E_DataID" attributes
     e2e_data_ids:
-      CVC_E2E_ESTOP_DATA_ID: 0x01
-      CVC_E2E_VEHICLE_STATE_DATA_ID: 0x02
-      CVC_E2E_TORQUE_DATA_ID: 0x03
-      CVC_E2E_HEARTBEAT_DATA_ID: 0x04
-      CVC_E2E_STEER_CMD_DATA_ID: 0x05
-      CVC_E2E_BRAKE_CMD_DATA_ID: 0x06
+      CVC_E2E_ESTOP_DATA_ID: 0x01        # CAN 0x001 → DBC DataID 1
+      CVC_E2E_HEARTBEAT_DATA_ID: 0x02    # CAN 0x010 → DBC DataID 2
+      CVC_E2E_VEHICLE_STATE_DATA_ID: 0x05 # CAN 0x100 → DBC DataID 5
+      CVC_E2E_TORQUE_DATA_ID: 0x06       # CAN 0x101 → DBC DataID 6
+      CVC_E2E_STEER_CMD_DATA_ID: 0x07    # CAN 0x102 → DBC DataID 7
+      CVC_E2E_BRAKE_CMD_DATA_ID: 0x08    # CAN 0x103 → DBC DataID 8
 
-    # Explicit PDU name → E2E data ID mapping (used by reader)
+    # Explicit PDU name → E2E data ID mapping — MUST match DBC BA_ "E2E_DataID"
+    # NOTE: e2e_source=dbc in project.yaml overrides these, but keep in sync
     pdu_e2e_map:
-      EStop_Broadcast: 0x01
-      Vehicle_State: 0x02
-      Torque_Request: 0x03
-      CVC_Heartbeat: 0x04
-      Steer_Command: 0x05
-      Brake_Command: 0x06
+      EStop_Broadcast: 0x01    # CAN 0x001
+      CVC_Heartbeat: 0x02     # CAN 0x010
+      Vehicle_State: 0x05     # CAN 0x100
+      Torque_Request: 0x06    # CAN 0x101
+      Steer_Command: 0x07     # CAN 0x102
+      Brake_Command: 0x08     # CAN 0x103
 
     enums:
       CVC_STATE_INIT: 0
@@ -127,25 +129,26 @@ ecus:
       FZC_DTC_WATCHDOG_FAIL: 14
       FZC_DTC_BRAKE_OSCILLATION: 15
 
+    # E2E DataIDs — MUST match DBC BA_ "E2E_DataID" attributes
     e2e_data_ids:
-      FZC_E2E_HEARTBEAT_DATA_ID: 0x03
-      FZC_E2E_STEER_STATUS_DATA_ID: 0x20
-      FZC_E2E_BRAKE_STATUS_DATA_ID: 0x21
-      FZC_E2E_LIDAR_DATA_ID: 0x22
-      FZC_E2E_ESTOP_DATA_ID: 0x01
-      FZC_E2E_VEHSTATE_DATA_ID: 0x10
-      FZC_E2E_STEER_CMD_DATA_ID: 0x12
-      FZC_E2E_BRAKE_CMD_DATA_ID: 0x13
+      FZC_E2E_HEARTBEAT_DATA_ID: 0x03     # CAN 0x011 → DBC DataID 3
+      FZC_E2E_STEER_STATUS_DATA_ID: 0x09  # CAN 0x200 → DBC DataID 9
+      FZC_E2E_BRAKE_STATUS_DATA_ID: 0x0A  # CAN 0x201 → DBC DataID 10
+      FZC_E2E_LIDAR_DATA_ID: 0x0D         # CAN 0x220 → DBC DataID 13
+      FZC_E2E_ESTOP_DATA_ID: 0x01         # CAN 0x001 → DBC DataID 1
+      FZC_E2E_VEHSTATE_DATA_ID: 0x05      # CAN 0x100 → DBC DataID 5
+      FZC_E2E_STEER_CMD_DATA_ID: 0x07     # CAN 0x102 → DBC DataID 7
+      FZC_E2E_BRAKE_CMD_DATA_ID: 0x08     # CAN 0x103 → DBC DataID 8
 
     pdu_e2e_map:
-      FZC_Heartbeat: 0x11
-      Steering_Status: 0x12
-      Brake_Status: 0x13
-      Steer_Command: 0x14
-      Brake_Command: 0x15
-      Brake_Fault: 0x16
-      Motor_Cutoff_Req: 0x17
-      Lidar_Distance: 0x18
+      FZC_Heartbeat: 0x03      # CAN 0x011
+      Steering_Status: 0x09    # CAN 0x200
+      Brake_Status: 0x0A       # CAN 0x201
+      Steer_Command: 0x07      # CAN 0x102
+      Brake_Command: 0x08      # CAN 0x103
+      Brake_Fault: 0x0B        # CAN 0x210
+      Motor_Cutoff_Req: 0x0C   # CAN 0x211
+      Lidar_Distance: 0x0D     # CAN 0x220
 
     enums:
       FZC_STATE_INIT: 0
@@ -238,23 +241,24 @@ ecus:
       RZC_DTC_ENCODER: 10
       RZC_DTC_ZERO_CAL: 11
 
+    # E2E DataIDs — MUST match DBC BA_ "E2E_DataID" attributes
     e2e_data_ids:
-      RZC_E2E_HEARTBEAT_DATA_ID: 0x04
-      RZC_E2E_MOTOR_STATUS_DATA_ID: 0x0E
-      RZC_E2E_MOTOR_CURRENT_DATA_ID: 0x0F
-      RZC_E2E_MOTOR_TEMP_DATA_ID: 0x10
-      RZC_E2E_BATTERY_DATA_ID: 0x11
-      RZC_E2E_ESTOP_DATA_ID: 0x01
-      RZC_E2E_VEHSTATE_DATA_ID: 0x05
+      RZC_E2E_HEARTBEAT_DATA_ID: 0x04     # CAN 0x012 → DBC DataID 4
+      RZC_E2E_MOTOR_STATUS_DATA_ID: 0x0E  # CAN 0x300 → DBC DataID 14
+      RZC_E2E_MOTOR_CURRENT_DATA_ID: 0x0F # CAN 0x301 → DBC DataID 15
+      RZC_E2E_MOTOR_TEMP_DATA_ID: 0x00    # CAN 0x302 → DBC DataID 0
+      RZC_E2E_BATTERY_DATA_ID: 0x13       # CAN 0x303 → DBC DataID 19
+      RZC_E2E_ESTOP_DATA_ID: 0x01         # CAN 0x001 → DBC DataID 1
+      RZC_E2E_VEHSTATE_DATA_ID: 0x05      # CAN 0x100 → DBC DataID 5
 
     pdu_e2e_map:
-      RZC_Heartbeat: 0x21
-      Motor_Status: 0x22
-      Motor_Current: 0x23
-      Torque_Request: 0x24
-      Motor_Temperature: 0x25
-      Battery_Status: 0x26
-      Encoder_Status: 0x27
+      RZC_Heartbeat: 0x04       # CAN 0x012
+      Motor_Status: 0x0E        # CAN 0x300
+      Motor_Current: 0x0F       # CAN 0x301
+      Torque_Request: 0x06      # CAN 0x101
+      Motor_Temperature: 0x00   # CAN 0x302
+      Battery_Status: 0x13      # CAN 0x303
+      Encoder_Status: 0x27      # no DBC entry — keep as-is
 
     enums:
       RZC_STATE_INIT: 0
@@ -335,7 +339,7 @@ ecus:
 
   bcm:
     e2e_data_ids:
-      BCM_E2E_HEARTBEAT_DATA_ID: 0x51
+      BCM_E2E_HEARTBEAT_DATA_ID: 0x12    # CAN 0x016 → DBC DataID 18
 
     pdu_e2e_map:
       BCM_Heartbeat: 0x51
@@ -359,7 +363,7 @@ ecus:
 
   icu:
     e2e_data_ids:
-      ICU_E2E_HEARTBEAT_DATA_ID: 0x31
+      ICU_E2E_HEARTBEAT_DATA_ID: 0x10    # CAN 0x014 → DBC DataID 16
 
     pdu_e2e_map:
       ICU_Heartbeat: 0x31
@@ -375,7 +379,7 @@ ecus:
       TCU_DTC_AGING_CLEAR_CYCLES: 0
 
     e2e_data_ids:
-      TCU_E2E_HEARTBEAT_DATA_ID: 0x41
+      TCU_E2E_HEARTBEAT_DATA_ID: 0x11    # CAN 0x015 → DBC DataID 17
 
     pdu_e2e_map:
       TCU_Heartbeat: 0x41
