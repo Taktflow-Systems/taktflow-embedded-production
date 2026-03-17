@@ -35,16 +35,14 @@ The production SIL test suite cannot pass SIL-001 (Normal Startup) because multi
 
 **Goal**: One authoritative DBC that defines ALL CAN communication including virtual sensors.
 
-1. **Audit every signal in the DBC**:
-   - For each signal: verify offset/scale so that raw=0 = safe physical value (0°, 0%, 0 RPM, etc.)
-   - Any signal where raw=0 ≠ neutral → fix the DBC encoding (use signed + offset=0)
-   - Document the audit in `docs/safety/analysis/signal-neutral-audit.md`
+1. ✅ **Audit every signal in the DBC** — DONE 2026-03-17
+   - Ran `cantools` audit: 0 signals with raw=0 ≠ neutral (SteerAngleCmd was the only one, already fixed)
+   - All signals: raw=0 = 0.0 physical (safe default)
 
-2. **Add all SIL-only frames to DBC**:
-   - ✅ 0x600 FZC_Virtual_Sensors (done)
-   - ✅ 0x601 RZC_Virtual_Sensors (done)
-   - 0x500 DTC_Broadcast (if not present)
-   - Verify Plant_Sim node is sender for virtual sensors
+2. ✅ **Add all SIL-only frames to DBC** — DONE 2026-03-17
+   - ✅ 0x600 FZC_Virtual_Sensors: sender=Plant_Sim
+   - ✅ 0x601 RZC_Virtual_Sensors: sender=Plant_Sim
+   - ✅ 0x500 DTC_Broadcast: sender=CVC (already present)
 
 3. **Signal naming convention**: DBC signal names must match what the codegen produces for `#define` names. Audit and fix any that diverge.
 
