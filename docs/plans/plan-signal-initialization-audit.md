@@ -112,6 +112,11 @@ Create `scripts/validate-pipeline.sh`:
   - Root cause: Ecu_Cfg.h.j2 template deduplicated by signal name, skipping com_id increment for duplicates (DTC_Broadcast TX/RX has 6 duplicate signal names). Com_Cfg.c always increments → IDs diverge by 6.
   - Fix: always increment com_id, comment out duplicate #defines
 
+- **Round 5** (COM_MAX_PDUS fix + signal path audit): Com RX chain fully working
+  - Root cause: `COM_MAX_PDUS=16` silently dropped ALL CAN frames with PDU >= 16
+  - DTC 0xE401 broadcasts successfully from RZC on battery undervoltage
+  - SIL-006 DTC verdict now PASSES (3/4, vehicle state expectation needs HARA update)
+
 **Remaining blockers**:
 - ~~fault_inject MQTT publish~~ — was stale container, not a code bug. Fixed by `docker compose down + up`.
 - **Hand-written RTE signal IDs in App.h** — RZC has 25, FZC has 20. All potentially wrong values.
