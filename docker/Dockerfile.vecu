@@ -30,9 +30,10 @@ WORKDIR /build
 # with per-ECU config includes (Com_Cfg, Rte_Cfg, etc.). Without cleaning,
 # later ECUs link against the first ECU's config objects → silent malfunction.
 # DIAG=1 enables SIL diagnostic printf for state machine tracing.
-RUN for ecu in bcm icu tcu cvc fzc rzc sc; do \
+RUN set -e && for ecu in bcm icu tcu cvc fzc rzc sc; do \
+        echo "=== Building $ecu ===" && \
         rm -rf build && \
-        make -f firmware/platform/posix/Makefile.posix TARGET=$ecu DIAG=1; \
+        make -f firmware/platform/posix/Makefile.posix TARGET=$ecu DIAG=1 && \
         cp build/${ecu}_posix /tmp/${ecu}_posix; \
     done && \
     mkdir -p build && \
