@@ -89,14 +89,14 @@ void Swc_RzcSensorFeeder_MainFunction(void)
 
 #ifdef SIL_DIAG
     {
-        static uint32 prev_batt = 0u;
-        if (battery_voltage != prev_batt) {
-            fprintf(stderr, "[VSENSOR] batt=%u (sig=%u valid=%u)\n",
+        static uint16 diag_cnt = 0u;
+        if (diag_cnt < 5u || (diag_cnt % 1000u == 0u)) {
+            fprintf(stderr, "[VSENSOR] c=%u batt=%u sig=%u\n",
+                    (unsigned)diag_cnt,
                     (unsigned)battery_voltage,
-                    (unsigned)RZC_COM_SIG_RX_VIRT_BATTERY_VOLTAGE,
-                    (unsigned)SensorFeeder_DataValid);
-            prev_batt = battery_voltage;
+                    (unsigned)RZC_COM_SIG_RX_VIRT_BATTERY_VOLTAGE);
         }
+        diag_cnt++;
     }
 #endif
 
