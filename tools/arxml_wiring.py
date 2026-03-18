@@ -72,6 +72,11 @@ def main():
     with open(code_to_dbc_path) as f:
         code_to_dbc = json.load(f)
 
+    # Load ports model (all ports from code scan)
+    ports_model_path = "arxml_v2/ports_model.json"
+    with open(ports_model_path) as f:
+        ports_model = json.load(f)
+
     # Collect existing elements
     swc_types = {}  # name → path
     sr_interfaces = {}  # name → path
