@@ -41,8 +41,9 @@ void Swc_FzcSensorFeeder_MainFunction(void)
     uint32 steer_angle = 0u;
     uint32 brake_pos   = 0u;
 
-    (void)Com_ReceiveSignal(FZC_COM_SIG_RX_VIRT_STEER_ANGLE, &steer_angle);
-    (void)Com_ReceiveSignal(FZC_COM_SIG_RX_VIRT_BRAKE_POS,   &brake_pos);
+    /* Read from RTE (auto-bound from Com RX).  SWCs use Rte_Read. */
+    (void)Rte_Read(FZC_SIG_FZC_VIRTUAL_SENSORS_VSENSOR_STEER_ANGLE_RAW, &steer_angle);
+    (void)Rte_Read(FZC_SIG_FZC_VIRTUAL_SENSORS_VSENSOR_BRAKE_POS_ADC,   &brake_pos);
 
     if (steer_angle == 0u)
     {

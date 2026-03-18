@@ -195,8 +195,13 @@ void Swc_Heartbeat_MainFunction(void)
             uint8 fzc_alive = 0u;
             uint8 rzc_alive = 0u;
 
-            (void)Com_ReceiveSignal(CVC_COM_SIG_FZC_HB_ALIVE, &fzc_alive);
-            (void)Com_ReceiveSignal(CVC_COM_SIG_RZC_HB_ALIVE, &rzc_alive);
+            {
+                uint32 tmp = 0u;
+                (void)Rte_Read(CVC_SIG_FZC_HEARTBEAT_E_2_E_ALIVE_COUNTER, &tmp);
+                fzc_alive = (uint8)tmp;
+                (void)Rte_Read(CVC_SIG_RZC_HEARTBEAT_E_2_E_ALIVE_COUNTER, &tmp);
+                rzc_alive = (uint8)tmp;
+            }
 
             if (fzc_alive != fzc_last_alive) {
                 fzc_rx_flag    = TRUE;
