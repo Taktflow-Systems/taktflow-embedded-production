@@ -26,6 +26,8 @@ for d, e in model.elements_dfs:
         except Exception:
             pass
 
+print("SR cache: %d interfaces" % len(sr_cache))
+
 existing = {}
 for d, e in model.elements_dfs:
     if e.element_name in ("P-PORT-PROTOTYPE", "R-PORT-PROTOTYPE"):

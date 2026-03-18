@@ -97,7 +97,25 @@ def main():
         errors += 1
 
     # ----------------------------------------------------------------
-    step("4. Add self-test SWCs + scan code ports + inject + wire")
+    step("4. Copy base ARXML + run arxmlgen for Cfg.h")
+    # ----------------------------------------------------------------
+    import shutil
+    arxml_path = os.path.join(ARXML_V2_DIR, "TaktflowSystem.arxml")
+    shutil.copy(arxml_path, ARXML_OUTPUT)
+    print("  Copied: %s → %s" % (arxml_path, ARXML_OUTPUT))
+
+    if not run("python3 -m tools.arxmlgen --config project.yaml"):
+        print("  ERROR: arxmlgen failed")
+        errors += 1
+    else:
+        for ecu in ECUS:
+            for f in os.listdir(os.path.join(FIRMWARE_ROOT, ecu, "src")):
+                if re.match(r"Swc_[A-Z]{3}\.c$", f):
+                    os.remove(os.path.join(FIRMWARE_ROOT, ecu, "src", f))
+        print("  Cfg.h generated with correct signal names")
+
+    # ----------------------------------------------------------------
+    step("5. Add self-test SWCs + scan code ports + inject")
     # ----------------------------------------------------------------
     import autosar_data as asr
     import autosar_data.abstraction as abst
@@ -276,25 +294,19 @@ def main():
         errors += 1
 
     # ----------------------------------------------------------------
-    step("5. Copy to production ARXML path")
+    step("6. Re-copy enriched ARXML + re-run arxmlgen")
     # ----------------------------------------------------------------
-    import shutil
     shutil.copy(arxml_path, ARXML_OUTPUT)
-    print("  Copied: %s → %s" % (arxml_path, ARXML_OUTPUT))
-
-    # ----------------------------------------------------------------
-    step("6. Run arxmlgen (Cfg.h, Com_Cfg, Rte_Cfg, etc.)")
-    # ----------------------------------------------------------------
+    print("  Copied enriched ARXML to production path")
     if not run("python3 -m tools.arxmlgen --config project.yaml"):
-        print("  ERROR: arxmlgen failed")
+        print("  ERROR: arxmlgen re-run failed")
         errors += 1
     else:
-        # Clean monolithic SWC skeletons
         for ecu in ECUS:
             for f in os.listdir(os.path.join(FIRMWARE_ROOT, ecu, "src")):
                 if re.match(r"Swc_[A-Z]{3}\.c$", f):
                     os.remove(os.path.join(FIRMWARE_ROOT, ecu, "src", f))
-        print("  Configs generated, monolithic SWCs cleaned")
+        print("  Final configs generated")
 
     # ----------------------------------------------------------------
     step("DONE")
