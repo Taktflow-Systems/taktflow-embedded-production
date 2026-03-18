@@ -485,13 +485,18 @@ void Swc_Motor_MainFunction(void)
     }
 
     /* ----------------------------------------------------------
-     * Step 14: Integrate external overcurrent from CurrentMonitor
+     * Step 14: Integrate external faults (overcurrent + overtemp)
      * ---------------------------------------------------------- */
     {
         uint32 overcurrent_flag = 0u;
+        uint32 temp_fault_flag  = 0u;
         (void)Rte_Read(RZC_SIG_OVERCURRENT, &overcurrent_flag);
+        (void)Rte_Read(RZC_SIG_TEMP_FAULT, &temp_fault_flag);
         if (overcurrent_flag != 0u) {
             Motor_Fault = RZC_MOTOR_OVERCURRENT;
+        }
+        if (temp_fault_flag != 0u) {
+            Motor_Fault = RZC_MOTOR_OVERTEMP;
         }
 #ifdef SIL_DIAG
         {
