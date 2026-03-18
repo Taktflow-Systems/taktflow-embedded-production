@@ -7,214 +7,214 @@ BS_:
 BU_: CVC FZC RZC SC BCM ICU TCU
 
 BO_ 1 EStop_Broadcast: 4 CVC
- SG_ EStBc_E2E_DataID : 0|4@1+ (1,0) [0|15] "" SC,FZC,RZC,BCM,ICU,TCU
- SG_ EStBc_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" SC,FZC,RZC,BCM,ICU,TCU
- SG_ EStBc_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" SC,FZC,RZC,BCM,ICU,TCU
- SG_ EStBc_EStop_Active : 16|8@1+ (1,0) [0|1] "" SC,FZC,RZC,BCM,ICU
- SG_ EStBc_EStop_Source : 24|8@1+ (1,0) [0|7] "" SC,FZC,RZC,BCM,ICU
+ SG_ EStop_Broadcast_E2E_DataID : 0|4@1+ (1,0) [0|15] "" SC,FZC,RZC,BCM,ICU,TCU
+ SG_ EStop_Broadcast_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" SC,FZC,RZC,BCM,ICU,TCU
+ SG_ EStop_Broadcast_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" SC,FZC,RZC,BCM,ICU,TCU
+ SG_ EStop_Broadcast_EStop_Active : 16|8@1+ (1,0) [0|1] "" SC,FZC,RZC,BCM,ICU
+ SG_ EStop_Broadcast_EStop_Source : 24|8@1+ (1,0) [0|7] "" SC,FZC,RZC,BCM,ICU
 
 BO_ 16 CVC_Heartbeat: 4 CVC
- SG_ CvcHb_E2E_DataID : 0|4@1+ (1,0) [0|15] "" SC,FZC,RZC,ICU
- SG_ CvcHb_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" SC,FZC,RZC,ICU
- SG_ CvcHb_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" SC,FZC,RZC,ICU
- SG_ CvcHb_ECU_ID : 16|8@1+ (1,0) [0|7] "" SC,FZC,RZC,ICU
- SG_ CvcHb_OperatingMode : 24|4@1+ (1,0) [0|5] "" SC,FZC,RZC,ICU
- SG_ CvcHb_FaultStatus : 28|4@1+ (1,0) [0|15] "" SC,FZC,RZC,ICU
+ SG_ CVC_Heartbeat_E2E_DataID : 0|4@1+ (1,0) [0|15] "" SC,FZC,RZC,ICU
+ SG_ CVC_Heartbeat_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" SC,FZC,RZC,ICU
+ SG_ CVC_Heartbeat_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" SC,FZC,RZC,ICU
+ SG_ CVC_Heartbeat_ECU_ID : 16|8@1+ (1,0) [0|7] "" SC,FZC,RZC,ICU
+ SG_ CVC_Heartbeat_OperatingMode : 24|4@1+ (1,0) [0|5] "" SC,FZC,RZC,ICU
+ SG_ CVC_Heartbeat_FaultStatus : 28|4@1+ (1,0) [0|15] "" SC,FZC,RZC,ICU
 
 BO_ 17 FZC_Heartbeat: 4 FZC
- SG_ FzcHb_E2E_DataID : 0|4@1+ (1,0) [0|15] "" SC,CVC,ICU
- SG_ FzcHb_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" SC,CVC,ICU
- SG_ FzcHb_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" SC,CVC,ICU
- SG_ FzcHb_ECU_ID : 16|8@1+ (1,0) [0|7] "" SC,CVC,ICU
- SG_ FzcHb_OperatingMode : 24|4@1+ (1,0) [0|5] "" SC,CVC,ICU
- SG_ FzcHb_FaultStatus : 28|4@1+ (1,0) [0|15] "" SC,CVC,ICU
+ SG_ FZC_Heartbeat_E2E_DataID : 0|4@1+ (1,0) [0|15] "" SC,CVC,ICU
+ SG_ FZC_Heartbeat_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" SC,CVC,ICU
+ SG_ FZC_Heartbeat_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" SC,CVC,ICU
+ SG_ FZC_Heartbeat_ECU_ID : 16|8@1+ (1,0) [0|7] "" SC,CVC,ICU
+ SG_ FZC_Heartbeat_OperatingMode : 24|4@1+ (1,0) [0|5] "" SC,CVC,ICU
+ SG_ FZC_Heartbeat_FaultStatus : 28|4@1+ (1,0) [0|15] "" SC,CVC,ICU
 
 BO_ 18 RZC_Heartbeat: 4 RZC
- SG_ RzcHb_E2E_DataID : 0|4@1+ (1,0) [0|15] "" SC,CVC,ICU
- SG_ RzcHb_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" SC,CVC,ICU
- SG_ RzcHb_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" SC,CVC,ICU
- SG_ RzcHb_ECU_ID : 16|8@1+ (1,0) [0|7] "" SC,CVC,ICU
- SG_ RzcHb_OperatingMode : 24|4@1+ (1,0) [0|5] "" SC,CVC,ICU
- SG_ RzcHb_FaultStatus : 28|4@1+ (1,0) [0|15] "" SC,CVC,ICU
+ SG_ RZC_Heartbeat_E2E_DataID : 0|4@1+ (1,0) [0|15] "" SC,CVC,ICU
+ SG_ RZC_Heartbeat_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" SC,CVC,ICU
+ SG_ RZC_Heartbeat_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" SC,CVC,ICU
+ SG_ RZC_Heartbeat_ECU_ID : 16|8@1+ (1,0) [0|7] "" SC,CVC,ICU
+ SG_ RZC_Heartbeat_OperatingMode : 24|4@1+ (1,0) [0|5] "" SC,CVC,ICU
+ SG_ RZC_Heartbeat_FaultStatus : 28|4@1+ (1,0) [0|15] "" SC,CVC,ICU
 
 BO_ 19 SC_Status: 4 SC
- SG_ ScSt_AliveCounter : 0|8@1+ (1,0) [0|255] "" CVC,FZC,RZC,ICU
- SG_ ScSt_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,FZC,RZC,ICU
- SG_ ScSt_Mode : 16|4@1+ (1,0) [0|3] "" CVC,FZC,RZC,ICU
- SG_ ScSt_FaultFlags : 20|4@1+ (1,0) [0|15] "" CVC,FZC,RZC,ICU
- SG_ ScSt_ECU_Health : 24|3@1+ (1,0) [0|7] "" CVC,FZC,RZC,ICU
- SG_ ScSt_FaultReason : 27|4@1+ (1,0) [0|15] "" CVC,FZC,RZC,ICU
- SG_ ScSt_RelayEnergized : 31|1@1+ (1,0) [0|1] "" CVC,FZC,RZC,ICU
+ SG_ SC_Status_AliveCounter : 0|8@1+ (1,0) [0|255] "" CVC,FZC,RZC,ICU
+ SG_ SC_Status_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,FZC,RZC,ICU
+ SG_ SC_Status_Mode : 16|4@1+ (1,0) [0|3] "" CVC,FZC,RZC,ICU
+ SG_ SC_Status_FaultFlags : 20|4@1+ (1,0) [0|15] "" CVC,FZC,RZC,ICU
+ SG_ SC_Status_ECU_Health : 24|3@1+ (1,0) [0|7] "" CVC,FZC,RZC,ICU
+ SG_ SC_Status_FaultReason : 27|4@1+ (1,0) [0|15] "" CVC,FZC,RZC,ICU
+ SG_ SC_Status_RelayEnergized : 31|1@1+ (1,0) [0|1] "" CVC,FZC,RZC,ICU
 
 BO_ 20 ICU_Heartbeat: 4 ICU
- SG_ IcuHb_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC
- SG_ IcuHb_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC
- SG_ IcuHb_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC
- SG_ IcuHb_AliveCounter : 16|8@1+ (1,0) [0|255] "" CVC
- SG_ IcuHb_ECU_ID : 24|8@1+ (1,0) [0|7] "" CVC
+ SG_ ICU_Heartbeat_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC
+ SG_ ICU_Heartbeat_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC
+ SG_ ICU_Heartbeat_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC
+ SG_ ICU_Heartbeat_AliveCounter : 16|8@1+ (1,0) [0|255] "" CVC
+ SG_ ICU_Heartbeat_ECU_ID : 24|8@1+ (1,0) [0|7] "" CVC
 
 BO_ 21 TCU_Heartbeat: 4 TCU
- SG_ TcuHb_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC
- SG_ TcuHb_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC
- SG_ TcuHb_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC
- SG_ TcuHb_AliveCounter : 16|8@1+ (1,0) [0|255] "" CVC
- SG_ TcuHb_ECU_ID : 24|8@1+ (1,0) [0|7] "" CVC
+ SG_ TCU_Heartbeat_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC
+ SG_ TCU_Heartbeat_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC
+ SG_ TCU_Heartbeat_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC
+ SG_ TCU_Heartbeat_AliveCounter : 16|8@1+ (1,0) [0|255] "" CVC
+ SG_ TCU_Heartbeat_ECU_ID : 24|8@1+ (1,0) [0|7] "" CVC
 
 BO_ 22 BCM_Heartbeat: 4 BCM
- SG_ BcmHb_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,ICU
- SG_ BcmHb_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,ICU
- SG_ BcmHb_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,ICU
- SG_ BcmHb_AliveCounter : 16|8@1+ (1,0) [0|255] "" CVC,ICU
- SG_ BcmHb_ECU_ID : 24|8@1+ (1,0) [0|7] "" CVC,ICU
+ SG_ BCM_Heartbeat_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,ICU
+ SG_ BCM_Heartbeat_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,ICU
+ SG_ BCM_Heartbeat_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,ICU
+ SG_ BCM_Heartbeat_AliveCounter : 16|8@1+ (1,0) [0|255] "" CVC,ICU
+ SG_ BCM_Heartbeat_ECU_ID : 24|8@1+ (1,0) [0|7] "" CVC,ICU
 
 BO_ 256 Vehicle_State: 6 CVC
- SG_ VehSt_E2E_DataID : 0|4@1+ (1,0) [0|15] "" FZC,RZC,BCM,ICU,SC
- SG_ VehSt_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" FZC,RZC,BCM,ICU,SC
- SG_ VehSt_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" FZC,RZC,BCM,ICU,SC
- SG_ VehSt_Mode : 16|4@1+ (1,0) [0|5] "" FZC,RZC,BCM,ICU,SC
- SG_ VehSt_FaultMask : 20|12@1+ (1,0) [0|4095] "" FZC,RZC,BCM,ICU,SC
- SG_ VehSt_TorqueLimit : 32|8@1+ (1,0) [0|100] "%" RZC,ICU
- SG_ VehSt_SpeedLimit : 40|8@1+ (1,0) [0|100] "%" RZC,ICU
+ SG_ Vehicle_State_E2E_DataID : 0|4@1+ (1,0) [0|15] "" FZC,RZC,BCM,ICU,SC
+ SG_ Vehicle_State_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" FZC,RZC,BCM,ICU,SC
+ SG_ Vehicle_State_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" FZC,RZC,BCM,ICU,SC
+ SG_ Vehicle_State_Mode : 16|4@1+ (1,0) [0|5] "" FZC,RZC,BCM,ICU,SC
+ SG_ Vehicle_State_FaultMask : 20|12@1+ (1,0) [0|4095] "" FZC,RZC,BCM,ICU,SC
+ SG_ Vehicle_State_TorqueLimit : 32|8@1+ (1,0) [0|100] "%" RZC,ICU
+ SG_ Vehicle_State_SpeedLimit : 40|8@1+ (1,0) [0|100] "%" RZC,ICU
 
 BO_ 257 Torque_Request: 8 CVC
- SG_ TrqRq_E2E_DataID : 0|4@1+ (1,0) [0|15] "" RZC
- SG_ TrqRq_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" RZC
- SG_ TrqRq_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" RZC
- SG_ TrqRq_Torque_pct : 16|8@1+ (1,0) [0|100] "%" RZC
- SG_ TrqRq_Direction : 24|2@1+ (1,0) [0|2] "" RZC
- SG_ TrqRq_PedalPosition1 : 26|14@1+ (0.022,0) [0|359.98] "deg" RZC
- SG_ TrqRq_PedalPosition2 : 40|14@1+ (0.022,0) [0|359.98] "deg" RZC
- SG_ TrqRq_PedalFault : 54|1@1+ (1,0) [0|1] "" RZC
+ SG_ Torque_Request_E2E_DataID : 0|4@1+ (1,0) [0|15] "" RZC
+ SG_ Torque_Request_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" RZC
+ SG_ Torque_Request_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" RZC
+ SG_ Torque_Request_Torque_pct : 16|8@1+ (1,0) [0|100] "%" RZC
+ SG_ Torque_Request_Direction : 24|2@1+ (1,0) [0|2] "" RZC
+ SG_ Torque_Request_PedalPosition1 : 26|14@1+ (0.022,0) [0|359.98] "deg" RZC
+ SG_ Torque_Request_PedalPosition2 : 40|14@1+ (0.022,0) [0|359.98] "deg" RZC
+ SG_ Torque_Request_PedalFault : 54|1@1+ (1,0) [0|1] "" RZC
 
 BO_ 258 Steer_Command: 8 CVC
- SG_ StrCmd_E2E_DataID : 0|4@1+ (1,0) [0|15] "" FZC
- SG_ StrCmd_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" FZC
- SG_ StrCmd_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" FZC
- SG_ StrCmd_SteerAngleCmd : 16|16@1- (0.01,0) [-45.0|45.0] "deg" FZC
- SG_ StrCmd_SteerRateLimit : 32|8@1+ (0.2,0) [0|51.0] "deg/s" FZC
- SG_ StrCmd_VehicleState : 40|4@1+ (1,0) [0|5] "" FZC
+ SG_ Steer_Command_E2E_DataID : 0|4@1+ (1,0) [0|15] "" FZC
+ SG_ Steer_Command_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" FZC
+ SG_ Steer_Command_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" FZC
+ SG_ Steer_Command_SteerAngleCmd : 16|16@1- (0.01,0) [-45.0|45.0] "deg" FZC
+ SG_ Steer_Command_SteerRateLimit : 32|8@1+ (0.2,0) [0|51.0] "deg/s" FZC
+ SG_ Steer_Command_VehicleState : 40|4@1+ (1,0) [0|5] "" FZC
 
 BO_ 259 Brake_Command: 8 CVC
- SG_ BrkCmd_E2E_DataID : 0|4@1+ (1,0) [0|15] "" FZC
- SG_ BrkCmd_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" FZC
- SG_ BrkCmd_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" FZC
- SG_ BrkCmd_BrakeForceCmd : 16|8@1+ (1,0) [0|100] "%" FZC
- SG_ BrkCmd_BrakeMode : 24|4@1+ (1,0) [0|3] "" FZC
- SG_ BrkCmd_VehicleState : 28|4@1+ (1,0) [0|5] "" FZC
+ SG_ Brake_Command_E2E_DataID : 0|4@1+ (1,0) [0|15] "" FZC
+ SG_ Brake_Command_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" FZC
+ SG_ Brake_Command_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" FZC
+ SG_ Brake_Command_BrakeForceCmd : 16|8@1+ (1,0) [0|100] "%" FZC
+ SG_ Brake_Command_BrakeMode : 24|4@1+ (1,0) [0|3] "" FZC
+ SG_ Brake_Command_VehicleState : 28|4@1+ (1,0) [0|5] "" FZC
 
 BO_ 512 Steering_Status: 8 FZC
- SG_ StrSt_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,SC,ICU
- SG_ StrSt_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,SC,ICU
- SG_ StrSt_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,SC,ICU
- SG_ StrSt_ActualAngle : 16|16@1- (1,0) [-45|45] "deg" CVC,SC,ICU
- SG_ StrSt_CommandedAngle : 32|16@1- (1,0) [-45|45] "deg" CVC,SC,ICU
- SG_ StrSt_SteerFaultStatus : 48|4@1+ (1,0) [0|15] "" CVC,SC,ICU
- SG_ StrSt_SteerMode : 52|4@1+ (1,0) [0|3] "" CVC,SC,ICU
- SG_ StrSt_ServoCurrent_mA : 56|8@1+ (10,0) [0|2550] "mA" CVC,SC,ICU
+ SG_ Steering_Status_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,SC,ICU
+ SG_ Steering_Status_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,SC,ICU
+ SG_ Steering_Status_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,SC,ICU
+ SG_ Steering_Status_ActualAngle : 16|16@1- (1,0) [-45|45] "deg" CVC,SC,ICU
+ SG_ Steering_Status_CommandedAngle : 32|16@1- (1,0) [-45|45] "deg" CVC,SC,ICU
+ SG_ Steering_Status_SteerFaultStatus : 48|4@1+ (1,0) [0|15] "" CVC,SC,ICU
+ SG_ Steering_Status_SteerMode : 52|4@1+ (1,0) [0|3] "" CVC,SC,ICU
+ SG_ Steering_Status_ServoCurrent_mA : 56|8@1+ (10,0) [0|2550] "mA" CVC,SC,ICU
 
 BO_ 513 Brake_Status: 8 FZC
- SG_ BrkSt_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,SC,ICU
- SG_ BrkSt_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,SC,ICU
- SG_ BrkSt_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,SC,ICU
- SG_ BrkSt_BrakePosition : 16|8@1+ (1,0) [0|100] "%" CVC,SC,ICU
- SG_ BrkSt_BrakeCommandEcho : 24|8@1+ (1,0) [0|100] "%" CVC,SC,ICU
- SG_ BrkSt_ServoCurrent_mA : 32|16@1+ (1,0) [0|3000] "mA" CVC,SC,ICU
- SG_ BrkSt_BrakeFaultStatus : 48|4@1+ (1,0) [0|15] "" CVC,SC,ICU
- SG_ BrkSt_BrakeMode : 52|4@1+ (1,0) [0|3] "" CVC,SC,ICU
+ SG_ Brake_Status_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,SC,ICU
+ SG_ Brake_Status_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,SC,ICU
+ SG_ Brake_Status_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,SC,ICU
+ SG_ Brake_Status_BrakePosition : 16|8@1+ (1,0) [0|100] "%" CVC,SC,ICU
+ SG_ Brake_Status_BrakeCommandEcho : 24|8@1+ (1,0) [0|100] "%" CVC,SC,ICU
+ SG_ Brake_Status_ServoCurrent_mA : 32|16@1+ (1,0) [0|3000] "mA" CVC,SC,ICU
+ SG_ Brake_Status_BrakeFaultStatus : 48|4@1+ (1,0) [0|15] "" CVC,SC,ICU
+ SG_ Brake_Status_BrakeMode : 52|4@1+ (1,0) [0|3] "" CVC,SC,ICU
 
 BO_ 528 Brake_Fault: 4 FZC
- SG_ BrkFlt_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,SC
- SG_ BrkFlt_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,SC
- SG_ BrkFlt_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,SC
- SG_ BrkFlt_FaultType : 16|4@1+ (1,0) [0|3] "" CVC,SC
- SG_ BrkFlt_CommandedBrake : 20|8@1+ (1,0) [0|100] "%" CVC,SC
- SG_ BrkFlt_MeasuredBrake : 28|4@1+ (10,0) [0|100] "%" CVC,SC
+ SG_ Brake_Fault_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,SC
+ SG_ Brake_Fault_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,SC
+ SG_ Brake_Fault_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,SC
+ SG_ Brake_Fault_FaultType : 16|4@1+ (1,0) [0|3] "" CVC,SC
+ SG_ Brake_Fault_CommandedBrake : 20|8@1+ (1,0) [0|100] "%" CVC,SC
+ SG_ Brake_Fault_MeasuredBrake : 28|4@1+ (10,0) [0|100] "%" CVC,SC
 
 BO_ 529 Motor_Cutoff_Req: 4 FZC
- SG_ MtrCut_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC
- SG_ MtrCut_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC
- SG_ MtrCut_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC
- SG_ MtrCut_RequestType : 16|4@1+ (1,0) [0|3] "" CVC
- SG_ MtrCut_Reason : 20|4@1+ (1,0) [0|7] "" CVC
+ SG_ Motor_Cutoff_Req_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC
+ SG_ Motor_Cutoff_Req_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC
+ SG_ Motor_Cutoff_Req_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC
+ SG_ Motor_Cutoff_Req_RequestType : 16|4@1+ (1,0) [0|3] "" CVC
+ SG_ Motor_Cutoff_Req_Reason : 20|4@1+ (1,0) [0|7] "" CVC
 
 BO_ 544 Lidar_Distance: 8 FZC
- SG_ LidarD_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,ICU
- SG_ LidarD_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,ICU
- SG_ LidarD_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,ICU
- SG_ LidarD_Distance_cm : 16|16@1+ (1,0) [0|1200] "cm" CVC,ICU
- SG_ LidarD_SignalStrength : 32|16@1+ (1,0) [0|65535] "" CVC,ICU
- SG_ LidarD_ObstacleZone : 48|4@1+ (1,0) [0|3] "" CVC,ICU
- SG_ LidarD_SensorStatus : 52|4@1+ (1,0) [0|15] "" CVC,ICU
+ SG_ Lidar_Distance_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,ICU
+ SG_ Lidar_Distance_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,ICU
+ SG_ Lidar_Distance_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,ICU
+ SG_ Lidar_Distance_Distance_cm : 16|16@1+ (1,0) [0|1200] "cm" CVC,ICU
+ SG_ Lidar_Distance_SignalStrength : 32|16@1+ (1,0) [0|65535] "" CVC,ICU
+ SG_ Lidar_Distance_ObstacleZone : 48|4@1+ (1,0) [0|3] "" CVC,ICU
+ SG_ Lidar_Distance_SensorStatus : 52|4@1+ (1,0) [0|15] "" CVC,ICU
 
 BO_ 768 Motor_Status: 8 RZC
- SG_ MtrSt_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,SC,ICU
- SG_ MtrSt_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,SC,ICU
- SG_ MtrSt_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,SC,ICU
- SG_ MtrSt_TorqueEcho : 16|8@1+ (1,0) [0|100] "%" CVC,SC,ICU
- SG_ MtrSt_MotorSpeed_RPM : 24|16@1+ (1,0) [0|10000] "RPM" CVC,SC,ICU
- SG_ MtrSt_MotorDirection : 40|8@1+ (1,0) [0|2] "" CVC,SC,ICU
- SG_ MtrSt_MotorEnable : 48|8@1+ (1,0) [0|1] "" CVC,SC,ICU
- SG_ MtrSt_MotorFaultStatus : 56|8@1+ (1,0) [0|31] "" CVC,SC,ICU
+ SG_ Motor_Status_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,SC,ICU
+ SG_ Motor_Status_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,SC,ICU
+ SG_ Motor_Status_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,SC,ICU
+ SG_ Motor_Status_TorqueEcho : 16|8@1+ (1,0) [0|100] "%" CVC,SC,ICU
+ SG_ Motor_Status_MotorSpeed_RPM : 24|16@1+ (1,0) [0|10000] "RPM" CVC,SC,ICU
+ SG_ Motor_Status_MotorDirection : 40|8@1+ (1,0) [0|2] "" CVC,SC,ICU
+ SG_ Motor_Status_MotorEnable : 48|8@1+ (1,0) [0|1] "" CVC,SC,ICU
+ SG_ Motor_Status_MotorFaultStatus : 56|8@1+ (1,0) [0|31] "" CVC,SC,ICU
 
 BO_ 769 Motor_Current: 8 RZC
- SG_ MtrCur_E2E_DataID : 0|4@1+ (1,0) [0|15] "" SC,CVC,ICU
- SG_ MtrCur_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" SC,CVC,ICU
- SG_ MtrCur_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" SC,CVC,ICU
- SG_ MtrCur_Current_mA : 16|16@1+ (1,0) [0|30000] "mA" SC,CVC,ICU
- SG_ MtrCur_DirIsReverse : 32|1@1+ (1,0) [0|1] "" SC,CVC,ICU
- SG_ MtrCur_MotorEnable : 33|1@1+ (1,0) [0|1] "" SC,CVC,ICU
- SG_ MtrCur_OvercurrentFlag : 34|1@1+ (1,0) [0|1] "" SC,CVC,ICU
- SG_ MtrCur_TorqueEcho : 35|8@1+ (1,0) [0|100] "%" SC,CVC,ICU
+ SG_ Motor_Current_E2E_DataID : 0|4@1+ (1,0) [0|15] "" SC,CVC,ICU
+ SG_ Motor_Current_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" SC,CVC,ICU
+ SG_ Motor_Current_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" SC,CVC,ICU
+ SG_ Motor_Current_Current_mA : 16|16@1+ (1,0) [0|30000] "mA" SC,CVC,ICU
+ SG_ Motor_Current_DirIsReverse : 32|1@1+ (1,0) [0|1] "" SC,CVC,ICU
+ SG_ Motor_Current_MotorEnable : 33|1@1+ (1,0) [0|1] "" SC,CVC,ICU
+ SG_ Motor_Current_OvercurrentFlag : 34|1@1+ (1,0) [0|1] "" SC,CVC,ICU
+ SG_ Motor_Current_TorqueEcho : 35|8@1+ (1,0) [0|100] "%" SC,CVC,ICU
 
 BO_ 770 Motor_Temperature: 8 RZC
- SG_ MtrTmp_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,ICU
- SG_ MtrTmp_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,ICU
- SG_ MtrTmp_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,ICU
- SG_ MtrTmp_WindingTemp1_C : 16|16@1+ (0.1,0) [0|200.0] "degC" CVC,ICU
- SG_ MtrTmp_WindingTemp2_C : 32|16@1+ (0.1,0) [0|200.0] "degC" CVC,ICU
- SG_ MtrTmp_DeratingPercent : 48|8@1+ (1,0) [0|100] "%" CVC,ICU
+ SG_ Motor_Temperature_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,ICU
+ SG_ Motor_Temperature_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,ICU
+ SG_ Motor_Temperature_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,ICU
+ SG_ Motor_Temperature_WindingTemp1_C : 16|16@1+ (0.1,0) [0|200.0] "degC" CVC,ICU
+ SG_ Motor_Temperature_WindingTemp2_C : 32|16@1+ (0.1,0) [0|200.0] "degC" CVC,ICU
+ SG_ Motor_Temperature_DeratingPercent : 48|8@1+ (1,0) [0|100] "%" CVC,ICU
 
 BO_ 771 Battery_Status: 6 RZC
- SG_ BatSt_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,ICU
- SG_ BatSt_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,ICU
- SG_ BatSt_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,ICU
- SG_ BatSt_BatteryVoltage_mV : 16|16@1+ (1,0) [0|20000] "mV" CVC,ICU
- SG_ BatSt_Status : 32|8@1+ (1,0) [0|4] "" CVC,ICU
+ SG_ Battery_Status_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,ICU
+ SG_ Battery_Status_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,ICU
+ SG_ Battery_Status_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,ICU
+ SG_ Battery_Status_BatteryVoltage_mV : 16|16@1+ (1,0) [0|20000] "mV" CVC,ICU
+ SG_ Battery_Status_Status : 32|8@1+ (1,0) [0|4] "" CVC,ICU
 
 BO_ 848 Body_Control_Cmd: 4 CVC
- SG_ BdyCmd_HeadlightCmd : 0|2@1+ (1,0) [0|2] "" BCM
- SG_ BdyCmd_TailLightOn : 2|1@1+ (1,0) [0|1] "" BCM
- SG_ BdyCmd_HazardActive : 3|1@1+ (1,0) [0|1] "" BCM
- SG_ BdyCmd_TurnSignalCmd : 4|2@1+ (1,0) [0|2] "" BCM
- SG_ BdyCmd_DoorLockCmd : 6|1@1+ (1,0) [0|1] "" BCM
+ SG_ Body_Control_Cmd_HeadlightCmd : 0|2@1+ (1,0) [0|2] "" BCM
+ SG_ Body_Control_Cmd_TailLightOn : 2|1@1+ (1,0) [0|1] "" BCM
+ SG_ Body_Control_Cmd_HazardActive : 3|1@1+ (1,0) [0|1] "" BCM
+ SG_ Body_Control_Cmd_TurnSignalCmd : 4|2@1+ (1,0) [0|2] "" BCM
+ SG_ Body_Control_Cmd_DoorLockCmd : 6|1@1+ (1,0) [0|1] "" BCM
 
 BO_ 1024 Light_Status: 4 BCM
- SG_ LtSt_HeadlightOn : 0|1@1+ (1,0) [0|1] "" ICU
- SG_ LtSt_TailLightOn : 1|1@1+ (1,0) [0|1] "" ICU
- SG_ LtSt_FogLightOn : 2|1@1+ (1,0) [0|1] "" ICU
- SG_ LtSt_BrakeLightOn : 3|1@1+ (1,0) [0|1] "" ICU
- SG_ LtSt_HeadlightLevel : 4|2@1+ (1,0) [0|2] "" ICU
+ SG_ Light_Status_HeadlightOn : 0|1@1+ (1,0) [0|1] "" ICU
+ SG_ Light_Status_TailLightOn : 1|1@1+ (1,0) [0|1] "" ICU
+ SG_ Light_Status_FogLightOn : 2|1@1+ (1,0) [0|1] "" ICU
+ SG_ Light_Status_BrakeLightOn : 3|1@1+ (1,0) [0|1] "" ICU
+ SG_ Light_Status_HeadlightLevel : 4|2@1+ (1,0) [0|2] "" ICU
 
 BO_ 1025 Indicator_State: 4 BCM
- SG_ IndSt_LeftOn : 0|1@1+ (1,0) [0|1] "" ICU
- SG_ IndSt_RightOn : 1|1@1+ (1,0) [0|1] "" ICU
- SG_ IndSt_HazardActive : 2|1@1+ (1,0) [0|1] "" ICU
- SG_ IndSt_BlinkPhaseHigh : 3|1@1+ (1,0) [0|1] "" ICU
+ SG_ Indicator_State_LeftOn : 0|1@1+ (1,0) [0|1] "" ICU
+ SG_ Indicator_State_RightOn : 1|1@1+ (1,0) [0|1] "" ICU
+ SG_ Indicator_State_HazardActive : 2|1@1+ (1,0) [0|1] "" ICU
+ SG_ Indicator_State_BlinkPhaseHigh : 3|1@1+ (1,0) [0|1] "" ICU
 
 BO_ 1026 Door_Lock_Status: 2 BCM
- SG_ DlkSt_FrontLeftLock : 0|1@1+ (1,0) [0|1] "" ICU
- SG_ DlkSt_FrontRightLock : 1|1@1+ (1,0) [0|1] "" ICU
- SG_ DlkSt_RearLeftLock : 2|1@1+ (1,0) [0|1] "" ICU
- SG_ DlkSt_RearRightLock : 3|1@1+ (1,0) [0|1] "" ICU
- SG_ DlkSt_CentralLock : 4|1@1+ (1,0) [0|1] "" ICU
+ SG_ Door_Lock_Status_FrontLeftLock : 0|1@1+ (1,0) [0|1] "" ICU
+ SG_ Door_Lock_Status_FrontRightLock : 1|1@1+ (1,0) [0|1] "" ICU
+ SG_ Door_Lock_Status_RearLeftLock : 2|1@1+ (1,0) [0|1] "" ICU
+ SG_ Door_Lock_Status_RearRightLock : 3|1@1+ (1,0) [0|1] "" ICU
+ SG_ Door_Lock_Status_CentralLock : 4|1@1+ (1,0) [0|1] "" ICU
 
 BO_ 1280 DTC_Broadcast: 8 CVC
- SG_ DtcBc_DTC_Number : 7|24@0+ (1,0) [0|16777215] "" TCU,ICU
- SG_ DtcBc_DTC_Status : 24|8@1+ (1,0) [0|255] "" TCU,ICU
- SG_ DtcBc_ECU_Source : 32|8@1+ (1,0) [0|7] "" TCU,ICU
- SG_ DtcBc_OccurrenceCount : 40|8@1+ (1,0) [0|255] "" TCU,ICU
- SG_ DtcBc_FreezeFrame0 : 48|8@1+ (1,0) [0|255] "" TCU,ICU
- SG_ DtcBc_FreezeFrame1 : 56|8@1+ (1,0) [0|255] "" TCU,ICU
+ SG_ DTC_Broadcast_DTC_Number : 7|24@0+ (1,0) [0|16777215] "" TCU,ICU
+ SG_ DTC_Broadcast_DTC_Status : 24|8@1+ (1,0) [0|255] "" TCU,ICU
+ SG_ DTC_Broadcast_ECU_Source : 32|8@1+ (1,0) [0|7] "" TCU,ICU
+ SG_ DTC_Broadcast_OccurrenceCount : 40|8@1+ (1,0) [0|255] "" TCU,ICU
+ SG_ DTC_Broadcast_FreezeFrame0 : 48|8@1+ (1,0) [0|255] "" TCU,ICU
+ SG_ DTC_Broadcast_FreezeFrame1 : 56|8@1+ (1,0) [0|255] "" TCU,ICU
 
 
 CM_ BU_ CVC "Central Vehicle Computer. STM32F446RE. ASIL D. Master coordinator.";
@@ -252,45 +252,45 @@ CM_ BO_ 1025 "Indicator state. 100ms cyclic. BCM feedback.";
 CM_ BO_ 1026 "Door lock status. Event-triggered. BCM feedback.";
 CM_ BO_ 1280 "DTC broadcast. Event-triggered. Any ECU via Dem_MainFunction.";
 
-CM_ SG_ 1 EStBc_EStop_Active "1=E-Stop active (latched until power-cycle). 0=inactive.";
-CM_ SG_ 1 EStBc_EStop_Source "Source that triggered E-Stop. 0=button, 1=CAN, 2=SC_relay.";
-CM_ SG_ 256 VehSt_Mode "VSM state. 0=INIT, 1=RUN, 2=DEGRADED, 3=LIMP, 4=SAFE_STOP, 5=SHUTDOWN.";
-CM_ SG_ 256 VehSt_FaultMask "Bitmask of active faults. Bit0=EStop, Bit1=SC_Kill, Bit2=MotorCutoff, etc.";
-CM_ SG_ 257 TrqRq_Torque_pct "Torque command 0-100%. Maps to motor PWM duty cycle.";
-CM_ SG_ 258 StrCmd_SteerAngleCmd "Steering angle command. Signed, 0.01 deg resolution. 0=center.";
-CM_ SG_ 259 BrkCmd_BrakeForceCmd "Brake force command 0-100%. Maps to brake servo PWM.";
-CM_ SG_ 768 MtrSt_MotorFaultStatus "Motor fault code. 0=OK, 1=stall, 2=shoot-through, 3=overcurrent, 4=overtemp.";
-CM_ SG_ 768 MtrSt_MotorSpeed_RPM "Encoder-derived motor speed in RPM. 0-10000.";
-CM_ SG_ 769 MtrCur_Current_mA "Phase current in milliamps. ACS723 sensor. 0-30000.";
-CM_ SG_ 769 MtrCur_OvercurrentFlag "1=overcurrent detected (>25A sustained). Latched until recovery.";
-CM_ SG_ 770 MtrTmp_WindingTemp1_C "Winding temperature sensor 1. 0.1 degC resolution. NTC thermistor.";
-CM_ SG_ 771 BatSt_BatteryVoltage_mV "Battery voltage in millivolts. Voltage divider ADC. 0-20000.";
-CM_ SG_ 771 BatSt_Status "Battery status enum. 0=critical_UV, 1=UV_warn, 2=normal, 3=OV_warn, 4=critical_OV.";
-CM_ SG_ 1280 DtcBc_DTC_Number "24-bit UDS DTC number (big-endian). Standard ISO 14229 format.";
-CM_ SG_ 1280 DtcBc_ECU_Source "Source ECU. 1=CVC, 2=FZC, 3=RZC, 4=SC, 5=BCM, 6=ICU, 7=TCU.";
+CM_ SG_ 1 EStop_Broadcast_EStop_Active "1=E-Stop active (latched until power-cycle). 0=inactive.";
+CM_ SG_ 1 EStop_Broadcast_EStop_Source "Source that triggered E-Stop. 0=button, 1=CAN, 2=SC_relay.";
+CM_ SG_ 256 Vehicle_State_Mode "VSM state. 0=INIT, 1=RUN, 2=DEGRADED, 3=LIMP, 4=SAFE_STOP, 5=SHUTDOWN.";
+CM_ SG_ 256 Vehicle_State_FaultMask "Bitmask of active faults. Bit0=EStop, Bit1=SC_Kill, Bit2=MotorCutoff, etc.";
+CM_ SG_ 257 Torque_Request_Torque_pct "Torque command 0-100%. Maps to motor PWM duty cycle.";
+CM_ SG_ 258 Steer_Command_SteerAngleCmd "Steering angle command. Signed, 0.01 deg resolution. 0=center.";
+CM_ SG_ 259 Brake_Command_BrakeForceCmd "Brake force command 0-100%. Maps to brake servo PWM.";
+CM_ SG_ 768 Motor_Status_MotorFaultStatus "Motor fault code. 0=OK, 1=stall, 2=shoot-through, 3=overcurrent, 4=overtemp.";
+CM_ SG_ 768 Motor_Status_MotorSpeed_RPM "Encoder-derived motor speed in RPM. 0-10000.";
+CM_ SG_ 769 Motor_Current_Current_mA "Phase current in milliamps. ACS723 sensor. 0-30000.";
+CM_ SG_ 769 Motor_Current_OvercurrentFlag "1=overcurrent detected (>25A sustained). Latched until recovery.";
+CM_ SG_ 770 Motor_Temperature_WindingTemp1_C "Winding temperature sensor 1. 0.1 degC resolution. NTC thermistor.";
+CM_ SG_ 771 Battery_Status_BatteryVoltage_mV "Battery voltage in millivolts. Voltage divider ADC. 0-20000.";
+CM_ SG_ 771 Battery_Status_Status "Battery status enum. 0=critical_UV, 1=UV_warn, 2=normal, 3=OV_warn, 4=critical_OV.";
+CM_ SG_ 1280 DTC_Broadcast_DTC_Number "24-bit UDS DTC number (big-endian). Standard ISO 14229 format.";
+CM_ SG_ 1280 DTC_Broadcast_ECU_Source "Source ECU. 1=CVC, 2=FZC, 3=RZC, 4=SC, 5=BCM, 6=ICU, 7=TCU.";
 
 
-VAL_ 1 EStBc_EStop_Source 0 "CVC_button" 1 "CAN_request" 2 "SC_relay" ;
-VAL_ 16 CvcHb_OperatingMode 0 "INIT" 1 "RUN" 2 "DEGRADED" 3 "LIMP" 4 "SAFE_STOP" 5 "SHUTDOWN" ;
-VAL_ 17 FzcHb_OperatingMode 0 "INIT" 1 "RUN" 2 "DEGRADED" 3 "LIMP" 4 "SAFE_STOP" 5 "SHUTDOWN" ;
-VAL_ 18 RzcHb_OperatingMode 0 "INIT" 1 "RUN" 2 "DEGRADED" 3 "LIMP" 4 "SAFE_STOP" 5 "SHUTDOWN" ;
-VAL_ 19 ScSt_Mode 0 "INIT" 1 "MONITORING" 2 "FAULT_DETECTED" 3 "SAFE_STOP" ;
-VAL_ 256 VehSt_Mode 0 "INIT" 1 "RUN" 2 "DEGRADED" 3 "LIMP" 4 "SAFE_STOP" 5 "SHUTDOWN" ;
-VAL_ 257 TrqRq_Direction 0 "stopped" 1 "forward" 2 "reverse" ;
-VAL_ 259 BrkCmd_BrakeMode 0 "release" 1 "normal" 2 "emergency" 3 "auto" ;
-VAL_ 512 StrSt_SteerMode 0 "normal" 1 "return_center" 2 "disabled" 3 "local" ;
-VAL_ 513 BrkSt_BrakeMode 0 "release" 1 "normal" 2 "auto_brake" 3 "emergency" ;
-VAL_ 528 BrkFlt_FaultType 0 "PWM_mismatch" 1 "servo_stuck" 2 "overcurrent" 3 "timeout" ;
-VAL_ 529 MtrCut_RequestType 0 "motor_cutoff" 1 "speed_reduce" 2 "e_stop_fwd" ;
-VAL_ 529 MtrCut_Reason 0 "brake_fault" 1 "steer_fault" 2 "lidar_emergency" 3 "CAN_loss" ;
-VAL_ 544 LidarD_ObstacleZone 0 "emergency" 1 "braking" 2 "warning" 3 "clear" ;
-VAL_ 768 MtrSt_MotorDirection 0 "stopped" 1 "forward" 2 "reverse" ;
-VAL_ 769 MtrCur_DirIsReverse 0 "forward" 1 "reverse" ;
-VAL_ 771 BatSt_Status 0 "critical_UV" 1 "UV_warn" 2 "normal" 3 "OV_warn" 4 "critical_OV" ;
-VAL_ 848 BdyCmd_HeadlightCmd 0 "off" 1 "low" 2 "high" ;
-VAL_ 848 BdyCmd_TurnSignalCmd 0 "off" 1 "left" 2 "right" ;
-VAL_ 1024 LtSt_HeadlightLevel 0 "off" 1 "low" 2 "high" ;
-VAL_ 1280 DtcBc_ECU_Source 1 "CVC" 2 "FZC" 3 "RZC" 4 "SC" 5 "BCM" 6 "ICU" 7 "TCU" ;
+VAL_ 1 EStop_Broadcast_EStop_Source 0 "CVC_button" 1 "CAN_request" 2 "SC_relay" ;
+VAL_ 16 CVC_Heartbeat_OperatingMode 0 "INIT" 1 "RUN" 2 "DEGRADED" 3 "LIMP" 4 "SAFE_STOP" 5 "SHUTDOWN" ;
+VAL_ 17 FZC_Heartbeat_OperatingMode 0 "INIT" 1 "RUN" 2 "DEGRADED" 3 "LIMP" 4 "SAFE_STOP" 5 "SHUTDOWN" ;
+VAL_ 18 RZC_Heartbeat_OperatingMode 0 "INIT" 1 "RUN" 2 "DEGRADED" 3 "LIMP" 4 "SAFE_STOP" 5 "SHUTDOWN" ;
+VAL_ 19 SC_Status_Mode 0 "INIT" 1 "MONITORING" 2 "FAULT_DETECTED" 3 "SAFE_STOP" ;
+VAL_ 256 Vehicle_State_Mode 0 "INIT" 1 "RUN" 2 "DEGRADED" 3 "LIMP" 4 "SAFE_STOP" 5 "SHUTDOWN" ;
+VAL_ 257 Torque_Request_Direction 0 "stopped" 1 "forward" 2 "reverse" ;
+VAL_ 259 Brake_Command_BrakeMode 0 "release" 1 "normal" 2 "emergency" 3 "auto" ;
+VAL_ 512 Steering_Status_SteerMode 0 "normal" 1 "return_center" 2 "disabled" 3 "local" ;
+VAL_ 513 Brake_Status_BrakeMode 0 "release" 1 "normal" 2 "auto_brake" 3 "emergency" ;
+VAL_ 528 Brake_Fault_FaultType 0 "PWM_mismatch" 1 "servo_stuck" 2 "overcurrent" 3 "timeout" ;
+VAL_ 529 Motor_Cutoff_Req_RequestType 0 "motor_cutoff" 1 "speed_reduce" 2 "e_stop_fwd" ;
+VAL_ 529 Motor_Cutoff_Req_Reason 0 "brake_fault" 1 "steer_fault" 2 "lidar_emergency" 3 "CAN_loss" ;
+VAL_ 544 Lidar_Distance_ObstacleZone 0 "emergency" 1 "braking" 2 "warning" 3 "clear" ;
+VAL_ 768 Motor_Status_MotorDirection 0 "stopped" 1 "forward" 2 "reverse" ;
+VAL_ 769 Motor_Current_DirIsReverse 0 "forward" 1 "reverse" ;
+VAL_ 771 Battery_Status_Status 0 "critical_UV" 1 "UV_warn" 2 "normal" 3 "OV_warn" 4 "critical_OV" ;
+VAL_ 848 Body_Control_Cmd_HeadlightCmd 0 "off" 1 "low" 2 "high" ;
+VAL_ 848 Body_Control_Cmd_TurnSignalCmd 0 "off" 1 "left" 2 "right" ;
+VAL_ 1024 Light_Status_HeadlightLevel 0 "off" 1 "low" 2 "high" ;
+VAL_ 1280 DTC_Broadcast_ECU_Source 1 "CVC" 2 "FZC" 3 "RZC" 4 "SC" 5 "BCM" 6 "ICU" 7 "TCU" ;
 
 
 BA_DEF_ BO_ "GenMsgCycleTime" INT 0 10000;
@@ -444,516 +444,516 @@ BA_ "Satisfies" BO_ 529 "TSR-031 SSR-FZC-006";
 BA_ "Satisfies" BO_ 768 "TSR-032 SSR-RZC-001";
 BA_ "Satisfies" BO_ 769 "TSR-033 SSR-RZC-002";
 
-BA_ "Owner" SG_ 256 VehSt_Mode "Swc_VehicleState";
-BA_ "ProducedBy" SG_ 256 VehSt_Mode "Swc_VehicleState";
-BA_ "Satisfies" SG_ 256 VehSt_Mode "SSR-CVC-010";
-BA_ "GenSigStartValue" SG_ 256 VehSt_Mode 0;
-BA_ "Timeout_ms" SG_ 256 VehSt_Mode 50;
+BA_ "Owner" SG_ 256 Vehicle_State_Mode "Swc_VehicleState";
+BA_ "ProducedBy" SG_ 256 Vehicle_State_Mode "Swc_VehicleState";
+BA_ "Satisfies" SG_ 256 Vehicle_State_Mode "SSR-CVC-010";
+BA_ "GenSigStartValue" SG_ 256 Vehicle_State_Mode 0;
+BA_ "Timeout_ms" SG_ 256 Vehicle_State_Mode 50;
 
-BA_ "Owner" SG_ 256 VehSt_FaultMask "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 256 VehSt_FaultMask "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 256 VehSt_FaultMask 0;
+BA_ "Owner" SG_ 256 Vehicle_State_FaultMask "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 256 Vehicle_State_FaultMask "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 256 Vehicle_State_FaultMask 0;
 
-BA_ "Owner" SG_ 257 TrqRq_Torque_pct "Swc_Pedal";
-BA_ "ProducedBy" SG_ 257 TrqRq_Torque_pct "Swc_Pedal";
-BA_ "Satisfies" SG_ 257 TrqRq_Torque_pct "SSR-CVC-001";
-BA_ "GenSigStartValue" SG_ 257 TrqRq_Torque_pct 0;
-BA_ "Timeout_ms" SG_ 257 TrqRq_Torque_pct 30;
+BA_ "Owner" SG_ 257 Torque_Request_Torque_pct "Swc_Pedal";
+BA_ "ProducedBy" SG_ 257 Torque_Request_Torque_pct "Swc_Pedal";
+BA_ "Satisfies" SG_ 257 Torque_Request_Torque_pct "SSR-CVC-001";
+BA_ "GenSigStartValue" SG_ 257 Torque_Request_Torque_pct 0;
+BA_ "Timeout_ms" SG_ 257 Torque_Request_Torque_pct 30;
 
-BA_ "Owner" SG_ 258 StrCmd_SteerAngleCmd "Swc_VehicleState";
-BA_ "ProducedBy" SG_ 258 StrCmd_SteerAngleCmd "Swc_CvcCom";
-BA_ "Satisfies" SG_ 258 StrCmd_SteerAngleCmd "SSR-CVC-002";
-BA_ "GenSigStartValue" SG_ 258 StrCmd_SteerAngleCmd 0;
-BA_ "Timeout_ms" SG_ 258 StrCmd_SteerAngleCmd 30;
+BA_ "Owner" SG_ 258 Steer_Command_SteerAngleCmd "Swc_VehicleState";
+BA_ "ProducedBy" SG_ 258 Steer_Command_SteerAngleCmd "Swc_CvcCom";
+BA_ "Satisfies" SG_ 258 Steer_Command_SteerAngleCmd "SSR-CVC-002";
+BA_ "GenSigStartValue" SG_ 258 Steer_Command_SteerAngleCmd 0;
+BA_ "Timeout_ms" SG_ 258 Steer_Command_SteerAngleCmd 30;
 
-BA_ "Owner" SG_ 259 BrkCmd_BrakeForceCmd "Swc_VehicleState";
-BA_ "ProducedBy" SG_ 259 BrkCmd_BrakeForceCmd "Swc_CvcCom";
-BA_ "Satisfies" SG_ 259 BrkCmd_BrakeForceCmd "SSR-CVC-003";
-BA_ "GenSigStartValue" SG_ 259 BrkCmd_BrakeForceCmd 0;
-BA_ "Timeout_ms" SG_ 259 BrkCmd_BrakeForceCmd 30;
+BA_ "Owner" SG_ 259 Brake_Command_BrakeForceCmd "Swc_VehicleState";
+BA_ "ProducedBy" SG_ 259 Brake_Command_BrakeForceCmd "Swc_CvcCom";
+BA_ "Satisfies" SG_ 259 Brake_Command_BrakeForceCmd "SSR-CVC-003";
+BA_ "GenSigStartValue" SG_ 259 Brake_Command_BrakeForceCmd 0;
+BA_ "Timeout_ms" SG_ 259 Brake_Command_BrakeForceCmd 30;
 
-BA_ "Owner" SG_ 768 MtrSt_MotorFaultStatus "Swc_Motor";
-BA_ "ProducedBy" SG_ 768 MtrSt_MotorFaultStatus "Swc_Motor";
-BA_ "Satisfies" SG_ 768 MtrSt_MotorFaultStatus "SSR-RZC-001 SSR-RZC-003";
-BA_ "GenSigStartValue" SG_ 768 MtrSt_MotorFaultStatus 0;
-BA_ "Timeout_ms" SG_ 768 MtrSt_MotorFaultStatus 60;
+BA_ "Owner" SG_ 768 Motor_Status_MotorFaultStatus "Swc_Motor";
+BA_ "ProducedBy" SG_ 768 Motor_Status_MotorFaultStatus "Swc_Motor";
+BA_ "Satisfies" SG_ 768 Motor_Status_MotorFaultStatus "SSR-RZC-001 SSR-RZC-003";
+BA_ "GenSigStartValue" SG_ 768 Motor_Status_MotorFaultStatus 0;
+BA_ "Timeout_ms" SG_ 768 Motor_Status_MotorFaultStatus 60;
 
-BA_ "Owner" SG_ 768 MtrSt_MotorSpeed_RPM "Swc_Encoder";
-BA_ "ProducedBy" SG_ 768 MtrSt_MotorSpeed_RPM "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 768 MtrSt_MotorSpeed_RPM 0;
+BA_ "Owner" SG_ 768 Motor_Status_MotorSpeed_RPM "Swc_Encoder";
+BA_ "ProducedBy" SG_ 768 Motor_Status_MotorSpeed_RPM "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 768 Motor_Status_MotorSpeed_RPM 0;
 
-BA_ "Owner" SG_ 769 MtrCur_Current_mA "Swc_CurrentMonitor";
-BA_ "ProducedBy" SG_ 769 MtrCur_Current_mA "Swc_RzcCom";
-BA_ "Satisfies" SG_ 769 MtrCur_Current_mA "SSR-RZC-002";
-BA_ "GenSigStartValue" SG_ 769 MtrCur_Current_mA 0;
+BA_ "Owner" SG_ 769 Motor_Current_Current_mA "Swc_CurrentMonitor";
+BA_ "ProducedBy" SG_ 769 Motor_Current_Current_mA "Swc_RzcCom";
+BA_ "Satisfies" SG_ 769 Motor_Current_Current_mA "SSR-RZC-002";
+BA_ "GenSigStartValue" SG_ 769 Motor_Current_Current_mA 0;
 
-BA_ "Owner" SG_ 769 MtrCur_OvercurrentFlag "Swc_CurrentMonitor";
-BA_ "ProducedBy" SG_ 769 MtrCur_OvercurrentFlag "Swc_RzcCom";
-BA_ "Satisfies" SG_ 769 MtrCur_OvercurrentFlag "SSR-RZC-002";
-BA_ "GenSigStartValue" SG_ 769 MtrCur_OvercurrentFlag 0;
-BA_ "Timeout_ms" SG_ 769 MtrCur_OvercurrentFlag 30;
+BA_ "Owner" SG_ 769 Motor_Current_OvercurrentFlag "Swc_CurrentMonitor";
+BA_ "ProducedBy" SG_ 769 Motor_Current_OvercurrentFlag "Swc_RzcCom";
+BA_ "Satisfies" SG_ 769 Motor_Current_OvercurrentFlag "SSR-RZC-002";
+BA_ "GenSigStartValue" SG_ 769 Motor_Current_OvercurrentFlag 0;
+BA_ "Timeout_ms" SG_ 769 Motor_Current_OvercurrentFlag 30;
 
-BA_ "Owner" SG_ 770 MtrTmp_WindingTemp1_C "Swc_TempMonitor";
-BA_ "ProducedBy" SG_ 770 MtrTmp_WindingTemp1_C "Swc_RzcCom";
-BA_ "Satisfies" SG_ 770 MtrTmp_WindingTemp1_C "SSR-RZC-003";
-BA_ "GenSigStartValue" SG_ 770 MtrTmp_WindingTemp1_C 250;
+BA_ "Owner" SG_ 770 Motor_Temperature_WindingTemp1_C "Swc_TempMonitor";
+BA_ "ProducedBy" SG_ 770 Motor_Temperature_WindingTemp1_C "Swc_RzcCom";
+BA_ "Satisfies" SG_ 770 Motor_Temperature_WindingTemp1_C "SSR-RZC-003";
+BA_ "GenSigStartValue" SG_ 770 Motor_Temperature_WindingTemp1_C 250;
 
-BA_ "Owner" SG_ 771 BatSt_BatteryVoltage_mV "Swc_Battery";
-BA_ "ProducedBy" SG_ 771 BatSt_BatteryVoltage_mV "Swc_RzcCom";
-BA_ "Satisfies" SG_ 771 BatSt_BatteryVoltage_mV "SSR-RZC-006";
-BA_ "GenSigStartValue" SG_ 771 BatSt_BatteryVoltage_mV 12600;
+BA_ "Owner" SG_ 771 Battery_Status_BatteryVoltage_mV "Swc_Battery";
+BA_ "ProducedBy" SG_ 771 Battery_Status_BatteryVoltage_mV "Swc_RzcCom";
+BA_ "Satisfies" SG_ 771 Battery_Status_BatteryVoltage_mV "SSR-RZC-006";
+BA_ "GenSigStartValue" SG_ 771 Battery_Status_BatteryVoltage_mV 12600;
 
-BA_ "Owner" SG_ 771 BatSt_Status "Swc_Battery";
-BA_ "ProducedBy" SG_ 771 BatSt_Status "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 771 BatSt_Status 2;
+BA_ "Owner" SG_ 771 Battery_Status_Status "Swc_Battery";
+BA_ "ProducedBy" SG_ 771 Battery_Status_Status "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 771 Battery_Status_Status 2;
 
-BA_ "Owner" SG_ 1 EStBc_EStop_Active "Swc_EStop";
-BA_ "ProducedBy" SG_ 1 EStBc_EStop_Active "Swc_EStop";
-BA_ "Satisfies" SG_ 1 EStBc_EStop_Active "TSR-046 SSR-CVC-018";
-BA_ "GenSigStartValue" SG_ 1 EStBc_EStop_Active 0;
-BA_ "Timeout_ms" SG_ 1 EStBc_EStop_Active 30;
+BA_ "Owner" SG_ 1 EStop_Broadcast_EStop_Active "Swc_EStop";
+BA_ "ProducedBy" SG_ 1 EStop_Broadcast_EStop_Active "Swc_EStop";
+BA_ "Satisfies" SG_ 1 EStop_Broadcast_EStop_Active "TSR-046 SSR-CVC-018";
+BA_ "GenSigStartValue" SG_ 1 EStop_Broadcast_EStop_Active 0;
+BA_ "Timeout_ms" SG_ 1 EStop_Broadcast_EStop_Active 30;
 
-BA_ "Owner" SG_ 19 ScSt_RelayEnergized "SC firmware (sc_relay.c)";
-BA_ "ProducedBy" SG_ 19 ScSt_RelayEnergized "SC CAN TX";
-BA_ "Satisfies" SG_ 19 ScSt_RelayEnergized "TSR-040 SSR-SC-001";
-BA_ "GenSigStartValue" SG_ 19 ScSt_RelayEnergized 1;
-BA_ "Timeout_ms" SG_ 19 ScSt_RelayEnergized 1500;
+BA_ "Owner" SG_ 19 SC_Status_RelayEnergized "SC firmware (sc_relay.c)";
+BA_ "ProducedBy" SG_ 19 SC_Status_RelayEnergized "SC CAN TX";
+BA_ "Satisfies" SG_ 19 SC_Status_RelayEnergized "TSR-040 SSR-SC-001";
+BA_ "GenSigStartValue" SG_ 19 SC_Status_RelayEnergized 1;
+BA_ "Timeout_ms" SG_ 19 SC_Status_RelayEnergized 1500;
 
-BA_ "Owner" SG_ 528 BrkFlt_FaultType "Swc_Brake";
-BA_ "ProducedBy" SG_ 528 BrkFlt_FaultType "Swc_FzcCom";
-BA_ "Satisfies" SG_ 528 BrkFlt_FaultType "SSR-FZC-005";
-BA_ "GenSigStartValue" SG_ 528 BrkFlt_FaultType 0;
+BA_ "Owner" SG_ 528 Brake_Fault_FaultType "Swc_Brake";
+BA_ "ProducedBy" SG_ 528 Brake_Fault_FaultType "Swc_FzcCom";
+BA_ "Satisfies" SG_ 528 Brake_Fault_FaultType "SSR-FZC-005";
+BA_ "GenSigStartValue" SG_ 528 Brake_Fault_FaultType 0;
 
-BA_ "Owner" SG_ 529 MtrCut_RequestType "Swc_FzcSafety";
-BA_ "ProducedBy" SG_ 529 MtrCut_RequestType "Swc_FzcCom";
-BA_ "Satisfies" SG_ 529 MtrCut_RequestType "SSR-FZC-006";
-BA_ "GenSigStartValue" SG_ 529 MtrCut_RequestType 0;
-BA_ "Timeout_ms" SG_ 529 MtrCut_RequestType 30;
+BA_ "Owner" SG_ 529 Motor_Cutoff_Req_RequestType "Swc_FzcSafety";
+BA_ "ProducedBy" SG_ 529 Motor_Cutoff_Req_RequestType "Swc_FzcCom";
+BA_ "Satisfies" SG_ 529 Motor_Cutoff_Req_RequestType "SSR-FZC-006";
+BA_ "GenSigStartValue" SG_ 529 Motor_Cutoff_Req_RequestType 0;
+BA_ "Timeout_ms" SG_ 529 Motor_Cutoff_Req_RequestType 30;
 
-BA_ "Owner" SG_ 1280 DtcBc_DTC_Number "BSW Dem module";
-BA_ "ProducedBy" SG_ 1280 DtcBc_DTC_Number "Dem_MainFunction";
-BA_ "GenSigStartValue" SG_ 1280 DtcBc_DTC_Number 0;
+BA_ "Owner" SG_ 1280 DTC_Broadcast_DTC_Number "BSW Dem module";
+BA_ "ProducedBy" SG_ 1280 DTC_Broadcast_DTC_Number "Dem_MainFunction";
+BA_ "GenSigStartValue" SG_ 1280 DTC_Broadcast_DTC_Number 0;
 
-BA_ "Owner" SG_ 1 EStBc_E2E_DataID "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 1 EStBc_E2E_DataID "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 1 EStBc_E2E_DataID 0;
-BA_ "Owner" SG_ 1 EStBc_E2E_AliveCounter "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 1 EStBc_E2E_AliveCounter "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 1 EStBc_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 1 EStBc_E2E_CRC8 "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 1 EStBc_E2E_CRC8 "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 1 EStBc_E2E_CRC8 0;
-BA_ "Owner" SG_ 1 EStBc_EStop_Source "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 1 EStBc_EStop_Source "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 1 EStBc_EStop_Source 0;
-BA_ "Owner" SG_ 16 CvcHb_E2E_DataID "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 16 CvcHb_E2E_DataID "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 16 CvcHb_E2E_DataID 0;
-BA_ "Owner" SG_ 16 CvcHb_E2E_AliveCounter "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 16 CvcHb_E2E_AliveCounter "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 16 CvcHb_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 16 CvcHb_E2E_CRC8 "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 16 CvcHb_E2E_CRC8 "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 16 CvcHb_E2E_CRC8 0;
-BA_ "Owner" SG_ 16 CvcHb_ECU_ID "Swc_Heartbeat";
-BA_ "ProducedBy" SG_ 16 CvcHb_ECU_ID "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 16 CvcHb_ECU_ID 0;
-BA_ "Owner" SG_ 16 CvcHb_OperatingMode "Swc_Heartbeat";
-BA_ "ProducedBy" SG_ 16 CvcHb_OperatingMode "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 16 CvcHb_OperatingMode 0;
-BA_ "Owner" SG_ 16 CvcHb_FaultStatus "Swc_Heartbeat";
-BA_ "ProducedBy" SG_ 16 CvcHb_FaultStatus "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 16 CvcHb_FaultStatus 0;
-BA_ "Owner" SG_ 17 FzcHb_E2E_DataID "Swc_FzcCom";
-BA_ "ProducedBy" SG_ 17 FzcHb_E2E_DataID "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 17 FzcHb_E2E_DataID 0;
-BA_ "Owner" SG_ 17 FzcHb_E2E_AliveCounter "Swc_FzcCom";
-BA_ "ProducedBy" SG_ 17 FzcHb_E2E_AliveCounter "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 17 FzcHb_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 17 FzcHb_E2E_CRC8 "Swc_FzcCom";
-BA_ "ProducedBy" SG_ 17 FzcHb_E2E_CRC8 "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 17 FzcHb_E2E_CRC8 0;
-BA_ "Owner" SG_ 17 FzcHb_ECU_ID "Swc_Heartbeat";
-BA_ "ProducedBy" SG_ 17 FzcHb_ECU_ID "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 17 FzcHb_ECU_ID 0;
-BA_ "Owner" SG_ 17 FzcHb_OperatingMode "Swc_Heartbeat";
-BA_ "ProducedBy" SG_ 17 FzcHb_OperatingMode "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 17 FzcHb_OperatingMode 0;
-BA_ "Owner" SG_ 17 FzcHb_FaultStatus "Swc_Heartbeat";
-BA_ "ProducedBy" SG_ 17 FzcHb_FaultStatus "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 17 FzcHb_FaultStatus 0;
-BA_ "Owner" SG_ 18 RzcHb_E2E_DataID "Swc_RzcCom";
-BA_ "ProducedBy" SG_ 18 RzcHb_E2E_DataID "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 18 RzcHb_E2E_DataID 0;
-BA_ "Owner" SG_ 18 RzcHb_E2E_AliveCounter "Swc_RzcCom";
-BA_ "ProducedBy" SG_ 18 RzcHb_E2E_AliveCounter "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 18 RzcHb_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 18 RzcHb_E2E_CRC8 "Swc_RzcCom";
-BA_ "ProducedBy" SG_ 18 RzcHb_E2E_CRC8 "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 18 RzcHb_E2E_CRC8 0;
-BA_ "Owner" SG_ 18 RzcHb_ECU_ID "Swc_Heartbeat";
-BA_ "ProducedBy" SG_ 18 RzcHb_ECU_ID "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 18 RzcHb_ECU_ID 0;
-BA_ "Owner" SG_ 18 RzcHb_OperatingMode "Swc_Heartbeat";
-BA_ "ProducedBy" SG_ 18 RzcHb_OperatingMode "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 18 RzcHb_OperatingMode 0;
-BA_ "Owner" SG_ 18 RzcHb_FaultStatus "Swc_Heartbeat";
-BA_ "ProducedBy" SG_ 18 RzcHb_FaultStatus "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 18 RzcHb_FaultStatus 0;
-BA_ "Owner" SG_ 19 ScSt_AliveCounter "SC firmware (sc_monitoring.c)";
-BA_ "ProducedBy" SG_ 19 ScSt_AliveCounter "SC firmware (sc_can.c)";
-BA_ "GenSigStartValue" SG_ 19 ScSt_AliveCounter 0;
-BA_ "Owner" SG_ 19 ScSt_CRC8 "SC firmware (sc_monitoring.c)";
-BA_ "ProducedBy" SG_ 19 ScSt_CRC8 "SC firmware (sc_can.c)";
-BA_ "GenSigStartValue" SG_ 19 ScSt_CRC8 0;
-BA_ "Owner" SG_ 19 ScSt_Mode "SC firmware (sc_state.c)";
-BA_ "ProducedBy" SG_ 19 ScSt_Mode "SC firmware (sc_can.c)";
-BA_ "GenSigStartValue" SG_ 19 ScSt_Mode 0;
-BA_ "Owner" SG_ 19 ScSt_FaultFlags "SC firmware (sc_relay.c)";
-BA_ "ProducedBy" SG_ 19 ScSt_FaultFlags "SC firmware (sc_can.c)";
-BA_ "GenSigStartValue" SG_ 19 ScSt_FaultFlags 0;
-BA_ "Owner" SG_ 19 ScSt_ECU_Health "SC firmware (sc_selftest.c)";
-BA_ "ProducedBy" SG_ 19 ScSt_ECU_Health "SC firmware (sc_can.c)";
-BA_ "GenSigStartValue" SG_ 19 ScSt_ECU_Health 0;
-BA_ "Owner" SG_ 19 ScSt_FaultReason "SC firmware (sc_relay.c)";
-BA_ "ProducedBy" SG_ 19 ScSt_FaultReason "SC firmware (sc_can.c)";
-BA_ "GenSigStartValue" SG_ 19 ScSt_FaultReason 0;
-BA_ "Owner" SG_ 20 IcuHb_E2E_DataID "Swc_Dashboard";
-BA_ "ProducedBy" SG_ 20 IcuHb_E2E_DataID "Swc_Dashboard";
-BA_ "GenSigStartValue" SG_ 20 IcuHb_E2E_DataID 0;
-BA_ "Owner" SG_ 20 IcuHb_E2E_AliveCounter "Swc_Dashboard";
-BA_ "ProducedBy" SG_ 20 IcuHb_E2E_AliveCounter "Swc_Dashboard";
-BA_ "GenSigStartValue" SG_ 20 IcuHb_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 20 IcuHb_E2E_CRC8 "Swc_Dashboard";
-BA_ "ProducedBy" SG_ 20 IcuHb_E2E_CRC8 "Swc_Dashboard";
-BA_ "GenSigStartValue" SG_ 20 IcuHb_E2E_CRC8 0;
-BA_ "Owner" SG_ 20 IcuHb_AliveCounter "Swc_Dashboard";
-BA_ "ProducedBy" SG_ 20 IcuHb_AliveCounter "Swc_Dashboard";
-BA_ "GenSigStartValue" SG_ 20 IcuHb_AliveCounter 0;
-BA_ "Owner" SG_ 20 IcuHb_ECU_ID "Swc_Dashboard";
-BA_ "ProducedBy" SG_ 20 IcuHb_ECU_ID "Swc_Dashboard";
-BA_ "GenSigStartValue" SG_ 20 IcuHb_ECU_ID 0;
-BA_ "Owner" SG_ 21 TcuHb_E2E_DataID "Swc_UdsServer";
-BA_ "ProducedBy" SG_ 21 TcuHb_E2E_DataID "Swc_UdsServer";
-BA_ "GenSigStartValue" SG_ 21 TcuHb_E2E_DataID 0;
-BA_ "Owner" SG_ 21 TcuHb_E2E_AliveCounter "Swc_UdsServer";
-BA_ "ProducedBy" SG_ 21 TcuHb_E2E_AliveCounter "Swc_UdsServer";
-BA_ "GenSigStartValue" SG_ 21 TcuHb_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 21 TcuHb_E2E_CRC8 "Swc_UdsServer";
-BA_ "ProducedBy" SG_ 21 TcuHb_E2E_CRC8 "Swc_UdsServer";
-BA_ "GenSigStartValue" SG_ 21 TcuHb_E2E_CRC8 0;
-BA_ "Owner" SG_ 21 TcuHb_AliveCounter "Swc_DataAggregator";
-BA_ "ProducedBy" SG_ 21 TcuHb_AliveCounter "Swc_UdsServer";
-BA_ "GenSigStartValue" SG_ 21 TcuHb_AliveCounter 0;
-BA_ "Owner" SG_ 21 TcuHb_ECU_ID "Swc_DataAggregator";
-BA_ "ProducedBy" SG_ 21 TcuHb_ECU_ID "Swc_UdsServer";
-BA_ "GenSigStartValue" SG_ 21 TcuHb_ECU_ID 0;
-BA_ "Owner" SG_ 22 BcmHb_E2E_DataID "Swc_BcmCan";
-BA_ "ProducedBy" SG_ 22 BcmHb_E2E_DataID "Swc_BcmCan";
-BA_ "GenSigStartValue" SG_ 22 BcmHb_E2E_DataID 0;
-BA_ "Owner" SG_ 22 BcmHb_E2E_AliveCounter "Swc_BcmCan";
-BA_ "ProducedBy" SG_ 22 BcmHb_E2E_AliveCounter "Swc_BcmCan";
-BA_ "GenSigStartValue" SG_ 22 BcmHb_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 22 BcmHb_E2E_CRC8 "Swc_BcmCan";
-BA_ "ProducedBy" SG_ 22 BcmHb_E2E_CRC8 "Swc_BcmCan";
-BA_ "GenSigStartValue" SG_ 22 BcmHb_E2E_CRC8 0;
-BA_ "Owner" SG_ 22 BcmHb_AliveCounter "Swc_BcmMain";
-BA_ "ProducedBy" SG_ 22 BcmHb_AliveCounter "Swc_BcmCan";
-BA_ "GenSigStartValue" SG_ 22 BcmHb_AliveCounter 0;
-BA_ "Owner" SG_ 22 BcmHb_ECU_ID "Swc_BcmMain";
-BA_ "ProducedBy" SG_ 22 BcmHb_ECU_ID "Swc_BcmCan";
-BA_ "GenSigStartValue" SG_ 22 BcmHb_ECU_ID 0;
-BA_ "Owner" SG_ 256 VehSt_E2E_DataID "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 256 VehSt_E2E_DataID "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 256 VehSt_E2E_DataID 0;
-BA_ "Owner" SG_ 256 VehSt_E2E_AliveCounter "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 256 VehSt_E2E_AliveCounter "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 256 VehSt_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 256 VehSt_E2E_CRC8 "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 256 VehSt_E2E_CRC8 "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 256 VehSt_E2E_CRC8 0;
-BA_ "Owner" SG_ 256 VehSt_TorqueLimit "Swc_VehicleState";
-BA_ "ProducedBy" SG_ 256 VehSt_TorqueLimit "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 256 VehSt_TorqueLimit 0;
-BA_ "Owner" SG_ 256 VehSt_SpeedLimit "Swc_VehicleState";
-BA_ "ProducedBy" SG_ 256 VehSt_SpeedLimit "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 256 VehSt_SpeedLimit 0;
-BA_ "Owner" SG_ 257 TrqRq_E2E_DataID "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 257 TrqRq_E2E_DataID "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 257 TrqRq_E2E_DataID 0;
-BA_ "Owner" SG_ 257 TrqRq_E2E_AliveCounter "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 257 TrqRq_E2E_AliveCounter "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 257 TrqRq_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 257 TrqRq_E2E_CRC8 "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 257 TrqRq_E2E_CRC8 "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 257 TrqRq_E2E_CRC8 0;
-BA_ "Owner" SG_ 257 TrqRq_Direction "Swc_Pedal";
-BA_ "ProducedBy" SG_ 257 TrqRq_Direction "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 257 TrqRq_Direction 0;
-BA_ "Owner" SG_ 257 TrqRq_PedalPosition1 "Swc_Pedal";
-BA_ "ProducedBy" SG_ 257 TrqRq_PedalPosition1 "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 257 TrqRq_PedalPosition1 0;
-BA_ "Owner" SG_ 257 TrqRq_PedalPosition2 "Swc_Pedal";
-BA_ "ProducedBy" SG_ 257 TrqRq_PedalPosition2 "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 257 TrqRq_PedalPosition2 0;
-BA_ "Owner" SG_ 257 TrqRq_PedalFault "Swc_Pedal";
-BA_ "ProducedBy" SG_ 257 TrqRq_PedalFault "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 257 TrqRq_PedalFault 0;
-BA_ "Owner" SG_ 258 StrCmd_E2E_DataID "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 258 StrCmd_E2E_DataID "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 258 StrCmd_E2E_DataID 0;
-BA_ "Owner" SG_ 258 StrCmd_E2E_AliveCounter "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 258 StrCmd_E2E_AliveCounter "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 258 StrCmd_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 258 StrCmd_E2E_CRC8 "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 258 StrCmd_E2E_CRC8 "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 258 StrCmd_E2E_CRC8 0;
-BA_ "Owner" SG_ 258 StrCmd_SteerRateLimit "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 258 StrCmd_SteerRateLimit "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 258 StrCmd_SteerRateLimit 0;
-BA_ "Owner" SG_ 258 StrCmd_VehicleState "Swc_VehicleState";
-BA_ "ProducedBy" SG_ 258 StrCmd_VehicleState "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 258 StrCmd_VehicleState 0;
-BA_ "Owner" SG_ 259 BrkCmd_E2E_DataID "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 259 BrkCmd_E2E_DataID "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 259 BrkCmd_E2E_DataID 0;
-BA_ "Owner" SG_ 259 BrkCmd_E2E_AliveCounter "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 259 BrkCmd_E2E_AliveCounter "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 259 BrkCmd_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 259 BrkCmd_E2E_CRC8 "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 259 BrkCmd_E2E_CRC8 "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 259 BrkCmd_E2E_CRC8 0;
-BA_ "Owner" SG_ 259 BrkCmd_BrakeMode "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 259 BrkCmd_BrakeMode "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 259 BrkCmd_BrakeMode 0;
-BA_ "Owner" SG_ 259 BrkCmd_VehicleState "Swc_VehicleState";
-BA_ "ProducedBy" SG_ 259 BrkCmd_VehicleState "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 259 BrkCmd_VehicleState 0;
-BA_ "Owner" SG_ 512 StrSt_E2E_DataID "Swc_FzcCom";
-BA_ "ProducedBy" SG_ 512 StrSt_E2E_DataID "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 512 StrSt_E2E_DataID 0;
-BA_ "Owner" SG_ 512 StrSt_E2E_AliveCounter "Swc_FzcCom";
-BA_ "ProducedBy" SG_ 512 StrSt_E2E_AliveCounter "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 512 StrSt_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 512 StrSt_E2E_CRC8 "Swc_FzcCom";
-BA_ "ProducedBy" SG_ 512 StrSt_E2E_CRC8 "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 512 StrSt_E2E_CRC8 0;
-BA_ "Owner" SG_ 512 StrSt_ActualAngle "Swc_Steering";
-BA_ "ProducedBy" SG_ 512 StrSt_ActualAngle "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 512 StrSt_ActualAngle 0;
-BA_ "Owner" SG_ 512 StrSt_CommandedAngle "Swc_Steering";
-BA_ "ProducedBy" SG_ 512 StrSt_CommandedAngle "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 512 StrSt_CommandedAngle 0;
-BA_ "Owner" SG_ 512 StrSt_SteerFaultStatus "Swc_Steering";
-BA_ "ProducedBy" SG_ 512 StrSt_SteerFaultStatus "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 512 StrSt_SteerFaultStatus 0;
-BA_ "Owner" SG_ 512 StrSt_SteerMode "Swc_Steering";
-BA_ "ProducedBy" SG_ 512 StrSt_SteerMode "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 512 StrSt_SteerMode 0;
-BA_ "Owner" SG_ 512 StrSt_ServoCurrent_mA "Swc_Steering";
-BA_ "ProducedBy" SG_ 512 StrSt_ServoCurrent_mA "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 512 StrSt_ServoCurrent_mA 0;
-BA_ "Owner" SG_ 513 BrkSt_E2E_DataID "Swc_FzcCom";
-BA_ "ProducedBy" SG_ 513 BrkSt_E2E_DataID "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 513 BrkSt_E2E_DataID 0;
-BA_ "Owner" SG_ 513 BrkSt_E2E_AliveCounter "Swc_FzcCom";
-BA_ "ProducedBy" SG_ 513 BrkSt_E2E_AliveCounter "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 513 BrkSt_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 513 BrkSt_E2E_CRC8 "Swc_FzcCom";
-BA_ "ProducedBy" SG_ 513 BrkSt_E2E_CRC8 "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 513 BrkSt_E2E_CRC8 0;
-BA_ "Owner" SG_ 513 BrkSt_BrakePosition "Swc_Brake";
-BA_ "ProducedBy" SG_ 513 BrkSt_BrakePosition "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 513 BrkSt_BrakePosition 0;
-BA_ "Owner" SG_ 513 BrkSt_BrakeCommandEcho "Swc_Brake";
-BA_ "ProducedBy" SG_ 513 BrkSt_BrakeCommandEcho "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 513 BrkSt_BrakeCommandEcho 0;
-BA_ "Owner" SG_ 513 BrkSt_ServoCurrent_mA "Swc_Brake";
-BA_ "ProducedBy" SG_ 513 BrkSt_ServoCurrent_mA "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 513 BrkSt_ServoCurrent_mA 0;
-BA_ "Owner" SG_ 513 BrkSt_BrakeFaultStatus "Swc_Brake";
-BA_ "ProducedBy" SG_ 513 BrkSt_BrakeFaultStatus "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 513 BrkSt_BrakeFaultStatus 0;
-BA_ "Owner" SG_ 513 BrkSt_BrakeMode "Swc_Brake";
-BA_ "ProducedBy" SG_ 513 BrkSt_BrakeMode "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 513 BrkSt_BrakeMode 0;
-BA_ "Owner" SG_ 528 BrkFlt_E2E_DataID "Swc_FzcCom";
-BA_ "ProducedBy" SG_ 528 BrkFlt_E2E_DataID "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 528 BrkFlt_E2E_DataID 0;
-BA_ "Owner" SG_ 528 BrkFlt_E2E_AliveCounter "Swc_FzcCom";
-BA_ "ProducedBy" SG_ 528 BrkFlt_E2E_AliveCounter "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 528 BrkFlt_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 528 BrkFlt_E2E_CRC8 "Swc_FzcCom";
-BA_ "ProducedBy" SG_ 528 BrkFlt_E2E_CRC8 "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 528 BrkFlt_E2E_CRC8 0;
-BA_ "Owner" SG_ 528 BrkFlt_CommandedBrake "Swc_Brake";
-BA_ "ProducedBy" SG_ 528 BrkFlt_CommandedBrake "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 528 BrkFlt_CommandedBrake 0;
-BA_ "Owner" SG_ 528 BrkFlt_MeasuredBrake "Swc_Brake";
-BA_ "ProducedBy" SG_ 528 BrkFlt_MeasuredBrake "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 528 BrkFlt_MeasuredBrake 0;
-BA_ "Owner" SG_ 529 MtrCut_E2E_DataID "Swc_FzcCom";
-BA_ "ProducedBy" SG_ 529 MtrCut_E2E_DataID "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 529 MtrCut_E2E_DataID 0;
-BA_ "Owner" SG_ 529 MtrCut_E2E_AliveCounter "Swc_FzcCom";
-BA_ "ProducedBy" SG_ 529 MtrCut_E2E_AliveCounter "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 529 MtrCut_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 529 MtrCut_E2E_CRC8 "Swc_FzcCom";
-BA_ "ProducedBy" SG_ 529 MtrCut_E2E_CRC8 "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 529 MtrCut_E2E_CRC8 0;
-BA_ "Owner" SG_ 529 MtrCut_Reason "Swc_FzcSafety";
-BA_ "ProducedBy" SG_ 529 MtrCut_Reason "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 529 MtrCut_Reason 0;
-BA_ "Owner" SG_ 544 LidarD_E2E_DataID "Swc_FzcCom";
-BA_ "ProducedBy" SG_ 544 LidarD_E2E_DataID "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 544 LidarD_E2E_DataID 0;
-BA_ "Owner" SG_ 544 LidarD_E2E_AliveCounter "Swc_FzcCom";
-BA_ "ProducedBy" SG_ 544 LidarD_E2E_AliveCounter "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 544 LidarD_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 544 LidarD_E2E_CRC8 "Swc_FzcCom";
-BA_ "ProducedBy" SG_ 544 LidarD_E2E_CRC8 "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 544 LidarD_E2E_CRC8 0;
-BA_ "Owner" SG_ 544 LidarD_Distance_cm "Swc_Lidar";
-BA_ "ProducedBy" SG_ 544 LidarD_Distance_cm "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 544 LidarD_Distance_cm 0;
-BA_ "Owner" SG_ 544 LidarD_SignalStrength "Swc_Lidar";
-BA_ "ProducedBy" SG_ 544 LidarD_SignalStrength "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 544 LidarD_SignalStrength 0;
-BA_ "Owner" SG_ 544 LidarD_ObstacleZone "Swc_Lidar";
-BA_ "ProducedBy" SG_ 544 LidarD_ObstacleZone "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 544 LidarD_ObstacleZone 0;
-BA_ "Owner" SG_ 544 LidarD_SensorStatus "Swc_Lidar";
-BA_ "ProducedBy" SG_ 544 LidarD_SensorStatus "Swc_FzcCom";
-BA_ "GenSigStartValue" SG_ 544 LidarD_SensorStatus 0;
-BA_ "Owner" SG_ 768 MtrSt_E2E_DataID "Swc_RzcCom";
-BA_ "ProducedBy" SG_ 768 MtrSt_E2E_DataID "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 768 MtrSt_E2E_DataID 0;
-BA_ "Owner" SG_ 768 MtrSt_E2E_AliveCounter "Swc_RzcCom";
-BA_ "ProducedBy" SG_ 768 MtrSt_E2E_AliveCounter "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 768 MtrSt_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 768 MtrSt_E2E_CRC8 "Swc_RzcCom";
-BA_ "ProducedBy" SG_ 768 MtrSt_E2E_CRC8 "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 768 MtrSt_E2E_CRC8 0;
-BA_ "Owner" SG_ 768 MtrSt_TorqueEcho "Swc_Motor";
-BA_ "ProducedBy" SG_ 768 MtrSt_TorqueEcho "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 768 MtrSt_TorqueEcho 0;
-BA_ "Owner" SG_ 768 MtrSt_MotorDirection "Swc_Motor";
-BA_ "ProducedBy" SG_ 768 MtrSt_MotorDirection "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 768 MtrSt_MotorDirection 0;
-BA_ "Owner" SG_ 768 MtrSt_MotorEnable "Swc_Motor";
-BA_ "ProducedBy" SG_ 768 MtrSt_MotorEnable "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 768 MtrSt_MotorEnable 0;
-BA_ "Owner" SG_ 769 MtrCur_E2E_DataID "Swc_RzcCom";
-BA_ "ProducedBy" SG_ 769 MtrCur_E2E_DataID "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 769 MtrCur_E2E_DataID 0;
-BA_ "Owner" SG_ 769 MtrCur_E2E_AliveCounter "Swc_RzcCom";
-BA_ "ProducedBy" SG_ 769 MtrCur_E2E_AliveCounter "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 769 MtrCur_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 769 MtrCur_E2E_CRC8 "Swc_RzcCom";
-BA_ "ProducedBy" SG_ 769 MtrCur_E2E_CRC8 "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 769 MtrCur_E2E_CRC8 0;
-BA_ "Owner" SG_ 769 MtrCur_DirIsReverse "Swc_CurrentMonitor";
-BA_ "ProducedBy" SG_ 769 MtrCur_DirIsReverse "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 769 MtrCur_DirIsReverse 0;
-BA_ "Owner" SG_ 769 MtrCur_MotorEnable "Swc_Motor";
-BA_ "ProducedBy" SG_ 769 MtrCur_MotorEnable "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 769 MtrCur_MotorEnable 0;
-BA_ "Owner" SG_ 769 MtrCur_TorqueEcho "Swc_Motor";
-BA_ "ProducedBy" SG_ 769 MtrCur_TorqueEcho "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 769 MtrCur_TorqueEcho 0;
-BA_ "Owner" SG_ 770 MtrTmp_E2E_DataID "Swc_RzcCom";
-BA_ "ProducedBy" SG_ 770 MtrTmp_E2E_DataID "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 770 MtrTmp_E2E_DataID 0;
-BA_ "Owner" SG_ 770 MtrTmp_E2E_AliveCounter "Swc_RzcCom";
-BA_ "ProducedBy" SG_ 770 MtrTmp_E2E_AliveCounter "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 770 MtrTmp_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 770 MtrTmp_E2E_CRC8 "Swc_RzcCom";
-BA_ "ProducedBy" SG_ 770 MtrTmp_E2E_CRC8 "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 770 MtrTmp_E2E_CRC8 0;
-BA_ "Owner" SG_ 770 MtrTmp_WindingTemp2_C "Swc_TempMonitor";
-BA_ "ProducedBy" SG_ 770 MtrTmp_WindingTemp2_C "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 770 MtrTmp_WindingTemp2_C 0;
-BA_ "Owner" SG_ 770 MtrTmp_DeratingPercent "Swc_TempMonitor";
-BA_ "ProducedBy" SG_ 770 MtrTmp_DeratingPercent "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 770 MtrTmp_DeratingPercent 0;
-BA_ "Owner" SG_ 771 BatSt_E2E_DataID "Swc_RzcCom";
-BA_ "ProducedBy" SG_ 771 BatSt_E2E_DataID "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 771 BatSt_E2E_DataID 0;
-BA_ "Owner" SG_ 771 BatSt_E2E_AliveCounter "Swc_RzcCom";
-BA_ "ProducedBy" SG_ 771 BatSt_E2E_AliveCounter "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 771 BatSt_E2E_AliveCounter 0;
-BA_ "Owner" SG_ 771 BatSt_E2E_CRC8 "Swc_RzcCom";
-BA_ "ProducedBy" SG_ 771 BatSt_E2E_CRC8 "Swc_RzcCom";
-BA_ "GenSigStartValue" SG_ 771 BatSt_E2E_CRC8 0;
-BA_ "Owner" SG_ 848 BdyCmd_HeadlightCmd "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 848 BdyCmd_HeadlightCmd "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 848 BdyCmd_HeadlightCmd 0;
-BA_ "Owner" SG_ 848 BdyCmd_TailLightOn "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 848 BdyCmd_TailLightOn "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 848 BdyCmd_TailLightOn 0;
-BA_ "Owner" SG_ 848 BdyCmd_HazardActive "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 848 BdyCmd_HazardActive "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 848 BdyCmd_HazardActive 0;
-BA_ "Owner" SG_ 848 BdyCmd_TurnSignalCmd "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 848 BdyCmd_TurnSignalCmd "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 848 BdyCmd_TurnSignalCmd 0;
-BA_ "Owner" SG_ 848 BdyCmd_DoorLockCmd "Swc_CvcCom";
-BA_ "ProducedBy" SG_ 848 BdyCmd_DoorLockCmd "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 848 BdyCmd_DoorLockCmd 0;
-BA_ "Owner" SG_ 1024 LtSt_HeadlightOn "Swc_Lights";
-BA_ "ProducedBy" SG_ 1024 LtSt_HeadlightOn "Swc_BcmCan";
-BA_ "GenSigStartValue" SG_ 1024 LtSt_HeadlightOn 0;
-BA_ "Owner" SG_ 1024 LtSt_TailLightOn "Swc_Lights";
-BA_ "ProducedBy" SG_ 1024 LtSt_TailLightOn "Swc_BcmCan";
-BA_ "GenSigStartValue" SG_ 1024 LtSt_TailLightOn 0;
-BA_ "Owner" SG_ 1024 LtSt_FogLightOn "Swc_Lights";
-BA_ "ProducedBy" SG_ 1024 LtSt_FogLightOn "Swc_BcmCan";
-BA_ "GenSigStartValue" SG_ 1024 LtSt_FogLightOn 0;
-BA_ "Owner" SG_ 1024 LtSt_BrakeLightOn "Swc_Lights";
-BA_ "ProducedBy" SG_ 1024 LtSt_BrakeLightOn "Swc_BcmCan";
-BA_ "GenSigStartValue" SG_ 1024 LtSt_BrakeLightOn 0;
-BA_ "Owner" SG_ 1024 LtSt_HeadlightLevel "Swc_Lights";
-BA_ "ProducedBy" SG_ 1024 LtSt_HeadlightLevel "Swc_BcmCan";
-BA_ "GenSigStartValue" SG_ 1024 LtSt_HeadlightLevel 0;
-BA_ "Owner" SG_ 1025 IndSt_LeftOn "Swc_Indicators";
-BA_ "ProducedBy" SG_ 1025 IndSt_LeftOn "Swc_BcmCan";
-BA_ "GenSigStartValue" SG_ 1025 IndSt_LeftOn 0;
-BA_ "Owner" SG_ 1025 IndSt_RightOn "Swc_Indicators";
-BA_ "ProducedBy" SG_ 1025 IndSt_RightOn "Swc_BcmCan";
-BA_ "GenSigStartValue" SG_ 1025 IndSt_RightOn 0;
-BA_ "Owner" SG_ 1025 IndSt_HazardActive "Swc_Indicators";
-BA_ "ProducedBy" SG_ 1025 IndSt_HazardActive "Swc_BcmCan";
-BA_ "GenSigStartValue" SG_ 1025 IndSt_HazardActive 0;
-BA_ "Owner" SG_ 1025 IndSt_BlinkPhaseHigh "Swc_Indicators";
-BA_ "ProducedBy" SG_ 1025 IndSt_BlinkPhaseHigh "Swc_BcmCan";
-BA_ "GenSigStartValue" SG_ 1025 IndSt_BlinkPhaseHigh 0;
-BA_ "Owner" SG_ 1026 DlkSt_FrontLeftLock "Swc_DoorLock";
-BA_ "ProducedBy" SG_ 1026 DlkSt_FrontLeftLock "Swc_BcmCan";
-BA_ "GenSigStartValue" SG_ 1026 DlkSt_FrontLeftLock 0;
-BA_ "Owner" SG_ 1026 DlkSt_FrontRightLock "Swc_DoorLock";
-BA_ "ProducedBy" SG_ 1026 DlkSt_FrontRightLock "Swc_BcmCan";
-BA_ "GenSigStartValue" SG_ 1026 DlkSt_FrontRightLock 0;
-BA_ "Owner" SG_ 1026 DlkSt_RearLeftLock "Swc_DoorLock";
-BA_ "ProducedBy" SG_ 1026 DlkSt_RearLeftLock "Swc_BcmCan";
-BA_ "GenSigStartValue" SG_ 1026 DlkSt_RearLeftLock 0;
-BA_ "Owner" SG_ 1026 DlkSt_RearRightLock "Swc_DoorLock";
-BA_ "ProducedBy" SG_ 1026 DlkSt_RearRightLock "Swc_BcmCan";
-BA_ "GenSigStartValue" SG_ 1026 DlkSt_RearRightLock 0;
-BA_ "Owner" SG_ 1026 DlkSt_CentralLock "Swc_DoorLock";
-BA_ "ProducedBy" SG_ 1026 DlkSt_CentralLock "Swc_BcmCan";
-BA_ "GenSigStartValue" SG_ 1026 DlkSt_CentralLock 0;
-BA_ "Owner" SG_ 1280 DtcBc_DTC_Status "BSW Dem module";
-BA_ "ProducedBy" SG_ 1280 DtcBc_DTC_Status "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 1280 DtcBc_DTC_Status 0;
-BA_ "Owner" SG_ 1280 DtcBc_ECU_Source "BSW Dem module";
-BA_ "ProducedBy" SG_ 1280 DtcBc_ECU_Source "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 1280 DtcBc_ECU_Source 0;
-BA_ "Owner" SG_ 1280 DtcBc_OccurrenceCount "BSW Dem module";
-BA_ "ProducedBy" SG_ 1280 DtcBc_OccurrenceCount "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 1280 DtcBc_OccurrenceCount 0;
-BA_ "Owner" SG_ 1280 DtcBc_FreezeFrame0 "BSW Dem module";
-BA_ "ProducedBy" SG_ 1280 DtcBc_FreezeFrame0 "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 1280 DtcBc_FreezeFrame0 0;
-BA_ "Owner" SG_ 1280 DtcBc_FreezeFrame1 "BSW Dem module";
-BA_ "ProducedBy" SG_ 1280 DtcBc_FreezeFrame1 "Swc_CvcCom";
-BA_ "GenSigStartValue" SG_ 1280 DtcBc_FreezeFrame1 0;
+BA_ "Owner" SG_ 1 EStop_Broadcast_E2E_DataID "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 1 EStop_Broadcast_E2E_DataID "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 1 EStop_Broadcast_E2E_DataID 0;
+BA_ "Owner" SG_ 1 EStop_Broadcast_E2E_AliveCounter "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 1 EStop_Broadcast_E2E_AliveCounter "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 1 EStop_Broadcast_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 1 EStop_Broadcast_E2E_CRC8 "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 1 EStop_Broadcast_E2E_CRC8 "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 1 EStop_Broadcast_E2E_CRC8 0;
+BA_ "Owner" SG_ 1 EStop_Broadcast_EStop_Source "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 1 EStop_Broadcast_EStop_Source "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 1 EStop_Broadcast_EStop_Source 0;
+BA_ "Owner" SG_ 16 CVC_Heartbeat_E2E_DataID "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 16 CVC_Heartbeat_E2E_DataID "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 16 CVC_Heartbeat_E2E_DataID 0;
+BA_ "Owner" SG_ 16 CVC_Heartbeat_E2E_AliveCounter "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 16 CVC_Heartbeat_E2E_AliveCounter "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 16 CVC_Heartbeat_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 16 CVC_Heartbeat_E2E_CRC8 "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 16 CVC_Heartbeat_E2E_CRC8 "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 16 CVC_Heartbeat_E2E_CRC8 0;
+BA_ "Owner" SG_ 16 CVC_Heartbeat_ECU_ID "Swc_Heartbeat";
+BA_ "ProducedBy" SG_ 16 CVC_Heartbeat_ECU_ID "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 16 CVC_Heartbeat_ECU_ID 0;
+BA_ "Owner" SG_ 16 CVC_Heartbeat_OperatingMode "Swc_Heartbeat";
+BA_ "ProducedBy" SG_ 16 CVC_Heartbeat_OperatingMode "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 16 CVC_Heartbeat_OperatingMode 0;
+BA_ "Owner" SG_ 16 CVC_Heartbeat_FaultStatus "Swc_Heartbeat";
+BA_ "ProducedBy" SG_ 16 CVC_Heartbeat_FaultStatus "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 16 CVC_Heartbeat_FaultStatus 0;
+BA_ "Owner" SG_ 17 FZC_Heartbeat_E2E_DataID "Swc_FzcCom";
+BA_ "ProducedBy" SG_ 17 FZC_Heartbeat_E2E_DataID "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 17 FZC_Heartbeat_E2E_DataID 0;
+BA_ "Owner" SG_ 17 FZC_Heartbeat_E2E_AliveCounter "Swc_FzcCom";
+BA_ "ProducedBy" SG_ 17 FZC_Heartbeat_E2E_AliveCounter "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 17 FZC_Heartbeat_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 17 FZC_Heartbeat_E2E_CRC8 "Swc_FzcCom";
+BA_ "ProducedBy" SG_ 17 FZC_Heartbeat_E2E_CRC8 "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 17 FZC_Heartbeat_E2E_CRC8 0;
+BA_ "Owner" SG_ 17 FZC_Heartbeat_ECU_ID "Swc_Heartbeat";
+BA_ "ProducedBy" SG_ 17 FZC_Heartbeat_ECU_ID "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 17 FZC_Heartbeat_ECU_ID 0;
+BA_ "Owner" SG_ 17 FZC_Heartbeat_OperatingMode "Swc_Heartbeat";
+BA_ "ProducedBy" SG_ 17 FZC_Heartbeat_OperatingMode "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 17 FZC_Heartbeat_OperatingMode 0;
+BA_ "Owner" SG_ 17 FZC_Heartbeat_FaultStatus "Swc_Heartbeat";
+BA_ "ProducedBy" SG_ 17 FZC_Heartbeat_FaultStatus "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 17 FZC_Heartbeat_FaultStatus 0;
+BA_ "Owner" SG_ 18 RZC_Heartbeat_E2E_DataID "Swc_RzcCom";
+BA_ "ProducedBy" SG_ 18 RZC_Heartbeat_E2E_DataID "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 18 RZC_Heartbeat_E2E_DataID 0;
+BA_ "Owner" SG_ 18 RZC_Heartbeat_E2E_AliveCounter "Swc_RzcCom";
+BA_ "ProducedBy" SG_ 18 RZC_Heartbeat_E2E_AliveCounter "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 18 RZC_Heartbeat_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 18 RZC_Heartbeat_E2E_CRC8 "Swc_RzcCom";
+BA_ "ProducedBy" SG_ 18 RZC_Heartbeat_E2E_CRC8 "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 18 RZC_Heartbeat_E2E_CRC8 0;
+BA_ "Owner" SG_ 18 RZC_Heartbeat_ECU_ID "Swc_Heartbeat";
+BA_ "ProducedBy" SG_ 18 RZC_Heartbeat_ECU_ID "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 18 RZC_Heartbeat_ECU_ID 0;
+BA_ "Owner" SG_ 18 RZC_Heartbeat_OperatingMode "Swc_Heartbeat";
+BA_ "ProducedBy" SG_ 18 RZC_Heartbeat_OperatingMode "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 18 RZC_Heartbeat_OperatingMode 0;
+BA_ "Owner" SG_ 18 RZC_Heartbeat_FaultStatus "Swc_Heartbeat";
+BA_ "ProducedBy" SG_ 18 RZC_Heartbeat_FaultStatus "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 18 RZC_Heartbeat_FaultStatus 0;
+BA_ "Owner" SG_ 19 SC_Status_AliveCounter "SC firmware (sc_monitoring.c)";
+BA_ "ProducedBy" SG_ 19 SC_Status_AliveCounter "SC firmware (sc_can.c)";
+BA_ "GenSigStartValue" SG_ 19 SC_Status_AliveCounter 0;
+BA_ "Owner" SG_ 19 SC_Status_CRC8 "SC firmware (sc_monitoring.c)";
+BA_ "ProducedBy" SG_ 19 SC_Status_CRC8 "SC firmware (sc_can.c)";
+BA_ "GenSigStartValue" SG_ 19 SC_Status_CRC8 0;
+BA_ "Owner" SG_ 19 SC_Status_Mode "SC firmware (sc_state.c)";
+BA_ "ProducedBy" SG_ 19 SC_Status_Mode "SC firmware (sc_can.c)";
+BA_ "GenSigStartValue" SG_ 19 SC_Status_Mode 0;
+BA_ "Owner" SG_ 19 SC_Status_FaultFlags "SC firmware (sc_relay.c)";
+BA_ "ProducedBy" SG_ 19 SC_Status_FaultFlags "SC firmware (sc_can.c)";
+BA_ "GenSigStartValue" SG_ 19 SC_Status_FaultFlags 0;
+BA_ "Owner" SG_ 19 SC_Status_ECU_Health "SC firmware (sc_selftest.c)";
+BA_ "ProducedBy" SG_ 19 SC_Status_ECU_Health "SC firmware (sc_can.c)";
+BA_ "GenSigStartValue" SG_ 19 SC_Status_ECU_Health 0;
+BA_ "Owner" SG_ 19 SC_Status_FaultReason "SC firmware (sc_relay.c)";
+BA_ "ProducedBy" SG_ 19 SC_Status_FaultReason "SC firmware (sc_can.c)";
+BA_ "GenSigStartValue" SG_ 19 SC_Status_FaultReason 0;
+BA_ "Owner" SG_ 20 ICU_Heartbeat_E2E_DataID "Swc_Dashboard";
+BA_ "ProducedBy" SG_ 20 ICU_Heartbeat_E2E_DataID "Swc_Dashboard";
+BA_ "GenSigStartValue" SG_ 20 ICU_Heartbeat_E2E_DataID 0;
+BA_ "Owner" SG_ 20 ICU_Heartbeat_E2E_AliveCounter "Swc_Dashboard";
+BA_ "ProducedBy" SG_ 20 ICU_Heartbeat_E2E_AliveCounter "Swc_Dashboard";
+BA_ "GenSigStartValue" SG_ 20 ICU_Heartbeat_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 20 ICU_Heartbeat_E2E_CRC8 "Swc_Dashboard";
+BA_ "ProducedBy" SG_ 20 ICU_Heartbeat_E2E_CRC8 "Swc_Dashboard";
+BA_ "GenSigStartValue" SG_ 20 ICU_Heartbeat_E2E_CRC8 0;
+BA_ "Owner" SG_ 20 ICU_Heartbeat_AliveCounter "Swc_Dashboard";
+BA_ "ProducedBy" SG_ 20 ICU_Heartbeat_AliveCounter "Swc_Dashboard";
+BA_ "GenSigStartValue" SG_ 20 ICU_Heartbeat_AliveCounter 0;
+BA_ "Owner" SG_ 20 ICU_Heartbeat_ECU_ID "Swc_Dashboard";
+BA_ "ProducedBy" SG_ 20 ICU_Heartbeat_ECU_ID "Swc_Dashboard";
+BA_ "GenSigStartValue" SG_ 20 ICU_Heartbeat_ECU_ID 0;
+BA_ "Owner" SG_ 21 TCU_Heartbeat_E2E_DataID "Swc_UdsServer";
+BA_ "ProducedBy" SG_ 21 TCU_Heartbeat_E2E_DataID "Swc_UdsServer";
+BA_ "GenSigStartValue" SG_ 21 TCU_Heartbeat_E2E_DataID 0;
+BA_ "Owner" SG_ 21 TCU_Heartbeat_E2E_AliveCounter "Swc_UdsServer";
+BA_ "ProducedBy" SG_ 21 TCU_Heartbeat_E2E_AliveCounter "Swc_UdsServer";
+BA_ "GenSigStartValue" SG_ 21 TCU_Heartbeat_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 21 TCU_Heartbeat_E2E_CRC8 "Swc_UdsServer";
+BA_ "ProducedBy" SG_ 21 TCU_Heartbeat_E2E_CRC8 "Swc_UdsServer";
+BA_ "GenSigStartValue" SG_ 21 TCU_Heartbeat_E2E_CRC8 0;
+BA_ "Owner" SG_ 21 TCU_Heartbeat_AliveCounter "Swc_DataAggregator";
+BA_ "ProducedBy" SG_ 21 TCU_Heartbeat_AliveCounter "Swc_UdsServer";
+BA_ "GenSigStartValue" SG_ 21 TCU_Heartbeat_AliveCounter 0;
+BA_ "Owner" SG_ 21 TCU_Heartbeat_ECU_ID "Swc_DataAggregator";
+BA_ "ProducedBy" SG_ 21 TCU_Heartbeat_ECU_ID "Swc_UdsServer";
+BA_ "GenSigStartValue" SG_ 21 TCU_Heartbeat_ECU_ID 0;
+BA_ "Owner" SG_ 22 BCM_Heartbeat_E2E_DataID "Swc_BcmCan";
+BA_ "ProducedBy" SG_ 22 BCM_Heartbeat_E2E_DataID "Swc_BcmCan";
+BA_ "GenSigStartValue" SG_ 22 BCM_Heartbeat_E2E_DataID 0;
+BA_ "Owner" SG_ 22 BCM_Heartbeat_E2E_AliveCounter "Swc_BcmCan";
+BA_ "ProducedBy" SG_ 22 BCM_Heartbeat_E2E_AliveCounter "Swc_BcmCan";
+BA_ "GenSigStartValue" SG_ 22 BCM_Heartbeat_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 22 BCM_Heartbeat_E2E_CRC8 "Swc_BcmCan";
+BA_ "ProducedBy" SG_ 22 BCM_Heartbeat_E2E_CRC8 "Swc_BcmCan";
+BA_ "GenSigStartValue" SG_ 22 BCM_Heartbeat_E2E_CRC8 0;
+BA_ "Owner" SG_ 22 BCM_Heartbeat_AliveCounter "Swc_BcmMain";
+BA_ "ProducedBy" SG_ 22 BCM_Heartbeat_AliveCounter "Swc_BcmCan";
+BA_ "GenSigStartValue" SG_ 22 BCM_Heartbeat_AliveCounter 0;
+BA_ "Owner" SG_ 22 BCM_Heartbeat_ECU_ID "Swc_BcmMain";
+BA_ "ProducedBy" SG_ 22 BCM_Heartbeat_ECU_ID "Swc_BcmCan";
+BA_ "GenSigStartValue" SG_ 22 BCM_Heartbeat_ECU_ID 0;
+BA_ "Owner" SG_ 256 Vehicle_State_E2E_DataID "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 256 Vehicle_State_E2E_DataID "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 256 Vehicle_State_E2E_DataID 0;
+BA_ "Owner" SG_ 256 Vehicle_State_E2E_AliveCounter "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 256 Vehicle_State_E2E_AliveCounter "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 256 Vehicle_State_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 256 Vehicle_State_E2E_CRC8 "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 256 Vehicle_State_E2E_CRC8 "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 256 Vehicle_State_E2E_CRC8 0;
+BA_ "Owner" SG_ 256 Vehicle_State_TorqueLimit "Swc_VehicleState";
+BA_ "ProducedBy" SG_ 256 Vehicle_State_TorqueLimit "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 256 Vehicle_State_TorqueLimit 0;
+BA_ "Owner" SG_ 256 Vehicle_State_SpeedLimit "Swc_VehicleState";
+BA_ "ProducedBy" SG_ 256 Vehicle_State_SpeedLimit "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 256 Vehicle_State_SpeedLimit 0;
+BA_ "Owner" SG_ 257 Torque_Request_E2E_DataID "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 257 Torque_Request_E2E_DataID "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 257 Torque_Request_E2E_DataID 0;
+BA_ "Owner" SG_ 257 Torque_Request_E2E_AliveCounter "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 257 Torque_Request_E2E_AliveCounter "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 257 Torque_Request_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 257 Torque_Request_E2E_CRC8 "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 257 Torque_Request_E2E_CRC8 "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 257 Torque_Request_E2E_CRC8 0;
+BA_ "Owner" SG_ 257 Torque_Request_Direction "Swc_Pedal";
+BA_ "ProducedBy" SG_ 257 Torque_Request_Direction "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 257 Torque_Request_Direction 0;
+BA_ "Owner" SG_ 257 Torque_Request_PedalPosition1 "Swc_Pedal";
+BA_ "ProducedBy" SG_ 257 Torque_Request_PedalPosition1 "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 257 Torque_Request_PedalPosition1 0;
+BA_ "Owner" SG_ 257 Torque_Request_PedalPosition2 "Swc_Pedal";
+BA_ "ProducedBy" SG_ 257 Torque_Request_PedalPosition2 "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 257 Torque_Request_PedalPosition2 0;
+BA_ "Owner" SG_ 257 Torque_Request_PedalFault "Swc_Pedal";
+BA_ "ProducedBy" SG_ 257 Torque_Request_PedalFault "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 257 Torque_Request_PedalFault 0;
+BA_ "Owner" SG_ 258 Steer_Command_E2E_DataID "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 258 Steer_Command_E2E_DataID "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 258 Steer_Command_E2E_DataID 0;
+BA_ "Owner" SG_ 258 Steer_Command_E2E_AliveCounter "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 258 Steer_Command_E2E_AliveCounter "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 258 Steer_Command_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 258 Steer_Command_E2E_CRC8 "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 258 Steer_Command_E2E_CRC8 "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 258 Steer_Command_E2E_CRC8 0;
+BA_ "Owner" SG_ 258 Steer_Command_SteerRateLimit "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 258 Steer_Command_SteerRateLimit "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 258 Steer_Command_SteerRateLimit 0;
+BA_ "Owner" SG_ 258 Steer_Command_VehicleState "Swc_VehicleState";
+BA_ "ProducedBy" SG_ 258 Steer_Command_VehicleState "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 258 Steer_Command_VehicleState 0;
+BA_ "Owner" SG_ 259 Brake_Command_E2E_DataID "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 259 Brake_Command_E2E_DataID "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 259 Brake_Command_E2E_DataID 0;
+BA_ "Owner" SG_ 259 Brake_Command_E2E_AliveCounter "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 259 Brake_Command_E2E_AliveCounter "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 259 Brake_Command_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 259 Brake_Command_E2E_CRC8 "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 259 Brake_Command_E2E_CRC8 "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 259 Brake_Command_E2E_CRC8 0;
+BA_ "Owner" SG_ 259 Brake_Command_BrakeMode "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 259 Brake_Command_BrakeMode "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 259 Brake_Command_BrakeMode 0;
+BA_ "Owner" SG_ 259 Brake_Command_VehicleState "Swc_VehicleState";
+BA_ "ProducedBy" SG_ 259 Brake_Command_VehicleState "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 259 Brake_Command_VehicleState 0;
+BA_ "Owner" SG_ 512 Steering_Status_E2E_DataID "Swc_FzcCom";
+BA_ "ProducedBy" SG_ 512 Steering_Status_E2E_DataID "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 512 Steering_Status_E2E_DataID 0;
+BA_ "Owner" SG_ 512 Steering_Status_E2E_AliveCounter "Swc_FzcCom";
+BA_ "ProducedBy" SG_ 512 Steering_Status_E2E_AliveCounter "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 512 Steering_Status_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 512 Steering_Status_E2E_CRC8 "Swc_FzcCom";
+BA_ "ProducedBy" SG_ 512 Steering_Status_E2E_CRC8 "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 512 Steering_Status_E2E_CRC8 0;
+BA_ "Owner" SG_ 512 Steering_Status_ActualAngle "Swc_Steering";
+BA_ "ProducedBy" SG_ 512 Steering_Status_ActualAngle "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 512 Steering_Status_ActualAngle 0;
+BA_ "Owner" SG_ 512 Steering_Status_CommandedAngle "Swc_Steering";
+BA_ "ProducedBy" SG_ 512 Steering_Status_CommandedAngle "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 512 Steering_Status_CommandedAngle 0;
+BA_ "Owner" SG_ 512 Steering_Status_SteerFaultStatus "Swc_Steering";
+BA_ "ProducedBy" SG_ 512 Steering_Status_SteerFaultStatus "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 512 Steering_Status_SteerFaultStatus 0;
+BA_ "Owner" SG_ 512 Steering_Status_SteerMode "Swc_Steering";
+BA_ "ProducedBy" SG_ 512 Steering_Status_SteerMode "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 512 Steering_Status_SteerMode 0;
+BA_ "Owner" SG_ 512 Steering_Status_ServoCurrent_mA "Swc_Steering";
+BA_ "ProducedBy" SG_ 512 Steering_Status_ServoCurrent_mA "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 512 Steering_Status_ServoCurrent_mA 0;
+BA_ "Owner" SG_ 513 Brake_Status_E2E_DataID "Swc_FzcCom";
+BA_ "ProducedBy" SG_ 513 Brake_Status_E2E_DataID "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 513 Brake_Status_E2E_DataID 0;
+BA_ "Owner" SG_ 513 Brake_Status_E2E_AliveCounter "Swc_FzcCom";
+BA_ "ProducedBy" SG_ 513 Brake_Status_E2E_AliveCounter "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 513 Brake_Status_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 513 Brake_Status_E2E_CRC8 "Swc_FzcCom";
+BA_ "ProducedBy" SG_ 513 Brake_Status_E2E_CRC8 "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 513 Brake_Status_E2E_CRC8 0;
+BA_ "Owner" SG_ 513 Brake_Status_BrakePosition "Swc_Brake";
+BA_ "ProducedBy" SG_ 513 Brake_Status_BrakePosition "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 513 Brake_Status_BrakePosition 0;
+BA_ "Owner" SG_ 513 Brake_Status_BrakeCommandEcho "Swc_Brake";
+BA_ "ProducedBy" SG_ 513 Brake_Status_BrakeCommandEcho "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 513 Brake_Status_BrakeCommandEcho 0;
+BA_ "Owner" SG_ 513 Brake_Status_ServoCurrent_mA "Swc_Brake";
+BA_ "ProducedBy" SG_ 513 Brake_Status_ServoCurrent_mA "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 513 Brake_Status_ServoCurrent_mA 0;
+BA_ "Owner" SG_ 513 Brake_Status_BrakeFaultStatus "Swc_Brake";
+BA_ "ProducedBy" SG_ 513 Brake_Status_BrakeFaultStatus "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 513 Brake_Status_BrakeFaultStatus 0;
+BA_ "Owner" SG_ 513 Brake_Status_BrakeMode "Swc_Brake";
+BA_ "ProducedBy" SG_ 513 Brake_Status_BrakeMode "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 513 Brake_Status_BrakeMode 0;
+BA_ "Owner" SG_ 528 Brake_Fault_E2E_DataID "Swc_FzcCom";
+BA_ "ProducedBy" SG_ 528 Brake_Fault_E2E_DataID "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 528 Brake_Fault_E2E_DataID 0;
+BA_ "Owner" SG_ 528 Brake_Fault_E2E_AliveCounter "Swc_FzcCom";
+BA_ "ProducedBy" SG_ 528 Brake_Fault_E2E_AliveCounter "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 528 Brake_Fault_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 528 Brake_Fault_E2E_CRC8 "Swc_FzcCom";
+BA_ "ProducedBy" SG_ 528 Brake_Fault_E2E_CRC8 "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 528 Brake_Fault_E2E_CRC8 0;
+BA_ "Owner" SG_ 528 Brake_Fault_CommandedBrake "Swc_Brake";
+BA_ "ProducedBy" SG_ 528 Brake_Fault_CommandedBrake "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 528 Brake_Fault_CommandedBrake 0;
+BA_ "Owner" SG_ 528 Brake_Fault_MeasuredBrake "Swc_Brake";
+BA_ "ProducedBy" SG_ 528 Brake_Fault_MeasuredBrake "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 528 Brake_Fault_MeasuredBrake 0;
+BA_ "Owner" SG_ 529 Motor_Cutoff_Req_E2E_DataID "Swc_FzcCom";
+BA_ "ProducedBy" SG_ 529 Motor_Cutoff_Req_E2E_DataID "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 529 Motor_Cutoff_Req_E2E_DataID 0;
+BA_ "Owner" SG_ 529 Motor_Cutoff_Req_E2E_AliveCounter "Swc_FzcCom";
+BA_ "ProducedBy" SG_ 529 Motor_Cutoff_Req_E2E_AliveCounter "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 529 Motor_Cutoff_Req_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 529 Motor_Cutoff_Req_E2E_CRC8 "Swc_FzcCom";
+BA_ "ProducedBy" SG_ 529 Motor_Cutoff_Req_E2E_CRC8 "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 529 Motor_Cutoff_Req_E2E_CRC8 0;
+BA_ "Owner" SG_ 529 Motor_Cutoff_Req_Reason "Swc_FzcSafety";
+BA_ "ProducedBy" SG_ 529 Motor_Cutoff_Req_Reason "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 529 Motor_Cutoff_Req_Reason 0;
+BA_ "Owner" SG_ 544 Lidar_Distance_E2E_DataID "Swc_FzcCom";
+BA_ "ProducedBy" SG_ 544 Lidar_Distance_E2E_DataID "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 544 Lidar_Distance_E2E_DataID 0;
+BA_ "Owner" SG_ 544 Lidar_Distance_E2E_AliveCounter "Swc_FzcCom";
+BA_ "ProducedBy" SG_ 544 Lidar_Distance_E2E_AliveCounter "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 544 Lidar_Distance_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 544 Lidar_Distance_E2E_CRC8 "Swc_FzcCom";
+BA_ "ProducedBy" SG_ 544 Lidar_Distance_E2E_CRC8 "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 544 Lidar_Distance_E2E_CRC8 0;
+BA_ "Owner" SG_ 544 Lidar_Distance_Distance_cm "Swc_Lidar";
+BA_ "ProducedBy" SG_ 544 Lidar_Distance_Distance_cm "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 544 Lidar_Distance_Distance_cm 0;
+BA_ "Owner" SG_ 544 Lidar_Distance_SignalStrength "Swc_Lidar";
+BA_ "ProducedBy" SG_ 544 Lidar_Distance_SignalStrength "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 544 Lidar_Distance_SignalStrength 0;
+BA_ "Owner" SG_ 544 Lidar_Distance_ObstacleZone "Swc_Lidar";
+BA_ "ProducedBy" SG_ 544 Lidar_Distance_ObstacleZone "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 544 Lidar_Distance_ObstacleZone 0;
+BA_ "Owner" SG_ 544 Lidar_Distance_SensorStatus "Swc_Lidar";
+BA_ "ProducedBy" SG_ 544 Lidar_Distance_SensorStatus "Swc_FzcCom";
+BA_ "GenSigStartValue" SG_ 544 Lidar_Distance_SensorStatus 0;
+BA_ "Owner" SG_ 768 Motor_Status_E2E_DataID "Swc_RzcCom";
+BA_ "ProducedBy" SG_ 768 Motor_Status_E2E_DataID "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 768 Motor_Status_E2E_DataID 0;
+BA_ "Owner" SG_ 768 Motor_Status_E2E_AliveCounter "Swc_RzcCom";
+BA_ "ProducedBy" SG_ 768 Motor_Status_E2E_AliveCounter "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 768 Motor_Status_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 768 Motor_Status_E2E_CRC8 "Swc_RzcCom";
+BA_ "ProducedBy" SG_ 768 Motor_Status_E2E_CRC8 "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 768 Motor_Status_E2E_CRC8 0;
+BA_ "Owner" SG_ 768 Motor_Status_TorqueEcho "Swc_Motor";
+BA_ "ProducedBy" SG_ 768 Motor_Status_TorqueEcho "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 768 Motor_Status_TorqueEcho 0;
+BA_ "Owner" SG_ 768 Motor_Status_MotorDirection "Swc_Motor";
+BA_ "ProducedBy" SG_ 768 Motor_Status_MotorDirection "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 768 Motor_Status_MotorDirection 0;
+BA_ "Owner" SG_ 768 Motor_Status_MotorEnable "Swc_Motor";
+BA_ "ProducedBy" SG_ 768 Motor_Status_MotorEnable "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 768 Motor_Status_MotorEnable 0;
+BA_ "Owner" SG_ 769 Motor_Current_E2E_DataID "Swc_RzcCom";
+BA_ "ProducedBy" SG_ 769 Motor_Current_E2E_DataID "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 769 Motor_Current_E2E_DataID 0;
+BA_ "Owner" SG_ 769 Motor_Current_E2E_AliveCounter "Swc_RzcCom";
+BA_ "ProducedBy" SG_ 769 Motor_Current_E2E_AliveCounter "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 769 Motor_Current_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 769 Motor_Current_E2E_CRC8 "Swc_RzcCom";
+BA_ "ProducedBy" SG_ 769 Motor_Current_E2E_CRC8 "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 769 Motor_Current_E2E_CRC8 0;
+BA_ "Owner" SG_ 769 Motor_Current_DirIsReverse "Swc_CurrentMonitor";
+BA_ "ProducedBy" SG_ 769 Motor_Current_DirIsReverse "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 769 Motor_Current_DirIsReverse 0;
+BA_ "Owner" SG_ 769 Motor_Current_MotorEnable "Swc_Motor";
+BA_ "ProducedBy" SG_ 769 Motor_Current_MotorEnable "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 769 Motor_Current_MotorEnable 0;
+BA_ "Owner" SG_ 769 Motor_Current_TorqueEcho "Swc_Motor";
+BA_ "ProducedBy" SG_ 769 Motor_Current_TorqueEcho "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 769 Motor_Current_TorqueEcho 0;
+BA_ "Owner" SG_ 770 Motor_Temperature_E2E_DataID "Swc_RzcCom";
+BA_ "ProducedBy" SG_ 770 Motor_Temperature_E2E_DataID "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 770 Motor_Temperature_E2E_DataID 0;
+BA_ "Owner" SG_ 770 Motor_Temperature_E2E_AliveCounter "Swc_RzcCom";
+BA_ "ProducedBy" SG_ 770 Motor_Temperature_E2E_AliveCounter "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 770 Motor_Temperature_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 770 Motor_Temperature_E2E_CRC8 "Swc_RzcCom";
+BA_ "ProducedBy" SG_ 770 Motor_Temperature_E2E_CRC8 "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 770 Motor_Temperature_E2E_CRC8 0;
+BA_ "Owner" SG_ 770 Motor_Temperature_WindingTemp2_C "Swc_TempMonitor";
+BA_ "ProducedBy" SG_ 770 Motor_Temperature_WindingTemp2_C "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 770 Motor_Temperature_WindingTemp2_C 0;
+BA_ "Owner" SG_ 770 Motor_Temperature_DeratingPercent "Swc_TempMonitor";
+BA_ "ProducedBy" SG_ 770 Motor_Temperature_DeratingPercent "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 770 Motor_Temperature_DeratingPercent 0;
+BA_ "Owner" SG_ 771 Battery_Status_E2E_DataID "Swc_RzcCom";
+BA_ "ProducedBy" SG_ 771 Battery_Status_E2E_DataID "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 771 Battery_Status_E2E_DataID 0;
+BA_ "Owner" SG_ 771 Battery_Status_E2E_AliveCounter "Swc_RzcCom";
+BA_ "ProducedBy" SG_ 771 Battery_Status_E2E_AliveCounter "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 771 Battery_Status_E2E_AliveCounter 0;
+BA_ "Owner" SG_ 771 Battery_Status_E2E_CRC8 "Swc_RzcCom";
+BA_ "ProducedBy" SG_ 771 Battery_Status_E2E_CRC8 "Swc_RzcCom";
+BA_ "GenSigStartValue" SG_ 771 Battery_Status_E2E_CRC8 0;
+BA_ "Owner" SG_ 848 Body_Control_Cmd_HeadlightCmd "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 848 Body_Control_Cmd_HeadlightCmd "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 848 Body_Control_Cmd_HeadlightCmd 0;
+BA_ "Owner" SG_ 848 Body_Control_Cmd_TailLightOn "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 848 Body_Control_Cmd_TailLightOn "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 848 Body_Control_Cmd_TailLightOn 0;
+BA_ "Owner" SG_ 848 Body_Control_Cmd_HazardActive "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 848 Body_Control_Cmd_HazardActive "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 848 Body_Control_Cmd_HazardActive 0;
+BA_ "Owner" SG_ 848 Body_Control_Cmd_TurnSignalCmd "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 848 Body_Control_Cmd_TurnSignalCmd "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 848 Body_Control_Cmd_TurnSignalCmd 0;
+BA_ "Owner" SG_ 848 Body_Control_Cmd_DoorLockCmd "Swc_CvcCom";
+BA_ "ProducedBy" SG_ 848 Body_Control_Cmd_DoorLockCmd "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 848 Body_Control_Cmd_DoorLockCmd 0;
+BA_ "Owner" SG_ 1024 Light_Status_HeadlightOn "Swc_Lights";
+BA_ "ProducedBy" SG_ 1024 Light_Status_HeadlightOn "Swc_BcmCan";
+BA_ "GenSigStartValue" SG_ 1024 Light_Status_HeadlightOn 0;
+BA_ "Owner" SG_ 1024 Light_Status_TailLightOn "Swc_Lights";
+BA_ "ProducedBy" SG_ 1024 Light_Status_TailLightOn "Swc_BcmCan";
+BA_ "GenSigStartValue" SG_ 1024 Light_Status_TailLightOn 0;
+BA_ "Owner" SG_ 1024 Light_Status_FogLightOn "Swc_Lights";
+BA_ "ProducedBy" SG_ 1024 Light_Status_FogLightOn "Swc_BcmCan";
+BA_ "GenSigStartValue" SG_ 1024 Light_Status_FogLightOn 0;
+BA_ "Owner" SG_ 1024 Light_Status_BrakeLightOn "Swc_Lights";
+BA_ "ProducedBy" SG_ 1024 Light_Status_BrakeLightOn "Swc_BcmCan";
+BA_ "GenSigStartValue" SG_ 1024 Light_Status_BrakeLightOn 0;
+BA_ "Owner" SG_ 1024 Light_Status_HeadlightLevel "Swc_Lights";
+BA_ "ProducedBy" SG_ 1024 Light_Status_HeadlightLevel "Swc_BcmCan";
+BA_ "GenSigStartValue" SG_ 1024 Light_Status_HeadlightLevel 0;
+BA_ "Owner" SG_ 1025 Indicator_State_LeftOn "Swc_Indicators";
+BA_ "ProducedBy" SG_ 1025 Indicator_State_LeftOn "Swc_BcmCan";
+BA_ "GenSigStartValue" SG_ 1025 Indicator_State_LeftOn 0;
+BA_ "Owner" SG_ 1025 Indicator_State_RightOn "Swc_Indicators";
+BA_ "ProducedBy" SG_ 1025 Indicator_State_RightOn "Swc_BcmCan";
+BA_ "GenSigStartValue" SG_ 1025 Indicator_State_RightOn 0;
+BA_ "Owner" SG_ 1025 Indicator_State_HazardActive "Swc_Indicators";
+BA_ "ProducedBy" SG_ 1025 Indicator_State_HazardActive "Swc_BcmCan";
+BA_ "GenSigStartValue" SG_ 1025 Indicator_State_HazardActive 0;
+BA_ "Owner" SG_ 1025 Indicator_State_BlinkPhaseHigh "Swc_Indicators";
+BA_ "ProducedBy" SG_ 1025 Indicator_State_BlinkPhaseHigh "Swc_BcmCan";
+BA_ "GenSigStartValue" SG_ 1025 Indicator_State_BlinkPhaseHigh 0;
+BA_ "Owner" SG_ 1026 Door_Lock_Status_FrontLeftLock "Swc_DoorLock";
+BA_ "ProducedBy" SG_ 1026 Door_Lock_Status_FrontLeftLock "Swc_BcmCan";
+BA_ "GenSigStartValue" SG_ 1026 Door_Lock_Status_FrontLeftLock 0;
+BA_ "Owner" SG_ 1026 Door_Lock_Status_FrontRightLock "Swc_DoorLock";
+BA_ "ProducedBy" SG_ 1026 Door_Lock_Status_FrontRightLock "Swc_BcmCan";
+BA_ "GenSigStartValue" SG_ 1026 Door_Lock_Status_FrontRightLock 0;
+BA_ "Owner" SG_ 1026 Door_Lock_Status_RearLeftLock "Swc_DoorLock";
+BA_ "ProducedBy" SG_ 1026 Door_Lock_Status_RearLeftLock "Swc_BcmCan";
+BA_ "GenSigStartValue" SG_ 1026 Door_Lock_Status_RearLeftLock 0;
+BA_ "Owner" SG_ 1026 Door_Lock_Status_RearRightLock "Swc_DoorLock";
+BA_ "ProducedBy" SG_ 1026 Door_Lock_Status_RearRightLock "Swc_BcmCan";
+BA_ "GenSigStartValue" SG_ 1026 Door_Lock_Status_RearRightLock 0;
+BA_ "Owner" SG_ 1026 Door_Lock_Status_CentralLock "Swc_DoorLock";
+BA_ "ProducedBy" SG_ 1026 Door_Lock_Status_CentralLock "Swc_BcmCan";
+BA_ "GenSigStartValue" SG_ 1026 Door_Lock_Status_CentralLock 0;
+BA_ "Owner" SG_ 1280 DTC_Broadcast_DTC_Status "BSW Dem module";
+BA_ "ProducedBy" SG_ 1280 DTC_Broadcast_DTC_Status "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 1280 DTC_Broadcast_DTC_Status 0;
+BA_ "Owner" SG_ 1280 DTC_Broadcast_ECU_Source "BSW Dem module";
+BA_ "ProducedBy" SG_ 1280 DTC_Broadcast_ECU_Source "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 1280 DTC_Broadcast_ECU_Source 0;
+BA_ "Owner" SG_ 1280 DTC_Broadcast_OccurrenceCount "BSW Dem module";
+BA_ "ProducedBy" SG_ 1280 DTC_Broadcast_OccurrenceCount "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 1280 DTC_Broadcast_OccurrenceCount 0;
+BA_ "Owner" SG_ 1280 DTC_Broadcast_FreezeFrame0 "BSW Dem module";
+BA_ "ProducedBy" SG_ 1280 DTC_Broadcast_FreezeFrame0 "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 1280 DTC_Broadcast_FreezeFrame0 0;
+BA_ "Owner" SG_ 1280 DTC_Broadcast_FreezeFrame1 "BSW Dem module";
+BA_ "ProducedBy" SG_ 1280 DTC_Broadcast_FreezeFrame1 "Swc_CvcCom";
+BA_ "GenSigStartValue" SG_ 1280 DTC_Broadcast_FreezeFrame1 0;
