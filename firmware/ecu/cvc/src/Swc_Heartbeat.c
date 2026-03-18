@@ -298,8 +298,15 @@ void Swc_Heartbeat_ResetCommStatus(void)
     rzc_comm_status = CVC_COMM_OK;
     fzc_timeout_count = 0u;
     rzc_timeout_count = 0u;
+    /* Force SM to VALID — skip the MIN_OK_INIT window requirement.
+     * The grace period already absorbed the boot transient; heartbeats
+     * are now arriving normally.  Without this, SM starts in INIT and
+     * needs 2 OKs (100ms) before VALID — but the CAN timeout check
+     * runs on the very next 10ms cycle and sees INIT → TIMEOUT. */
     E2E_Sm_Init(&fzc_sm_state);
     E2E_Sm_Init(&rzc_sm_state);
+    fzc_sm_state.Status = E2E_SM_VALID;
+    rzc_sm_state.Status = E2E_SM_VALID;
     (void)Rte_Write(CVC_SIG_FZC_COMM_STATUS, (uint32)CVC_COMM_OK);
     (void)Rte_Write(CVC_SIG_RZC_COMM_STATUS, (uint32)CVC_COMM_OK);
 }
