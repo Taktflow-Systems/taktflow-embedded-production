@@ -596,16 +596,19 @@ void Swc_VehicleState_MainFunction(void)
         Swc_VehicleState_OnEvent(CVC_EVT_SC_KILL);
     }
 
-    /* CAN communication faults */
-    if ((fzc_comm == CVC_COMM_TIMEOUT) && (rzc_comm == CVC_COMM_TIMEOUT))
+    /* CAN communication faults (suppressed during post-INIT grace) */
+    if (post_init_grace_counter == 0u)
     {
-        Swc_VehicleState_OnEvent(CVC_EVT_CAN_TIMEOUT_DUAL);
-    }
-    else if ((fzc_comm == CVC_COMM_TIMEOUT) || (rzc_comm == CVC_COMM_TIMEOUT))
-    {
-        if ((current_state == CVC_STATE_RUN) || (current_state == CVC_STATE_DEGRADED))
+        if ((fzc_comm == CVC_COMM_TIMEOUT) && (rzc_comm == CVC_COMM_TIMEOUT))
         {
-            Swc_VehicleState_OnEvent(CVC_EVT_CAN_TIMEOUT_SINGLE);
+            Swc_VehicleState_OnEvent(CVC_EVT_CAN_TIMEOUT_DUAL);
+        }
+        else if ((fzc_comm == CVC_COMM_TIMEOUT) || (rzc_comm == CVC_COMM_TIMEOUT))
+        {
+            if ((current_state == CVC_STATE_RUN) || (current_state == CVC_STATE_DEGRADED))
+            {
+                Swc_VehicleState_OnEvent(CVC_EVT_CAN_TIMEOUT_SINGLE);
+            }
         }
     }
     else
