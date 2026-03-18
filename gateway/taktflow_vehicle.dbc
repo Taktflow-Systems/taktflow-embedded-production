@@ -1,0 +1,402 @@
+VERSION "1.0.0"
+
+NS_ :
+
+BS_:
+
+BU_: CVC FZC RZC SC BCM ICU TCU
+
+BO_ 1 EStop_Broadcast: 4 CVC
+ SG_ EStBc_E2E_DataID : 0|4@1+ (1,0) [0|15] "" SC,FZC,RZC,BCM,ICU,TCU
+ SG_ EStBc_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" SC,FZC,RZC,BCM,ICU,TCU
+ SG_ EStBc_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" SC,FZC,RZC,BCM,ICU,TCU
+ SG_ EStBc_EStop_Active : 16|8@1+ (1,0) [0|1] "" SC,FZC,RZC,BCM,ICU
+ SG_ EStBc_EStop_Source : 24|8@1+ (1,0) [0|7] "" SC,FZC,RZC,BCM,ICU
+
+BO_ 16 CVC_Heartbeat: 4 CVC
+ SG_ CvcHb_E2E_DataID : 0|4@1+ (1,0) [0|15] "" SC,FZC,RZC,ICU
+ SG_ CvcHb_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" SC,FZC,RZC,ICU
+ SG_ CvcHb_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" SC,FZC,RZC,ICU
+ SG_ CvcHb_ECU_ID : 16|8@1+ (1,0) [0|7] "" SC,FZC,RZC,ICU
+ SG_ CvcHb_OperatingMode : 24|4@1+ (1,0) [0|5] "" SC,FZC,RZC,ICU
+ SG_ CvcHb_FaultStatus : 28|4@1+ (1,0) [0|15] "" SC,FZC,RZC,ICU
+
+BO_ 17 FZC_Heartbeat: 4 FZC
+ SG_ FzcHb_E2E_DataID : 0|4@1+ (1,0) [0|15] "" SC,CVC,ICU
+ SG_ FzcHb_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" SC,CVC,ICU
+ SG_ FzcHb_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" SC,CVC,ICU
+ SG_ FzcHb_ECU_ID : 16|8@1+ (1,0) [0|7] "" SC,CVC,ICU
+ SG_ FzcHb_OperatingMode : 24|4@1+ (1,0) [0|5] "" SC,CVC,ICU
+ SG_ FzcHb_FaultStatus : 28|4@1+ (1,0) [0|15] "" SC,CVC,ICU
+
+BO_ 18 RZC_Heartbeat: 4 RZC
+ SG_ RzcHb_E2E_DataID : 0|4@1+ (1,0) [0|15] "" SC,CVC,ICU
+ SG_ RzcHb_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" SC,CVC,ICU
+ SG_ RzcHb_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" SC,CVC,ICU
+ SG_ RzcHb_ECU_ID : 16|8@1+ (1,0) [0|7] "" SC,CVC,ICU
+ SG_ RzcHb_OperatingMode : 24|4@1+ (1,0) [0|5] "" SC,CVC,ICU
+ SG_ RzcHb_FaultStatus : 28|4@1+ (1,0) [0|15] "" SC,CVC,ICU
+
+BO_ 19 SC_Status: 4 SC
+ SG_ ScSt_AliveCounter : 0|8@1+ (1,0) [0|255] "" CVC,FZC,RZC,ICU
+ SG_ ScSt_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,FZC,RZC,ICU
+ SG_ ScSt_Mode : 16|4@1+ (1,0) [0|3] "" CVC,FZC,RZC,ICU
+ SG_ ScSt_FaultFlags : 20|4@1+ (1,0) [0|15] "" CVC,FZC,RZC,ICU
+ SG_ ScSt_ECU_Health : 24|3@1+ (1,0) [0|7] "" CVC,FZC,RZC,ICU
+ SG_ ScSt_FaultReason : 27|4@1+ (1,0) [0|15] "" CVC,FZC,RZC,ICU
+ SG_ ScSt_RelayState : 31|1@1+ (1,0) [0|1] "" CVC,FZC,RZC,ICU
+
+BO_ 20 ICU_Heartbeat: 4 ICU
+ SG_ IcuHb_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC
+ SG_ IcuHb_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC
+ SG_ IcuHb_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC
+ SG_ IcuHb_AliveCounter : 16|8@1+ (1,0) [0|255] "" CVC
+ SG_ IcuHb_ECU_ID : 24|8@1+ (1,0) [0|7] "" CVC
+
+BO_ 21 TCU_Heartbeat: 4 TCU
+ SG_ TcuHb_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC
+ SG_ TcuHb_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC
+ SG_ TcuHb_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC
+ SG_ TcuHb_AliveCounter : 16|8@1+ (1,0) [0|255] "" CVC
+ SG_ TcuHb_ECU_ID : 24|8@1+ (1,0) [0|7] "" CVC
+
+BO_ 22 BCM_Heartbeat: 4 BCM
+ SG_ BcmHb_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,ICU
+ SG_ BcmHb_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,ICU
+ SG_ BcmHb_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,ICU
+ SG_ BcmHb_AliveCounter : 16|8@1+ (1,0) [0|255] "" CVC,ICU
+ SG_ BcmHb_ECU_ID : 24|8@1+ (1,0) [0|7] "" CVC,ICU
+
+BO_ 256 Vehicle_State: 6 CVC
+ SG_ VehSt_E2E_DataID : 0|4@1+ (1,0) [0|15] "" FZC,RZC,BCM,ICU,SC
+ SG_ VehSt_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" FZC,RZC,BCM,ICU,SC
+ SG_ VehSt_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" FZC,RZC,BCM,ICU,SC
+ SG_ VehSt_VehicleState : 16|4@1+ (1,0) [0|5] "" FZC,RZC,BCM,ICU,SC
+ SG_ VehSt_FaultMask : 20|12@1+ (1,0) [0|4095] "" FZC,RZC,BCM,ICU,SC
+ SG_ VehSt_TorqueLimit : 32|8@1+ (1,0) [0|100] "%" RZC,ICU
+ SG_ VehSt_SpeedLimit : 40|8@1+ (1,0) [0|100] "%" RZC,ICU
+
+BO_ 257 Torque_Request: 8 CVC
+ SG_ TrqRq_E2E_DataID : 0|4@1+ (1,0) [0|15] "" RZC
+ SG_ TrqRq_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" RZC
+ SG_ TrqRq_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" RZC
+ SG_ TrqRq_TorqueRequest : 16|8@1+ (1,0) [0|100] "%" RZC
+ SG_ TrqRq_Direction : 24|2@1+ (1,0) [0|2] "" RZC
+ SG_ TrqRq_PedalPosition1 : 26|14@1+ (0.022,0) [0|359.98] "deg" RZC
+ SG_ TrqRq_PedalPosition2 : 40|14@1+ (0.022,0) [0|359.98] "deg" RZC
+ SG_ TrqRq_PedalFault : 54|1@1+ (1,0) [0|1] "" RZC
+
+BO_ 258 Steer_Command: 8 CVC
+ SG_ StrCmd_E2E_DataID : 0|4@1+ (1,0) [0|15] "" FZC
+ SG_ StrCmd_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" FZC
+ SG_ StrCmd_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" FZC
+ SG_ StrCmd_SteerAngleCmd : 16|16@1- (0.01,0) [-45.0|45.0] "deg" FZC
+ SG_ StrCmd_SteerRateLimit : 32|8@1+ (0.2,0) [0|51.0] "deg/s" FZC
+ SG_ StrCmd_VehicleState : 40|4@1+ (1,0) [0|5] "" FZC
+
+BO_ 259 Brake_Command: 8 CVC
+ SG_ BrkCmd_E2E_DataID : 0|4@1+ (1,0) [0|15] "" FZC
+ SG_ BrkCmd_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" FZC
+ SG_ BrkCmd_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" FZC
+ SG_ BrkCmd_BrakeForceCmd : 16|8@1+ (1,0) [0|100] "%" FZC
+ SG_ BrkCmd_BrakeMode : 24|4@1+ (1,0) [0|3] "" FZC
+ SG_ BrkCmd_VehicleState : 28|4@1+ (1,0) [0|5] "" FZC
+
+BO_ 512 Steering_Status: 8 FZC
+ SG_ StrSt_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,SC,ICU
+ SG_ StrSt_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,SC,ICU
+ SG_ StrSt_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,SC,ICU
+ SG_ StrSt_ActualAngle : 16|16@1- (1,0) [-45|45] "deg" CVC,SC,ICU
+ SG_ StrSt_CommandedAngle : 32|16@1- (1,0) [-45|45] "deg" CVC,SC,ICU
+ SG_ StrSt_SteerFaultStatus : 48|4@1+ (1,0) [0|15] "" CVC,SC,ICU
+ SG_ StrSt_SteerMode : 52|4@1+ (1,0) [0|3] "" CVC,SC,ICU
+ SG_ StrSt_ServoCurrent_mA : 56|8@1+ (10,0) [0|2550] "mA" CVC,SC,ICU
+
+BO_ 513 Brake_Status: 8 FZC
+ SG_ BrkSt_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,SC,ICU
+ SG_ BrkSt_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,SC,ICU
+ SG_ BrkSt_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,SC,ICU
+ SG_ BrkSt_BrakePosition : 16|8@1+ (1,0) [0|100] "%" CVC,SC,ICU
+ SG_ BrkSt_BrakeCommandEcho : 24|8@1+ (1,0) [0|100] "%" CVC,SC,ICU
+ SG_ BrkSt_ServoCurrent_mA : 32|16@1+ (1,0) [0|3000] "mA" CVC,SC,ICU
+ SG_ BrkSt_BrakeFaultStatus : 48|4@1+ (1,0) [0|15] "" CVC,SC,ICU
+ SG_ BrkSt_BrakeMode : 52|4@1+ (1,0) [0|3] "" CVC,SC,ICU
+
+BO_ 528 Brake_Fault: 4 FZC
+ SG_ BrkFlt_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,SC
+ SG_ BrkFlt_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,SC
+ SG_ BrkFlt_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,SC
+ SG_ BrkFlt_FaultType : 16|4@1+ (1,0) [0|3] "" CVC,SC
+ SG_ BrkFlt_CommandedBrake : 20|8@1+ (1,0) [0|100] "%" CVC,SC
+ SG_ BrkFlt_MeasuredBrake : 28|4@1+ (10,0) [0|100] "%" CVC,SC
+
+BO_ 529 Motor_Cutoff_Req: 4 FZC
+ SG_ MtrCut_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC
+ SG_ MtrCut_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC
+ SG_ MtrCut_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC
+ SG_ MtrCut_RequestType : 16|4@1+ (1,0) [0|3] "" CVC
+ SG_ MtrCut_Reason : 20|4@1+ (1,0) [0|7] "" CVC
+
+BO_ 544 Lidar_Distance: 8 FZC
+ SG_ LidarD_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,ICU
+ SG_ LidarD_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,ICU
+ SG_ LidarD_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,ICU
+ SG_ LidarD_Distance_cm : 16|16@1+ (1,0) [0|1200] "cm" CVC,ICU
+ SG_ LidarD_SignalStrength : 32|16@1+ (1,0) [0|65535] "" CVC,ICU
+ SG_ LidarD_ObstacleZone : 48|4@1+ (1,0) [0|3] "" CVC,ICU
+ SG_ LidarD_SensorStatus : 52|4@1+ (1,0) [0|15] "" CVC,ICU
+
+BO_ 768 Motor_Status: 8 RZC
+ SG_ MtrSt_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,SC,ICU
+ SG_ MtrSt_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,SC,ICU
+ SG_ MtrSt_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,SC,ICU
+ SG_ MtrSt_TorqueEcho : 16|8@1+ (1,0) [0|100] "%" CVC,SC,ICU
+ SG_ MtrSt_MotorSpeed_RPM : 24|16@1+ (1,0) [0|10000] "RPM" CVC,SC,ICU
+ SG_ MtrSt_MotorDirection : 40|8@1+ (1,0) [0|2] "" CVC,SC,ICU
+ SG_ MtrSt_MotorEnable : 48|8@1+ (1,0) [0|1] "" CVC,SC,ICU
+ SG_ MtrSt_MotorFaultStatus : 56|8@1+ (1,0) [0|31] "" CVC,SC,ICU
+
+BO_ 769 Motor_Current: 8 RZC
+ SG_ MtrCur_E2E_DataID : 0|4@1+ (1,0) [0|15] "" SC,CVC,ICU
+ SG_ MtrCur_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" SC,CVC,ICU
+ SG_ MtrCur_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" SC,CVC,ICU
+ SG_ MtrCur_Current_mA : 16|16@1+ (1,0) [0|30000] "mA" SC,CVC,ICU
+ SG_ MtrCur_CurrentDirection : 32|1@1+ (1,0) [0|1] "" SC,CVC,ICU
+ SG_ MtrCur_MotorEnable : 33|1@1+ (1,0) [0|1] "" SC,CVC,ICU
+ SG_ MtrCur_OvercurrentFlag : 34|1@1+ (1,0) [0|1] "" SC,CVC,ICU
+ SG_ MtrCur_TorqueEcho : 35|8@1+ (1,0) [0|100] "%" SC,CVC,ICU
+
+BO_ 770 Motor_Temperature: 8 RZC
+ SG_ MtrTmp_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,ICU
+ SG_ MtrTmp_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,ICU
+ SG_ MtrTmp_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,ICU
+ SG_ MtrTmp_WindingTemp1_C : 16|16@1+ (0.1,0) [0|200.0] "degC" CVC,ICU
+ SG_ MtrTmp_WindingTemp2_C : 32|16@1+ (0.1,0) [0|200.0] "degC" CVC,ICU
+ SG_ MtrTmp_DeratingPercent : 48|8@1+ (1,0) [0|100] "%" CVC,ICU
+
+BO_ 771 Battery_Status: 6 RZC
+ SG_ BatSt_E2E_DataID : 0|4@1+ (1,0) [0|15] "" CVC,ICU
+ SG_ BatSt_E2E_AliveCounter : 4|4@1+ (1,0) [0|15] "" CVC,ICU
+ SG_ BatSt_E2E_CRC8 : 8|8@1+ (1,0) [0|255] "" CVC,ICU
+ SG_ BatSt_BatteryVoltage_mV : 16|16@1+ (1,0) [0|20000] "mV" CVC,ICU
+ SG_ BatSt_BatteryStatus : 32|8@1+ (1,0) [0|4] "" CVC,ICU
+
+BO_ 848 Body_Control_Cmd: 4 CVC
+ SG_ BdyCmd_HeadlightCmd : 0|2@1+ (1,0) [0|2] "" BCM
+ SG_ BdyCmd_TailLightCmd : 2|1@1+ (1,0) [0|1] "" BCM
+ SG_ BdyCmd_HazardCmd : 3|1@1+ (1,0) [0|1] "" BCM
+ SG_ BdyCmd_TurnSignalCmd : 4|2@1+ (1,0) [0|2] "" BCM
+ SG_ BdyCmd_DoorLockCmd : 6|1@1+ (1,0) [0|1] "" BCM
+
+BO_ 1024 Light_Status: 4 BCM
+ SG_ LtSt_HeadlightOn : 0|1@1+ (1,0) [0|1] "" ICU
+ SG_ LtSt_TailLightOn : 1|1@1+ (1,0) [0|1] "" ICU
+ SG_ LtSt_FogLightOn : 2|1@1+ (1,0) [0|1] "" ICU
+ SG_ LtSt_BrakeLightOn : 3|1@1+ (1,0) [0|1] "" ICU
+ SG_ LtSt_HeadlightLevel : 4|2@1+ (1,0) [0|2] "" ICU
+
+BO_ 1025 Indicator_State: 4 BCM
+ SG_ IndSt_LeftIndicator : 0|1@1+ (1,0) [0|1] "" ICU
+ SG_ IndSt_RightIndicator : 1|1@1+ (1,0) [0|1] "" ICU
+ SG_ IndSt_HazardActive : 2|1@1+ (1,0) [0|1] "" ICU
+ SG_ IndSt_BlinkState : 3|1@1+ (1,0) [0|1] "" ICU
+
+BO_ 1026 Door_Lock_Status: 2 BCM
+ SG_ DlkSt_FrontLeftLock : 0|1@1+ (1,0) [0|1] "" ICU
+ SG_ DlkSt_FrontRightLock : 1|1@1+ (1,0) [0|1] "" ICU
+ SG_ DlkSt_RearLeftLock : 2|1@1+ (1,0) [0|1] "" ICU
+ SG_ DlkSt_RearRightLock : 3|1@1+ (1,0) [0|1] "" ICU
+ SG_ DlkSt_CentralLock : 4|1@1+ (1,0) [0|1] "" ICU
+
+BO_ 1280 DTC_Broadcast: 8 CVC
+ SG_ DtcBc_DTC_Number : 7|24@0+ (1,0) [0|16777215] "" TCU,ICU
+ SG_ DtcBc_DTC_Status : 24|8@1+ (1,0) [0|255] "" TCU,ICU
+ SG_ DtcBc_ECU_Source : 32|8@1+ (1,0) [0|7] "" TCU,ICU
+ SG_ DtcBc_OccurrenceCount : 40|8@1+ (1,0) [0|255] "" TCU,ICU
+ SG_ DtcBc_FreezeFrame0 : 48|8@1+ (1,0) [0|255] "" TCU,ICU
+ SG_ DtcBc_FreezeFrame1 : 56|8@1+ (1,0) [0|255] "" TCU,ICU
+
+
+CM_ BU_ CVC "Central Vehicle Computer. STM32F446RE. ASIL D. Master coordinator.";
+CM_ BU_ FZC "Front Zone Controller. STM32F446RE. ASIL D. Steering, braking, lidar.";
+CM_ BU_ RZC "Rear Zone Controller. STM32F446RE. ASIL C. Motor, battery, encoder.";
+CM_ BU_ SC "Safety Controller. TMS570LS0432. ASIL D. Independent relay watchdog.";
+CM_ BU_ BCM "Body Control Module. Docker SIL. QM. Lights, indicators, locks.";
+CM_ BU_ ICU "Instrument Cluster Unit. Docker SIL. QM. Display, DTC viewer.";
+CM_ BU_ TCU "Telematics Control Unit. Docker SIL. QM. UDS server, data logging.";
+
+CM_ BO_ 1 "Emergency stop broadcast. Event-triggered + 10ms repeat x4. ASIL B.";
+CM_ BO_ 16 "CVC heartbeat. 50ms cyclic. SC monitors alive counter for timeout.";
+CM_ BO_ 17 "FZC heartbeat. 50ms cyclic. SC monitors alive counter for timeout.";
+CM_ BO_ 18 "RZC heartbeat. 50ms cyclic. SC monitors alive counter for timeout.";
+CM_ BO_ 19 "SC status. 500ms cyclic. Simplified E2E (8-bit counter + CRC-8).";
+CM_ BO_ 20 "ICU heartbeat. 500ms cyclic. QM — no safety monitoring.";
+CM_ BO_ 21 "TCU heartbeat. 500ms cyclic. QM — no safety monitoring.";
+CM_ BO_ 22 "BCM heartbeat. 500ms cyclic. QM — no safety monitoring.";
+CM_ BO_ 256 "Vehicle state. 10ms cyclic. Contains VSM state + fault mask + limits.";
+CM_ BO_ 257 "Torque request. 10ms cyclic. CVC to RZC. ASIL D safety path.";
+CM_ BO_ 258 "Steering command. 10ms cyclic. CVC to FZC. ASIL D safety path.";
+CM_ BO_ 259 "Brake command. 10ms cyclic. CVC to FZC. ASIL D safety path.";
+CM_ BO_ 512 "Steering status. 20ms cyclic. FZC feedback to CVC.";
+CM_ BO_ 513 "Brake status. 20ms cyclic. FZC feedback to CVC.";
+CM_ BO_ 528 "Brake fault event. FZC to CVC + SC. ASIL D.";
+CM_ BO_ 529 "Motor cutoff request. FZC to CVC. Event + 10ms repeat.";
+CM_ BO_ 544 "Lidar distance. 10ms cyclic. TFMini-S sensor via FZC.";
+CM_ BO_ 768 "Motor status. 20ms cyclic. RZC encoder speed + fault status.";
+CM_ BO_ 769 "Motor current. 10ms cyclic. ACS723 current sensor via RZC.";
+CM_ BO_ 770 "Motor temperature. 100ms cyclic. NTC thermistor via RZC.";
+CM_ BO_ 771 "Battery status. 1000ms cyclic. Voltage divider ADC via RZC.";
+CM_ BO_ 848 "Body control command. 100ms cyclic. CVC to BCM.";
+CM_ BO_ 1024 "Light status. 100ms cyclic. BCM feedback.";
+CM_ BO_ 1025 "Indicator state. 100ms cyclic. BCM feedback.";
+CM_ BO_ 1026 "Door lock status. Event-triggered. BCM feedback.";
+CM_ BO_ 1280 "DTC broadcast. Event-triggered. Any ECU via Dem_MainFunction.";
+
+CM_ SG_ 1 EStBc_EStop_Active "1=E-Stop active (latched until power-cycle). 0=inactive.";
+CM_ SG_ 1 EStBc_EStop_Source "Source that triggered E-Stop. 0=button, 1=CAN, 2=SC_relay.";
+CM_ SG_ 256 VehSt_VehicleState "VSM state. 0=INIT, 1=RUN, 2=DEGRADED, 3=LIMP, 4=SAFE_STOP, 5=SHUTDOWN.";
+CM_ SG_ 256 VehSt_FaultMask "Bitmask of active faults. Bit0=EStop, Bit1=SC_Kill, Bit2=MotorCutoff, etc.";
+CM_ SG_ 257 TrqRq_TorqueRequest "Torque command 0-100%. Maps to motor PWM duty cycle.";
+CM_ SG_ 258 StrCmd_SteerAngleCmd "Steering angle command. Signed, 0.01 deg resolution. 0=center.";
+CM_ SG_ 259 BrkCmd_BrakeForceCmd "Brake force command 0-100%. Maps to brake servo PWM.";
+CM_ SG_ 768 MtrSt_MotorFaultStatus "Motor fault code. 0=OK, 1=stall, 2=shoot-through, 3=overcurrent, 4=overtemp.";
+CM_ SG_ 768 MtrSt_MotorSpeed_RPM "Encoder-derived motor speed in RPM. 0-10000.";
+CM_ SG_ 769 MtrCur_Current_mA "Phase current in milliamps. ACS723 sensor. 0-30000.";
+CM_ SG_ 769 MtrCur_OvercurrentFlag "1=overcurrent detected (>25A sustained). Latched until recovery.";
+CM_ SG_ 770 MtrTmp_WindingTemp1_C "Winding temperature sensor 1. 0.1 degC resolution. NTC thermistor.";
+CM_ SG_ 771 BatSt_BatteryVoltage_mV "Battery voltage in millivolts. Voltage divider ADC. 0-20000.";
+CM_ SG_ 771 BatSt_BatteryStatus "Battery status enum. 0=critical_UV, 1=UV_warn, 2=normal, 3=OV_warn, 4=critical_OV.";
+CM_ SG_ 1280 DtcBc_DTC_Number "24-bit UDS DTC number (big-endian). Standard ISO 14229 format.";
+CM_ SG_ 1280 DtcBc_ECU_Source "Source ECU. 1=CVC, 2=FZC, 3=RZC, 4=SC, 5=BCM, 6=ICU, 7=TCU.";
+
+
+VAL_ 1 EStBc_EStop_Source 0 "CVC_button" 1 "CAN_request" 2 "SC_relay" ;
+VAL_ 16 CvcHb_OperatingMode 0 "INIT" 1 "RUN" 2 "DEGRADED" 3 "LIMP" 4 "SAFE_STOP" 5 "SHUTDOWN" ;
+VAL_ 17 FzcHb_OperatingMode 0 "INIT" 1 "RUN" 2 "DEGRADED" 3 "LIMP" 4 "SAFE_STOP" 5 "SHUTDOWN" ;
+VAL_ 18 RzcHb_OperatingMode 0 "INIT" 1 "RUN" 2 "DEGRADED" 3 "LIMP" 4 "SAFE_STOP" 5 "SHUTDOWN" ;
+VAL_ 19 ScSt_Mode 0 "INIT" 1 "MONITORING" 2 "FAULT_DETECTED" 3 "SAFE_STOP" ;
+VAL_ 256 VehSt_VehicleState 0 "INIT" 1 "RUN" 2 "DEGRADED" 3 "LIMP" 4 "SAFE_STOP" 5 "SHUTDOWN" ;
+VAL_ 257 TrqRq_Direction 0 "stopped" 1 "forward" 2 "reverse" ;
+VAL_ 259 BrkCmd_BrakeMode 0 "release" 1 "normal" 2 "emergency" 3 "auto" ;
+VAL_ 512 StrSt_SteerMode 0 "normal" 1 "return_center" 2 "disabled" 3 "local" ;
+VAL_ 513 BrkSt_BrakeMode 0 "release" 1 "normal" 2 "auto_brake" 3 "emergency" ;
+VAL_ 528 BrkFlt_FaultType 0 "PWM_mismatch" 1 "servo_stuck" 2 "overcurrent" 3 "timeout" ;
+VAL_ 529 MtrCut_RequestType 0 "motor_cutoff" 1 "speed_reduce" 2 "e_stop_fwd" ;
+VAL_ 529 MtrCut_Reason 0 "brake_fault" 1 "steer_fault" 2 "lidar_emergency" 3 "CAN_loss" ;
+VAL_ 544 LidarD_ObstacleZone 0 "emergency" 1 "braking" 2 "warning" 3 "clear" ;
+VAL_ 768 MtrSt_MotorDirection 0 "stopped" 1 "forward" 2 "reverse" ;
+VAL_ 769 MtrCur_CurrentDirection 0 "forward" 1 "reverse" ;
+VAL_ 771 BatSt_BatteryStatus 0 "critical_UV" 1 "UV_warn" 2 "normal" 3 "OV_warn" 4 "critical_OV" ;
+VAL_ 848 BdyCmd_HeadlightCmd 0 "off" 1 "low" 2 "high" ;
+VAL_ 848 BdyCmd_TurnSignalCmd 0 "off" 1 "left" 2 "right" ;
+VAL_ 1024 LtSt_HeadlightLevel 0 "off" 1 "low" 2 "high" ;
+VAL_ 1280 DtcBc_ECU_Source 1 "CVC" 2 "FZC" 3 "RZC" 4 "SC" 5 "BCM" 6 "ICU" 7 "TCU" ;
+
+
+BA_DEF_ BO_ "GenMsgCycleTime" INT 0 10000;
+BA_DEF_ BO_ "GenMsgSendType" STRING;
+BA_DEF_ BO_ "ASIL" STRING;
+BA_DEF_ BO_ "E2E_DataID" INT -1 255;
+
+BA_ "GenMsgCycleTime" BO_ 1 10;
+BA_ "GenMsgCycleTime" BO_ 16 50;
+BA_ "GenMsgCycleTime" BO_ 17 50;
+BA_ "GenMsgCycleTime" BO_ 18 50;
+BA_ "GenMsgCycleTime" BO_ 19 500;
+BA_ "GenMsgCycleTime" BO_ 20 500;
+BA_ "GenMsgCycleTime" BO_ 21 500;
+BA_ "GenMsgCycleTime" BO_ 22 500;
+BA_ "GenMsgCycleTime" BO_ 256 10;
+BA_ "GenMsgCycleTime" BO_ 257 10;
+BA_ "GenMsgCycleTime" BO_ 258 10;
+BA_ "GenMsgCycleTime" BO_ 259 10;
+BA_ "GenMsgCycleTime" BO_ 512 20;
+BA_ "GenMsgCycleTime" BO_ 513 20;
+BA_ "GenMsgCycleTime" BO_ 528 0;
+BA_ "GenMsgCycleTime" BO_ 529 10;
+BA_ "GenMsgCycleTime" BO_ 544 10;
+BA_ "GenMsgCycleTime" BO_ 768 20;
+BA_ "GenMsgCycleTime" BO_ 769 10;
+BA_ "GenMsgCycleTime" BO_ 770 100;
+BA_ "GenMsgCycleTime" BO_ 771 1000;
+BA_ "GenMsgCycleTime" BO_ 848 100;
+BA_ "GenMsgCycleTime" BO_ 1024 100;
+BA_ "GenMsgCycleTime" BO_ 1025 100;
+BA_ "GenMsgCycleTime" BO_ 1026 0;
+BA_ "GenMsgCycleTime" BO_ 1280 0;
+
+BA_ "GenMsgSendType" BO_ 1 "event";
+BA_ "GenMsgSendType" BO_ 16 "cyclic";
+BA_ "GenMsgSendType" BO_ 17 "cyclic";
+BA_ "GenMsgSendType" BO_ 18 "cyclic";
+BA_ "GenMsgSendType" BO_ 19 "cyclic";
+BA_ "GenMsgSendType" BO_ 20 "cyclic";
+BA_ "GenMsgSendType" BO_ 21 "cyclic";
+BA_ "GenMsgSendType" BO_ 22 "cyclic";
+BA_ "GenMsgSendType" BO_ 256 "cyclic";
+BA_ "GenMsgSendType" BO_ 257 "cyclic";
+BA_ "GenMsgSendType" BO_ 258 "cyclic";
+BA_ "GenMsgSendType" BO_ 259 "cyclic";
+BA_ "GenMsgSendType" BO_ 512 "cyclic";
+BA_ "GenMsgSendType" BO_ 513 "cyclic";
+BA_ "GenMsgSendType" BO_ 528 "event";
+BA_ "GenMsgSendType" BO_ 529 "event";
+BA_ "GenMsgSendType" BO_ 544 "cyclic";
+BA_ "GenMsgSendType" BO_ 768 "cyclic";
+BA_ "GenMsgSendType" BO_ 769 "cyclic";
+BA_ "GenMsgSendType" BO_ 770 "cyclic";
+BA_ "GenMsgSendType" BO_ 771 "cyclic";
+BA_ "GenMsgSendType" BO_ 848 "cyclic";
+BA_ "GenMsgSendType" BO_ 1024 "cyclic";
+BA_ "GenMsgSendType" BO_ 1025 "cyclic";
+BA_ "GenMsgSendType" BO_ 1026 "event";
+BA_ "GenMsgSendType" BO_ 1280 "event";
+
+BA_ "ASIL" BO_ 1 "B";
+BA_ "ASIL" BO_ 16 "C";
+BA_ "ASIL" BO_ 17 "C";
+BA_ "ASIL" BO_ 18 "C";
+BA_ "ASIL" BO_ 19 "D";
+BA_ "ASIL" BO_ 20 "QM";
+BA_ "ASIL" BO_ 21 "QM";
+BA_ "ASIL" BO_ 22 "QM";
+BA_ "ASIL" BO_ 256 "D";
+BA_ "ASIL" BO_ 257 "D";
+BA_ "ASIL" BO_ 258 "D";
+BA_ "ASIL" BO_ 259 "D";
+BA_ "ASIL" BO_ 512 "D";
+BA_ "ASIL" BO_ 513 "D";
+BA_ "ASIL" BO_ 528 "D";
+BA_ "ASIL" BO_ 529 "D";
+BA_ "ASIL" BO_ 544 "C";
+BA_ "ASIL" BO_ 768 "D";
+BA_ "ASIL" BO_ 769 "C";
+BA_ "ASIL" BO_ 770 "A";
+BA_ "ASIL" BO_ 771 "QM";
+BA_ "ASIL" BO_ 848 "QM";
+BA_ "ASIL" BO_ 1024 "QM";
+BA_ "ASIL" BO_ 1025 "QM";
+BA_ "ASIL" BO_ 1026 "QM";
+BA_ "ASIL" BO_ 1280 "QM";
+
+BA_ "E2E_DataID" BO_ 1 1;
+BA_ "E2E_DataID" BO_ 16 2;
+BA_ "E2E_DataID" BO_ 17 3;
+BA_ "E2E_DataID" BO_ 18 4;
+BA_ "E2E_DataID" BO_ 256 5;
+BA_ "E2E_DataID" BO_ 257 6;
+BA_ "E2E_DataID" BO_ 258 7;
+BA_ "E2E_DataID" BO_ 259 8;
+BA_ "E2E_DataID" BO_ 512 9;
+BA_ "E2E_DataID" BO_ 513 10;
+BA_ "E2E_DataID" BO_ 528 11;
+BA_ "E2E_DataID" BO_ 529 12;
+BA_ "E2E_DataID" BO_ 544 13;
+BA_ "E2E_DataID" BO_ 768 14;
+BA_ "E2E_DataID" BO_ 769 15;
+BA_ "E2E_DataID" BO_ 770 0;
+BA_ "E2E_DataID" BO_ 20 16;
+BA_ "E2E_DataID" BO_ 21 17;
+BA_ "E2E_DataID" BO_ 22 18;
+BA_ "E2E_DataID" BO_ 771 19;
+
