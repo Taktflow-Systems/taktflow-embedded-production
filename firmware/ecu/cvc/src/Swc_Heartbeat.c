@@ -192,16 +192,11 @@ void Swc_Heartbeat_MainFunction(void)
          * but does not call Swc_Heartbeat_RxIndication, so we detect
          * heartbeat reception by checking if the alive counter changed. */
         {
-            uint8 fzc_alive = 0u;
-            uint8 rzc_alive = 0u;
+            uint32 fzc_alive = 0u;
+            uint32 rzc_alive = 0u;
 
-            {
-                uint32 tmp = 0u;
-                (void)Rte_Read(CVC_SIG_FZC_HEARTBEAT_E_2_E_ALIVE_COUNTER, &tmp);
-                fzc_alive = (uint8)tmp;
-                (void)Rte_Read(CVC_SIG_RZC_HEARTBEAT_E_2_E_ALIVE_COUNTER, &tmp);
-                rzc_alive = (uint8)tmp;
-            }
+            (void)Rte_Read(CVC_SIG_FZC_HEARTBEAT_E_2_E_ALIVE_COUNTER, &fzc_alive);
+            (void)Rte_Read(CVC_SIG_RZC_HEARTBEAT_E_2_E_ALIVE_COUNTER, &rzc_alive);
 
             if (fzc_alive != fzc_last_alive) {
                 fzc_rx_flag    = TRUE;

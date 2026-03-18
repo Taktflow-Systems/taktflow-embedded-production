@@ -78,6 +78,7 @@ static uintptr_t os_port_stm32_get_saved_psp(uintptr_t ActivePsp)
     return ActivePsp - (uintptr_t)OS_PORT_STM32_SOFTWARE_RESTORE_BYTES;
 }
 
+__attribute__((unused))
 static uintptr_t os_port_stm32_get_first_task_restore_psp(void)
 {
     return os_port_stm32_get_restore_psp(os_port_stm32_state.FirstTaskPsp);
