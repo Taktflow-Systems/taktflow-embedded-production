@@ -56,3 +56,9 @@ firmware/ecu/rzc_f4/
 
 # SCORE HSM (separate repo with its own .git)
 scorehsm/
+firmware/lib/cmsis6/
+firmware/lib/threadx/
+firmware/lib/x-cube-azrtos-g4/
+firmware/lib/rtcan/
+firmware/lib/cmsis-rtos-tx/
+firmware/ecu/fzc/src/main.c.bak

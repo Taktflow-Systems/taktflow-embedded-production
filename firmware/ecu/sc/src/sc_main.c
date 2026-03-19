@@ -38,6 +38,14 @@
 #define SC_MAIN_DIAG(fmt, ...) ((void)0)
 #endif
 
+/* ==================================================================
+ * CMSIS-RTOS2 (ThreadX backend via CMSIS adapter)
+ * ================================================================== */
+
+#ifdef USE_THREADX
+#include "cmsis_os2.h"
+#endif
+
 /* Platform hardware functions (link-time selection: sc_hw_tms570.c or sc_hw_posix.c) */
 #include "sc_hw.h"
 
@@ -100,17 +108,173 @@ static void sc_startup_fail_blink(uint8 failStep)
 }
 
 /* ==================================================================
+ * CMSIS-RTOS2 Timer Callbacks (USE_THREADX only)
+ * ================================================================== */
+
+#ifdef USE_THREADX
+
+/** Shared state for ThreadX timer callbacks — mirrors bare-metal counters */
+static uint8  tx_hb_blink_counter = 0u;
+#ifdef SIL_DIAG
+static uint16 tx_sil_diag_tick = 0u;
+#endif
+
+/**
+ * @brief  10ms periodic timer callback — main safety loop iteration
+ * @param  arg  unused (CMSIS-RTOS2 timer callback signature)
+ *
+ * @note   Executes in timer service thread context (not ISR).
+ *         Replicates the bare-metal 10ms loop body: CAN receive,
+ *         heartbeat monitor, plausibility check, relay triggers,
+ *         state machine, LED update, self-test, watchdog feed.
+ */
+static void Timer_10ms_Callback(void *arg)
+{
+    boolean all_checks_ok;
+
+    (void)arg;
+
+    /* ---- Step 1: CAN Receive ---- */
+    SC_CAN_Receive();
+
+    /* ---- Step 2: Heartbeat Monitor ---- */
+    SC_Heartbeat_Monitor();
+
+    /* ---- Step 3: Plausibility Check ---- */
+    SC_Plausibility_Check();
+
+    /* ---- Step 3a: Creep Guard (SSR-SC-018) ---- */
+    SC_CreepGuard_Check();
+
+    /* ---- Step 4: Relay Trigger Evaluation ---- */
+    SC_Relay_CheckTriggers();
+
+    /* ---- Step 4a: State machine update (GAP-SC-006) ---- */
+    if (SC_Relay_IsKilled() == TRUE) {
+        (void)SC_State_Transition(SC_STATE_KILL);
+    } else if ((SC_Heartbeat_IsTimedOut(SC_ECU_CVC) == TRUE) ||
+               (SC_Heartbeat_IsTimedOut(SC_ECU_FZC) == TRUE) ||
+               (SC_Heartbeat_IsTimedOut(SC_ECU_RZC) == TRUE) ||
+               (SC_Plausibility_IsFaulted() == TRUE)          ||
+               (SC_Heartbeat_IsContentFault(SC_ECU_CVC) == TRUE) ||
+               (SC_Heartbeat_IsContentFault(SC_ECU_FZC) == TRUE) ||
+               (SC_Heartbeat_IsContentFault(SC_ECU_RZC) == TRUE)) {
+        (void)SC_State_Transition(SC_STATE_FAULT);
+    } else {
+        /* No transition requested in this cycle. */
+    }
+
+#ifdef SIL_DIAG
+    tx_sil_diag_tick++;
+    if (tx_sil_diag_tick % 100u == 0u) {  /* Every 1s */
+        SC_MAIN_DIAG("t=%u hb_cvc=%u hb_fzc=%u hb_rzc=%u relay=%u selftest=%u esm=%u busoff=%u plaus=%u",
+                     (unsigned)tx_sil_diag_tick,
+                     (unsigned)SC_Heartbeat_IsTimedOut(SC_ECU_CVC),
+                     (unsigned)SC_Heartbeat_IsTimedOut(SC_ECU_FZC),
+                     (unsigned)SC_Heartbeat_IsTimedOut(SC_ECU_RZC),
+                     (unsigned)(SC_Relay_IsKilled() ? 0u : 1u),
+                     (unsigned)SC_SelfTest_IsHealthy(),
+                     (unsigned)SC_ESM_IsErrorActive(),
+                     (unsigned)SC_CAN_IsBusOff(),
+                     (unsigned)SC_Plausibility_IsFaulted());
+    }
+#endif
+
+    /* ---- Step 4b: SC_Status Broadcast (500ms, SWR-SC-029/030) ---- */
+    SC_Monitoring_Update();
+
+    /* ---- Step 5: LED Update ---- */
+    SC_LED_Update();
+
+    /* Heartbeat blink on GIOB[6:7] user LEDs */
+    tx_hb_blink_counter++;
+    if (tx_hb_blink_counter >= 100u) {
+        tx_hb_blink_counter = 0u;
+    }
+    if (SC_ESM_IsErrorActive() == TRUE) {
+        sc_het_led_on();  /* solid ON = fault */
+    }
+#ifdef SC_ESM_ENABLED
+    else if (tx_hb_blink_counter < 50u) {
+        sc_het_led_set(1u, 0u);
+    } else {
+        sc_het_led_set(0u, 1u);
+    }
+#else
+    else if (tx_hb_blink_counter < 50u) {
+        sc_het_led_on();
+    } else {
+        sc_het_led_off();
+    }
+#endif
+
+    /* ---- Step 6: Bus Silence Monitor ---- */
+    SC_CAN_MonitorBus();
+
+    /* ---- Step 7: Runtime Self-Test (1 step) ---- */
+    SC_SelfTest_Runtime();
+
+    /* ---- Step 8: Stack Canary + Health Check ---- */
+    all_checks_ok = TRUE;
+
+    if (SC_SelfTest_StackCanaryOk() == FALSE) {
+        all_checks_ok = FALSE;
+    }
+
+    if (SC_SelfTest_IsHealthy() == FALSE) {
+        all_checks_ok = FALSE;
+    }
+
+    if (SC_CAN_IsBusOff() == TRUE) {
+        all_checks_ok = FALSE;
+    }
+
+    if (SC_ESM_IsErrorActive() == TRUE) {
+        all_checks_ok = FALSE;
+    }
+
+    /* ---- Step 9: Watchdog Feed ---- */
+    SC_Watchdog_Feed(all_checks_ok);
+}
+
+/**
+ * @brief  5s periodic timer callback — debug status print
+ * @param  arg  unused
+ *
+ * @note   Prints heartbeat/relay/CAN status over SCI UART.
+ */
+static void Timer_5s_Callback(void *arg)
+{
+    (void)arg;
+    sc_sci_puts("[5s] SC: CVC=");
+    sc_sci_puts(SC_Heartbeat_IsTimedOut(SC_ECU_CVC) ? "TIMEOUT" : "OK");
+    sc_sci_puts(" FZC=");
+    sc_sci_puts(SC_Heartbeat_IsTimedOut(SC_ECU_FZC) ? "TIMEOUT" : "OK");
+    sc_sci_puts(" RZC=");
+    sc_sci_puts(SC_Heartbeat_IsTimedOut(SC_ECU_RZC) ? "TIMEOUT" : "OK");
+    sc_sci_puts(" relay=");
+    sc_sci_puts((SC_Relay_IsKilled() == FALSE) ? "ON" : "OFF");
+    sc_hw_debug_periodic();
+}
+
+#endif /* USE_THREADX */
+
+/* ==================================================================
  * Entry Point
  * ================================================================== */
 
 int main(void)
 {
     uint8 startup_result;
+#ifndef USE_THREADX
     boolean all_checks_ok;
     uint16 dbg_tick_counter = 0u;  /* 5s periodic debug print */
     uint8 hb_blink_counter = 0u;  /* heartbeat LED blink (GIOB[6:7]) */
+#endif
 #ifdef SIL_DIAG
+#ifndef USE_THREADX
     uint16 sil_diag_tick = 0u;
+#endif
 #endif
 
     /* ---- 0. LED+UART -- prove CPU reaches main() ---- */
@@ -189,7 +353,23 @@ int main(void)
 
     sc_sci_puts("SC_Relay: energized (MONITORING)\r\n");
 
-    /* ---- 5. Start RTI timer and enter main loop ---- */
+    /* ---- 5. Start RTI timer / RTOS kernel ---- */
+
+#ifdef USE_THREADX
+    /* Initialize CMSIS-RTOS2 kernel (ThreadX underneath) */
+    osKernelInitialize();
+
+    /* Create SC cyclic timers */
+    osTimerId_t timer_10ms = osTimerNew(Timer_10ms_Callback, osTimerPeriodic, NULL, NULL);
+    osTimerId_t timer_5s   = osTimerNew(Timer_5s_Callback,   osTimerPeriodic, NULL, NULL);
+
+    /* Start timers — ticks are in kernel ticks (1 tick = 1ms with default config) */
+    osTimerStart(timer_10ms, 10u);     /* 10ms  — main safety loop      */
+    osTimerStart(timer_5s,   5000u);   /* 5s    — debug status print    */
+
+    /* Start kernel — never returns */
+    osKernelStart();
+#else
     rtiStartCounter();
 
     for (;;) {
@@ -321,6 +501,7 @@ int main(void)
         /* ---- Step 9: Watchdog Feed ---- */
         SC_Watchdog_Feed(all_checks_ok);
     }
+#endif /* USE_THREADX */
 
     /* Should never reach here */
     return 0;

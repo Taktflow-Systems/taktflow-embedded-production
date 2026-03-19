@@ -66,6 +66,14 @@
 #include "Det.h"
 
 /* ==================================================================
+ * CMSIS-RTOS2 (ThreadX backend via CMSIS adapter)
+ * ================================================================== */
+
+#ifdef USE_THREADX
+#include "cmsis_os2.h"
+#endif
+
+/* ==================================================================
  * External Configuration (defined in cfg/ files)
  * ================================================================== */
 
@@ -337,6 +345,66 @@ static uint8 Main_RunSelfTest(void)
 static volatile uint32 tick_us;
 
 /* ==================================================================
+ * CMSIS-RTOS2 Timer Callbacks (USE_THREADX only)
+ * ================================================================== */
+
+#ifdef USE_THREADX
+
+/**
+ * @brief  1ms periodic timer callback — RTE scheduler dispatch
+ * @param  arg  unused (CMSIS-RTOS2 timer callback signature)
+ *
+ * @note   Executes in timer service thread context (not ISR).
+ *         Dispatches all RTE runnables configured at 1ms period.
+ */
+static void Timer_1ms_Callback(void *arg)
+{
+    (void)arg;
+    Rte_MainFunction();
+}
+
+/**
+ * @brief  10ms periodic timer callback — Dcm, BswM
+ * @param  arg  unused
+ *
+ * @note   Executes in timer service thread context.
+ */
+static void Timer_10ms_Callback(void *arg)
+{
+    (void)arg;
+    Dcm_MainFunction();
+    BswM_MainFunction();
+}
+
+/**
+ * @brief  100ms periodic timer callback — WdgM, Dem
+ * @param  arg  unused
+ *
+ * @note   Executes in timer service thread context.
+ */
+static void Timer_100ms_Callback(void *arg)
+{
+    (void)arg;
+    WdgM_MainFunction();
+    Dem_MainFunction();
+}
+
+/**
+ * @brief  5s periodic timer callback — debug status print
+ * @param  arg  unused
+ *
+ * @note   Calls Main_Hw_DebugPrintStatus with current kernel tick.
+ *         UART print on STM32, no-op on POSIX.
+ */
+static void Timer_5s_Callback(void *arg)
+{
+    (void)arg;
+    Main_Hw_DebugPrintStatus(Main_Hw_GetTick());
+}
+
+#endif /* USE_THREADX */
+
+/* ==================================================================
  * Main Entry Point
  * ================================================================== */
 
@@ -348,10 +416,12 @@ static volatile uint32 tick_us;
  */
 int main(void)
 {
+#ifndef USE_THREADX
     uint32 last_1ms_us   = 0u;
     uint32 last_10ms_us  = 0u;
     uint32 last_100ms_us = 0u;
     uint32 last_5s_us    = 0u;
+#endif
     uint8  self_test_result;
 
     /* ---- Step 1: Hardware initialization ---- */
@@ -429,7 +499,28 @@ int main(void)
     Main_Hw_SysTickInit(1000u);
     Det_ReportRuntimeError(DET_MODULE_RZC_MAIN, 0u, MAIN_API_RUN, DET_E_DBG_SYSTICK_START);
 
-    /* ---- Step 8: Main loop ---- */
+    /* ---- Step 8: Main loop / RTOS kernel ---- */
+
+#ifdef USE_THREADX
+    /* Initialize CMSIS-RTOS2 kernel (ThreadX underneath) */
+    osKernelInitialize();
+
+    /* Create BSW cyclic timers */
+    osTimerId_t timer_1ms = osTimerNew(Timer_1ms_Callback, osTimerPeriodic, NULL, NULL);
+    osTimerId_t timer_10ms = osTimerNew(Timer_10ms_Callback, osTimerPeriodic, NULL, NULL);
+    osTimerId_t timer_100ms = osTimerNew(Timer_100ms_Callback, osTimerPeriodic, NULL, NULL);
+    osTimerId_t timer_5s = osTimerNew(Timer_5s_Callback, osTimerPeriodic, NULL, NULL);
+
+    /* Start timers — ticks are in kernel ticks (1 tick = 1ms with default config) */
+    osTimerStart(timer_1ms, 1u);       /* 1ms   — RTE scheduler         */
+    osTimerStart(timer_10ms, 10u);     /* 10ms  — Dcm, BswM             */
+    osTimerStart(timer_100ms, 100u);   /* 100ms — WdgM, Dem             */
+    osTimerStart(timer_5s, 5000u);     /* 5s    — debug status print     */
+
+    /* Start kernel — never returns */
+    osKernelStart();
+#else
+    /* Original bare-metal polling loop */
     for (;;)
     {
         Main_Hw_Wfi();
@@ -467,6 +558,7 @@ int main(void)
             Main_Hw_DebugPrintStatus(tick_us);
         }
     }
+#endif /* USE_THREADX */
 
     /* MISRA: unreachable but satisfies compiler */
     return 0;
