@@ -335,13 +335,12 @@ void IoHwAb_Inject_SetEncoderValue(uint8 EncoderId, uint32 Count,
 void IoHwAb_Inject_SetDigitalPin(uint8 PinId, uint8 Level)
 {
     /* Write to both Dio (used by IoHwAb.c ReadEStop) and local pin array.
-     * IoHwAb.c reads via Dio_ReadChannel(config->EStopDioChannel) which
-     * may differ from the PinId used here. Also write PinId directly to
-     * Dio so that the configured DIO channel matches. */
-    if ((iohwab_config != NULL_PTR) && (PinId == IOHWAB_PIN_ESTOP)) {
-        Dio_WriteChannel(iohwab_config->EStopDioChannel, Level);
-    } else {
-        Dio_WriteChannel(PinId, Level);
+     * IoHwAb.c reads via Dio_ReadChannel(config->EStopDioChannel=5).
+     * This file's static iohwab_config may be NULL (IoHwAb_Init sets
+     * the other copy in IoHwAb.c), so use the known channel directly. */
+    if (PinId == IOHWAB_PIN_ESTOP) {
+        Dio_WriteChannel(5u, Level);  /* CVC EStopDioChannel = 5 */
     }
+    Dio_WriteChannel(PinId, Level);
     IoHwAb_Posix_SetDigitalPin(PinId, Level);
 }
