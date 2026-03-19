@@ -55,7 +55,7 @@ verdicts:
   - type: vehicle_state
     expected: SAFE_STOP
     within_ms: 500
-    description: "Vehicle must enter SAFE_STOP after FZC loss (SC relay kill on confirmed heartbeat timeout)"
+    description: "Vehicle must enter SAFE_STOP after FZC loss (no backup zone — HARA requires safe stop)"
 
   - type: can_message
     can_id: 0x012

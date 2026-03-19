@@ -41,7 +41,14 @@ header(){ echo -e "\n${BOLD}=== $* ===${NC}"; }
 # ---------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-COMPOSE_FILE="$REPO_ROOT/docker/docker-compose.yml"
+# Accept docker-compose.yml or docker-compose.dev.yml (production layout)
+if [ -f "$REPO_ROOT/docker/docker-compose.yml" ]; then
+    COMPOSE_FILE="$REPO_ROOT/docker/docker-compose.yml"
+elif [ -f "$REPO_ROOT/docker/docker-compose.dev.yml" ]; then
+    COMPOSE_FILE="$REPO_ROOT/docker/docker-compose.dev.yml"
+else
+    COMPOSE_FILE="$REPO_ROOT/docker/docker-compose.yml"
+fi
 SCENARIOS_DIR="$SCRIPT_DIR/scenarios"
 RESULTS_DIR="$SCRIPT_DIR/results"
 VERDICT_CHECKER="$SCRIPT_DIR/verdict_checker.py"

@@ -46,6 +46,20 @@ import yaml
 from junit_xml import TestCase, TestSuite
 
 # ---------------------------------------------------------------------------
+# Compose file discovery
+# ---------------------------------------------------------------------------
+
+def _find_compose_file() -> Path:
+    """Find the docker-compose file, preferring dev layout."""
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    for name in ("docker-compose.dev.yml", "docker-compose.yml"):
+        p = repo_root / "docker" / name
+        if p.exists():
+            return p
+    return repo_root / "docker" / "docker-compose.dev.yml"
+
+
+# ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
 logging.basicConfig(
@@ -787,10 +801,7 @@ class ScenarioExecutor:
         elif action == "docker_stop":
             container = step["container"]
             log.info("  [STEP] Stopping container: %s", container)
-            compose_file = (
-                Path(__file__).resolve().parent.parent.parent
-                / "docker" / "docker-compose.yml"
-            )
+            compose_file = _find_compose_file()
             subprocess.run(
                 [
                     "docker", "compose",
@@ -805,10 +816,7 @@ class ScenarioExecutor:
         elif action == "docker_start":
             container = step["container"]
             log.info("  [STEP] Starting container: %s", container)
-            compose_file = (
-                Path(__file__).resolve().parent.parent.parent
-                / "docker" / "docker-compose.yml"
-            )
+            compose_file = _find_compose_file()
             subprocess.run(
                 [
                     "docker", "compose",
@@ -905,10 +913,7 @@ class ScenarioExecutor:
                 ", ".join(containers),
             )
             # Use docker compose restart (service names, not container names)
-            compose_file = (
-                Path(__file__).resolve().parent.parent.parent
-                / "docker" / "docker-compose.yml"
-            )
+            compose_file = _find_compose_file()
             for ctr in containers:
                 subprocess.run(
                     [

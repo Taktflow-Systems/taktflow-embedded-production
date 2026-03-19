@@ -1,0 +1,35 @@
+VERSION "1.0.0"
+
+NS_ :
+
+BS_:
+
+BU_: Plant_Sim
+
+BO_ 1536 FZC_Virtual_Sensors: 8 Plant_Sim
+ SG_ FzcVS_SteerAngle_Raw : 0|16@1+ (1,0) [0|16383] "" FZC
+ SG_ FzcVS_BrakePos_ADC : 16|16@1+ (1,0) [0|1000] "" FZC
+ SG_ FzcVS_BrakeCurrent_mA : 32|16@1+ (1,0) [0|65535] "mA" FZC
+
+BO_ 1537 RZC_Virtual_Sensors: 8 Plant_Sim
+ SG_ RzcVS_MotorCurrent_mA : 0|16@1+ (1,0) [0|65535] "mA" RZC
+ SG_ RzcVS_MotorTemp_dC : 16|16@1+ (1,0) [0|2000] "" RZC
+ SG_ RzcVS_BattVoltage_mV : 32|16@1+ (1,0) [0|20000] "mV" RZC
+ SG_ RzcVS_MotorRPM : 48|16@1+ (1,0) [0|10000] "rpm" RZC
+
+
+CM_ BU_ Plant_Sim "Physics plant simulator. SIL/HIL only. Docker container.";
+CM_ BO_ 1536 "FZC virtual sensors. 10ms cyclic. SIL only. No E2E. Replaces SPI/ADC.";
+CM_ BO_ 1537 "RZC virtual sensors. 10ms cyclic. SIL only. No E2E. Replaces ADC.";
+
+CM_ SG_ 1536 FzcVS_SteerAngle_Raw "14-bit SPI AS5048A format. 0=−45deg, 8191=0deg, 16383=+45deg.";
+CM_ SG_ 1536 FzcVS_BrakePos_ADC "Brake position ADC counts. 0-1000 maps to 0-100%.";
+CM_ SG_ 1537 RzcVS_MotorCurrent_mA "Motor phase current in mA. ACS723 equivalent.";
+CM_ SG_ 1537 RzcVS_MotorTemp_dC "Motor winding temperature in deci-degrees C. NTC equivalent.";
+CM_ SG_ 1537 RzcVS_BattVoltage_mV "Battery voltage in mV. Voltage divider equivalent.";
+CM_ SG_ 1537 RzcVS_MotorRPM "Motor speed in RPM. Encoder equivalent.";
+
+BA_DEF_ BO_ "GenMsgCycleTime" INT 0 10000;
+BA_ "GenMsgCycleTime" BO_ 1536 10;
+BA_ "GenMsgCycleTime" BO_ 1537 10;
+

@@ -17,8 +17,14 @@
 
 /* ---- Constants ---- */
 
-#define COM_MAX_PDUS     16u
-#define COM_MAX_SIGNALS  32u
+/* PDU/signal limits — generated per-ECU in Cfg.h.
+ * Fallback to safe defaults if Cfg.h wasn't included first. */
+#ifndef COM_MAX_PDUS
+#define COM_MAX_PDUS     48u
+#endif
+#ifndef COM_MAX_SIGNALS
+#define COM_MAX_SIGNALS  256u
+#endif
 #define COM_PDU_SIZE      8u  /**< CAN 2.0B fixed 8 bytes */
 
 /* ---- Types ---- */
@@ -33,6 +39,9 @@ typedef enum {
     COM_UINT32 = 4u
 } Com_SignalType;
 
+/** Sentinel: no RTE signal bound to this Com signal */
+#define COM_RTE_SIGNAL_NONE  0xFFFFu
+
 /** Signal configuration (compile-time) */
 typedef struct {
     Com_SignalIdType SignalId;
@@ -41,6 +50,7 @@ typedef struct {
     Com_SignalType   Type;          /**< Data type                 */
     PduIdType        PduId;         /**< Parent PDU                */
     void*            ShadowBuffer;  /**< RAM buffer for signal     */
+    uint16           RteSignalId;   /**< RTE signal to update on RX (NONE=no binding) */
 } Com_SignalConfigType;
 
 /** TX PDU configuration */

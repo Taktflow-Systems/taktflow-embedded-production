@@ -32,9 +32,6 @@
 /** @brief Debounce threshold in 10ms cycles (1 cycle = 10ms) */
 #define ESTOP_DEBOUNCE_THRESHOLD  1u
 
-/** @brief Total number of CAN broadcasts on activation */
-#define ESTOP_BROADCAST_COUNT     4u
-
 /** @brief E-stop CAN PDU length in bytes */
 #define ESTOP_PDU_LENGTH          8u
 
@@ -44,7 +41,6 @@
 
 static boolean active;
 static uint8   debounce_counter;
-static uint8   repeat_counter;
 static boolean initialized;
 
 /* ====================================================================
@@ -58,7 +54,6 @@ void Swc_EStop_Init(void)
 {
     active            = FALSE;
     debounce_counter  = 0u;
-    repeat_counter    = 0u;
     initialized       = TRUE;
 }
 
@@ -68,9 +63,11 @@ void Swc_EStop_Init(void)
  * @details Execution flow:
  *   1. Read E-stop pin via IoHwAb (read failure = fail-safe active)
  *   2. Debounce: HIGH sustained for ESTOP_DEBOUNCE_THRESHOLD cycles
- *   3. On first activation: set latch, report DTC, write RTE, send CAN
- *   4. Repeat CAN send for ESTOP_BROADCAST_COUNT total transmissions
- *   5. After all broadcasts: latch remains, no further sends
+ *   3. On first activation: set latch, report DTC, write RTE
+ *   4. While latched: broadcast EStop_Broadcast (0x001) every cycle
+ *      (IfActive pattern per automotive convention — ensures recovering
+ *      nodes and late-joining testers see the current E-Stop state)
+ *   5. Latch is permanent until power cycle (no software clear)
  */
 void Swc_EStop_MainFunction(void)
 {
@@ -89,50 +86,33 @@ void Swc_EStop_MainFunction(void)
         pin_state = STD_HIGH;
     }
 
-    /* --- 2. Debounce logic ---------------------------------------- */
+    /* --- 2. Debounce + first activation --------------------------- */
     if (active == FALSE) {
         if (pin_state == STD_HIGH) {
             debounce_counter++;
 
             if (debounce_counter >= ESTOP_DEBOUNCE_THRESHOLD) {
-                /* --- 3. First activation -------------------------- */
                 active = TRUE;
-                repeat_counter = 1u;  /* First broadcast counted */
 
-                /* Report DTC */
+                /* Report DTC (once) */
                 Dem_ReportErrorStatus(CVC_DTC_ESTOP_ACTIVATED,
                                       DEM_EVENT_STATUS_FAILED);
 
-                /* Write to RTE */
+                /* Write to RTE (once — latched, never cleared) */
                 (void)Rte_Write(CVC_SIG_ESTOP_ACTIVE, (uint32)TRUE);
-
-                /* Build E-stop PDU and send with E2E */
-                {
-                    uint8 pdu[ESTOP_PDU_LENGTH] = {0u};
-                    pdu[0] = TRUE;  /* E-stop active flag */
-
-                    (void)E2E_Protect(NULL_PTR, NULL_PTR,
-                                      pdu, ESTOP_PDU_LENGTH);
-                    (void)Com_SendSignal(CVC_COM_TX_ESTOP, pdu);
-                }
             }
         } else {
             /* LOW and not yet latched — reset debounce */
             debounce_counter = 0u;
         }
-    } else {
-        /* --- 4. Already latched — repeat broadcasts --------------- */
-        if (repeat_counter < ESTOP_BROADCAST_COUNT) {
-            uint8 pdu[ESTOP_PDU_LENGTH] = {0u};
-            pdu[0] = TRUE;
+    }
 
-            (void)E2E_Protect(NULL_PTR, NULL_PTR,
-                              pdu, ESTOP_PDU_LENGTH);
-            (void)Com_SendSignal(CVC_COM_TX_ESTOP, pdu);
-
-            repeat_counter++;
-        }
-        /* After ESTOP_BROADCAST_COUNT: no more sends, latch remains */
+    /* --- 3. Cyclic broadcast while latched ------------------------ */
+    if (active == TRUE) {
+        uint8 estop_active = TRUE;
+        uint8 estop_source = 1u;  /* CVC = source 1 */
+        (void)Com_SendSignal(CVC_COM_SIG_ESTOP_BROADCAST_ACTIVE, &estop_active);
+        (void)Com_SendSignal(CVC_COM_SIG_ESTOP_BROADCAST_SOURCE, &estop_source);
     }
 }
 

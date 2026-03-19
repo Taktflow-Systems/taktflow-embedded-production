@@ -22,30 +22,14 @@
  * ==================================================================== */
 
 /**
- * @brief  Read SteerAngleCmd (uint16_t)
+ * @brief  Read Steer_Command_E2E_CRC8 (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_SteerAngleCmd(uint16_t *data)
+static inline Rte_StatusType Rte_Read_Steer_Command_E2E_CRC8(uint8_t *data)
 {
     uint32_t tmp;
-    Rte_StatusType status = Rte_Read(FZC_SIG_STEER_ANGLE_CMD, &tmp);
-    if (status == RTE_E_OK)
-    {
-        *data = (uint16_t)tmp;
-    }
-    return status;
-}
-
-/**
- * @brief  Read SteerRateLimit (uint8_t)
- * @param  data  Pointer to receive the signal value
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Read_SteerRateLimit(uint8_t *data)
-{
-    uint32_t tmp;
-    Rte_StatusType status = Rte_Read(FZC_SIG_STEER_RATE_LIMIT, &tmp);
+    Rte_StatusType status = Rte_Read(FZC_SIG_STEER_COMMAND_E_2_E_CRC_8, &tmp);
     if (status == RTE_E_OK)
     {
         *data = (uint8_t)tmp;
@@ -54,23 +38,179 @@ static inline Rte_StatusType Rte_Read_SteerRateLimit(uint8_t *data)
 }
 
 /**
- * @brief  Write SteerMode (uint8_t)
- * @param  value  Signal value to transmit
+ * @brief  Read Steer_Command_SteerRateLimit (uint8_t)
+ * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_SteerMode(uint8_t value)
+static inline Rte_StatusType Rte_Read_Steer_Command_SteerRateLimit(uint8_t *data)
 {
-    return Rte_Write(FZC_SIG_STEER_MODE, (uint32_t)value);
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(FZC_SIG_STEER_COMMAND_STEER_RATE_LIMIT, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint8_t)tmp;
+    }
+    return status;
 }
 
 /**
- * @brief  Write SteerFaultStatus (uint8_t)
+ * @brief  Read Steer_Command_E2E_DataID (uint8_t)
+ * @param  data  Pointer to receive the signal value
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Read_Steer_Command_E2E_DataID(uint8_t *data)
+{
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(FZC_SIG_STEER_COMMAND_E_2_E_DATA_ID, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint8_t)tmp;
+    }
+    return status;
+}
+
+/**
+ * @brief  Read FZC_Virtual_Sensors_SteerAngle_Raw (uint16_t)
+ * @param  data  Pointer to receive the signal value
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Read_FZC_Virtual_Sensors_SteerAngle_Raw(uint16_t *data)
+{
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(FZC_SIG_FZC_VIRTUAL_SENSORS_STEER_ANGLE_RAW, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint16_t)tmp;
+    }
+    return status;
+}
+
+/**
+ * @brief  Read Steer_Command_SteerAngleCmd (uint16_t)
+ * @param  data  Pointer to receive the signal value
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Read_Steer_Command_SteerAngleCmd(uint16_t *data)
+{
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(FZC_SIG_STEER_COMMAND_STEER_ANGLE_CMD, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint16_t)tmp;
+    }
+    return status;
+}
+
+/**
+ * @brief  Read Steer_Command_VehicleState (uint8_t)
+ * @param  data  Pointer to receive the signal value
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Read_Steer_Command_VehicleState(uint8_t *data)
+{
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(FZC_SIG_STEER_COMMAND_VEHICLE_STATE, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint8_t)tmp;
+    }
+    return status;
+}
+
+/**
+ * @brief  Read Steer_Command_E2E_AliveCounter (uint8_t)
+ * @param  data  Pointer to receive the signal value
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Read_Steer_Command_E2E_AliveCounter(uint8_t *data)
+{
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(FZC_SIG_STEER_COMMAND_E_2_E_ALIVE_COUNTER, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint8_t)tmp;
+    }
+    return status;
+}
+
+/**
+ * @brief  Write Steering_Status_SteerMode (uint8_t)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_SteerFaultStatus(uint8_t value)
+static inline Rte_StatusType Rte_Write_Steering_Status_SteerMode(uint8_t value)
 {
-    return Rte_Write(FZC_SIG_STEER_FAULT_STATUS, (uint32_t)value);
+    return Rte_Write(FZC_SIG_STEERING_STATUS_STEER_MODE, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Steering_Status_E2E_DataID (uint8_t)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Steering_Status_E2E_DataID(uint8_t value)
+{
+    return Rte_Write(FZC_SIG_STEERING_STATUS_E_2_E_DATA_ID, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Steering_Status_ServoCurrent_mA (uint8_t)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Steering_Status_ServoCurrent_mA(uint8_t value)
+{
+    return Rte_Write(FZC_SIG_STEERING_STATUS_SERVO_CURRENT_M_A, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Steering_Status_ActualAngle (uint16_t)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Steering_Status_ActualAngle(uint16_t value)
+{
+    return Rte_Write(FZC_SIG_STEERING_STATUS_ACTUAL_ANGLE, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Steering_Status_SteerFaultStatus (uint8_t)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Steering_Status_SteerFaultStatus(uint8_t value)
+{
+    return Rte_Write(FZC_SIG_STEERING_STATUS_STEER_FAULT_STATUS, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Steering_Status_CommandedAngle (uint16_t)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Steering_Status_CommandedAngle(uint16_t value)
+{
+    return Rte_Write(FZC_SIG_STEERING_STATUS_COMMANDED_ANGLE, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Steering_Status_E2E_AliveCounter (uint8_t)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Steering_Status_E2E_AliveCounter(uint8_t value)
+{
+    return Rte_Write(FZC_SIG_STEERING_STATUS_E_2_E_ALIVE_COUNTER, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Steering_Status_E2E_CRC8 (uint8_t)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Steering_Status_E2E_CRC8(uint8_t value)
+{
+    return Rte_Write(FZC_SIG_STEERING_STATUS_E_2_E_CRC_8, (uint32_t)value);
 }
 
 #endif /* RTE_SWC_STEERING_H */

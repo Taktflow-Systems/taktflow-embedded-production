@@ -21,8 +21,8 @@ static uint8_t  sig_tx_icu_heartbeat_e2e_alivecounter;
 static uint8_t  sig_tx_icu_heartbeat_e2e_crc8;
 static uint8_t  sig_tx_icu_heartbeat_alivecounter;
 static uint8_t  sig_tx_icu_heartbeat_ecu_id;
-static uint32_t  sig_tx_dtc_broadcast_dtc_number;
-static uint8_t  sig_tx_dtc_broadcast_dtc_status;
+static uint32_t  sig_tx_dtc_broadcast_number;
+static uint8_t  sig_tx_dtc_broadcast_status;
 static uint8_t  sig_tx_dtc_broadcast_ecu_source;
 static uint8_t  sig_tx_dtc_broadcast_occurrencecount;
 static uint8_t  sig_tx_dtc_broadcast_freezeframe0;
@@ -32,8 +32,8 @@ static uint8_t  sig_tx_dtc_broadcast_freezeframe1;
 static uint8_t  sig_rx_estop_broadcast_e2e_dataid;
 static uint8_t  sig_rx_estop_broadcast_e2e_alivecounter;
 static uint8_t  sig_rx_estop_broadcast_e2e_crc8;
-static uint8_t  sig_rx_estop_broadcast_estop_active;
-static uint8_t  sig_rx_estop_broadcast_estop_source;
+static uint8_t  sig_rx_estop_broadcast_active;
+static uint8_t  sig_rx_estop_broadcast_source;
 static uint8_t  sig_rx_cvc_heartbeat_e2e_dataid;
 static uint8_t  sig_rx_cvc_heartbeat_e2e_alivecounter;
 static uint8_t  sig_rx_cvc_heartbeat_e2e_crc8;
@@ -52,13 +52,13 @@ static uint8_t  sig_rx_rzc_heartbeat_e2e_crc8;
 static uint8_t  sig_rx_rzc_heartbeat_ecu_id;
 static uint8_t  sig_rx_rzc_heartbeat_operatingmode;
 static uint8_t  sig_rx_rzc_heartbeat_faultstatus;
-static uint8_t  sig_rx_sc_status_sc_alivecounter;
-static uint8_t  sig_rx_sc_status_sc_crc8;
-static uint8_t  sig_rx_sc_status_sc_mode;
-static uint8_t  sig_rx_sc_status_sc_faultflags;
+static uint8_t  sig_rx_sc_status_alivecounter;
+static uint8_t  sig_rx_sc_status_crc8;
+static uint8_t  sig_rx_sc_status_mode;
+static uint8_t  sig_rx_sc_status_faultflags;
 static uint8_t  sig_rx_sc_status_ecu_health;
 static uint8_t  sig_rx_sc_status_faultreason;
-static boolean  sig_rx_sc_status_relaystate;
+static boolean  sig_rx_sc_status_relayenergized;
 static uint8_t  sig_rx_tcu_heartbeat_e2e_dataid;
 static uint8_t  sig_rx_tcu_heartbeat_e2e_alivecounter;
 static uint8_t  sig_rx_tcu_heartbeat_e2e_crc8;
@@ -72,14 +72,14 @@ static uint8_t  sig_rx_bcm_heartbeat_ecu_id;
 static uint8_t  sig_rx_vehicle_state_e2e_dataid;
 static uint8_t  sig_rx_vehicle_state_e2e_alivecounter;
 static uint8_t  sig_rx_vehicle_state_e2e_crc8;
-static uint8_t  sig_rx_vehicle_state_vehiclestate;
+static uint8_t  sig_rx_vehicle_state_mode;
 static uint16_t  sig_rx_vehicle_state_faultmask;
 static uint8_t  sig_rx_vehicle_state_torquelimit;
 static uint8_t  sig_rx_vehicle_state_speedlimit;
 static uint8_t  sig_rx_torque_request_e2e_dataid;
 static uint8_t  sig_rx_torque_request_e2e_alivecounter;
 static uint8_t  sig_rx_torque_request_e2e_crc8;
-static uint8_t  sig_rx_torque_request_torquerequest;
+static uint8_t  sig_rx_torque_request_command_pct;
 static uint8_t  sig_rx_torque_request_direction;
 static uint16_t  sig_rx_torque_request_pedalposition1;
 static uint16_t  sig_rx_torque_request_pedalposition2;
@@ -126,7 +126,7 @@ static uint8_t  sig_rx_motor_cutoff_req_reason;
 static uint8_t  sig_rx_lidar_distance_e2e_dataid;
 static uint8_t  sig_rx_lidar_distance_e2e_alivecounter;
 static uint8_t  sig_rx_lidar_distance_e2e_crc8;
-static uint16_t  sig_rx_lidar_distance_distance_cm;
+static uint16_t  sig_rx_lidar_distance_range_cm;
 static uint16_t  sig_rx_lidar_distance_signalstrength;
 static uint8_t  sig_rx_lidar_distance_obstaclezone;
 static uint8_t  sig_rx_lidar_distance_sensorstatus;
@@ -141,8 +141,8 @@ static uint8_t  sig_rx_motor_status_motorfaultstatus;
 static uint8_t  sig_rx_motor_current_e2e_dataid;
 static uint8_t  sig_rx_motor_current_e2e_alivecounter;
 static uint8_t  sig_rx_motor_current_e2e_crc8;
-static uint16_t  sig_rx_motor_current_current_ma;
-static boolean  sig_rx_motor_current_currentdirection;
+static uint16_t  sig_rx_motor_current_phase_ma;
+static boolean  sig_rx_motor_current_dirisreverse;
 static boolean  sig_rx_motor_current_motorenable;
 static boolean  sig_rx_motor_current_overcurrentflag;
 static uint8_t  sig_rx_motor_current_torqueecho;
@@ -156,10 +156,10 @@ static uint8_t  sig_rx_battery_status_e2e_dataid;
 static uint8_t  sig_rx_battery_status_e2e_alivecounter;
 static uint8_t  sig_rx_battery_status_e2e_crc8;
 static uint16_t  sig_rx_battery_status_batteryvoltage_mv;
-static uint8_t  sig_rx_battery_status_batterystatus;
+static uint8_t  sig_rx_battery_status_level;
 static uint8_t  sig_rx_body_control_cmd_headlightcmd;
-static boolean  sig_rx_body_control_cmd_taillightcmd;
-static boolean  sig_rx_body_control_cmd_hazardcmd;
+static boolean  sig_rx_body_control_cmd_taillighton;
+static boolean  sig_rx_body_control_cmd_hazardactive;
 static uint8_t  sig_rx_body_control_cmd_turnsignalcmd;
 static boolean  sig_rx_body_control_cmd_doorlockcmd;
 static boolean  sig_rx_light_status_headlighton;
@@ -167,21 +167,28 @@ static boolean  sig_rx_light_status_taillighton;
 static boolean  sig_rx_light_status_foglighton;
 static boolean  sig_rx_light_status_brakelighton;
 static uint8_t  sig_rx_light_status_headlightlevel;
-static boolean  sig_rx_indicator_state_leftindicator;
-static boolean  sig_rx_indicator_state_rightindicator;
+static boolean  sig_rx_indicator_state_lefton;
+static boolean  sig_rx_indicator_state_righton;
 static boolean  sig_rx_indicator_state_hazardactive;
-static boolean  sig_rx_indicator_state_blinkstate;
+static boolean  sig_rx_indicator_state_blinkphasehigh;
 static boolean  sig_rx_door_lock_status_frontleftlock;
 static boolean  sig_rx_door_lock_status_frontrightlock;
 static boolean  sig_rx_door_lock_status_rearleftlock;
 static boolean  sig_rx_door_lock_status_rearrightlock;
 static boolean  sig_rx_door_lock_status_centrallock;
-static uint32_t  sig_rx_dtc_broadcast_dtc_number;
-static uint8_t  sig_rx_dtc_broadcast_dtc_status;
+static uint32_t  sig_rx_dtc_broadcast_number;
+static uint8_t  sig_rx_dtc_broadcast_status;
 static uint8_t  sig_rx_dtc_broadcast_ecu_source;
 static uint8_t  sig_rx_dtc_broadcast_occurrencecount;
 static uint8_t  sig_rx_dtc_broadcast_freezeframe0;
 static uint8_t  sig_rx_dtc_broadcast_freezeframe1;
+static uint16_t  sig_rx_fzc_virtual_sensors_steerangle_raw;
+static uint16_t  sig_rx_fzc_virtual_sensors_brakepos_adc;
+static uint16_t  sig_rx_fzc_virtual_sensors_brakecurrent_ma;
+static uint16_t  sig_rx_rzc_virtual_sensors_motorcurrent_ma;
+static uint16_t  sig_rx_rzc_virtual_sensors_motortemp_dc;
+static uint16_t  sig_rx_rzc_virtual_sensors_battvoltage_mv;
+static uint16_t  sig_rx_rzc_virtual_sensors_motorspeed_rpm;
 static uint32_t  sig_rx_uds_resp_tcu_uds_data;
 static uint32_t  sig_rx_uds_func_request_uds_data;
 static uint32_t  sig_rx_uds_phys_req_cvc_uds_data;
@@ -198,183 +205,190 @@ static uint32_t  sig_rx_uds_resp_rzc_uds_data;
  * ================================================================== */
 
 static const Com_SignalConfigType icu_signal_config[] = {
-    /* TX signals */
-    /* id, bitPos, bitSize, type,       pduId,                      shadowBuf */
-    {  0u,    0u,     4u, COM_UINT8, ICU_COM_TX_ICU_HEARTBEAT, &sig_tx_icu_heartbeat_e2e_dataid },
-    {  1u,    4u,     4u, COM_UINT8, ICU_COM_TX_ICU_HEARTBEAT, &sig_tx_icu_heartbeat_e2e_alivecounter },
-    {  2u,    8u,     8u, COM_UINT8, ICU_COM_TX_ICU_HEARTBEAT, &sig_tx_icu_heartbeat_e2e_crc8 },
-    {  3u,   16u,     8u, COM_UINT8, ICU_COM_TX_ICU_HEARTBEAT, &sig_tx_icu_heartbeat_alivecounter },
-    {  4u,   24u,     8u, COM_UINT8, ICU_COM_TX_ICU_HEARTBEAT, &sig_tx_icu_heartbeat_ecu_id },
-    {  5u,    7u,    24u, COM_UINT32, ICU_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_dtc_number },
-    {  6u,   24u,     8u, COM_UINT8, ICU_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_dtc_status },
-    {  7u,   32u,     8u, COM_UINT8, ICU_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_ecu_source },
-    {  8u,   40u,     8u, COM_UINT8, ICU_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_occurrencecount },
-    {  9u,   48u,     8u, COM_UINT8, ICU_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_freezeframe0 },
-    { 10u,   56u,     8u, COM_UINT8, ICU_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_freezeframe1 },
+    /* TX signals — no RTE binding (TX uses Rte_Read → Com_SendSignal path) */
+    /* id, bitPos, bitSize, type,       pduId,                      shadowBuf,       rteSignalId */
+    {  0u,    0u,     4u, COM_UINT8, ICU_COM_TX_ICU_HEARTBEAT, &sig_tx_icu_heartbeat_e2e_dataid, COM_RTE_SIGNAL_NONE },
+    {  1u,    4u,     4u, COM_UINT8, ICU_COM_TX_ICU_HEARTBEAT, &sig_tx_icu_heartbeat_e2e_alivecounter, COM_RTE_SIGNAL_NONE },
+    {  2u,    8u,     8u, COM_UINT8, ICU_COM_TX_ICU_HEARTBEAT, &sig_tx_icu_heartbeat_e2e_crc8, COM_RTE_SIGNAL_NONE },
+    {  3u,   16u,     8u, COM_UINT8, ICU_COM_TX_ICU_HEARTBEAT, &sig_tx_icu_heartbeat_alivecounter, COM_RTE_SIGNAL_NONE },
+    {  4u,   24u,     8u, COM_UINT8, ICU_COM_TX_ICU_HEARTBEAT, &sig_tx_icu_heartbeat_ecu_id, COM_RTE_SIGNAL_NONE },
+    {  5u,    7u,    24u, COM_UINT32, ICU_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_number, COM_RTE_SIGNAL_NONE },
+    {  6u,   24u,     8u, COM_UINT8, ICU_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_status, COM_RTE_SIGNAL_NONE },
+    {  7u,   32u,     8u, COM_UINT8, ICU_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_ecu_source, COM_RTE_SIGNAL_NONE },
+    {  8u,   40u,     8u, COM_UINT8, ICU_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_occurrencecount, COM_RTE_SIGNAL_NONE },
+    {  9u,   48u,     8u, COM_UINT8, ICU_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_freezeframe0, COM_RTE_SIGNAL_NONE },
+    { 10u,   56u,     8u, COM_UINT8, ICU_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_freezeframe1, COM_RTE_SIGNAL_NONE },
 
-    /* RX signals */
-    { 11u,    0u,     4u, COM_UINT8, ICU_COM_RX_ESTOP_BROADCAST, &sig_rx_estop_broadcast_e2e_dataid },
-    { 12u,    4u,     4u, COM_UINT8, ICU_COM_RX_ESTOP_BROADCAST, &sig_rx_estop_broadcast_e2e_alivecounter },
-    { 13u,    8u,     8u, COM_UINT8, ICU_COM_RX_ESTOP_BROADCAST, &sig_rx_estop_broadcast_e2e_crc8 },
-    { 14u,   16u,     8u, COM_UINT8, ICU_COM_RX_ESTOP_BROADCAST, &sig_rx_estop_broadcast_estop_active },
-    { 15u,   24u,     8u, COM_UINT8, ICU_COM_RX_ESTOP_BROADCAST, &sig_rx_estop_broadcast_estop_source },
-    { 16u,    0u,     4u, COM_UINT8, ICU_COM_RX_CVC_HEARTBEAT, &sig_rx_cvc_heartbeat_e2e_dataid },
-    { 17u,    4u,     4u, COM_UINT8, ICU_COM_RX_CVC_HEARTBEAT, &sig_rx_cvc_heartbeat_e2e_alivecounter },
-    { 18u,    8u,     8u, COM_UINT8, ICU_COM_RX_CVC_HEARTBEAT, &sig_rx_cvc_heartbeat_e2e_crc8 },
-    { 19u,   16u,     8u, COM_UINT8, ICU_COM_RX_CVC_HEARTBEAT, &sig_rx_cvc_heartbeat_ecu_id },
-    { 20u,   24u,     4u, COM_UINT8, ICU_COM_RX_CVC_HEARTBEAT, &sig_rx_cvc_heartbeat_operatingmode },
-    { 21u,   28u,     4u, COM_UINT8, ICU_COM_RX_CVC_HEARTBEAT, &sig_rx_cvc_heartbeat_faultstatus },
-    { 22u,    0u,     4u, COM_UINT8, ICU_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_e2e_dataid },
-    { 23u,    4u,     4u, COM_UINT8, ICU_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_e2e_alivecounter },
-    { 24u,    8u,     8u, COM_UINT8, ICU_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_e2e_crc8 },
-    { 25u,   16u,     8u, COM_UINT8, ICU_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_ecu_id },
-    { 26u,   24u,     4u, COM_UINT8, ICU_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_operatingmode },
-    { 27u,   28u,     4u, COM_UINT8, ICU_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_faultstatus },
-    { 28u,    0u,     4u, COM_UINT8, ICU_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_e2e_dataid },
-    { 29u,    4u,     4u, COM_UINT8, ICU_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_e2e_alivecounter },
-    { 30u,    8u,     8u, COM_UINT8, ICU_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_e2e_crc8 },
-    { 31u,   16u,     8u, COM_UINT8, ICU_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_ecu_id },
-    { 32u,   24u,     4u, COM_UINT8, ICU_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_operatingmode },
-    { 33u,   28u,     4u, COM_UINT8, ICU_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_faultstatus },
-    { 34u,    0u,     8u, COM_UINT8, ICU_COM_RX_SC_STATUS, &sig_rx_sc_status_sc_alivecounter },
-    { 35u,    8u,     8u, COM_UINT8, ICU_COM_RX_SC_STATUS, &sig_rx_sc_status_sc_crc8 },
-    { 36u,   16u,     4u, COM_UINT8, ICU_COM_RX_SC_STATUS, &sig_rx_sc_status_sc_mode },
-    { 37u,   20u,     4u, COM_UINT8, ICU_COM_RX_SC_STATUS, &sig_rx_sc_status_sc_faultflags },
-    { 38u,   24u,     3u, COM_UINT8, ICU_COM_RX_SC_STATUS, &sig_rx_sc_status_ecu_health },
-    { 39u,   27u,     4u, COM_UINT8, ICU_COM_RX_SC_STATUS, &sig_rx_sc_status_faultreason },
-    { 40u,   31u,     1u, COM_UINT8, ICU_COM_RX_SC_STATUS, &sig_rx_sc_status_relaystate },
-    { 41u,    0u,     4u, COM_UINT8, ICU_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_e2e_dataid },
-    { 42u,    4u,     4u, COM_UINT8, ICU_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_e2e_alivecounter },
-    { 43u,    8u,     8u, COM_UINT8, ICU_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_e2e_crc8 },
-    { 44u,   16u,     8u, COM_UINT8, ICU_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_alivecounter },
-    { 45u,   24u,     8u, COM_UINT8, ICU_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_ecu_id },
-    { 46u,    0u,     4u, COM_UINT8, ICU_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_e2e_dataid },
-    { 47u,    4u,     4u, COM_UINT8, ICU_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_e2e_alivecounter },
-    { 48u,    8u,     8u, COM_UINT8, ICU_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_e2e_crc8 },
-    { 49u,   16u,     8u, COM_UINT8, ICU_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_alivecounter },
-    { 50u,   24u,     8u, COM_UINT8, ICU_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_ecu_id },
-    { 51u,    0u,     4u, COM_UINT8, ICU_COM_RX_VEHICLE_STATE, &sig_rx_vehicle_state_e2e_dataid },
-    { 52u,    4u,     4u, COM_UINT8, ICU_COM_RX_VEHICLE_STATE, &sig_rx_vehicle_state_e2e_alivecounter },
-    { 53u,    8u,     8u, COM_UINT8, ICU_COM_RX_VEHICLE_STATE, &sig_rx_vehicle_state_e2e_crc8 },
-    { 54u,   16u,     4u, COM_UINT8, ICU_COM_RX_VEHICLE_STATE, &sig_rx_vehicle_state_vehiclestate },
-    { 55u,   20u,    12u, COM_UINT16, ICU_COM_RX_VEHICLE_STATE, &sig_rx_vehicle_state_faultmask },
-    { 56u,   32u,     8u, COM_UINT8, ICU_COM_RX_VEHICLE_STATE, &sig_rx_vehicle_state_torquelimit },
-    { 57u,   40u,     8u, COM_UINT8, ICU_COM_RX_VEHICLE_STATE, &sig_rx_vehicle_state_speedlimit },
-    { 58u,    0u,     4u, COM_UINT8, ICU_COM_RX_TORQUE_REQUEST, &sig_rx_torque_request_e2e_dataid },
-    { 59u,    4u,     4u, COM_UINT8, ICU_COM_RX_TORQUE_REQUEST, &sig_rx_torque_request_e2e_alivecounter },
-    { 60u,    8u,     8u, COM_UINT8, ICU_COM_RX_TORQUE_REQUEST, &sig_rx_torque_request_e2e_crc8 },
-    { 61u,   16u,     8u, COM_UINT8, ICU_COM_RX_TORQUE_REQUEST, &sig_rx_torque_request_torquerequest },
-    { 62u,   24u,     2u, COM_UINT8, ICU_COM_RX_TORQUE_REQUEST, &sig_rx_torque_request_direction },
-    { 63u,   26u,    14u, COM_UINT16, ICU_COM_RX_TORQUE_REQUEST, &sig_rx_torque_request_pedalposition1 },
-    { 64u,   40u,    14u, COM_UINT16, ICU_COM_RX_TORQUE_REQUEST, &sig_rx_torque_request_pedalposition2 },
-    { 65u,   54u,     1u, COM_UINT8, ICU_COM_RX_TORQUE_REQUEST, &sig_rx_torque_request_pedalfault },
-    { 66u,    0u,     4u, COM_UINT8, ICU_COM_RX_STEER_COMMAND, &sig_rx_steer_command_e2e_dataid },
-    { 67u,    4u,     4u, COM_UINT8, ICU_COM_RX_STEER_COMMAND, &sig_rx_steer_command_e2e_alivecounter },
-    { 68u,    8u,     8u, COM_UINT8, ICU_COM_RX_STEER_COMMAND, &sig_rx_steer_command_e2e_crc8 },
-    { 69u,   16u,    16u, COM_UINT16, ICU_COM_RX_STEER_COMMAND, &sig_rx_steer_command_steeranglecmd },
-    { 70u,   32u,     8u, COM_UINT8, ICU_COM_RX_STEER_COMMAND, &sig_rx_steer_command_steerratelimit },
-    { 71u,   40u,     4u, COM_UINT8, ICU_COM_RX_STEER_COMMAND, &sig_rx_steer_command_vehiclestate },
-    { 72u,    0u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_COMMAND, &sig_rx_brake_command_e2e_dataid },
-    { 73u,    4u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_COMMAND, &sig_rx_brake_command_e2e_alivecounter },
-    { 74u,    8u,     8u, COM_UINT8, ICU_COM_RX_BRAKE_COMMAND, &sig_rx_brake_command_e2e_crc8 },
-    { 75u,   16u,     8u, COM_UINT8, ICU_COM_RX_BRAKE_COMMAND, &sig_rx_brake_command_brakeforcecmd },
-    { 76u,   24u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_COMMAND, &sig_rx_brake_command_brakemode },
-    { 77u,   28u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_COMMAND, &sig_rx_brake_command_vehiclestate },
-    { 78u,    0u,     4u, COM_UINT8, ICU_COM_RX_STEERING_STATUS, &sig_rx_steering_status_e2e_dataid },
-    { 79u,    4u,     4u, COM_UINT8, ICU_COM_RX_STEERING_STATUS, &sig_rx_steering_status_e2e_alivecounter },
-    { 80u,    8u,     8u, COM_UINT8, ICU_COM_RX_STEERING_STATUS, &sig_rx_steering_status_e2e_crc8 },
-    { 81u,   16u,    16u, COM_UINT16, ICU_COM_RX_STEERING_STATUS, &sig_rx_steering_status_actualangle },
-    { 82u,   32u,    16u, COM_UINT16, ICU_COM_RX_STEERING_STATUS, &sig_rx_steering_status_commandedangle },
-    { 83u,   48u,     4u, COM_UINT8, ICU_COM_RX_STEERING_STATUS, &sig_rx_steering_status_steerfaultstatus },
-    { 84u,   52u,     4u, COM_UINT8, ICU_COM_RX_STEERING_STATUS, &sig_rx_steering_status_steermode },
-    { 85u,   56u,     8u, COM_UINT8, ICU_COM_RX_STEERING_STATUS, &sig_rx_steering_status_servocurrent_ma },
-    { 86u,    0u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_e2e_dataid },
-    { 87u,    4u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_e2e_alivecounter },
-    { 88u,    8u,     8u, COM_UINT8, ICU_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_e2e_crc8 },
-    { 89u,   16u,     8u, COM_UINT8, ICU_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_brakeposition },
-    { 90u,   24u,     8u, COM_UINT8, ICU_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_brakecommandecho },
-    { 91u,   32u,    16u, COM_UINT16, ICU_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_servocurrent_ma },
-    { 92u,   48u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_brakefaultstatus },
-    { 93u,   52u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_brakemode },
-    { 94u,    0u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_e2e_dataid },
-    { 95u,    4u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_e2e_alivecounter },
-    { 96u,    8u,     8u, COM_UINT8, ICU_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_e2e_crc8 },
-    { 97u,   16u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_faulttype },
-    { 98u,   20u,     8u, COM_UINT8, ICU_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_commandedbrake },
-    { 99u,   28u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_measuredbrake },
-    { 100u,    0u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_e2e_dataid },
-    { 101u,    4u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_e2e_alivecounter },
-    { 102u,    8u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_e2e_crc8 },
-    { 103u,   16u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_requesttype },
-    { 104u,   20u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_reason },
-    { 105u,    0u,     4u, COM_UINT8, ICU_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_e2e_dataid },
-    { 106u,    4u,     4u, COM_UINT8, ICU_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_e2e_alivecounter },
-    { 107u,    8u,     8u, COM_UINT8, ICU_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_e2e_crc8 },
-    { 108u,   16u,    16u, COM_UINT16, ICU_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_distance_cm },
-    { 109u,   32u,    16u, COM_UINT16, ICU_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_signalstrength },
-    { 110u,   48u,     4u, COM_UINT8, ICU_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_obstaclezone },
-    { 111u,   52u,     4u, COM_UINT8, ICU_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_sensorstatus },
-    { 112u,    0u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_e2e_dataid },
-    { 113u,    4u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_e2e_alivecounter },
-    { 114u,    8u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_e2e_crc8 },
-    { 115u,   16u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_torqueecho },
-    { 116u,   24u,    16u, COM_UINT16, ICU_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_motorspeed_rpm },
-    { 117u,   40u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_motordirection },
-    { 118u,   48u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_motorenable },
-    { 119u,   56u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_motorfaultstatus },
-    { 120u,    0u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_e2e_dataid },
-    { 121u,    4u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_e2e_alivecounter },
-    { 122u,    8u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_e2e_crc8 },
-    { 123u,   16u,    16u, COM_UINT16, ICU_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_current_ma },
-    { 124u,   32u,     1u, COM_UINT8, ICU_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_currentdirection },
-    { 125u,   33u,     1u, COM_UINT8, ICU_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_motorenable },
-    { 126u,   34u,     1u, COM_UINT8, ICU_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_overcurrentflag },
-    { 127u,   35u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_torqueecho },
-    { 128u,    0u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_e2e_dataid },
-    { 129u,    4u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_e2e_alivecounter },
-    { 130u,    8u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_e2e_crc8 },
-    { 131u,   16u,    16u, COM_UINT16, ICU_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_windingtemp1_c },
-    { 132u,   32u,    16u, COM_UINT16, ICU_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_windingtemp2_c },
-    { 133u,   48u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_deratingpercent },
-    { 134u,    0u,     4u, COM_UINT8, ICU_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_e2e_dataid },
-    { 135u,    4u,     4u, COM_UINT8, ICU_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_e2e_alivecounter },
-    { 136u,    8u,     8u, COM_UINT8, ICU_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_e2e_crc8 },
-    { 137u,   16u,    16u, COM_UINT16, ICU_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_batteryvoltage_mv },
-    { 138u,   32u,     8u, COM_UINT8, ICU_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_batterystatus },
-    { 139u,    0u,     2u, COM_UINT8, ICU_COM_RX_BODY_CONTROL_CMD, &sig_rx_body_control_cmd_headlightcmd },
-    { 140u,    2u,     1u, COM_UINT8, ICU_COM_RX_BODY_CONTROL_CMD, &sig_rx_body_control_cmd_taillightcmd },
-    { 141u,    3u,     1u, COM_UINT8, ICU_COM_RX_BODY_CONTROL_CMD, &sig_rx_body_control_cmd_hazardcmd },
-    { 142u,    4u,     2u, COM_UINT8, ICU_COM_RX_BODY_CONTROL_CMD, &sig_rx_body_control_cmd_turnsignalcmd },
-    { 143u,    6u,     1u, COM_UINT8, ICU_COM_RX_BODY_CONTROL_CMD, &sig_rx_body_control_cmd_doorlockcmd },
-    { 144u,    0u,     1u, COM_UINT8, ICU_COM_RX_LIGHT_STATUS, &sig_rx_light_status_headlighton },
-    { 145u,    1u,     1u, COM_UINT8, ICU_COM_RX_LIGHT_STATUS, &sig_rx_light_status_taillighton },
-    { 146u,    2u,     1u, COM_UINT8, ICU_COM_RX_LIGHT_STATUS, &sig_rx_light_status_foglighton },
-    { 147u,    3u,     1u, COM_UINT8, ICU_COM_RX_LIGHT_STATUS, &sig_rx_light_status_brakelighton },
-    { 148u,    4u,     2u, COM_UINT8, ICU_COM_RX_LIGHT_STATUS, &sig_rx_light_status_headlightlevel },
-    { 149u,    0u,     1u, COM_UINT8, ICU_COM_RX_INDICATOR_STATE, &sig_rx_indicator_state_leftindicator },
-    { 150u,    1u,     1u, COM_UINT8, ICU_COM_RX_INDICATOR_STATE, &sig_rx_indicator_state_rightindicator },
-    { 151u,    2u,     1u, COM_UINT8, ICU_COM_RX_INDICATOR_STATE, &sig_rx_indicator_state_hazardactive },
-    { 152u,    3u,     1u, COM_UINT8, ICU_COM_RX_INDICATOR_STATE, &sig_rx_indicator_state_blinkstate },
-    { 153u,    0u,     1u, COM_UINT8, ICU_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_frontleftlock },
-    { 154u,    1u,     1u, COM_UINT8, ICU_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_frontrightlock },
-    { 155u,    2u,     1u, COM_UINT8, ICU_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_rearleftlock },
-    { 156u,    3u,     1u, COM_UINT8, ICU_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_rearrightlock },
-    { 157u,    4u,     1u, COM_UINT8, ICU_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_centrallock },
-    { 158u,    7u,    24u, COM_UINT32, ICU_COM_RX_DTC_BROADCAST, &sig_rx_dtc_broadcast_dtc_number },
-    { 159u,   24u,     8u, COM_UINT8, ICU_COM_RX_DTC_BROADCAST, &sig_rx_dtc_broadcast_dtc_status },
-    { 160u,   32u,     8u, COM_UINT8, ICU_COM_RX_DTC_BROADCAST, &sig_rx_dtc_broadcast_ecu_source },
-    { 161u,   40u,     8u, COM_UINT8, ICU_COM_RX_DTC_BROADCAST, &sig_rx_dtc_broadcast_occurrencecount },
-    { 162u,   48u,     8u, COM_UINT8, ICU_COM_RX_DTC_BROADCAST, &sig_rx_dtc_broadcast_freezeframe0 },
-    { 163u,   56u,     8u, COM_UINT8, ICU_COM_RX_DTC_BROADCAST, &sig_rx_dtc_broadcast_freezeframe1 },
-    { 164u,    0u,    64u, COM_UINT32, ICU_COM_RX_UDS_RESP_TCU, &sig_rx_uds_resp_tcu_uds_data },
-    { 165u,    0u,    64u, COM_UINT32, ICU_COM_RX_UDS_FUNC_REQUEST, &sig_rx_uds_func_request_uds_data },
-    { 166u,    0u,    64u, COM_UINT32, ICU_COM_RX_UDS_PHYS_REQ_CVC, &sig_rx_uds_phys_req_cvc_uds_data },
-    { 167u,    0u,    64u, COM_UINT32, ICU_COM_RX_UDS_PHYS_REQ_FZC, &sig_rx_uds_phys_req_fzc_uds_data },
-    { 168u,    0u,    64u, COM_UINT32, ICU_COM_RX_UDS_PHYS_REQ_RZC, &sig_rx_uds_phys_req_rzc_uds_data },
-    { 169u,    0u,    64u, COM_UINT32, ICU_COM_RX_UDS_PHYS_REQ_TCU, &sig_rx_uds_phys_req_tcu_uds_data },
-    { 170u,    0u,    64u, COM_UINT32, ICU_COM_RX_UDS_RESP_CVC, &sig_rx_uds_resp_cvc_uds_data },
-    { 171u,    0u,    64u, COM_UINT32, ICU_COM_RX_UDS_RESP_FZC, &sig_rx_uds_resp_fzc_uds_data },
-    { 172u,    0u,    64u, COM_UINT32, ICU_COM_RX_UDS_RESP_RZC, &sig_rx_uds_resp_rzc_uds_data },
+    /* RX signals — auto-push to RTE on reception */
+    { 11u,    0u,     4u, COM_UINT8, ICU_COM_RX_ESTOP_BROADCAST, &sig_rx_estop_broadcast_e2e_dataid, ICU_SIG_ESTOP_BROADCAST_E_2_E_DATA_ID },
+    { 12u,    4u,     4u, COM_UINT8, ICU_COM_RX_ESTOP_BROADCAST, &sig_rx_estop_broadcast_e2e_alivecounter, ICU_SIG_ESTOP_BROADCAST_E_2_E_ALIVE_COUNTER },
+    { 13u,    8u,     8u, COM_UINT8, ICU_COM_RX_ESTOP_BROADCAST, &sig_rx_estop_broadcast_e2e_crc8, ICU_SIG_ESTOP_BROADCAST_E_2_E_CRC_8 },
+    { 14u,   16u,     8u, COM_UINT8, ICU_COM_RX_ESTOP_BROADCAST, &sig_rx_estop_broadcast_active, ICU_SIG_ESTOP_BROADCAST_ACTIVE },
+    { 15u,   24u,     8u, COM_UINT8, ICU_COM_RX_ESTOP_BROADCAST, &sig_rx_estop_broadcast_source, ICU_SIG_ESTOP_BROADCAST_SOURCE },
+    { 16u,    0u,     4u, COM_UINT8, ICU_COM_RX_CVC_HEARTBEAT, &sig_rx_cvc_heartbeat_e2e_dataid, ICU_SIG_CVC_HEARTBEAT_E_2_E_DATA_ID },
+    { 17u,    4u,     4u, COM_UINT8, ICU_COM_RX_CVC_HEARTBEAT, &sig_rx_cvc_heartbeat_e2e_alivecounter, ICU_SIG_CVC_HEARTBEAT_E_2_E_ALIVE_COUNTER },
+    { 18u,    8u,     8u, COM_UINT8, ICU_COM_RX_CVC_HEARTBEAT, &sig_rx_cvc_heartbeat_e2e_crc8, ICU_SIG_CVC_HEARTBEAT_E_2_E_CRC_8 },
+    { 19u,   16u,     8u, COM_UINT8, ICU_COM_RX_CVC_HEARTBEAT, &sig_rx_cvc_heartbeat_ecu_id, ICU_SIG_CVC_HEARTBEAT_ECU_ID },
+    { 20u,   24u,     4u, COM_UINT8, ICU_COM_RX_CVC_HEARTBEAT, &sig_rx_cvc_heartbeat_operatingmode, ICU_SIG_CVC_HEARTBEAT_OPERATING_MODE },
+    { 21u,   28u,     4u, COM_UINT8, ICU_COM_RX_CVC_HEARTBEAT, &sig_rx_cvc_heartbeat_faultstatus, ICU_SIG_CVC_HEARTBEAT_FAULT_STATUS },
+    { 22u,    0u,     4u, COM_UINT8, ICU_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_e2e_dataid, ICU_SIG_FZC_HEARTBEAT_E_2_E_DATA_ID },
+    { 23u,    4u,     4u, COM_UINT8, ICU_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_e2e_alivecounter, ICU_SIG_FZC_HEARTBEAT_E_2_E_ALIVE_COUNTER },
+    { 24u,    8u,     8u, COM_UINT8, ICU_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_e2e_crc8, ICU_SIG_FZC_HEARTBEAT_E_2_E_CRC_8 },
+    { 25u,   16u,     8u, COM_UINT8, ICU_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_ecu_id, ICU_SIG_FZC_HEARTBEAT_ECU_ID },
+    { 26u,   24u,     4u, COM_UINT8, ICU_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_operatingmode, ICU_SIG_FZC_HEARTBEAT_OPERATING_MODE },
+    { 27u,   28u,     4u, COM_UINT8, ICU_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_faultstatus, ICU_SIG_FZC_HEARTBEAT_FAULT_STATUS },
+    { 28u,    0u,     4u, COM_UINT8, ICU_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_e2e_dataid, ICU_SIG_RZC_HEARTBEAT_E_2_E_DATA_ID },
+    { 29u,    4u,     4u, COM_UINT8, ICU_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_e2e_alivecounter, ICU_SIG_RZC_HEARTBEAT_E_2_E_ALIVE_COUNTER },
+    { 30u,    8u,     8u, COM_UINT8, ICU_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_e2e_crc8, ICU_SIG_RZC_HEARTBEAT_E_2_E_CRC_8 },
+    { 31u,   16u,     8u, COM_UINT8, ICU_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_ecu_id, ICU_SIG_RZC_HEARTBEAT_ECU_ID },
+    { 32u,   24u,     4u, COM_UINT8, ICU_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_operatingmode, ICU_SIG_RZC_HEARTBEAT_OPERATING_MODE },
+    { 33u,   28u,     4u, COM_UINT8, ICU_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_faultstatus, ICU_SIG_RZC_HEARTBEAT_FAULT_STATUS },
+    { 34u,    0u,     8u, COM_UINT8, ICU_COM_RX_SC_STATUS, &sig_rx_sc_status_alivecounter, ICU_SIG_SC_STATUS_ALIVE_COUNTER },
+    { 35u,    8u,     8u, COM_UINT8, ICU_COM_RX_SC_STATUS, &sig_rx_sc_status_crc8, ICU_SIG_SC_STATUS_CRC_8 },
+    { 36u,   16u,     4u, COM_UINT8, ICU_COM_RX_SC_STATUS, &sig_rx_sc_status_mode, ICU_SIG_SC_STATUS_MODE },
+    { 37u,   20u,     4u, COM_UINT8, ICU_COM_RX_SC_STATUS, &sig_rx_sc_status_faultflags, ICU_SIG_SC_STATUS_FAULT_FLAGS },
+    { 38u,   24u,     3u, COM_UINT8, ICU_COM_RX_SC_STATUS, &sig_rx_sc_status_ecu_health, ICU_SIG_SC_STATUS_ECU_HEALTH },
+    { 39u,   27u,     4u, COM_UINT8, ICU_COM_RX_SC_STATUS, &sig_rx_sc_status_faultreason, ICU_SIG_SC_STATUS_FAULT_REASON },
+    { 40u,   31u,     1u, COM_UINT8, ICU_COM_RX_SC_STATUS, &sig_rx_sc_status_relayenergized, ICU_SIG_SC_STATUS_RELAY_ENERGIZED },
+    { 41u,    0u,     4u, COM_UINT8, ICU_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_e2e_dataid, ICU_SIG_TCU_HEARTBEAT_E_2_E_DATA_ID },
+    { 42u,    4u,     4u, COM_UINT8, ICU_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_e2e_alivecounter, ICU_SIG_TCU_HEARTBEAT_E_2_E_ALIVE_COUNTER },
+    { 43u,    8u,     8u, COM_UINT8, ICU_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_e2e_crc8, ICU_SIG_TCU_HEARTBEAT_E_2_E_CRC_8 },
+    { 44u,   16u,     8u, COM_UINT8, ICU_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_alivecounter, ICU_SIG_TCU_HEARTBEAT_ALIVE_COUNTER },
+    { 45u,   24u,     8u, COM_UINT8, ICU_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_ecu_id, ICU_SIG_TCU_HEARTBEAT_ECU_ID },
+    { 46u,    0u,     4u, COM_UINT8, ICU_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_e2e_dataid, ICU_SIG_BCM_HEARTBEAT_E_2_E_DATA_ID },
+    { 47u,    4u,     4u, COM_UINT8, ICU_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_e2e_alivecounter, ICU_SIG_BCM_HEARTBEAT_E_2_E_ALIVE_COUNTER },
+    { 48u,    8u,     8u, COM_UINT8, ICU_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_e2e_crc8, ICU_SIG_BCM_HEARTBEAT_E_2_E_CRC_8 },
+    { 49u,   16u,     8u, COM_UINT8, ICU_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_alivecounter, ICU_SIG_BCM_HEARTBEAT_ALIVE_COUNTER },
+    { 50u,   24u,     8u, COM_UINT8, ICU_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_ecu_id, ICU_SIG_BCM_HEARTBEAT_ECU_ID },
+    { 51u,    0u,     4u, COM_UINT8, ICU_COM_RX_VEHICLE_STATE, &sig_rx_vehicle_state_e2e_dataid, ICU_SIG_VEHICLE_STATE_E_2_E_DATA_ID },
+    { 52u,    4u,     4u, COM_UINT8, ICU_COM_RX_VEHICLE_STATE, &sig_rx_vehicle_state_e2e_alivecounter, ICU_SIG_VEHICLE_STATE_E_2_E_ALIVE_COUNTER },
+    { 53u,    8u,     8u, COM_UINT8, ICU_COM_RX_VEHICLE_STATE, &sig_rx_vehicle_state_e2e_crc8, ICU_SIG_VEHICLE_STATE_E_2_E_CRC_8 },
+    { 54u,   16u,     4u, COM_UINT8, ICU_COM_RX_VEHICLE_STATE, &sig_rx_vehicle_state_mode, ICU_SIG_VEHICLE_STATE_MODE },
+    { 55u,   20u,    12u, COM_UINT16, ICU_COM_RX_VEHICLE_STATE, &sig_rx_vehicle_state_faultmask, ICU_SIG_VEHICLE_STATE_FAULT_MASK },
+    { 56u,   32u,     8u, COM_UINT8, ICU_COM_RX_VEHICLE_STATE, &sig_rx_vehicle_state_torquelimit, ICU_SIG_VEHICLE_STATE_TORQUE_LIMIT },
+    { 57u,   40u,     8u, COM_UINT8, ICU_COM_RX_VEHICLE_STATE, &sig_rx_vehicle_state_speedlimit, ICU_SIG_VEHICLE_STATE_SPEED_LIMIT },
+    { 58u,    0u,     4u, COM_UINT8, ICU_COM_RX_TORQUE_REQUEST, &sig_rx_torque_request_e2e_dataid, ICU_SIG_TORQUE_REQUEST_E_2_E_DATA_ID },
+    { 59u,    4u,     4u, COM_UINT8, ICU_COM_RX_TORQUE_REQUEST, &sig_rx_torque_request_e2e_alivecounter, ICU_SIG_TORQUE_REQUEST_E_2_E_ALIVE_COUNTER },
+    { 60u,    8u,     8u, COM_UINT8, ICU_COM_RX_TORQUE_REQUEST, &sig_rx_torque_request_e2e_crc8, ICU_SIG_TORQUE_REQUEST_E_2_E_CRC_8 },
+    { 61u,   16u,     8u, COM_UINT8, ICU_COM_RX_TORQUE_REQUEST, &sig_rx_torque_request_command_pct, ICU_SIG_TORQUE_REQUEST_COMMAND_PCT },
+    { 62u,   24u,     2u, COM_UINT8, ICU_COM_RX_TORQUE_REQUEST, &sig_rx_torque_request_direction, ICU_SIG_TORQUE_REQUEST_DIRECTION },
+    { 63u,   26u,    14u, COM_UINT16, ICU_COM_RX_TORQUE_REQUEST, &sig_rx_torque_request_pedalposition1, ICU_SIG_TORQUE_REQUEST_PEDAL_POSITION_1 },
+    { 64u,   40u,    14u, COM_UINT16, ICU_COM_RX_TORQUE_REQUEST, &sig_rx_torque_request_pedalposition2, ICU_SIG_TORQUE_REQUEST_PEDAL_POSITION_2 },
+    { 65u,   54u,     1u, COM_UINT8, ICU_COM_RX_TORQUE_REQUEST, &sig_rx_torque_request_pedalfault, ICU_SIG_TORQUE_REQUEST_PEDAL_FAULT },
+    { 66u,    0u,     4u, COM_UINT8, ICU_COM_RX_STEER_COMMAND, &sig_rx_steer_command_e2e_dataid, ICU_SIG_STEER_COMMAND_E_2_E_DATA_ID },
+    { 67u,    4u,     4u, COM_UINT8, ICU_COM_RX_STEER_COMMAND, &sig_rx_steer_command_e2e_alivecounter, ICU_SIG_STEER_COMMAND_E_2_E_ALIVE_COUNTER },
+    { 68u,    8u,     8u, COM_UINT8, ICU_COM_RX_STEER_COMMAND, &sig_rx_steer_command_e2e_crc8, ICU_SIG_STEER_COMMAND_E_2_E_CRC_8 },
+    { 69u,   16u,    16u, COM_UINT16, ICU_COM_RX_STEER_COMMAND, &sig_rx_steer_command_steeranglecmd, ICU_SIG_STEER_COMMAND_STEER_ANGLE_CMD },
+    { 70u,   32u,     8u, COM_UINT8, ICU_COM_RX_STEER_COMMAND, &sig_rx_steer_command_steerratelimit, ICU_SIG_STEER_COMMAND_STEER_RATE_LIMIT },
+    { 71u,   40u,     4u, COM_UINT8, ICU_COM_RX_STEER_COMMAND, &sig_rx_steer_command_vehiclestate, ICU_SIG_STEER_COMMAND_VEHICLE_STATE },
+    { 72u,    0u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_COMMAND, &sig_rx_brake_command_e2e_dataid, ICU_SIG_BRAKE_COMMAND_E_2_E_DATA_ID },
+    { 73u,    4u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_COMMAND, &sig_rx_brake_command_e2e_alivecounter, ICU_SIG_BRAKE_COMMAND_E_2_E_ALIVE_COUNTER },
+    { 74u,    8u,     8u, COM_UINT8, ICU_COM_RX_BRAKE_COMMAND, &sig_rx_brake_command_e2e_crc8, ICU_SIG_BRAKE_COMMAND_E_2_E_CRC_8 },
+    { 75u,   16u,     8u, COM_UINT8, ICU_COM_RX_BRAKE_COMMAND, &sig_rx_brake_command_brakeforcecmd, ICU_SIG_BRAKE_COMMAND_BRAKE_FORCE_CMD },
+    { 76u,   24u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_COMMAND, &sig_rx_brake_command_brakemode, ICU_SIG_BRAKE_COMMAND_BRAKE_MODE },
+    { 77u,   28u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_COMMAND, &sig_rx_brake_command_vehiclestate, ICU_SIG_BRAKE_COMMAND_VEHICLE_STATE },
+    { 78u,    0u,     4u, COM_UINT8, ICU_COM_RX_STEERING_STATUS, &sig_rx_steering_status_e2e_dataid, ICU_SIG_STEERING_STATUS_E_2_E_DATA_ID },
+    { 79u,    4u,     4u, COM_UINT8, ICU_COM_RX_STEERING_STATUS, &sig_rx_steering_status_e2e_alivecounter, ICU_SIG_STEERING_STATUS_E_2_E_ALIVE_COUNTER },
+    { 80u,    8u,     8u, COM_UINT8, ICU_COM_RX_STEERING_STATUS, &sig_rx_steering_status_e2e_crc8, ICU_SIG_STEERING_STATUS_E_2_E_CRC_8 },
+    { 81u,   16u,    16u, COM_UINT16, ICU_COM_RX_STEERING_STATUS, &sig_rx_steering_status_actualangle, ICU_SIG_STEERING_STATUS_ACTUAL_ANGLE },
+    { 82u,   32u,    16u, COM_UINT16, ICU_COM_RX_STEERING_STATUS, &sig_rx_steering_status_commandedangle, ICU_SIG_STEERING_STATUS_COMMANDED_ANGLE },
+    { 83u,   48u,     4u, COM_UINT8, ICU_COM_RX_STEERING_STATUS, &sig_rx_steering_status_steerfaultstatus, ICU_SIG_STEERING_STATUS_STEER_FAULT_STATUS },
+    { 84u,   52u,     4u, COM_UINT8, ICU_COM_RX_STEERING_STATUS, &sig_rx_steering_status_steermode, ICU_SIG_STEERING_STATUS_STEER_MODE },
+    { 85u,   56u,     8u, COM_UINT8, ICU_COM_RX_STEERING_STATUS, &sig_rx_steering_status_servocurrent_ma, ICU_SIG_STEERING_STATUS_SERVO_CURRENT_M_A },
+    { 86u,    0u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_e2e_dataid, ICU_SIG_BRAKE_STATUS_E_2_E_DATA_ID },
+    { 87u,    4u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_e2e_alivecounter, ICU_SIG_BRAKE_STATUS_E_2_E_ALIVE_COUNTER },
+    { 88u,    8u,     8u, COM_UINT8, ICU_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_e2e_crc8, ICU_SIG_BRAKE_STATUS_E_2_E_CRC_8 },
+    { 89u,   16u,     8u, COM_UINT8, ICU_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_brakeposition, ICU_SIG_BRAKE_STATUS_BRAKE_POSITION },
+    { 90u,   24u,     8u, COM_UINT8, ICU_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_brakecommandecho, ICU_SIG_BRAKE_STATUS_BRAKE_COMMAND_ECHO },
+    { 91u,   32u,    16u, COM_UINT16, ICU_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_servocurrent_ma, ICU_SIG_BRAKE_STATUS_SERVO_CURRENT_M_A },
+    { 92u,   48u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_brakefaultstatus, ICU_SIG_BRAKE_STATUS_BRAKE_FAULT_STATUS },
+    { 93u,   52u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_brakemode, ICU_SIG_BRAKE_STATUS_BRAKE_MODE },
+    { 94u,    0u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_e2e_dataid, ICU_SIG_BRAKE_FAULT_E_2_E_DATA_ID },
+    { 95u,    4u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_e2e_alivecounter, ICU_SIG_BRAKE_FAULT_E_2_E_ALIVE_COUNTER },
+    { 96u,    8u,     8u, COM_UINT8, ICU_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_e2e_crc8, ICU_SIG_BRAKE_FAULT_E_2_E_CRC_8 },
+    { 97u,   16u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_faulttype, ICU_SIG_BRAKE_FAULT_FAULT_TYPE },
+    { 98u,   20u,     8u, COM_UINT8, ICU_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_commandedbrake, ICU_SIG_BRAKE_FAULT_COMMANDED_BRAKE },
+    { 99u,   28u,     4u, COM_UINT8, ICU_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_measuredbrake, ICU_SIG_BRAKE_FAULT_MEASURED_BRAKE },
+    { 100u,    0u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_e2e_dataid, ICU_SIG_MOTOR_CUTOFF_REQ_E_2_E_DATA_ID },
+    { 101u,    4u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_e2e_alivecounter, ICU_SIG_MOTOR_CUTOFF_REQ_E_2_E_ALIVE_COUNTER },
+    { 102u,    8u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_e2e_crc8, ICU_SIG_MOTOR_CUTOFF_REQ_E_2_E_CRC_8 },
+    { 103u,   16u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_requesttype, ICU_SIG_MOTOR_CUTOFF_REQ_REQUEST_TYPE },
+    { 104u,   20u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_reason, ICU_SIG_MOTOR_CUTOFF_REQ_REASON },
+    { 105u,    0u,     4u, COM_UINT8, ICU_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_e2e_dataid, ICU_SIG_LIDAR_DISTANCE_E_2_E_DATA_ID },
+    { 106u,    4u,     4u, COM_UINT8, ICU_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_e2e_alivecounter, ICU_SIG_LIDAR_DISTANCE_E_2_E_ALIVE_COUNTER },
+    { 107u,    8u,     8u, COM_UINT8, ICU_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_e2e_crc8, ICU_SIG_LIDAR_DISTANCE_E_2_E_CRC_8 },
+    { 108u,   16u,    16u, COM_UINT16, ICU_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_range_cm, ICU_SIG_LIDAR_DISTANCE_RANGE_CM },
+    { 109u,   32u,    16u, COM_UINT16, ICU_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_signalstrength, ICU_SIG_LIDAR_DISTANCE_SIGNAL_STRENGTH },
+    { 110u,   48u,     4u, COM_UINT8, ICU_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_obstaclezone, ICU_SIG_LIDAR_DISTANCE_OBSTACLE_ZONE },
+    { 111u,   52u,     4u, COM_UINT8, ICU_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_sensorstatus, ICU_SIG_LIDAR_DISTANCE_SENSOR_STATUS },
+    { 112u,    0u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_e2e_dataid, ICU_SIG_MOTOR_STATUS_E_2_E_DATA_ID },
+    { 113u,    4u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_e2e_alivecounter, ICU_SIG_MOTOR_STATUS_E_2_E_ALIVE_COUNTER },
+    { 114u,    8u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_e2e_crc8, ICU_SIG_MOTOR_STATUS_E_2_E_CRC_8 },
+    { 115u,   16u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_torqueecho, ICU_SIG_MOTOR_STATUS_TORQUE_ECHO },
+    { 116u,   24u,    16u, COM_UINT16, ICU_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_motorspeed_rpm, ICU_SIG_MOTOR_STATUS_MOTOR_SPEED_RPM },
+    { 117u,   40u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_motordirection, ICU_SIG_MOTOR_STATUS_MOTOR_DIRECTION },
+    { 118u,   48u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_motorenable, ICU_SIG_MOTOR_STATUS_MOTOR_ENABLE },
+    { 119u,   56u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_motorfaultstatus, ICU_SIG_MOTOR_STATUS_MOTOR_FAULT_STATUS },
+    { 120u,    0u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_e2e_dataid, ICU_SIG_MOTOR_CURRENT_E_2_E_DATA_ID },
+    { 121u,    4u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_e2e_alivecounter, ICU_SIG_MOTOR_CURRENT_E_2_E_ALIVE_COUNTER },
+    { 122u,    8u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_e2e_crc8, ICU_SIG_MOTOR_CURRENT_E_2_E_CRC_8 },
+    { 123u,   16u,    16u, COM_UINT16, ICU_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_phase_ma, ICU_SIG_MOTOR_CURRENT_PHASE_M_A },
+    { 124u,   32u,     1u, COM_UINT8, ICU_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_dirisreverse, ICU_SIG_MOTOR_CURRENT_DIR_IS_REVERSE },
+    { 125u,   33u,     1u, COM_UINT8, ICU_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_motorenable, ICU_SIG_MOTOR_CURRENT_MOTOR_ENABLE },
+    { 126u,   34u,     1u, COM_UINT8, ICU_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_overcurrentflag, ICU_SIG_MOTOR_CURRENT_OVERCURRENT_FLAG },
+    { 127u,   35u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_torqueecho, ICU_SIG_MOTOR_CURRENT_TORQUE_ECHO },
+    { 128u,    0u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_e2e_dataid, ICU_SIG_MOTOR_TEMPERATURE_E_2_E_DATA_ID },
+    { 129u,    4u,     4u, COM_UINT8, ICU_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_e2e_alivecounter, ICU_SIG_MOTOR_TEMPERATURE_E_2_E_ALIVE_COUNTER },
+    { 130u,    8u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_e2e_crc8, ICU_SIG_MOTOR_TEMPERATURE_E_2_E_CRC_8 },
+    { 131u,   16u,    16u, COM_UINT16, ICU_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_windingtemp1_c, ICU_SIG_MOTOR_TEMPERATURE_WINDING_TEMP_1_C },
+    { 132u,   32u,    16u, COM_UINT16, ICU_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_windingtemp2_c, ICU_SIG_MOTOR_TEMPERATURE_WINDING_TEMP_2_C },
+    { 133u,   48u,     8u, COM_UINT8, ICU_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_deratingpercent, ICU_SIG_MOTOR_TEMPERATURE_DERATING_PERCENT },
+    { 134u,    0u,     4u, COM_UINT8, ICU_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_e2e_dataid, ICU_SIG_BATTERY_STATUS_E_2_E_DATA_ID },
+    { 135u,    4u,     4u, COM_UINT8, ICU_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_e2e_alivecounter, ICU_SIG_BATTERY_STATUS_E_2_E_ALIVE_COUNTER },
+    { 136u,    8u,     8u, COM_UINT8, ICU_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_e2e_crc8, ICU_SIG_BATTERY_STATUS_E_2_E_CRC_8 },
+    { 137u,   16u,    16u, COM_UINT16, ICU_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_batteryvoltage_mv, ICU_SIG_BATTERY_STATUS_BATTERY_VOLTAGE_M_V },
+    { 138u,   32u,     8u, COM_UINT8, ICU_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_level, ICU_SIG_BATTERY_STATUS_LEVEL },
+    { 139u,    0u,     2u, COM_UINT8, ICU_COM_RX_BODY_CONTROL_CMD, &sig_rx_body_control_cmd_headlightcmd, ICU_SIG_BODY_CONTROL_CMD_HEADLIGHT_CMD },
+    { 140u,    2u,     1u, COM_UINT8, ICU_COM_RX_BODY_CONTROL_CMD, &sig_rx_body_control_cmd_taillighton, ICU_SIG_BODY_CONTROL_CMD_TAIL_LIGHT_ON },
+    { 141u,    3u,     1u, COM_UINT8, ICU_COM_RX_BODY_CONTROL_CMD, &sig_rx_body_control_cmd_hazardactive, ICU_SIG_BODY_CONTROL_CMD_HAZARD_ACTIVE },
+    { 142u,    4u,     2u, COM_UINT8, ICU_COM_RX_BODY_CONTROL_CMD, &sig_rx_body_control_cmd_turnsignalcmd, ICU_SIG_BODY_CONTROL_CMD_TURN_SIGNAL_CMD },
+    { 143u,    6u,     1u, COM_UINT8, ICU_COM_RX_BODY_CONTROL_CMD, &sig_rx_body_control_cmd_doorlockcmd, ICU_SIG_BODY_CONTROL_CMD_DOOR_LOCK_CMD },
+    { 144u,    0u,     1u, COM_UINT8, ICU_COM_RX_LIGHT_STATUS, &sig_rx_light_status_headlighton, ICU_SIG_LIGHT_STATUS_HEADLIGHT_ON },
+    { 145u,    1u,     1u, COM_UINT8, ICU_COM_RX_LIGHT_STATUS, &sig_rx_light_status_taillighton, ICU_SIG_LIGHT_STATUS_TAIL_LIGHT_ON },
+    { 146u,    2u,     1u, COM_UINT8, ICU_COM_RX_LIGHT_STATUS, &sig_rx_light_status_foglighton, ICU_SIG_LIGHT_STATUS_FOG_LIGHT_ON },
+    { 147u,    3u,     1u, COM_UINT8, ICU_COM_RX_LIGHT_STATUS, &sig_rx_light_status_brakelighton, ICU_SIG_LIGHT_STATUS_BRAKE_LIGHT_ON },
+    { 148u,    4u,     2u, COM_UINT8, ICU_COM_RX_LIGHT_STATUS, &sig_rx_light_status_headlightlevel, ICU_SIG_LIGHT_STATUS_HEADLIGHT_LEVEL },
+    { 149u,    0u,     1u, COM_UINT8, ICU_COM_RX_INDICATOR_STATE, &sig_rx_indicator_state_lefton, ICU_SIG_INDICATOR_STATE_LEFT_ON },
+    { 150u,    1u,     1u, COM_UINT8, ICU_COM_RX_INDICATOR_STATE, &sig_rx_indicator_state_righton, ICU_SIG_INDICATOR_STATE_RIGHT_ON },
+    { 151u,    2u,     1u, COM_UINT8, ICU_COM_RX_INDICATOR_STATE, &sig_rx_indicator_state_hazardactive, ICU_SIG_INDICATOR_STATE_HAZARD_ACTIVE },
+    { 152u,    3u,     1u, COM_UINT8, ICU_COM_RX_INDICATOR_STATE, &sig_rx_indicator_state_blinkphasehigh, ICU_SIG_INDICATOR_STATE_BLINK_PHASE_HIGH },
+    { 153u,    0u,     1u, COM_UINT8, ICU_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_frontleftlock, ICU_SIG_DOOR_LOCK_STATUS_FRONT_LEFT_LOCK },
+    { 154u,    1u,     1u, COM_UINT8, ICU_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_frontrightlock, ICU_SIG_DOOR_LOCK_STATUS_FRONT_RIGHT_LOCK },
+    { 155u,    2u,     1u, COM_UINT8, ICU_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_rearleftlock, ICU_SIG_DOOR_LOCK_STATUS_REAR_LEFT_LOCK },
+    { 156u,    3u,     1u, COM_UINT8, ICU_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_rearrightlock, ICU_SIG_DOOR_LOCK_STATUS_REAR_RIGHT_LOCK },
+    { 157u,    4u,     1u, COM_UINT8, ICU_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_centrallock, ICU_SIG_DOOR_LOCK_STATUS_CENTRAL_LOCK },
+    { 158u,    7u,    24u, COM_UINT32, ICU_COM_RX_DTC_BROADCAST, &sig_rx_dtc_broadcast_number, ICU_SIG_DTC_BROADCAST_NUMBER },
+    { 159u,   24u,     8u, COM_UINT8, ICU_COM_RX_DTC_BROADCAST, &sig_rx_dtc_broadcast_status, ICU_SIG_DTC_BROADCAST_STATUS },
+    { 160u,   32u,     8u, COM_UINT8, ICU_COM_RX_DTC_BROADCAST, &sig_rx_dtc_broadcast_ecu_source, ICU_SIG_DTC_BROADCAST_ECU_SOURCE },
+    { 161u,   40u,     8u, COM_UINT8, ICU_COM_RX_DTC_BROADCAST, &sig_rx_dtc_broadcast_occurrencecount, ICU_SIG_DTC_BROADCAST_OCCURRENCE_COUNT },
+    { 162u,   48u,     8u, COM_UINT8, ICU_COM_RX_DTC_BROADCAST, &sig_rx_dtc_broadcast_freezeframe0, ICU_SIG_DTC_BROADCAST_FREEZE_FRAME_0 },
+    { 163u,   56u,     8u, COM_UINT8, ICU_COM_RX_DTC_BROADCAST, &sig_rx_dtc_broadcast_freezeframe1, ICU_SIG_DTC_BROADCAST_FREEZE_FRAME_1 },
+    { 164u,    0u,    16u, COM_UINT16, ICU_COM_RX_FZC_VIRTUAL_SENSORS, &sig_rx_fzc_virtual_sensors_steerangle_raw, ICU_SIG_FZC_VIRTUAL_SENSORS_STEER_ANGLE_RAW },
+    { 165u,   16u,    16u, COM_UINT16, ICU_COM_RX_FZC_VIRTUAL_SENSORS, &sig_rx_fzc_virtual_sensors_brakepos_adc, ICU_SIG_FZC_VIRTUAL_SENSORS_BRAKE_POS_ADC },
+    { 166u,   32u,    16u, COM_UINT16, ICU_COM_RX_FZC_VIRTUAL_SENSORS, &sig_rx_fzc_virtual_sensors_brakecurrent_ma, ICU_SIG_FZC_VIRTUAL_SENSORS_BRAKE_CURRENT_M_A },
+    { 167u,    0u,    16u, COM_UINT16, ICU_COM_RX_RZC_VIRTUAL_SENSORS, &sig_rx_rzc_virtual_sensors_motorcurrent_ma, ICU_SIG_RZC_VIRTUAL_SENSORS_MOTOR_CURRENT_M_A },
+    { 168u,   16u,    16u, COM_UINT16, ICU_COM_RX_RZC_VIRTUAL_SENSORS, &sig_rx_rzc_virtual_sensors_motortemp_dc, ICU_SIG_RZC_VIRTUAL_SENSORS_MOTOR_TEMP_D_C },
+    { 169u,   32u,    16u, COM_UINT16, ICU_COM_RX_RZC_VIRTUAL_SENSORS, &sig_rx_rzc_virtual_sensors_battvoltage_mv, ICU_SIG_RZC_VIRTUAL_SENSORS_BATT_VOLTAGE_M_V },
+    { 170u,   48u,    16u, COM_UINT16, ICU_COM_RX_RZC_VIRTUAL_SENSORS, &sig_rx_rzc_virtual_sensors_motorspeed_rpm, ICU_SIG_RZC_VIRTUAL_SENSORS_MOTOR_SPEED_RPM },
+    { 171u,    0u,    64u, COM_UINT32, ICU_COM_RX_UDS_RESP_TCU, &sig_rx_uds_resp_tcu_uds_data, ICU_SIG_UDS_RESP_TCU_UDS_DATA },
+    { 172u,    0u,    64u, COM_UINT32, ICU_COM_RX_UDS_FUNC_REQUEST, &sig_rx_uds_func_request_uds_data, ICU_SIG_UDS_FUNC_REQUEST_UDS_DATA },
+    { 173u,    0u,    64u, COM_UINT32, ICU_COM_RX_UDS_PHYS_REQ_CVC, &sig_rx_uds_phys_req_cvc_uds_data, ICU_SIG_UDS_PHYS_REQ_CVC_UDS_DATA },
+    { 174u,    0u,    64u, COM_UINT32, ICU_COM_RX_UDS_PHYS_REQ_FZC, &sig_rx_uds_phys_req_fzc_uds_data, ICU_SIG_UDS_PHYS_REQ_FZC_UDS_DATA },
+    { 175u,    0u,    64u, COM_UINT32, ICU_COM_RX_UDS_PHYS_REQ_RZC, &sig_rx_uds_phys_req_rzc_uds_data, ICU_SIG_UDS_PHYS_REQ_RZC_UDS_DATA },
+    { 176u,    0u,    64u, COM_UINT32, ICU_COM_RX_UDS_PHYS_REQ_TCU, &sig_rx_uds_phys_req_tcu_uds_data, ICU_SIG_UDS_PHYS_REQ_TCU_UDS_DATA },
+    { 177u,    0u,    64u, COM_UINT32, ICU_COM_RX_UDS_RESP_CVC, &sig_rx_uds_resp_cvc_uds_data, ICU_SIG_UDS_RESP_CVC_UDS_DATA },
+    { 178u,    0u,    64u, COM_UINT32, ICU_COM_RX_UDS_RESP_FZC, &sig_rx_uds_resp_fzc_uds_data, ICU_SIG_UDS_RESP_FZC_UDS_DATA },
+    { 179u,    0u,    64u, COM_UINT32, ICU_COM_RX_UDS_RESP_RZC, &sig_rx_uds_resp_rzc_uds_data, ICU_SIG_UDS_RESP_RZC_UDS_DATA },
 };
 
 #define ICU_COM_SIGNAL_COUNT  (sizeof(icu_signal_config) / sizeof(icu_signal_config[0]))
@@ -424,6 +438,8 @@ static const Com_RxPduConfigType icu_rx_pdu_config[] = {
     { ICU_COM_RX_INDICATOR_STATE,     4u,     0u },   /* CAN 0x401 */
     { ICU_COM_RX_DOOR_LOCK_STATUS,     2u,     0u },   /* CAN 0x402 */
     { ICU_COM_RX_DTC_BROADCAST,     8u,     0u },   /* CAN 0x500 */
+    { ICU_COM_RX_FZC_VIRTUAL_SENSORS,     8u,     0u },   /* CAN 0x600 */
+    { ICU_COM_RX_RZC_VIRTUAL_SENSORS,     8u,     0u },   /* CAN 0x601 */
     { ICU_COM_RX_UDS_RESP_TCU,     8u,     0u },   /* CAN 0x644 */
     { ICU_COM_RX_UDS_FUNC_REQUEST,     8u,     0u },   /* CAN 0x7DF */
     { ICU_COM_RX_UDS_PHYS_REQ_CVC,     8u,     0u },   /* CAN 0x7E0 */

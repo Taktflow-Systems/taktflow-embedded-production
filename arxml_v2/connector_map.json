@@ -1,0 +1,564 @@
+{
+  "CVC": [
+    {
+      "signal": "CVC_SIG_STEERING_FAULT",
+      "provider": "Swc_CvcCom",
+      "requester": "Swc_VehicleState",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_MOTOR_CUTOFF",
+      "provider": "Swc_CvcCom",
+      "requester": "Swc_VehicleState",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_FAULT_MASK",
+      "provider": "Swc_CvcCom",
+      "requester": "Swc_Dashboard",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_BATTERY_STATUS",
+      "provider": "Swc_CvcCom",
+      "requester": "Swc_VehicleState",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_SC_RELAY_KILL",
+      "provider": "Swc_CvcCom",
+      "requester": "Swc_VehicleState",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_MOTOR_FAULT_RZC",
+      "provider": "Swc_CvcCom",
+      "requester": "Swc_VehicleState",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_BRAKE_FAULT",
+      "provider": "Swc_CvcCom",
+      "requester": "Swc_VehicleState",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_ESTOP_ACTIVE",
+      "provider": "Swc_EStop",
+      "requester": "Swc_CvcCom",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_ESTOP_ACTIVE",
+      "provider": "Swc_EStop",
+      "requester": "Swc_VehicleState",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_RZC_COMM_STATUS",
+      "provider": "Swc_Heartbeat",
+      "requester": "Swc_CvcCom",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_RZC_COMM_STATUS",
+      "provider": "Swc_Heartbeat",
+      "requester": "Swc_VehicleState",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_FZC_COMM_STATUS",
+      "provider": "Swc_Heartbeat",
+      "requester": "Swc_CvcCom",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_FZC_COMM_STATUS",
+      "provider": "Swc_Heartbeat",
+      "requester": "Swc_VehicleState",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_TORQUE_REQUEST",
+      "provider": "Swc_Pedal",
+      "requester": "Swc_CvcCom",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_TORQUE_REQUEST",
+      "provider": "Swc_Pedal",
+      "requester": "Swc_VehicleState",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_PEDAL_FAULT",
+      "provider": "Swc_Pedal",
+      "requester": "Swc_CvcCom",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_PEDAL_FAULT",
+      "provider": "Swc_Pedal",
+      "requester": "Swc_CvcDcm",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_PEDAL_FAULT",
+      "provider": "Swc_Pedal",
+      "requester": "Swc_VehicleState",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_PEDAL_POSITION",
+      "provider": "Swc_Pedal",
+      "requester": "Swc_CvcDcm",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_PEDAL_POSITION",
+      "provider": "Swc_Pedal",
+      "requester": "Swc_Dashboard",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_PEDAL_POSITION",
+      "provider": "Swc_Pedal",
+      "requester": "Swc_VehicleState",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_VEHICLE_STATE",
+      "provider": "Swc_VehicleState",
+      "requester": "Swc_CvcDcm",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_VEHICLE_STATE",
+      "provider": "Swc_VehicleState",
+      "requester": "Swc_Dashboard",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_VEHICLE_STATE",
+      "provider": "Swc_VehicleState",
+      "requester": "Swc_Heartbeat",
+      "ecu": "CVC"
+    },
+    {
+      "signal": "CVC_SIG_VEHICLE_STATE",
+      "provider": "Swc_VehicleState",
+      "requester": "Swc_Pedal",
+      "ecu": "CVC"
+    }
+  ],
+  "FZC": [
+    {
+      "signal": "FZC_SIG_BRAKE_POS",
+      "provider": "Swc_Brake",
+      "requester": "Swc_FzcCom",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_BRAKE_POS",
+      "provider": "Swc_Brake",
+      "requester": "Swc_FzcDcm",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_MOTOR_CUTOFF",
+      "provider": "Swc_FzcSafety",
+      "requester": "Swc_FzcCom",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_BRAKE_FAULT",
+      "provider": "Swc_Brake",
+      "requester": "Swc_FzcCom",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_BRAKE_FAULT",
+      "provider": "Swc_Brake",
+      "requester": "Swc_FzcSafety",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_STEER_CMD",
+      "provider": "Swc_FzcCom",
+      "requester": "Swc_Steering",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_BRAKE_CMD",
+      "provider": "Swc_FzcCom",
+      "requester": "Swc_Brake",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_VEHICLE_STATE",
+      "provider": "Swc_FzcCom",
+      "requester": "Swc_Buzzer",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_VEHICLE_STATE",
+      "provider": "Swc_FzcCom",
+      "requester": "Swc_FzcSafety",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_VEHICLE_STATE",
+      "provider": "Swc_FzcCom",
+      "requester": "Swc_Heartbeat",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_ESTOP_ACTIVE",
+      "provider": "Swc_FzcCom",
+      "requester": "Swc_Brake",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_FAULT_MASK",
+      "provider": "Swc_FzcSafety",
+      "requester": "Swc_Heartbeat",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_LIDAR_FAULT",
+      "provider": "Swc_Lidar",
+      "requester": "Swc_FzcSafety",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_LIDAR_DIST",
+      "provider": "Swc_Lidar",
+      "requester": "Swc_FzcCom",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_LIDAR_DIST",
+      "provider": "Swc_Lidar",
+      "requester": "Swc_FzcDcm",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_LIDAR_ZONE",
+      "provider": "Swc_Lidar",
+      "requester": "Swc_Buzzer",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_LIDAR_ZONE",
+      "provider": "Swc_Lidar",
+      "requester": "Swc_FzcCom",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_LIDAR_ZONE",
+      "provider": "Swc_Lidar",
+      "requester": "Swc_FzcDcm",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_LIDAR_SIGNAL",
+      "provider": "Swc_Lidar",
+      "requester": "Swc_FzcDcm",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_STEER_ANGLE",
+      "provider": "Swc_Steering",
+      "requester": "Swc_FzcCom",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_STEER_ANGLE",
+      "provider": "Swc_Steering",
+      "requester": "Swc_FzcDcm",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_STEER_FAULT",
+      "provider": "Swc_Steering",
+      "requester": "Swc_FzcCom",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_STEER_FAULT",
+      "provider": "Swc_Steering",
+      "requester": "Swc_FzcSafety",
+      "ecu": "FZC"
+    },
+    {
+      "signal": "FZC_SIG_SELF_TEST_RESULT",
+      "provider": "main",
+      "requester": "Swc_FzcSafety",
+      "ecu": "FZC"
+    }
+  ],
+  "RZC": [
+    {
+      "signal": "RZC_SIG_BATTERY_MV",
+      "provider": "Swc_Battery",
+      "requester": "Swc_RzcCom",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_BATTERY_MV",
+      "provider": "Swc_Battery",
+      "requester": "Swc_RzcDcm",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_BATTERY_STATUS",
+      "provider": "Swc_Battery",
+      "requester": "Swc_RzcCom",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_BATTERY_STATUS",
+      "provider": "Swc_Battery",
+      "requester": "Swc_RzcSafety",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_BATTERY_SOC",
+      "provider": "Swc_Battery",
+      "requester": "Swc_RzcCom",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_CURRENT_MA",
+      "provider": "Swc_CurrentMonitor",
+      "requester": "Swc_RzcCom",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_CURRENT_MA",
+      "provider": "Swc_CurrentMonitor",
+      "requester": "Swc_RzcDcm",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_OVERCURRENT",
+      "provider": "Swc_CurrentMonitor",
+      "requester": "Swc_Motor",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_OVERCURRENT",
+      "provider": "Swc_CurrentMonitor",
+      "requester": "Swc_RzcCom",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_OVERCURRENT",
+      "provider": "Swc_CurrentMonitor",
+      "requester": "Swc_RzcSafety",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_ENCODER_SPEED",
+      "provider": "Swc_Encoder",
+      "requester": "Swc_RzcCom",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_ENCODER_SPEED",
+      "provider": "Swc_Encoder",
+      "requester": "Swc_RzcDcm",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_ENCODER_STALL",
+      "provider": "Swc_Encoder",
+      "requester": "Swc_RzcSafety",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_ENCODER_DIR",
+      "provider": "Swc_Encoder",
+      "requester": "Swc_RzcSafety",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_MOTOR_FAULT",
+      "provider": "Swc_Motor",
+      "requester": "Swc_RzcCom",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_MOTOR_ENABLE",
+      "provider": "Swc_Motor",
+      "requester": "Swc_RzcCom",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_TORQUE_ECHO",
+      "provider": "Swc_Motor",
+      "requester": "Swc_Encoder",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_TORQUE_ECHO",
+      "provider": "Swc_Motor",
+      "requester": "Swc_RzcCom",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_TORQUE_ECHO",
+      "provider": "Swc_Motor",
+      "requester": "Swc_RzcDcm",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_MOTOR_DIR",
+      "provider": "Swc_Motor",
+      "requester": "Swc_Encoder",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_MOTOR_DIR",
+      "provider": "Swc_Motor",
+      "requester": "Swc_RzcCom",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_TORQUE_CMD",
+      "provider": "Swc_RzcCom",
+      "requester": "Swc_Motor",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_ESTOP_ACTIVE",
+      "provider": "Swc_RzcCom",
+      "requester": "Swc_Motor",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_ESTOP_ACTIVE",
+      "provider": "Swc_RzcCom",
+      "requester": "Swc_RzcSafety",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_FAULT_MASK",
+      "provider": "Swc_RzcSafety",
+      "requester": "Swc_Heartbeat",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_DERATING_PCT",
+      "provider": "Swc_TempMonitor",
+      "requester": "Swc_Motor",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_DERATING_PCT",
+      "provider": "Swc_TempMonitor",
+      "requester": "Swc_RzcCom",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_DERATING_PCT",
+      "provider": "Swc_TempMonitor",
+      "requester": "Swc_RzcDcm",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_TEMP_FAULT",
+      "provider": "Swc_TempMonitor",
+      "requester": "Swc_Motor",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_TEMP_FAULT",
+      "provider": "Swc_TempMonitor",
+      "requester": "Swc_RzcSafety",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_TEMP1_DC",
+      "provider": "Swc_TempMonitor",
+      "requester": "Swc_RzcCom",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_TEMP1_DC",
+      "provider": "Swc_TempMonitor",
+      "requester": "Swc_RzcDcm",
+      "ecu": "RZC"
+    },
+    {
+      "signal": "RZC_SIG_SELF_TEST_RESULT",
+      "provider": "main",
+      "requester": "Swc_RzcSafety",
+      "ecu": "RZC"
+    }
+  ],
+  "BCM": [
+    {
+      "signal": "BCM_SIG_DOOR_LOCK_STATUS_FRONT_LEFT_LOCK",
+      "provider": "Swc_DoorLock",
+      "requester": "bcm_main",
+      "ecu": "BCM"
+    },
+    {
+      "signal": "BCM_SIG_INDICATOR_STATE_RIGHT_INDICATOR",
+      "provider": "Swc_Indicators",
+      "requester": "bcm_main",
+      "ecu": "BCM"
+    },
+    {
+      "signal": "BCM_SIG_INDICATOR_STATE_HAZARD_ACTIVE",
+      "provider": "Swc_Indicators",
+      "requester": "bcm_main",
+      "ecu": "BCM"
+    },
+    {
+      "signal": "BCM_SIG_INDICATOR_STATE_LEFT_INDICATOR",
+      "provider": "Swc_Indicators",
+      "requester": "bcm_main",
+      "ecu": "BCM"
+    },
+    {
+      "signal": "BCM_SIG_LIGHT_STATUS_HEADLIGHT_ON",
+      "provider": "Swc_Lights",
+      "requester": "bcm_main",
+      "ecu": "BCM"
+    },
+    {
+      "signal": "BCM_SIG_LIGHT_STATUS_TAIL_LIGHT_ON",
+      "provider": "Swc_Lights",
+      "requester": "bcm_main",
+      "ecu": "BCM"
+    },
+    {
+      "signal": "BCM_SIG_VEHICLE_STATE_VEHICLE_STATE",
+      "provider": "bcm_main",
+      "requester": "Swc_DoorLock",
+      "ecu": "BCM"
+    },
+    {
+      "signal": "BCM_SIG_VEHICLE_STATE_VEHICLE_STATE",
+      "provider": "bcm_main",
+      "requester": "Swc_Lights",
+      "ecu": "BCM"
+    },
+    {
+      "signal": "BCM_SIG_BODY_CONTROL_CMD_HEADLIGHT_CMD",
+      "provider": "bcm_main",
+      "requester": "Swc_Lights",
+      "ecu": "BCM"
+    },
+    {
+      "signal": "BCM_SIG_ESTOP_BROADCAST_ESTOP_ACTIVE",
+      "provider": "bcm_main",
+      "requester": "Swc_Indicators",
+      "ecu": "BCM"
+    }
+  ],
+  "ICU": [],
+  "TCU": []
+}

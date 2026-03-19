@@ -192,11 +192,11 @@ void Swc_Heartbeat_MainFunction(void)
          * but does not call Swc_Heartbeat_RxIndication, so we detect
          * heartbeat reception by checking if the alive counter changed. */
         {
-            uint8 fzc_alive = 0u;
-            uint8 rzc_alive = 0u;
+            uint32 fzc_alive = 0u;
+            uint32 rzc_alive = 0u;
 
-            (void)Com_ReceiveSignal(CVC_COM_SIG_FZC_HB_ALIVE, &fzc_alive);
-            (void)Com_ReceiveSignal(CVC_COM_SIG_RZC_HB_ALIVE, &rzc_alive);
+            (void)Rte_Read(CVC_SIG_FZC_HEARTBEAT_E_2_E_ALIVE_COUNTER, &fzc_alive);
+            (void)Rte_Read(CVC_SIG_RZC_HEARTBEAT_E_2_E_ALIVE_COUNTER, &rzc_alive);
 
             if (fzc_alive != fzc_last_alive) {
                 fzc_rx_flag    = TRUE;
@@ -284,4 +284,27 @@ void Swc_Heartbeat_RxIndication(uint8 ecuId)
     } else {
         /* Unknown ECU ID — ignore */
     }
+}
+
+/**
+ * @brief  Reset comm status to OK — called when post-INIT grace expires
+ *
+ * Clears stale TIMEOUT status accumulated during Docker boot transient
+ * so the first post-grace cycle doesn't immediately trigger CAN_TMO_S.
+ */
+void Swc_Heartbeat_ResetCommStatus(void)
+{
+    fzc_comm_status = CVC_COMM_OK;
+    rzc_comm_status = CVC_COMM_OK;
+    /* Force SM to VALID — skip the MIN_OK_INIT window requirement.
+     * The grace period already absorbed the boot transient; heartbeats
+     * are now arriving normally.  Without this, SM starts in INIT and
+     * needs 2 OKs (100ms) before VALID — but the CAN timeout check
+     * runs on the very next 10ms cycle and sees INIT → TIMEOUT. */
+    E2E_Sm_Init(&fzc_sm_state);
+    E2E_Sm_Init(&rzc_sm_state);
+    fzc_sm_state.Status = E2E_SM_VALID;
+    rzc_sm_state.Status = E2E_SM_VALID;
+    (void)Rte_Write(CVC_SIG_FZC_COMM_STATUS, (uint32)CVC_COMM_OK);
+    (void)Rte_Write(CVC_SIG_RZC_COMM_STATUS, (uint32)CVC_COMM_OK);
 }

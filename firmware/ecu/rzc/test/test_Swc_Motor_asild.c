@@ -67,11 +67,15 @@ typedef uint8           Com_SignalIdType;
 #define RZC_SIG_ESTOP_ACTIVE       34u
 #define RZC_SIG_FAULT_MASK         35u
 #define RZC_SIG_CMD_TIMEOUT        39u
+#define RZC_SIG_OVERCURRENT        40u
+#define RZC_SIG_TEMP_FAULT         41u
 
 /* ==================================================================
  * Motor constants (from Rzc_Cfg.h)
  * ================================================================== */
 
+#define RZC_MOTOR_OVERCURRENT        3u
+#define RZC_MOTOR_OVERTEMP           4u
 #define RZC_MOTOR_MAX_DUTY_PCT       95u
 #define RZC_MOTOR_LIMIT_RUN         100u
 #define RZC_MOTOR_LIMIT_DEGRADED     75u
@@ -142,7 +146,7 @@ extern void Swc_Motor_MainFunction(void);
  * Mock: Rte_Read
  * ================================================================== */
 
-#define MOCK_RTE_MAX_SIGNALS  48u
+#define MOCK_RTE_MAX_SIGNALS  200u  /* Must exceed RTE_MAX_SIGNALS (194) */
 
 static uint32  mock_rte_signals[MOCK_RTE_MAX_SIGNALS];
 static uint32  mock_vehicle_state;
@@ -1020,6 +1024,41 @@ void test_Rapid_direction_reversal(void)
  * Test runner
  * ================================================================== */
 
+/* SWR-RZC-003: Overtemp → MotorFaultStatus integration */
+void test_Overtemp_sets_MotorFault(void)
+{
+    Swc_Motor_Init();
+    mock_rte_signals[RZC_SIG_VEHICLE_STATE] = 1u;  /* RUN */
+    mock_rte_signals[RZC_SIG_TORQUE_CMD]    = 500u;
+    mock_rte_signals[RZC_SIG_DERATING_PCT]  = 100u;
+    mock_rte_signals[RZC_SIG_OVERCURRENT]   = 0u;
+    mock_rte_signals[RZC_SIG_TEMP_FAULT]    = 0u;
+
+    /* Normal cycle — no fault */
+    Swc_Motor_MainFunction();
+    TEST_ASSERT_EQUAL_UINT32(0u, mock_rte_signals[RZC_SIG_MOTOR_FAULT]);
+
+    /* Set overtemp fault */
+    mock_rte_signals[RZC_SIG_TEMP_FAULT] = 1u;
+    Swc_Motor_MainFunction();
+    TEST_ASSERT_EQUAL_UINT32(RZC_MOTOR_OVERTEMP, mock_rte_signals[RZC_SIG_MOTOR_FAULT]);
+}
+
+void test_Overcurrent_sets_MotorFault(void)
+{
+    Swc_Motor_Init();
+    mock_rte_signals[RZC_SIG_VEHICLE_STATE] = 1u;  /* RUN */
+    mock_rte_signals[RZC_SIG_TORQUE_CMD]    = 500u;
+    mock_rte_signals[RZC_SIG_DERATING_PCT]  = 100u;
+    mock_rte_signals[RZC_SIG_OVERCURRENT]   = 0u;
+    mock_rte_signals[RZC_SIG_TEMP_FAULT]    = 0u;
+
+    /* Set overcurrent */
+    mock_rte_signals[RZC_SIG_OVERCURRENT] = 1u;
+    Swc_Motor_MainFunction();
+    TEST_ASSERT_EQUAL_UINT32(RZC_MOTOR_OVERCURRENT, mock_rte_signals[RZC_SIG_MOTOR_FAULT]);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -1038,6 +1077,10 @@ int main(void)
     RUN_TEST(test_DEGRADED_limits_to_75pct);
     RUN_TEST(test_LIMP_limits_to_30pct);
     RUN_TEST(test_SAFE_STOP_forces_zero);
+
+    /* SWR-RZC-003: External Fault Integration */
+    RUN_TEST(test_Overtemp_sets_MotorFault);
+    RUN_TEST(test_Overcurrent_sets_MotorFault);
 
     /* SWR-RZC-004: Direction Change Dead-Time */
     RUN_TEST(test_Direction_change_disables_first);

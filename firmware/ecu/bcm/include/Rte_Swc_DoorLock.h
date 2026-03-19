@@ -22,14 +22,14 @@
  * ==================================================================== */
 
 /**
- * @brief  Read DoorLockCmd (boolean)
+ * @brief  Read Body_Control_Cmd_DoorLockCmd (boolean)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_DoorLockCmd(boolean *data)
+static inline Rte_StatusType Rte_Read_Body_Control_Cmd_DoorLockCmd(boolean *data)
 {
     uint32_t tmp;
-    Rte_StatusType status = Rte_Read(BCM_SIG_DOOR_LOCK_CMD, &tmp);
+    Rte_StatusType status = Rte_Read(BCM_SIG_BODY_CONTROL_CMD_DOOR_LOCK_CMD, &tmp);
     if (status == RTE_E_OK)
     {
         *data = (boolean)tmp;
@@ -38,53 +38,53 @@ static inline Rte_StatusType Rte_Read_DoorLockCmd(boolean *data)
 }
 
 /**
- * @brief  Write CentralLock (boolean)
+ * @brief  Write Door_Lock_Status_FrontLeftLock (boolean)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_CentralLock(boolean value)
+static inline Rte_StatusType Rte_Write_Door_Lock_Status_FrontLeftLock(boolean value)
 {
-    return Rte_Write(BCM_SIG_CENTRAL_LOCK, (uint32_t)value);
+    return Rte_Write(BCM_SIG_DOOR_LOCK_STATUS_FRONT_LEFT_LOCK, (uint32_t)value);
 }
 
 /**
- * @brief  Write FrontLeftLock (boolean)
+ * @brief  Write Door_Lock_Status_RearRightLock (boolean)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_FrontLeftLock(boolean value)
+static inline Rte_StatusType Rte_Write_Door_Lock_Status_RearRightLock(boolean value)
 {
-    return Rte_Write(BCM_SIG_FRONT_LEFT_LOCK, (uint32_t)value);
+    return Rte_Write(BCM_SIG_DOOR_LOCK_STATUS_REAR_RIGHT_LOCK, (uint32_t)value);
 }
 
 /**
- * @brief  Write RearRightLock (boolean)
+ * @brief  Write Door_Lock_Status_CentralLock (boolean)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_RearRightLock(boolean value)
+static inline Rte_StatusType Rte_Write_Door_Lock_Status_CentralLock(boolean value)
 {
-    return Rte_Write(BCM_SIG_REAR_RIGHT_LOCK, (uint32_t)value);
+    return Rte_Write(BCM_SIG_DOOR_LOCK_STATUS_CENTRAL_LOCK, (uint32_t)value);
 }
 
 /**
- * @brief  Write RearLeftLock (boolean)
+ * @brief  Write Door_Lock_Status_RearLeftLock (boolean)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_RearLeftLock(boolean value)
+static inline Rte_StatusType Rte_Write_Door_Lock_Status_RearLeftLock(boolean value)
 {
-    return Rte_Write(BCM_SIG_REAR_LEFT_LOCK, (uint32_t)value);
+    return Rte_Write(BCM_SIG_DOOR_LOCK_STATUS_REAR_LEFT_LOCK, (uint32_t)value);
 }
 
 /**
- * @brief  Write FrontRightLock (boolean)
+ * @brief  Write Door_Lock_Status_FrontRightLock (boolean)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_FrontRightLock(boolean value)
+static inline Rte_StatusType Rte_Write_Door_Lock_Status_FrontRightLock(boolean value)
 {
-    return Rte_Write(BCM_SIG_FRONT_RIGHT_LOCK, (uint32_t)value);
+    return Rte_Write(BCM_SIG_DOOR_LOCK_STATUS_FRONT_RIGHT_LOCK, (uint32_t)value);
 }
 
 #endif /* RTE_SWC_DOORLOCK_H */

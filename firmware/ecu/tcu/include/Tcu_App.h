@@ -9,14 +9,7 @@
 #ifndef TCU_APP_H
 #define TCU_APP_H
 
-/* --- Simplified signal IDs for SWC code --- */
-#define TCU_SIG_VEHICLE_SPEED     16u
-#define TCU_SIG_MOTOR_TEMP        17u
-#define TCU_SIG_BATTERY_VOLTAGE   18u
-#define TCU_SIG_MOTOR_CURRENT     19u
-#define TCU_SIG_TORQUE_PCT        20u
-#define TCU_SIG_MOTOR_RPM         21u
-#define TCU_SIG_DTC_BROADCAST     22u
+/* Signal IDs are generated in Tcu_Cfg.h — do not duplicate here */
 
 /* --- TX PDU aliases (tcu_main.c uses short names) --- */
 #define TCU_COM_TX_HEARTBEAT      TCU_COM_TX_TCU_HEARTBEAT

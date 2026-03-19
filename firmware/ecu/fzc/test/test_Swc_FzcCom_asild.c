@@ -78,7 +78,7 @@ typedef struct {
 #define FZC_COM_RX_BRAKE_CMD       3u
 
 /* Com Signal IDs used by Swc_FzcCom.c (mirrors Fzc_Cfg.h) */
-#define FZC_COM_SIG_ESTOP_BROADCAST_ESTOP_ACTIVE         50u
+#define FZC_COM_SIG_ESTOP_BROADCAST_ACTIVE         50u
 #define FZC_COM_SIG_VEHICLE_STATE_VEHICLE_STATE           89u
 #define FZC_COM_SIG_STEER_COMMAND_STEER_ANGLE_CMD        104u
 #define FZC_COM_SIG_BRAKE_COMMAND_BRAKE_FORCE_CMD        110u

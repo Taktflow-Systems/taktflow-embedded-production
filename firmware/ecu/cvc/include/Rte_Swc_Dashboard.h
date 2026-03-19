@@ -22,19 +22,29 @@
  * ==================================================================== */
 
 /**
- * @brief  Read MotorSpeed_RPM (uint16_t)
+ * @brief  Read Motor_Status_MotorSpeed_RPM (uint16_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_MotorSpeed_RPM(uint16_t *data)
+static inline Rte_StatusType Rte_Read_Motor_Status_MotorSpeed_RPM(uint16_t *data)
 {
     uint32_t tmp;
-    Rte_StatusType status = Rte_Read(CVC_SIG_MOTOR_SPEED_RPM, &tmp);
+    Rte_StatusType status = Rte_Read(CVC_SIG_MOTOR_STATUS_MOTOR_SPEED_RPM, &tmp);
     if (status == RTE_E_OK)
     {
         *data = (uint16_t)tmp;
     }
     return status;
+}
+
+/**
+ * @brief  Write RZC_Virtual_Sensors_MotorSpeed_RPM (uint16_t)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_RZC_Virtual_Sensors_MotorSpeed_RPM(uint16_t value)
+{
+    return Rte_Write(CVC_SIG_RZC_VIRTUAL_SENSORS_MOTOR_SPEED_RPM, (uint32_t)value);
 }
 
 #endif /* RTE_SWC_DASHBOARD_H */

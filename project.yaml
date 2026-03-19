@@ -10,8 +10,9 @@ project:
 input:
   arxml:
     - "arxml/TaktflowSystem.arxml"
-  dbc: "gateway/taktflow.dbc"
+  dbc: "gateway/taktflow_vehicle.dbc"
   sidecar: "model/ecu_sidecar.yaml"
+  e2e_source: "dbc"  # DBC BA_ "E2E_DataID" is the single source of truth
 
 output:
   base_dir: "firmware/ecu"

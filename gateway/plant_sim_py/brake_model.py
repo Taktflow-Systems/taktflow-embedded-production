@@ -77,6 +77,15 @@ class BrakeModel:
         self.fault = False
         self._large_swings.clear()
 
+    def reset_state(self):
+        """Full physics reset — return to neutral (called on power-cycle reset)."""
+        self.actual_pct = 0.0
+        self.commanded_pct = 0.0
+        self.servo_current_ma = 0
+        self.fault = False
+        self._prev_cmd = 0.0
+        self._large_swings.clear()
+
     @property
     def position_int(self) -> int:
         return int(max(0, min(100, self.actual_pct)))

@@ -186,7 +186,7 @@ services:
   plant-sim:
     build:
       context: ..
-      dockerfile: gateway/plant_sim/Dockerfile
+      dockerfile: gateway/plant_sim_py/Dockerfile
     network_mode: host
     cap_add:
       - NET_ADMIN

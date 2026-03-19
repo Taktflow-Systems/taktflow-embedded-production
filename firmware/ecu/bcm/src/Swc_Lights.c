@@ -69,7 +69,7 @@ void Swc_Lights_10ms(void)
 
     /* --- 1. Read input signals ---------------------------------------- */
     (void)Rte_Read(BCM_SIG_MOTOR_STATUS_MOTOR_SPEED_RPM, &vehicle_speed);
-    (void)Rte_Read(BCM_SIG_VEHICLE_STATE_VEHICLE_STATE, &vehicle_state);
+    (void)Rte_Read(BCM_SIG_VEHICLE_STATE_MODE, &vehicle_state);
     (void)Rte_Read(BCM_SIG_BODY_CONTROL_CMD_HEADLIGHT_CMD, &body_cmd);
 
     /* --- 2. Determine headlamp state ---------------------------------- */

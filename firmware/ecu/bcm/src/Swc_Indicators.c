@@ -97,8 +97,8 @@ void Swc_Indicators_10ms(void)
 
     /* --- 1. Read input signals ---------------------------------------- */
     (void)Rte_Read(BCM_SIG_BODY_CONTROL_CMD_TURN_SIGNAL_CMD, &turn_signal_cmd);
-    (void)Rte_Read(BCM_SIG_BODY_CONTROL_CMD_HAZARD_CMD, &hazard_cmd);
-    (void)Rte_Read(BCM_SIG_ESTOP_BROADCAST_ESTOP_ACTIVE, &estop_active);
+    (void)Rte_Read(BCM_SIG_BODY_CONTROL_CMD_HAZARD_ACTIVE, &hazard_cmd);
+    (void)Rte_Read(BCM_SIG_ESTOP_BROADCAST_ACTIVE, &estop_active);
 
     /* --- 2. Decode commands ------------------------------------------- */
     turn_cmd = (uint8)turn_signal_cmd;  /* 0=off, 1=left, 2=right */
@@ -154,7 +154,7 @@ void Swc_Indicators_10ms(void)
     }
 
     /* --- 5. Write output signals -------------------------------------- */
-    (void)Rte_Write(BCM_SIG_INDICATOR_STATE_LEFT_INDICATOR, left_output);
-    (void)Rte_Write(BCM_SIG_INDICATOR_STATE_RIGHT_INDICATOR, right_output);
+    (void)Rte_Write(BCM_SIG_INDICATOR_STATE_LEFT_ON, left_output);
+    (void)Rte_Write(BCM_SIG_INDICATOR_STATE_RIGHT_ON, right_output);
     (void)Rte_Write(BCM_SIG_INDICATOR_STATE_HAZARD_ACTIVE, hazard_output);
 }

@@ -79,13 +79,13 @@ void Bcm_ComBridge_10ms(void)
         (void)Com_SendSignal(BCM_COM_SIG_LIGHT_STATUS_TAIL_LIGHT_ON, &sig_u8);
 
         /* Indicator_State signals → CAN 0x401 */
-        (void)Rte_Read(BCM_SIG_INDICATOR_STATE_LEFT_INDICATOR, &rte_val);
+        (void)Rte_Read(BCM_SIG_INDICATOR_STATE_LEFT_ON, &rte_val);
         sig_u8 = (uint8)rte_val;
-        (void)Com_SendSignal(BCM_COM_SIG_INDICATOR_STATE_LEFT_INDICATOR, &sig_u8);
+        (void)Com_SendSignal(BCM_COM_SIG_INDICATOR_STATE_LEFT_ON, &sig_u8);
 
-        (void)Rte_Read(BCM_SIG_INDICATOR_STATE_RIGHT_INDICATOR, &rte_val);
+        (void)Rte_Read(BCM_SIG_INDICATOR_STATE_RIGHT_ON, &rte_val);
         sig_u8 = (uint8)rte_val;
-        (void)Com_SendSignal(BCM_COM_SIG_INDICATOR_STATE_RIGHT_INDICATOR, &sig_u8);
+        (void)Com_SendSignal(BCM_COM_SIG_INDICATOR_STATE_RIGHT_ON, &sig_u8);
 
         (void)Rte_Read(BCM_SIG_INDICATOR_STATE_HAZARD_ACTIVE, &rte_val);
         sig_u8 = (uint8)rte_val;
@@ -98,21 +98,8 @@ void Bcm_ComBridge_10ms(void)
     }
 
     /* ---- RX bridge: Com RX → RTE inputs ---- */
-    {
-        uint8  rx_u8;
-
-        /* Vehicle_State (CAN 0x100) → RTE */
-        (void)Com_ReceiveSignal(BCM_COM_SIG_VEHICLE_STATE_VEHICLE_STATE, &rx_u8);
-        (void)Rte_Write(BCM_SIG_VEHICLE_STATE_VEHICLE_STATE, (uint32)rx_u8);
-
-        /* Body_Control_Cmd (CAN 0x350) → RTE */
-        (void)Com_ReceiveSignal(BCM_COM_SIG_BODY_CONTROL_CMD_HEADLIGHT_CMD, &rx_u8);
-        (void)Rte_Write(BCM_SIG_BODY_CONTROL_CMD_HEADLIGHT_CMD, (uint32)rx_u8);
-
-        /* EStop_Broadcast (CAN 0x001) → RTE */
-        (void)Com_ReceiveSignal(BCM_COM_SIG_ESTOP_BROADCAST_ESTOP_ACTIVE, &rx_u8);
-        (void)Rte_Write(BCM_SIG_ESTOP_BROADCAST_ESTOP_ACTIVE, (uint32)rx_u8);
-    }
+    /* Com→RTE auto-binding handles Vehicle_State, Body_Control_Cmd,
+     * EStop_Broadcast — no manual bridge needed (AUTOSAR layering). */
 }
 
 /* ==================================================================

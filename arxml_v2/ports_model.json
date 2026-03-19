@@ -1,0 +1,1609 @@
+{
+  "CVC": {
+    "Swc_CvcCom": {
+      "p_ports": [
+        {
+          "name": "PP_CVC_SIG_BATTERY_STATUS",
+          "code_signal": "CVC_SIG_BATTERY_STATUS",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_BATTERY_STATUS",
+          "internal": true
+        },
+        {
+          "name": "PP_CVC_SIG_BRAKE_FAULT",
+          "code_signal": "CVC_SIG_BRAKE_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_BRAKE_FAULT",
+          "internal": true
+        },
+        {
+          "name": "PP_CVC_SIG_FAULT_MASK",
+          "code_signal": "CVC_SIG_FAULT_MASK",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_FAULT_MASK",
+          "internal": true
+        },
+        {
+          "name": "PP_CVC_SIG_MOTOR_CUTOFF",
+          "code_signal": "CVC_SIG_MOTOR_CUTOFF",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_MOTOR_CUTOFF",
+          "internal": true
+        },
+        {
+          "name": "PP_CVC_SIG_MOTOR_FAULT_RZC",
+          "code_signal": "CVC_SIG_MOTOR_FAULT_RZC",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_MOTOR_FAULT_RZC",
+          "internal": true
+        },
+        {
+          "name": "PP_CVC_SIG_SC_RELAY_KILL",
+          "code_signal": "CVC_SIG_SC_RELAY_KILL",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_SC_RELAY_KILL",
+          "internal": true
+        },
+        {
+          "name": "PP_CVC_SIG_STEERING_FAULT",
+          "code_signal": "CVC_SIG_STEERING_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_STEERING_FAULT",
+          "internal": true
+        }
+      ],
+      "r_ports": [
+        {
+          "name": "RP_CVC_SIG_BRAKE_FAULT",
+          "code_signal": "CVC_SIG_BRAKE_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_BRAKE_FAULT",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_ESTOP_ACTIVE",
+          "code_signal": "CVC_SIG_ESTOP_ACTIVE",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_ESTOP_ACTIVE",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_FZC_COMM_STATUS",
+          "code_signal": "CVC_SIG_FZC_COMM_STATUS",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_FZC_COMM_STATUS",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_MOTOR_CUTOFF",
+          "code_signal": "CVC_SIG_MOTOR_CUTOFF",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_MOTOR_CUTOFF",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_PEDAL_FAULT",
+          "code_signal": "CVC_SIG_PEDAL_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_PEDAL_FAULT",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_RZC_COMM_STATUS",
+          "code_signal": "CVC_SIG_RZC_COMM_STATUS",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_RZC_COMM_STATUS",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_SC_RELAY_KILL",
+          "code_signal": "CVC_SIG_SC_RELAY_KILL",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_SC_RELAY_KILL",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_STEERING_FAULT",
+          "code_signal": "CVC_SIG_STEERING_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_STEERING_FAULT",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_TORQUE_REQUEST",
+          "code_signal": "CVC_SIG_TORQUE_REQUEST",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_TORQUE_REQUEST",
+          "internal": true
+        }
+      ]
+    },
+    "Swc_CvcDcm": {
+      "p_ports": [],
+      "r_ports": [
+        {
+          "name": "RP_CVC_SIG_PEDAL_FAULT",
+          "code_signal": "CVC_SIG_PEDAL_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_PEDAL_FAULT",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_PEDAL_POSITION",
+          "code_signal": "CVC_SIG_PEDAL_POSITION",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_PEDAL_POSITION",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_VEHICLE_STATE",
+          "code_signal": "CVC_SIG_VEHICLE_STATE",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_VEHICLE_STATE",
+          "internal": true
+        }
+      ]
+    },
+    "Swc_Dashboard": {
+      "p_ports": [],
+      "r_ports": [
+        {
+          "name": "RP_CVC_SIG_FAULT_MASK",
+          "code_signal": "CVC_SIG_FAULT_MASK",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_FAULT_MASK",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_MOTOR_SPEED",
+          "code_signal": "CVC_SIG_MOTOR_SPEED",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_MOTOR_SPEED",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_PEDAL_POSITION",
+          "code_signal": "CVC_SIG_PEDAL_POSITION",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_PEDAL_POSITION",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_VEHICLE_STATE",
+          "code_signal": "CVC_SIG_VEHICLE_STATE",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_VEHICLE_STATE",
+          "internal": true
+        }
+      ]
+    },
+    "Swc_EStop": {
+      "p_ports": [
+        {
+          "name": "PP_CVC_SIG_ESTOP_ACTIVE",
+          "code_signal": "CVC_SIG_ESTOP_ACTIVE",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_ESTOP_ACTIVE",
+          "internal": true
+        }
+      ],
+      "r_ports": []
+    },
+    "Swc_Heartbeat": {
+      "p_ports": [
+        {
+          "name": "PP_CVC_SIG_FZC_COMM_STATUS",
+          "code_signal": "CVC_SIG_FZC_COMM_STATUS",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_FZC_COMM_STATUS",
+          "internal": true
+        },
+        {
+          "name": "PP_CVC_SIG_RZC_COMM_STATUS",
+          "code_signal": "CVC_SIG_RZC_COMM_STATUS",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_RZC_COMM_STATUS",
+          "internal": true
+        }
+      ],
+      "r_ports": [
+        {
+          "name": "RP_CVC_SIG_VEHICLE_STATE",
+          "code_signal": "CVC_SIG_VEHICLE_STATE",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_VEHICLE_STATE",
+          "internal": true
+        }
+      ]
+    },
+    "Swc_Pedal": {
+      "p_ports": [
+        {
+          "name": "PP_CVC_SIG_PEDAL_FAULT",
+          "code_signal": "CVC_SIG_PEDAL_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_PEDAL_FAULT",
+          "internal": true
+        },
+        {
+          "name": "PP_CVC_SIG_PEDAL_POSITION",
+          "code_signal": "CVC_SIG_PEDAL_POSITION",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_PEDAL_POSITION",
+          "internal": true
+        },
+        {
+          "name": "PP_CVC_SIG_TORQUE_REQUEST",
+          "code_signal": "CVC_SIG_TORQUE_REQUEST",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_TORQUE_REQUEST",
+          "internal": true
+        }
+      ],
+      "r_ports": [
+        {
+          "name": "RP_CVC_SIG_VEHICLE_STATE",
+          "code_signal": "CVC_SIG_VEHICLE_STATE",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_VEHICLE_STATE",
+          "internal": true
+        }
+      ]
+    },
+    "Swc_VehicleState": {
+      "p_ports": [
+        {
+          "name": "PP_CVC_SIG_VEHICLE_STATE",
+          "code_signal": "CVC_SIG_VEHICLE_STATE",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_VEHICLE_STATE",
+          "internal": true
+        }
+      ],
+      "r_ports": [
+        {
+          "name": "RP_CVC_SIG_BATTERY_STATUS",
+          "code_signal": "CVC_SIG_BATTERY_STATUS",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_BATTERY_STATUS",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_BRAKE_FAULT",
+          "code_signal": "CVC_SIG_BRAKE_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_BRAKE_FAULT",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_ESTOP_ACTIVE",
+          "code_signal": "CVC_SIG_ESTOP_ACTIVE",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_ESTOP_ACTIVE",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_FZC_COMM_STATUS",
+          "code_signal": "CVC_SIG_FZC_COMM_STATUS",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_FZC_COMM_STATUS",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_MOTOR_CUTOFF",
+          "code_signal": "CVC_SIG_MOTOR_CUTOFF",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_MOTOR_CUTOFF",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_MOTOR_FAULT_RZC",
+          "code_signal": "CVC_SIG_MOTOR_FAULT_RZC",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_MOTOR_FAULT_RZC",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_MOTOR_SPEED",
+          "code_signal": "CVC_SIG_MOTOR_SPEED",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_MOTOR_SPEED",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_PEDAL_FAULT",
+          "code_signal": "CVC_SIG_PEDAL_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_PEDAL_FAULT",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_PEDAL_POSITION",
+          "code_signal": "CVC_SIG_PEDAL_POSITION",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_PEDAL_POSITION",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_RZC_COMM_STATUS",
+          "code_signal": "CVC_SIG_RZC_COMM_STATUS",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_RZC_COMM_STATUS",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_SC_RELAY_KILL",
+          "code_signal": "CVC_SIG_SC_RELAY_KILL",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_SC_RELAY_KILL",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_STEERING_FAULT",
+          "code_signal": "CVC_SIG_STEERING_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_STEERING_FAULT",
+          "internal": true
+        },
+        {
+          "name": "RP_CVC_SIG_TORQUE_REQUEST",
+          "code_signal": "CVC_SIG_TORQUE_REQUEST",
+          "dbc_signal": null,
+          "interface": "SRI_CVC_SIG_TORQUE_REQUEST",
+          "internal": true
+        }
+      ]
+    }
+  },
+  "FZC": {
+    "Swc_Brake": {
+      "p_ports": [
+        {
+          "name": "PP_FZC_SIG_BRAKE_FAULT",
+          "code_signal": "FZC_SIG_BRAKE_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_BRAKE_FAULT",
+          "internal": true
+        },
+        {
+          "name": "PP_FZC_SIG_BRAKE_POS",
+          "code_signal": "FZC_SIG_BRAKE_POS",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_BRAKE_POS",
+          "internal": true
+        },
+        {
+          "name": "PP_FZC_SIG_BRAKE_PWM_DISABLE",
+          "code_signal": "FZC_SIG_BRAKE_PWM_DISABLE",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_BRAKE_PWM_DISABLE",
+          "internal": true
+        },
+        {
+          "name": "PP_FZC_SIG_MOTOR_CUTOFF",
+          "code_signal": "FZC_SIG_MOTOR_CUTOFF",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_MOTOR_CUTOFF",
+          "internal": true
+        }
+      ],
+      "r_ports": [
+        {
+          "name": "RP_FZC_SIG_BRAKE_CMD",
+          "code_signal": "FZC_SIG_BRAKE_CMD",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_BRAKE_CMD",
+          "internal": true
+        },
+        {
+          "name": "RP_FZC_SIG_ESTOP_ACTIVE",
+          "code_signal": "FZC_SIG_ESTOP_ACTIVE",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_ESTOP_ACTIVE",
+          "internal": true
+        }
+      ]
+    },
+    "Swc_Buzzer": {
+      "p_ports": [],
+      "r_ports": [
+        {
+          "name": "RP_FZC_SIG_LIDAR_ZONE",
+          "code_signal": "FZC_SIG_LIDAR_ZONE",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_LIDAR_ZONE",
+          "internal": true
+        },
+        {
+          "name": "RP_FZC_SIG_VEHICLE_STATE",
+          "code_signal": "FZC_SIG_VEHICLE_STATE",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_VEHICLE_STATE",
+          "internal": true
+        }
+      ]
+    },
+    "Swc_FzcCanMonitor": {
+      "p_ports": [
+        {
+          "name": "PP_FZC_SIG_BRAKE_CMD",
+          "code_signal": "FZC_SIG_BRAKE_CMD",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_BRAKE_CMD",
+          "internal": true
+        },
+        {
+          "name": "PP_FZC_SIG_BUZZER_PATTERN",
+          "code_signal": "FZC_SIG_BUZZER_PATTERN",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_BUZZER_PATTERN",
+          "internal": true
+        },
+        {
+          "name": "PP_FZC_SIG_STEER_CMD",
+          "code_signal": "FZC_SIG_STEER_CMD",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_STEER_CMD",
+          "internal": true
+        }
+      ],
+      "r_ports": []
+    },
+    "Swc_FzcCom": {
+      "p_ports": [
+        {
+          "name": "PP_FZC_SIG_BRAKE_CMD",
+          "code_signal": "FZC_SIG_BRAKE_CMD",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_BRAKE_CMD",
+          "internal": true
+        },
+        {
+          "name": "PP_FZC_SIG_ESTOP_ACTIVE",
+          "code_signal": "FZC_SIG_ESTOP_ACTIVE",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_ESTOP_ACTIVE",
+          "internal": true
+        },
+        {
+          "name": "PP_FZC_SIG_STEER_CMD",
+          "code_signal": "FZC_SIG_STEER_CMD",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_STEER_CMD",
+          "internal": true
+        },
+        {
+          "name": "PP_FZC_SIG_VEHICLE_STATE",
+          "code_signal": "FZC_SIG_VEHICLE_STATE",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_VEHICLE_STATE",
+          "internal": true
+        }
+      ],
+      "r_ports": [
+        {
+          "name": "RP_FZC_SIG_BRAKE_FAULT",
+          "code_signal": "FZC_SIG_BRAKE_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_BRAKE_FAULT",
+          "internal": true
+        },
+        {
+          "name": "RP_FZC_SIG_BRAKE_POS",
+          "code_signal": "FZC_SIG_BRAKE_POS",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_BRAKE_POS",
+          "internal": true
+        },
+        {
+          "name": "RP_FZC_SIG_LIDAR_DIST",
+          "code_signal": "FZC_SIG_LIDAR_DIST",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_LIDAR_DIST",
+          "internal": true
+        },
+        {
+          "name": "RP_FZC_SIG_LIDAR_ZONE",
+          "code_signal": "FZC_SIG_LIDAR_ZONE",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_LIDAR_ZONE",
+          "internal": true
+        },
+        {
+          "name": "RP_FZC_SIG_MOTOR_CUTOFF",
+          "code_signal": "FZC_SIG_MOTOR_CUTOFF",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_MOTOR_CUTOFF",
+          "internal": true
+        },
+        {
+          "name": "RP_FZC_SIG_STEER_ANGLE",
+          "code_signal": "FZC_SIG_STEER_ANGLE",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_STEER_ANGLE",
+          "internal": true
+        },
+        {
+          "name": "RP_FZC_SIG_STEER_FAULT",
+          "code_signal": "FZC_SIG_STEER_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_STEER_FAULT",
+          "internal": true
+        }
+      ]
+    },
+    "Swc_FzcDcm": {
+      "p_ports": [],
+      "r_ports": [
+        {
+          "name": "RP_FZC_SIG_BRAKE_POS",
+          "code_signal": "FZC_SIG_BRAKE_POS",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_BRAKE_POS",
+          "internal": true
+        },
+        {
+          "name": "RP_FZC_SIG_LIDAR_DIST",
+          "code_signal": "FZC_SIG_LIDAR_DIST",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_LIDAR_DIST",
+          "internal": true
+        },
+        {
+          "name": "RP_FZC_SIG_LIDAR_SIGNAL",
+          "code_signal": "FZC_SIG_LIDAR_SIGNAL",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_LIDAR_SIGNAL",
+          "internal": true
+        },
+        {
+          "name": "RP_FZC_SIG_LIDAR_ZONE",
+          "code_signal": "FZC_SIG_LIDAR_ZONE",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_LIDAR_ZONE",
+          "internal": true
+        },
+        {
+          "name": "RP_FZC_SIG_STEER_ANGLE",
+          "code_signal": "FZC_SIG_STEER_ANGLE",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_STEER_ANGLE",
+          "internal": true
+        }
+      ]
+    },
+    "Swc_FzcSafety": {
+      "p_ports": [
+        {
+          "name": "PP_FZC_SIG_FAULT_MASK",
+          "code_signal": "FZC_SIG_FAULT_MASK",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_FAULT_MASK",
+          "internal": true
+        },
+        {
+          "name": "PP_FZC_SIG_MOTOR_CUTOFF",
+          "code_signal": "FZC_SIG_MOTOR_CUTOFF",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_MOTOR_CUTOFF",
+          "internal": true
+        },
+        {
+          "name": "PP_FZC_SIG_SAFETY_STATUS",
+          "code_signal": "FZC_SIG_SAFETY_STATUS",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_SAFETY_STATUS",
+          "internal": true
+        }
+      ],
+      "r_ports": [
+        {
+          "name": "RP_FZC_SIG_BRAKE_FAULT",
+          "code_signal": "FZC_SIG_BRAKE_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_BRAKE_FAULT",
+          "internal": true
+        },
+        {
+          "name": "RP_FZC_SIG_LIDAR_FAULT",
+          "code_signal": "FZC_SIG_LIDAR_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_LIDAR_FAULT",
+          "internal": true
+        },
+        {
+          "name": "RP_FZC_SIG_SELF_TEST_RESULT",
+          "code_signal": "FZC_SIG_SELF_TEST_RESULT",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_SELF_TEST_RESULT",
+          "internal": true
+        },
+        {
+          "name": "RP_FZC_SIG_STEER_FAULT",
+          "code_signal": "FZC_SIG_STEER_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_STEER_FAULT",
+          "internal": true
+        },
+        {
+          "name": "RP_FZC_SIG_VEHICLE_STATE",
+          "code_signal": "FZC_SIG_VEHICLE_STATE",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_VEHICLE_STATE",
+          "internal": true
+        }
+      ]
+    },
+    "Swc_Heartbeat": {
+      "p_ports": [
+        {
+          "name": "PP_FZC_SIG_HEARTBEAT_ALIVE",
+          "code_signal": "FZC_SIG_HEARTBEAT_ALIVE",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_HEARTBEAT_ALIVE",
+          "internal": true
+        }
+      ],
+      "r_ports": [
+        {
+          "name": "RP_FZC_SIG_FAULT_MASK",
+          "code_signal": "FZC_SIG_FAULT_MASK",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_FAULT_MASK",
+          "internal": true
+        },
+        {
+          "name": "RP_FZC_SIG_VEHICLE_STATE",
+          "code_signal": "FZC_SIG_VEHICLE_STATE",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_VEHICLE_STATE",
+          "internal": true
+        }
+      ]
+    },
+    "Swc_Lidar": {
+      "p_ports": [
+        {
+          "name": "PP_FZC_SIG_LIDAR_DIST",
+          "code_signal": "FZC_SIG_LIDAR_DIST",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_LIDAR_DIST",
+          "internal": true
+        },
+        {
+          "name": "PP_FZC_SIG_LIDAR_FAULT",
+          "code_signal": "FZC_SIG_LIDAR_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_LIDAR_FAULT",
+          "internal": true
+        },
+        {
+          "name": "PP_FZC_SIG_LIDAR_SIGNAL",
+          "code_signal": "FZC_SIG_LIDAR_SIGNAL",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_LIDAR_SIGNAL",
+          "internal": true
+        },
+        {
+          "name": "PP_FZC_SIG_LIDAR_ZONE",
+          "code_signal": "FZC_SIG_LIDAR_ZONE",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_LIDAR_ZONE",
+          "internal": true
+        }
+      ],
+      "r_ports": []
+    },
+    "Swc_Steering": {
+      "p_ports": [
+        {
+          "name": "PP_FZC_SIG_STEER_ANGLE",
+          "code_signal": "FZC_SIG_STEER_ANGLE",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_STEER_ANGLE",
+          "internal": true
+        },
+        {
+          "name": "PP_FZC_SIG_STEER_FAULT",
+          "code_signal": "FZC_SIG_STEER_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_STEER_FAULT",
+          "internal": true
+        },
+        {
+          "name": "PP_FZC_SIG_STEER_PWM_DISABLE",
+          "code_signal": "FZC_SIG_STEER_PWM_DISABLE",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_STEER_PWM_DISABLE",
+          "internal": true
+        }
+      ],
+      "r_ports": [
+        {
+          "name": "RP_FZC_SIG_STEER_CMD",
+          "code_signal": "FZC_SIG_STEER_CMD",
+          "dbc_signal": null,
+          "interface": "SRI_FZC_SIG_STEER_CMD",
+          "internal": true
+        }
+      ]
+    }
+  },
+  "RZC": {
+    "Swc_Battery": {
+      "p_ports": [
+        {
+          "name": "PP_BatSt_BatteryVoltage_mV",
+          "code_signal": "RZC_SIG_BATTERY_MV",
+          "dbc_signal": "BatSt_BatteryVoltage_mV",
+          "interface": "SRI_BatSt_BatteryVoltage_mV",
+          "internal": false
+        },
+        {
+          "name": "PP_BatSt_Status",
+          "code_signal": "RZC_SIG_BATTERY_SOC",
+          "dbc_signal": "BatSt_Status",
+          "interface": "SRI_BatSt_Status",
+          "internal": false
+        },
+        {
+          "name": "PP_BatSt_Status",
+          "code_signal": "RZC_SIG_BATTERY_STATUS",
+          "dbc_signal": "BatSt_Status",
+          "interface": "SRI_BatSt_Status",
+          "internal": false
+        }
+      ],
+      "r_ports": []
+    },
+    "Swc_CurrentMonitor": {
+      "p_ports": [
+        {
+          "name": "PP_MtrCur_Current_mA",
+          "code_signal": "RZC_SIG_CURRENT_MA",
+          "dbc_signal": "MtrCur_Current_mA",
+          "interface": "SRI_MtrCur_Current_mA",
+          "internal": false
+        },
+        {
+          "name": "PP_MtrCur_OvercurrentFlag",
+          "code_signal": "RZC_SIG_OVERCURRENT",
+          "dbc_signal": "MtrCur_OvercurrentFlag",
+          "interface": "SRI_MtrCur_OvercurrentFlag",
+          "internal": false
+        }
+      ],
+      "r_ports": []
+    },
+    "Swc_Encoder": {
+      "p_ports": [
+        {
+          "name": "PP_RZC_SIG_ENCODER_DIR",
+          "code_signal": "RZC_SIG_ENCODER_DIR",
+          "dbc_signal": null,
+          "interface": "SRI_RZC_SIG_ENCODER_DIR",
+          "internal": true
+        },
+        {
+          "name": "PP_RZC_SIG_ENCODER_SPEED",
+          "code_signal": "RZC_SIG_ENCODER_SPEED",
+          "dbc_signal": null,
+          "interface": "SRI_RZC_SIG_ENCODER_SPEED",
+          "internal": true
+        },
+        {
+          "name": "PP_RZC_SIG_ENCODER_STALL",
+          "code_signal": "RZC_SIG_ENCODER_STALL",
+          "dbc_signal": null,
+          "interface": "SRI_RZC_SIG_ENCODER_STALL",
+          "internal": true
+        }
+      ],
+      "r_ports": [
+        {
+          "name": "RP_MtrSt_MotorDirection",
+          "code_signal": "RZC_SIG_MOTOR_DIR",
+          "dbc_signal": "MtrSt_MotorDirection",
+          "interface": "SRI_MtrSt_MotorDirection",
+          "internal": false
+        },
+        {
+          "name": "RP_MtrCur_TorqueEcho",
+          "code_signal": "RZC_SIG_TORQUE_ECHO",
+          "dbc_signal": "MtrCur_TorqueEcho",
+          "interface": "SRI_MtrCur_TorqueEcho",
+          "internal": false
+        }
+      ]
+    },
+    "Swc_Heartbeat": {
+      "p_ports": [
+        {
+          "name": "PP_RzcHb_E2E_AliveCounter",
+          "code_signal": "RZC_SIG_HEARTBEAT_ALIVE",
+          "dbc_signal": "RzcHb_E2E_AliveCounter",
+          "interface": "SRI_RzcHb_E2E_AliveCounter",
+          "internal": false
+        }
+      ],
+      "r_ports": [
+        {
+          "name": "RP_VehSt_FaultMask",
+          "code_signal": "RZC_SIG_FAULT_MASK",
+          "dbc_signal": "VehSt_FaultMask",
+          "interface": "SRI_VehSt_FaultMask",
+          "internal": false
+        },
+        {
+          "name": "RP_VehSt_Mode",
+          "code_signal": "RZC_SIG_VEHICLE_STATE",
+          "dbc_signal": "VehSt_Mode",
+          "interface": "SRI_VehSt_Mode",
+          "internal": false
+        }
+      ]
+    },
+    "Swc_Motor": {
+      "p_ports": [
+        {
+          "name": "PP_MtrSt_MotorDirection",
+          "code_signal": "RZC_SIG_MOTOR_DIR",
+          "dbc_signal": "MtrSt_MotorDirection",
+          "interface": "SRI_MtrSt_MotorDirection",
+          "internal": false
+        },
+        {
+          "name": "PP_MtrSt_MotorEnable",
+          "code_signal": "RZC_SIG_MOTOR_ENABLE",
+          "dbc_signal": "MtrSt_MotorEnable",
+          "interface": "SRI_MtrSt_MotorEnable",
+          "internal": false
+        },
+        {
+          "name": "PP_MtrSt_MotorFaultStatus",
+          "code_signal": "RZC_SIG_MOTOR_FAULT",
+          "dbc_signal": "MtrSt_MotorFaultStatus",
+          "interface": "SRI_MtrSt_MotorFaultStatus",
+          "internal": false
+        },
+        {
+          "name": "PP_MtrCur_TorqueEcho",
+          "code_signal": "RZC_SIG_TORQUE_ECHO",
+          "dbc_signal": "MtrCur_TorqueEcho",
+          "interface": "SRI_MtrCur_TorqueEcho",
+          "internal": false
+        }
+      ],
+      "r_ports": [
+        {
+          "name": "RP_MtrTmp_DeratingPercent",
+          "code_signal": "RZC_SIG_DERATING_PCT",
+          "dbc_signal": "MtrTmp_DeratingPercent",
+          "interface": "SRI_MtrTmp_DeratingPercent",
+          "internal": false
+        },
+        {
+          "name": "RP_EStBc_EStop_Active",
+          "code_signal": "RZC_SIG_ESTOP_ACTIVE",
+          "dbc_signal": "EStBc_EStop_Active",
+          "interface": "SRI_EStBc_EStop_Active",
+          "internal": false
+        },
+        {
+          "name": "RP_MtrCur_OvercurrentFlag",
+          "code_signal": "RZC_SIG_OVERCURRENT",
+          "dbc_signal": "MtrCur_OvercurrentFlag",
+          "interface": "SRI_MtrCur_OvercurrentFlag",
+          "internal": false
+        },
+        {
+          "name": "RP_RZC_SIG_TEMP_FAULT",
+          "code_signal": "RZC_SIG_TEMP_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_RZC_SIG_TEMP_FAULT",
+          "internal": true
+        },
+        {
+          "name": "RP_TrqRq_Torque_pct",
+          "code_signal": "RZC_SIG_TORQUE_CMD",
+          "dbc_signal": "TrqRq_Torque_pct",
+          "interface": "SRI_TrqRq_Torque_pct",
+          "internal": false
+        },
+        {
+          "name": "RP_VehSt_Mode",
+          "code_signal": "RZC_SIG_VEHICLE_STATE",
+          "dbc_signal": "VehSt_Mode",
+          "interface": "SRI_VehSt_Mode",
+          "internal": false
+        }
+      ]
+    },
+    "Swc_RzcCom": {
+      "p_ports": [
+        {
+          "name": "PP_EStBc_EStop_Active",
+          "code_signal": "RZC_SIG_ESTOP_ACTIVE",
+          "dbc_signal": "EStBc_EStop_Active",
+          "interface": "SRI_EStBc_EStop_Active",
+          "internal": false
+        },
+        {
+          "name": "PP_TrqRq_Torque_pct",
+          "code_signal": "RZC_SIG_TORQUE_CMD",
+          "dbc_signal": "TrqRq_Torque_pct",
+          "interface": "SRI_TrqRq_Torque_pct",
+          "internal": false
+        }
+      ],
+      "r_ports": [
+        {
+          "name": "RP_BatSt_BatteryVoltage_mV",
+          "code_signal": "RZC_SIG_BATTERY_MV",
+          "dbc_signal": "BatSt_BatteryVoltage_mV",
+          "interface": "SRI_BatSt_BatteryVoltage_mV",
+          "internal": false
+        },
+        {
+          "name": "RP_BatSt_Status",
+          "code_signal": "RZC_SIG_BATTERY_SOC",
+          "dbc_signal": "BatSt_Status",
+          "interface": "SRI_BatSt_Status",
+          "internal": false
+        },
+        {
+          "name": "RP_BatSt_Status",
+          "code_signal": "RZC_SIG_BATTERY_STATUS",
+          "dbc_signal": "BatSt_Status",
+          "interface": "SRI_BatSt_Status",
+          "internal": false
+        },
+        {
+          "name": "RP_MtrCur_Current_mA",
+          "code_signal": "RZC_SIG_CURRENT_MA",
+          "dbc_signal": "MtrCur_Current_mA",
+          "interface": "SRI_MtrCur_Current_mA",
+          "internal": false
+        },
+        {
+          "name": "RP_MtrTmp_DeratingPercent",
+          "code_signal": "RZC_SIG_DERATING_PCT",
+          "dbc_signal": "MtrTmp_DeratingPercent",
+          "interface": "SRI_MtrTmp_DeratingPercent",
+          "internal": false
+        },
+        {
+          "name": "RP_RZC_SIG_ENCODER_SPEED",
+          "code_signal": "RZC_SIG_ENCODER_SPEED",
+          "dbc_signal": null,
+          "interface": "SRI_RZC_SIG_ENCODER_SPEED",
+          "internal": true
+        },
+        {
+          "name": "RP_EStBc_EStop_Active",
+          "code_signal": "RZC_SIG_ESTOP_ACTIVE",
+          "dbc_signal": "EStBc_EStop_Active",
+          "interface": "SRI_EStBc_EStop_Active",
+          "internal": false
+        },
+        {
+          "name": "RP_MtrSt_MotorDirection",
+          "code_signal": "RZC_SIG_MOTOR_DIR",
+          "dbc_signal": "MtrSt_MotorDirection",
+          "interface": "SRI_MtrSt_MotorDirection",
+          "internal": false
+        },
+        {
+          "name": "RP_MtrSt_MotorEnable",
+          "code_signal": "RZC_SIG_MOTOR_ENABLE",
+          "dbc_signal": "MtrSt_MotorEnable",
+          "interface": "SRI_MtrSt_MotorEnable",
+          "internal": false
+        },
+        {
+          "name": "RP_MtrSt_MotorFaultStatus",
+          "code_signal": "RZC_SIG_MOTOR_FAULT",
+          "dbc_signal": "MtrSt_MotorFaultStatus",
+          "interface": "SRI_MtrSt_MotorFaultStatus",
+          "internal": false
+        },
+        {
+          "name": "RP_MtrCur_OvercurrentFlag",
+          "code_signal": "RZC_SIG_OVERCURRENT",
+          "dbc_signal": "MtrCur_OvercurrentFlag",
+          "interface": "SRI_MtrCur_OvercurrentFlag",
+          "internal": false
+        },
+        {
+          "name": "RP_MtrTmp_WindingTemp1_C",
+          "code_signal": "RZC_SIG_TEMP1_DC",
+          "dbc_signal": "MtrTmp_WindingTemp1_C",
+          "interface": "SRI_MtrTmp_WindingTemp1_C",
+          "internal": false
+        },
+        {
+          "name": "RP_MtrTmp_WindingTemp2_C",
+          "code_signal": "RZC_SIG_TEMP2_DC",
+          "dbc_signal": "MtrTmp_WindingTemp2_C",
+          "interface": "SRI_MtrTmp_WindingTemp2_C",
+          "internal": false
+        },
+        {
+          "name": "RP_TrqRq_Torque_pct",
+          "code_signal": "RZC_SIG_TORQUE_CMD",
+          "dbc_signal": "TrqRq_Torque_pct",
+          "interface": "SRI_TrqRq_Torque_pct",
+          "internal": false
+        },
+        {
+          "name": "RP_MtrCur_TorqueEcho",
+          "code_signal": "RZC_SIG_TORQUE_ECHO",
+          "dbc_signal": "MtrCur_TorqueEcho",
+          "interface": "SRI_MtrCur_TorqueEcho",
+          "internal": false
+        },
+        {
+          "name": "RP_VehSt_Mode",
+          "code_signal": "RZC_SIG_VEHICLE_STATE",
+          "dbc_signal": "VehSt_Mode",
+          "interface": "SRI_VehSt_Mode",
+          "internal": false
+        }
+      ]
+    },
+    "Swc_RzcDcm": {
+      "p_ports": [],
+      "r_ports": [
+        {
+          "name": "RP_BatSt_BatteryVoltage_mV",
+          "code_signal": "RZC_SIG_BATTERY_MV",
+          "dbc_signal": "BatSt_BatteryVoltage_mV",
+          "interface": "SRI_BatSt_BatteryVoltage_mV",
+          "internal": false
+        },
+        {
+          "name": "RP_MtrCur_Current_mA",
+          "code_signal": "RZC_SIG_CURRENT_MA",
+          "dbc_signal": "MtrCur_Current_mA",
+          "interface": "SRI_MtrCur_Current_mA",
+          "internal": false
+        },
+        {
+          "name": "RP_MtrTmp_DeratingPercent",
+          "code_signal": "RZC_SIG_DERATING_PCT",
+          "dbc_signal": "MtrTmp_DeratingPercent",
+          "interface": "SRI_MtrTmp_DeratingPercent",
+          "internal": false
+        },
+        {
+          "name": "RP_RZC_SIG_ENCODER_SPEED",
+          "code_signal": "RZC_SIG_ENCODER_SPEED",
+          "dbc_signal": null,
+          "interface": "SRI_RZC_SIG_ENCODER_SPEED",
+          "internal": true
+        },
+        {
+          "name": "RP_MtrTmp_WindingTemp1_C",
+          "code_signal": "RZC_SIG_TEMP1_DC",
+          "dbc_signal": "MtrTmp_WindingTemp1_C",
+          "interface": "SRI_MtrTmp_WindingTemp1_C",
+          "internal": false
+        },
+        {
+          "name": "RP_MtrCur_TorqueEcho",
+          "code_signal": "RZC_SIG_TORQUE_ECHO",
+          "dbc_signal": "MtrCur_TorqueEcho",
+          "interface": "SRI_MtrCur_TorqueEcho",
+          "internal": false
+        }
+      ]
+    },
+    "Swc_RzcSafety": {
+      "p_ports": [
+        {
+          "name": "PP_VehSt_FaultMask",
+          "code_signal": "RZC_SIG_FAULT_MASK",
+          "dbc_signal": "VehSt_FaultMask",
+          "interface": "SRI_VehSt_FaultMask",
+          "internal": false
+        },
+        {
+          "name": "PP_ScSt_RelayEnergized",
+          "code_signal": "RZC_SIG_SAFETY_STATUS",
+          "dbc_signal": "ScSt_RelayEnergized",
+          "interface": "SRI_ScSt_RelayEnergized",
+          "internal": false
+        }
+      ],
+      "r_ports": [
+        {
+          "name": "RP_BatSt_Status",
+          "code_signal": "RZC_SIG_BATTERY_STATUS",
+          "dbc_signal": "BatSt_Status",
+          "interface": "SRI_BatSt_Status",
+          "internal": false
+        },
+        {
+          "name": "RP_RZC_SIG_ENCODER_DIR",
+          "code_signal": "RZC_SIG_ENCODER_DIR",
+          "dbc_signal": null,
+          "interface": "SRI_RZC_SIG_ENCODER_DIR",
+          "internal": true
+        },
+        {
+          "name": "RP_RZC_SIG_ENCODER_STALL",
+          "code_signal": "RZC_SIG_ENCODER_STALL",
+          "dbc_signal": null,
+          "interface": "SRI_RZC_SIG_ENCODER_STALL",
+          "internal": true
+        },
+        {
+          "name": "RP_EStBc_EStop_Active",
+          "code_signal": "RZC_SIG_ESTOP_ACTIVE",
+          "dbc_signal": "EStBc_EStop_Active",
+          "interface": "SRI_EStBc_EStop_Active",
+          "internal": false
+        },
+        {
+          "name": "RP_MtrCur_OvercurrentFlag",
+          "code_signal": "RZC_SIG_OVERCURRENT",
+          "dbc_signal": "MtrCur_OvercurrentFlag",
+          "interface": "SRI_MtrCur_OvercurrentFlag",
+          "internal": false
+        },
+        {
+          "name": "RP_RzcHb_FaultStatus",
+          "code_signal": "RZC_SIG_SELF_TEST_RESULT",
+          "dbc_signal": "RzcHb_FaultStatus",
+          "interface": "SRI_RzcHb_FaultStatus",
+          "internal": false
+        },
+        {
+          "name": "RP_RZC_SIG_TEMP_FAULT",
+          "code_signal": "RZC_SIG_TEMP_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_RZC_SIG_TEMP_FAULT",
+          "internal": true
+        },
+        {
+          "name": "RP_VehSt_Mode",
+          "code_signal": "RZC_SIG_VEHICLE_STATE",
+          "dbc_signal": "VehSt_Mode",
+          "interface": "SRI_VehSt_Mode",
+          "internal": false
+        }
+      ]
+    },
+    "Swc_TempMonitor": {
+      "p_ports": [
+        {
+          "name": "PP_MtrTmp_DeratingPercent",
+          "code_signal": "RZC_SIG_DERATING_PCT",
+          "dbc_signal": "MtrTmp_DeratingPercent",
+          "interface": "SRI_MtrTmp_DeratingPercent",
+          "internal": false
+        },
+        {
+          "name": "PP_MtrTmp_WindingTemp1_C",
+          "code_signal": "RZC_SIG_TEMP1_DC",
+          "dbc_signal": "MtrTmp_WindingTemp1_C",
+          "interface": "SRI_MtrTmp_WindingTemp1_C",
+          "internal": false
+        },
+        {
+          "name": "PP_RZC_SIG_TEMP_FAULT",
+          "code_signal": "RZC_SIG_TEMP_FAULT",
+          "dbc_signal": null,
+          "interface": "SRI_RZC_SIG_TEMP_FAULT",
+          "internal": true
+        }
+      ],
+      "r_ports": []
+    }
+  },
+  "BCM": {
+    "Swc_DoorLock": {
+      "p_ports": [
+        {
+          "name": "PP_DlkSt_FrontLeftLock",
+          "code_signal": "BCM_SIG_DOOR_LOCK_STATUS_FRONT_LEFT_LOCK",
+          "dbc_signal": "DlkSt_FrontLeftLock",
+          "interface": "SRI_DlkSt_FrontLeftLock",
+          "internal": false
+        }
+      ],
+      "r_ports": [
+        {
+          "name": "RP_BdyCmd_DoorLockCmd",
+          "code_signal": "BCM_SIG_BODY_CONTROL_CMD_DOOR_LOCK_CMD",
+          "dbc_signal": "BdyCmd_DoorLockCmd",
+          "interface": "SRI_BdyCmd_DoorLockCmd",
+          "internal": false
+        },
+        {
+          "name": "RP_BCM_SIG_MOTOR_STATUS_MOTOR_SPEED_RPM",
+          "code_signal": "BCM_SIG_MOTOR_STATUS_MOTOR_SPEED_RPM",
+          "dbc_signal": null,
+          "interface": "SRI_BCM_SIG_MOTOR_STATUS_MOTOR_SPEED_RPM",
+          "internal": true
+        },
+        {
+          "name": "RP_VehSt_Mode",
+          "code_signal": "BCM_SIG_VEHICLE_STATE_VEHICLE_STATE",
+          "dbc_signal": "VehSt_Mode",
+          "interface": "SRI_VehSt_Mode",
+          "internal": false
+        }
+      ]
+    },
+    "Swc_Indicators": {
+      "p_ports": [
+        {
+          "name": "PP_IndSt_HazardActive",
+          "code_signal": "BCM_SIG_INDICATOR_STATE_HAZARD_ACTIVE",
+          "dbc_signal": "IndSt_HazardActive",
+          "interface": "SRI_IndSt_HazardActive",
+          "internal": false
+        },
+        {
+          "name": "PP_IndSt_LeftOn",
+          "code_signal": "BCM_SIG_INDICATOR_STATE_LEFT_INDICATOR",
+          "dbc_signal": "IndSt_LeftOn",
+          "interface": "SRI_IndSt_LeftOn",
+          "internal": false
+        },
+        {
+          "name": "PP_IndSt_RightOn",
+          "code_signal": "BCM_SIG_INDICATOR_STATE_RIGHT_INDICATOR",
+          "dbc_signal": "IndSt_RightOn",
+          "interface": "SRI_IndSt_RightOn",
+          "internal": false
+        }
+      ],
+      "r_ports": [
+        {
+          "name": "RP_BdyCmd_HazardActive",
+          "code_signal": "BCM_SIG_BODY_CONTROL_CMD_HAZARD_CMD",
+          "dbc_signal": "BdyCmd_HazardActive",
+          "interface": "SRI_BdyCmd_HazardActive",
+          "internal": false
+        },
+        {
+          "name": "RP_BdyCmd_TurnSignalCmd",
+          "code_signal": "BCM_SIG_BODY_CONTROL_CMD_TURN_SIGNAL_CMD",
+          "dbc_signal": "BdyCmd_TurnSignalCmd",
+          "interface": "SRI_BdyCmd_TurnSignalCmd",
+          "internal": false
+        },
+        {
+          "name": "RP_BCM_SIG_ESTOP_BROADCAST_ESTOP_ACTIVE",
+          "code_signal": "BCM_SIG_ESTOP_BROADCAST_ESTOP_ACTIVE",
+          "dbc_signal": null,
+          "interface": "SRI_BCM_SIG_ESTOP_BROADCAST_ESTOP_ACTIVE",
+          "internal": true
+        }
+      ]
+    },
+    "Swc_Lights": {
+      "p_ports": [
+        {
+          "name": "PP_LtSt_HeadlightOn",
+          "code_signal": "BCM_SIG_LIGHT_STATUS_HEADLIGHT_ON",
+          "dbc_signal": "LtSt_HeadlightOn",
+          "interface": "SRI_LtSt_HeadlightOn",
+          "internal": false
+        },
+        {
+          "name": "PP_LtSt_TailLightOn",
+          "code_signal": "BCM_SIG_LIGHT_STATUS_TAIL_LIGHT_ON",
+          "dbc_signal": "LtSt_TailLightOn",
+          "interface": "SRI_LtSt_TailLightOn",
+          "internal": false
+        }
+      ],
+      "r_ports": [
+        {
+          "name": "RP_BdyCmd_HeadlightCmd",
+          "code_signal": "BCM_SIG_BODY_CONTROL_CMD_HEADLIGHT_CMD",
+          "dbc_signal": "BdyCmd_HeadlightCmd",
+          "interface": "SRI_BdyCmd_HeadlightCmd",
+          "internal": false
+        },
+        {
+          "name": "RP_BCM_SIG_MOTOR_STATUS_MOTOR_SPEED_RPM",
+          "code_signal": "BCM_SIG_MOTOR_STATUS_MOTOR_SPEED_RPM",
+          "dbc_signal": null,
+          "interface": "SRI_BCM_SIG_MOTOR_STATUS_MOTOR_SPEED_RPM",
+          "internal": true
+        },
+        {
+          "name": "RP_VehSt_Mode",
+          "code_signal": "BCM_SIG_VEHICLE_STATE_VEHICLE_STATE",
+          "dbc_signal": "VehSt_Mode",
+          "interface": "SRI_VehSt_Mode",
+          "internal": false
+        }
+      ]
+    },
+    "Swc_BcmCan": {
+      "p_ports": [
+        {
+          "name": "PP_BdyCmd_HeadlightCmd",
+          "code_signal": "BCM_SIG_BODY_CONTROL_CMD_HEADLIGHT_CMD",
+          "dbc_signal": "BdyCmd_HeadlightCmd",
+          "interface": "SRI_BdyCmd_HeadlightCmd",
+          "internal": false
+        },
+        {
+          "name": "PP_BCM_SIG_ESTOP_BROADCAST_ESTOP_ACTIVE",
+          "code_signal": "BCM_SIG_ESTOP_BROADCAST_ESTOP_ACTIVE",
+          "dbc_signal": null,
+          "interface": "SRI_BCM_SIG_ESTOP_BROADCAST_ESTOP_ACTIVE",
+          "internal": true
+        },
+        {
+          "name": "PP_VehSt_Mode",
+          "code_signal": "BCM_SIG_VEHICLE_STATE_VEHICLE_STATE",
+          "dbc_signal": "VehSt_Mode",
+          "interface": "SRI_VehSt_Mode",
+          "internal": false
+        }
+      ],
+      "r_ports": [
+        {
+          "name": "RP_DlkSt_FrontLeftLock",
+          "code_signal": "BCM_SIG_DOOR_LOCK_STATUS_FRONT_LEFT_LOCK",
+          "dbc_signal": "DlkSt_FrontLeftLock",
+          "interface": "SRI_DlkSt_FrontLeftLock",
+          "internal": false
+        },
+        {
+          "name": "RP_IndSt_HazardActive",
+          "code_signal": "BCM_SIG_INDICATOR_STATE_HAZARD_ACTIVE",
+          "dbc_signal": "IndSt_HazardActive",
+          "interface": "SRI_IndSt_HazardActive",
+          "internal": false
+        },
+        {
+          "name": "RP_IndSt_LeftOn",
+          "code_signal": "BCM_SIG_INDICATOR_STATE_LEFT_INDICATOR",
+          "dbc_signal": "IndSt_LeftOn",
+          "interface": "SRI_IndSt_LeftOn",
+          "internal": false
+        },
+        {
+          "name": "RP_IndSt_RightOn",
+          "code_signal": "BCM_SIG_INDICATOR_STATE_RIGHT_INDICATOR",
+          "dbc_signal": "IndSt_RightOn",
+          "interface": "SRI_IndSt_RightOn",
+          "internal": false
+        },
+        {
+          "name": "RP_LtSt_HeadlightOn",
+          "code_signal": "BCM_SIG_LIGHT_STATUS_HEADLIGHT_ON",
+          "dbc_signal": "LtSt_HeadlightOn",
+          "interface": "SRI_LtSt_HeadlightOn",
+          "internal": false
+        },
+        {
+          "name": "RP_LtSt_TailLightOn",
+          "code_signal": "BCM_SIG_LIGHT_STATUS_TAIL_LIGHT_ON",
+          "dbc_signal": "LtSt_TailLightOn",
+          "interface": "SRI_LtSt_TailLightOn",
+          "internal": false
+        }
+      ]
+    }
+  },
+  "ICU": {
+    "Swc_Dashboard": {
+      "p_ports": [],
+      "r_ports": [
+        {
+          "name": "RP_ICU_SIG_BATTERY_VOLTAGE",
+          "code_signal": "ICU_SIG_BATTERY_VOLTAGE",
+          "dbc_signal": null,
+          "interface": "SRI_ICU_SIG_BATTERY_VOLTAGE",
+          "internal": true
+        },
+        {
+          "name": "RP_ICU_SIG_DTC_BROADCAST",
+          "code_signal": "ICU_SIG_DTC_BROADCAST",
+          "dbc_signal": null,
+          "interface": "SRI_ICU_SIG_DTC_BROADCAST",
+          "internal": true
+        },
+        {
+          "name": "RP_ICU_SIG_ESTOP_ACTIVE",
+          "code_signal": "ICU_SIG_ESTOP_ACTIVE",
+          "dbc_signal": null,
+          "interface": "SRI_ICU_SIG_ESTOP_ACTIVE",
+          "internal": true
+        },
+        {
+          "name": "RP_ICU_SIG_HEARTBEAT_CVC",
+          "code_signal": "ICU_SIG_HEARTBEAT_CVC",
+          "dbc_signal": null,
+          "interface": "SRI_ICU_SIG_HEARTBEAT_CVC",
+          "internal": true
+        },
+        {
+          "name": "RP_ICU_SIG_HEARTBEAT_FZC",
+          "code_signal": "ICU_SIG_HEARTBEAT_FZC",
+          "dbc_signal": null,
+          "interface": "SRI_ICU_SIG_HEARTBEAT_FZC",
+          "internal": true
+        },
+        {
+          "name": "RP_ICU_SIG_HEARTBEAT_RZC",
+          "code_signal": "ICU_SIG_HEARTBEAT_RZC",
+          "dbc_signal": null,
+          "interface": "SRI_ICU_SIG_HEARTBEAT_RZC",
+          "internal": true
+        },
+        {
+          "name": "RP_ICU_SIG_MOTOR_RPM",
+          "code_signal": "ICU_SIG_MOTOR_RPM",
+          "dbc_signal": null,
+          "interface": "SRI_ICU_SIG_MOTOR_RPM",
+          "internal": true
+        },
+        {
+          "name": "RP_ICU_SIG_MOTOR_TEMP",
+          "code_signal": "ICU_SIG_MOTOR_TEMP",
+          "dbc_signal": null,
+          "interface": "SRI_ICU_SIG_MOTOR_TEMP",
+          "internal": true
+        },
+        {
+          "name": "RP_ICU_SIG_OVERCURRENT_FLAG",
+          "code_signal": "ICU_SIG_OVERCURRENT_FLAG",
+          "dbc_signal": null,
+          "interface": "SRI_ICU_SIG_OVERCURRENT_FLAG",
+          "internal": true
+        },
+        {
+          "name": "RP_ICU_SIG_TORQUE_PCT",
+          "code_signal": "ICU_SIG_TORQUE_PCT",
+          "dbc_signal": null,
+          "interface": "SRI_ICU_SIG_TORQUE_PCT",
+          "internal": true
+        },
+        {
+          "name": "RP_ICU_SIG_VEHICLE_STATE",
+          "code_signal": "ICU_SIG_VEHICLE_STATE",
+          "dbc_signal": null,
+          "interface": "SRI_ICU_SIG_VEHICLE_STATE",
+          "internal": true
+        }
+      ]
+    },
+    "Swc_DtcDisplay": {
+      "p_ports": [],
+      "r_ports": [
+        {
+          "name": "RP_ICU_SIG_DTC_BROADCAST",
+          "code_signal": "ICU_SIG_DTC_BROADCAST",
+          "dbc_signal": null,
+          "interface": "SRI_ICU_SIG_DTC_BROADCAST",
+          "internal": true
+        }
+      ]
+    }
+  },
+  "TCU": {
+    "Swc_DtcStore": {
+      "p_ports": [],
+      "r_ports": [
+        {
+          "name": "RP_TCU_SIG_BATTERY_VOLTAGE",
+          "code_signal": "TCU_SIG_BATTERY_VOLTAGE",
+          "dbc_signal": null,
+          "interface": "SRI_TCU_SIG_BATTERY_VOLTAGE",
+          "internal": true
+        },
+        {
+          "name": "RP_TCU_SIG_DTC_BROADCAST",
+          "code_signal": "TCU_SIG_DTC_BROADCAST",
+          "dbc_signal": null,
+          "interface": "SRI_TCU_SIG_DTC_BROADCAST",
+          "internal": true
+        },
+        {
+          "name": "RP_TCU_SIG_MOTOR_CURRENT",
+          "code_signal": "TCU_SIG_MOTOR_CURRENT",
+          "dbc_signal": null,
+          "interface": "SRI_TCU_SIG_MOTOR_CURRENT",
+          "internal": true
+        },
+        {
+          "name": "RP_TCU_SIG_MOTOR_TEMP",
+          "code_signal": "TCU_SIG_MOTOR_TEMP",
+          "dbc_signal": null,
+          "interface": "SRI_TCU_SIG_MOTOR_TEMP",
+          "internal": true
+        },
+        {
+          "name": "RP_TCU_SIG_VEHICLE_SPEED",
+          "code_signal": "TCU_SIG_VEHICLE_SPEED",
+          "dbc_signal": null,
+          "interface": "SRI_TCU_SIG_VEHICLE_SPEED",
+          "internal": true
+        }
+      ]
+    },
+    "Swc_Obd2Pids": {
+      "p_ports": [],
+      "r_ports": [
+        {
+          "name": "RP_TCU_SIG_BATTERY_VOLTAGE",
+          "code_signal": "TCU_SIG_BATTERY_VOLTAGE",
+          "dbc_signal": null,
+          "interface": "SRI_TCU_SIG_BATTERY_VOLTAGE",
+          "internal": true
+        },
+        {
+          "name": "RP_TCU_SIG_MOTOR_RPM",
+          "code_signal": "TCU_SIG_MOTOR_RPM",
+          "dbc_signal": null,
+          "interface": "SRI_TCU_SIG_MOTOR_RPM",
+          "internal": true
+        },
+        {
+          "name": "RP_TCU_SIG_MOTOR_TEMP",
+          "code_signal": "TCU_SIG_MOTOR_TEMP",
+          "dbc_signal": null,
+          "interface": "SRI_TCU_SIG_MOTOR_TEMP",
+          "internal": true
+        },
+        {
+          "name": "RP_TCU_SIG_TORQUE_PCT",
+          "code_signal": "TCU_SIG_TORQUE_PCT",
+          "dbc_signal": null,
+          "interface": "SRI_TCU_SIG_TORQUE_PCT",
+          "internal": true
+        }
+      ]
+    },
+    "Swc_UdsServer": {
+      "p_ports": [],
+      "r_ports": [
+        {
+          "name": "RP_TCU_SIG_BATTERY_VOLTAGE",
+          "code_signal": "TCU_SIG_BATTERY_VOLTAGE",
+          "dbc_signal": null,
+          "interface": "SRI_TCU_SIG_BATTERY_VOLTAGE",
+          "internal": true
+        },
+        {
+          "name": "RP_TCU_SIG_MOTOR_CURRENT",
+          "code_signal": "TCU_SIG_MOTOR_CURRENT",
+          "dbc_signal": null,
+          "interface": "SRI_TCU_SIG_MOTOR_CURRENT",
+          "internal": true
+        },
+        {
+          "name": "RP_TCU_SIG_MOTOR_RPM",
+          "code_signal": "TCU_SIG_MOTOR_RPM",
+          "dbc_signal": null,
+          "interface": "SRI_TCU_SIG_MOTOR_RPM",
+          "internal": true
+        },
+        {
+          "name": "RP_TCU_SIG_MOTOR_TEMP",
+          "code_signal": "TCU_SIG_MOTOR_TEMP",
+          "dbc_signal": null,
+          "interface": "SRI_TCU_SIG_MOTOR_TEMP",
+          "internal": true
+        },
+        {
+          "name": "RP_TCU_SIG_VEHICLE_SPEED",
+          "code_signal": "TCU_SIG_VEHICLE_SPEED",
+          "dbc_signal": null,
+          "interface": "SRI_TCU_SIG_VEHICLE_SPEED",
+          "internal": true
+        }
+      ]
+    }
+  }
+}

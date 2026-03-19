@@ -85,7 +85,12 @@
  * Bus Silence Monitoring
  * ================================================================== */
 
-#define SC_BUS_SILENCE_TICKS        20u    /* 200ms = all-heartbeat timeout */
+#ifdef PLATFORM_POSIX
+/* SIL: Docker containers may take 1-2s to start CAN TX — extend timeout */
+#define SC_BUS_SILENCE_TICKS        200u   /* 2000ms = SIL boot margin */
+#else
+#define SC_BUS_SILENCE_TICKS        20u    /* 200ms = real hardware timeout */
+#endif
 
 /* ==================================================================
  * Plausibility Thresholds

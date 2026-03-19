@@ -20,6 +20,7 @@
 #include "IoHwAb.h"
 #include "IoHwAb_Posix.h"
 #include "IoHwAb_Inject.h"
+#include "Dio.h"
 #include "Det.h"
 
 /* ---- Internal State ---- */
@@ -77,10 +78,13 @@ void IoHwAb_Init(const IoHwAb_ConfigType* ConfigPtr)
     iohwab_config = ConfigPtr;
     iohwab_initialized = TRUE;
 
-    /* Clear injection buffers */
+    /* Initialize injection buffers to safe neutral defaults.
+     * Steering uses 14-bit SPI format: 8191 = center = 0°.
+     * All other sensors: 0 = safe (no current, no temp, no brake). */
     for (i = 0u; i < IOHWAB_SENSOR_COUNT; i++) {
         iohwab_sensor_values[i] = 0u;
     }
+    iohwab_sensor_values[IOHWAB_SENSOR_STEERING] = 8191u;  /* 14-bit center = 0° */
     for (i = 0u; i < IOHWAB_PIN_COUNT; i++) {
         iohwab_pin_states[i] = STD_LOW;
     }
@@ -330,5 +334,13 @@ void IoHwAb_Inject_SetEncoderValue(uint8 EncoderId, uint32 Count,
 
 void IoHwAb_Inject_SetDigitalPin(uint8 PinId, uint8 Level)
 {
+    /* Write to both Dio (used by IoHwAb.c ReadEStop) and local pin array.
+     * IoHwAb.c reads via Dio_ReadChannel(config->EStopDioChannel=5).
+     * This file's static iohwab_config may be NULL (IoHwAb_Init sets
+     * the other copy in IoHwAb.c), so use the known channel directly. */
+    if (PinId == IOHWAB_PIN_ESTOP) {
+        Dio_WriteChannel(5u, Level);  /* CVC EStopDioChannel = 5 */
+    }
+    Dio_WriteChannel(PinId, Level);
     IoHwAb_Posix_SetDigitalPin(PinId, Level);
 }

@@ -333,7 +333,7 @@ class Dbc2Arxml:
                     pass
 
             for sig in msg.signals:
-                sn = "%s_%s" % (mn, safe_name(sig.name))
+                sn = safe_name(sig.name)
                 try:
                     ss = syssig_pkg.create_system_signal("SS_%s" % sn)
                     self.sys_signals[(mn, sig.name)] = ss

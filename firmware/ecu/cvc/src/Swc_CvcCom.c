@@ -370,14 +370,25 @@ void Swc_CvcCom_BridgeRxToRte(void)
     /* Read fault signals from Com shadow buffers */
     (void)Com_ReceiveSignal(CVC_COM_SIG_BRAKE_FAULT_FAULT_TYPE, &brake_fault_val);
     (void)Com_ReceiveSignal(CVC_COM_SIG_MOTOR_CUTOFF_REQ_REQUEST_TYPE, &motor_cutoff_val);
-    (void)Com_ReceiveSignal(CVC_COM_SIG_SC_STATUS_RELAY_STATE, &sc_relay_byte3);
+#ifdef SIL_DIAG
+    {
+        static uint8 prev_mc = 0xFFu;
+        if (motor_cutoff_val != prev_mc) {
+            fprintf(stderr, "[BRIDGE] mc=%u bf=%u sig=%u\n",
+                    motor_cutoff_val, brake_fault_val,
+                    (unsigned)CVC_COM_SIG_MOTOR_CUTOFF_REQ_REQUEST_TYPE);
+            prev_mc = motor_cutoff_val;
+        }
+    }
+#endif
+    (void)Com_ReceiveSignal(CVC_COM_SIG_SC_STATUS_RELAY_ENERGIZED, &sc_relay_byte3);
     /* Com extracts the 1-bit RelayState signal as 0 or 1.
      * 1=energized (OK), 0=de-energized (killed).
      * On PDU timeout Com zeros shadow → 0 → kill. */
     {
         (void)Rte_Write(CVC_SIG_SC_RELAY_KILL, (uint32)sc_relay_byte3);
     }
-    (void)Com_ReceiveSignal(CVC_COM_SIG_BATTERY_STATUS_BATTERY_STATUS, &battery_status_val);
+    (void)Com_ReceiveSignal(CVC_COM_SIG_BATTERY_STATUS_LEVEL, &battery_status_val);
     (void)Com_ReceiveSignal(CVC_COM_SIG_STEERING_STATUS_STEER_FAULT_STATUS, &steering_fault_val);
     (void)Com_ReceiveSignal(CVC_COM_SIG_MOTOR_STATUS_MOTOR_FAULT_STATUS, &motor_fault_rzc_val);
 
@@ -391,19 +402,9 @@ void Swc_CvcCom_BridgeRxToRte(void)
     (void)Rte_Write(CVC_SIG_STEERING_FAULT, (uint32)steering_fault_val);
     (void)Rte_Write(CVC_SIG_MOTOR_FAULT_RZC, (uint32)motor_fault_rzc_val);
 
-    /* SIL E-Stop injection: fault-inject API sends CAN 0x001 with E-Stop
-     * active flag at byte 2.  CVC normally reads E-Stop via GPIO (DIO ch 5).
-     * In SIL, CvcCom_Hw_InjectEstop writes to IoHwAb injection buffer.
-     * On target, this is a no-op (GPIO reads real hardware). */
-    {
-        extern void CvcCom_Hw_InjectEstop(uint8 Level);
-        uint8 estop_inject_val = 0u;
-        /* TODO:SCALE — signal ID 19u is a dev-repo leftover; no dedicated
-         * RX EStop_Inject Com signal exists in production codegen yet.
-         * Harmless on target (CvcCom_Hw_InjectEstop is a no-op). */
-        (void)Com_ReceiveSignal(19u, &estop_inject_val);
-        CvcCom_Hw_InjectEstop((estop_inject_val != 0u) ? 1u : 0u);
-    }
+    /* E-Stop injection: handled by Spi_Hw_PollUdp -> IoHwAb DIO ch 5.
+     * Previous CAN-based injection (Com signal 19u) was resetting DIO5
+     * to LOW every cycle because the signal ID was stale. Removed. */
 }
 
 /* ==================================================================

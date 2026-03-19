@@ -108,6 +108,7 @@ static boolean os_bootstrap_ready_task_requires_dispatch(void)
     return (boolean)(os_tcb[next_task].CurrentPriority < os_tcb[os_current_task].CurrentPriority);
 }
 
+#if defined(UNIT_TEST)
 static StatusType os_bootstrap_complete_port_dispatches(void)
 {
     StatusType status = E_OS_NOFUNC;
@@ -137,6 +138,7 @@ static void os_bootstrap_drain_to_idle(void)
         }
     } while (progressed == TRUE);
 }
+#endif /* UNIT_TEST */
 
 StatusType GetAlarmBase(AlarmType AlarmID, AlarmBaseRefType Info)
 {
@@ -331,6 +333,7 @@ boolean Os_BootstrapProcessCounterTick(void)
     return os_bootstrap_ready_task_requires_dispatch();
 }
 
+#if defined(UNIT_TEST)
 static void os_bootstrap_advance_counter(TickType Ticks)
 {
     while (Ticks > 0u) {
@@ -347,7 +350,6 @@ static void os_bootstrap_advance_counter(TickType Ticks)
     }
 }
 
-#if defined(UNIT_TEST)
 void Os_TestAdvanceCounter(TickType Ticks)
 {
     os_bootstrap_advance_counter(Ticks);

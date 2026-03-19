@@ -59,7 +59,7 @@ typedef uint8           Std_ReturnType;
 #define CVC_COM_SIG_BRAKE_FAULT_FAULT_TYPE                   103u
 #define CVC_COM_SIG_MOTOR_CUTOFF_REQ_REQUEST_TYPE            109u
 #define CVC_COM_SIG_SC_STATUS_RELAY_STATE                     68u
-#define CVC_COM_SIG_BATTERY_STATUS_BATTERY_STATUS            144u
+#define CVC_COM_SIG_BATTERY_STATUS_LEVEL            144u
 #define CVC_COM_SIG_STEERING_STATUS_STEER_FAULT_STATUS        89u
 #define CVC_COM_SIG_MOTOR_STATUS_MOTOR_FAULT_STATUS          125u
 

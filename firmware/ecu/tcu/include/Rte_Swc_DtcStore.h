@@ -22,24 +22,88 @@
  * ==================================================================== */
 
 /**
- * @brief  Read DTC_Number (uint32_t)
+ * @brief  Read DTC_Broadcast_ECU_Source (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_DTC_Number(uint32_t *data)
+static inline Rte_StatusType Rte_Read_DTC_Broadcast_ECU_Source(uint8_t *data)
 {
-    return Rte_Read(TCU_SIG_DTC_NUMBER, data);
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(TCU_SIG_DTC_BROADCAST_ECU_SOURCE, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint8_t)tmp;
+    }
+    return status;
 }
 
 /**
- * @brief  Read DTC_Status (uint8_t)
+ * @brief  Read DTC_Broadcast_Status (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_DTC_Status(uint8_t *data)
+static inline Rte_StatusType Rte_Read_DTC_Broadcast_Status(uint8_t *data)
 {
     uint32_t tmp;
-    Rte_StatusType status = Rte_Read(TCU_SIG_DTC_STATUS, &tmp);
+    Rte_StatusType status = Rte_Read(TCU_SIG_DTC_BROADCAST_STATUS, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint8_t)tmp;
+    }
+    return status;
+}
+
+/**
+ * @brief  Read DTC_Broadcast_FreezeFrame0 (uint8_t)
+ * @param  data  Pointer to receive the signal value
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Read_DTC_Broadcast_FreezeFrame0(uint8_t *data)
+{
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(TCU_SIG_DTC_BROADCAST_FREEZE_FRAME_0, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint8_t)tmp;
+    }
+    return status;
+}
+
+/**
+ * @brief  Read DTC_Broadcast_Number (uint32_t)
+ * @param  data  Pointer to receive the signal value
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Read_DTC_Broadcast_Number(uint32_t *data)
+{
+    return Rte_Read(TCU_SIG_DTC_BROADCAST_NUMBER, data);
+}
+
+/**
+ * @brief  Read DTC_Broadcast_FreezeFrame1 (uint8_t)
+ * @param  data  Pointer to receive the signal value
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Read_DTC_Broadcast_FreezeFrame1(uint8_t *data)
+{
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(TCU_SIG_DTC_BROADCAST_FREEZE_FRAME_1, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint8_t)tmp;
+    }
+    return status;
+}
+
+/**
+ * @brief  Read DTC_Broadcast_OccurrenceCount (uint8_t)
+ * @param  data  Pointer to receive the signal value
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Read_DTC_Broadcast_OccurrenceCount(uint8_t *data)
+{
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(TCU_SIG_DTC_BROADCAST_OCCURRENCE_COUNT, &tmp);
     if (status == RTE_E_OK)
     {
         *data = (uint8_t)tmp;

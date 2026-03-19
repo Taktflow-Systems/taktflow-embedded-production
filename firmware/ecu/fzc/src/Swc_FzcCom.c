@@ -247,7 +247,7 @@ void Swc_FzcCom_Receive(void)
     /* ---- RX: 0x001 E-stop (uint8) ---- */
     {
         uint8 estop_val = 0u;
-        ret = Com_ReceiveSignal(FZC_COM_SIG_ESTOP_BROADCAST_ESTOP_ACTIVE, &estop_val);
+        ret = Com_ReceiveSignal(FZC_COM_SIG_ESTOP_BROADCAST_ACTIVE, &estop_val);
         if (ret == E_OK) {
             (void)Rte_Write(FZC_SIG_ESTOP_ACTIVE, (uint32)estop_val);
         }
@@ -256,7 +256,7 @@ void Swc_FzcCom_Receive(void)
     /* ---- RX: 0x100 Vehicle State (uint8) ---- */
     {
         uint8 vs_val = 0u;
-        ret = Com_ReceiveSignal(FZC_COM_SIG_VEHICLE_STATE_VEHICLE_STATE, &vs_val);
+        ret = Com_ReceiveSignal(FZC_COM_SIG_VEHICLE_STATE_MODE, &vs_val);
         if (ret == E_OK) {
             (void)Rte_Write(FZC_SIG_VEHICLE_STATE, (uint32)vs_val);
         }

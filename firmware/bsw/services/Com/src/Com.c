@@ -10,8 +10,13 @@
  * @copyright Taktflow Systems 2026
  */
 #include "Com.h"
+#include "Rte.h"
 #include "SchM.h"
 #include "Det.h"
+#ifdef SIL_DIAG
+#include <stdio.h>
+#endif
+
 
 /* ---- Internal State ---- */
 
@@ -198,26 +203,45 @@ void Com_RxIndication(PduIdType ComRxPduId, const PduInfoType* PduInfoPtr)
     /* Reset RX deadline counter — fresh data arrived */
     com_rx_timeout_cnt[ComRxPduId] = 0u;
 
+#ifdef SIL_DIAG
+    if (ComRxPduId == 22u) {
+        fprintf(stderr, "[COM] RxInd PDU=22 len=%u data=%02X%02X%02X%02X%02X%02X\n",
+                PduInfoPtr->SduLength,
+                PduInfoPtr->SduDataPtr[0], PduInfoPtr->SduDataPtr[1],
+                PduInfoPtr->SduDataPtr[2], PduInfoPtr->SduDataPtr[3],
+                PduInfoPtr->SduDataPtr[4], PduInfoPtr->SduDataPtr[5]);
+    }
+#endif
+
     /* Store received PDU data */
     for (i = 0u; (i < PduInfoPtr->SduLength) && (i < COM_PDU_SIZE); i++) {
         com_rx_pdu_buf[ComRxPduId][i] = PduInfoPtr->SduDataPtr[i];
     }
 
-    /* Unpack signals belonging to this RX PDU */
+    /* Unpack signals belonging to this RX PDU and push to RTE */
     for (i = 0u; i < com_config->signalCount; i++) {
         const Com_SignalConfigType* sig = &com_config->signalConfig[i];
 
         if (sig->PduId == ComRxPduId) {
             uint8 byte_offset = com_get_byte_offset(sig->BitPosition);
+            uint32 rte_val = 0u;
 
             if (sig->BitSize <= 8u) {
-                *((uint8*)sig->ShadowBuffer) = com_rx_pdu_buf[ComRxPduId][byte_offset];
+                uint8 v = com_rx_pdu_buf[ComRxPduId][byte_offset];
+                *((uint8*)sig->ShadowBuffer) = v;
+                rte_val = (uint32)v;
             } else if (sig->BitSize <= 16u) {
-                uint16 val = (uint16)com_rx_pdu_buf[ComRxPduId][byte_offset] |
-                             ((uint16)com_rx_pdu_buf[ComRxPduId][byte_offset + 1u] << 8u);
-                *((uint16*)sig->ShadowBuffer) = val;
+                uint16 v = (uint16)com_rx_pdu_buf[ComRxPduId][byte_offset] |
+                           ((uint16)com_rx_pdu_buf[ComRxPduId][byte_offset + 1u] << 8u);
+                *((uint16*)sig->ShadowBuffer) = v;
+                rte_val = (uint32)v;
             } else {
                 /* BitSize > 16 not supported — no action */
+            }
+
+            /* Auto-push to RTE if binding configured */
+            if (sig->RteSignalId != COM_RTE_SIGNAL_NONE) {
+                Rte_Write((Rte_SignalIdType)sig->RteSignalId, rte_val);
             }
         }
     }

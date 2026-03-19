@@ -9,7 +9,15 @@
 {% for sig_name, sig_id in ecu_app_signals %}
 #define {{ ecu.prefix }}_SIG_{{ sig_name | upper_snake }}  {{ "%4d"|format(sig_id) }}u
 {% endfor %}
+{% if rte_internal_signals %}
+
+/* ECU-internal RTE signals (SWC-to-SWC, not on CAN) */
+{% for sig_name, sig_id in rte_internal_signals %}
+#define {{ ecu.prefix }}_SIG_{{ sig_name }}  {{ "%4d"|format(sig_id) }}u
+{% endfor %}
+{% endif %}
 #define {{ ecu.prefix }}_SIG_COUNT  {{ "%4d"|format(sig_count) }}u
+
 
 /* ====================================================================
  * Com TX PDU IDs
@@ -38,8 +46,10 @@
 {% if sig.name not in ns.seen_sigs %}
 #define {{ ecu.prefix }}_COM_SIG_{{ sig.name | upper_snake }}  {{ "%4d"|format(ns.com_id) }}u   /* TX {{ pdu.name }} */
 {% set ns.seen_sigs = ns.seen_sigs + [sig.name] %}
-{% set ns.com_id = ns.com_id + 1 %}
+{% else %}
+/* {{ ecu.prefix }}_COM_SIG_{{ sig.name | upper_snake }} = {{ "%4d"|format(ns.com_id) }}u   TX {{ pdu.name }} (dup, ID only) */
 {% endif %}
+{% set ns.com_id = ns.com_id + 1 %}
 {% endfor %}
 {% endfor %}
 {% for pdu in ecu.rx_pdus %}
@@ -47,11 +57,26 @@
 {% if sig.name not in ns.seen_sigs %}
 #define {{ ecu.prefix }}_COM_SIG_{{ sig.name | upper_snake }}  {{ "%4d"|format(ns.com_id) }}u   /* RX {{ pdu.name }} */
 {% set ns.seen_sigs = ns.seen_sigs + [sig.name] %}
-{% set ns.com_id = ns.com_id + 1 %}
+{% else %}
+/* {{ ecu.prefix }}_COM_SIG_{{ sig.name | upper_snake }} = {{ "%4d"|format(ns.com_id) }}u   RX {{ pdu.name }} (dup, ID only) */
 {% endif %}
+{% set ns.com_id = ns.com_id + 1 %}
 {% endfor %}
 {% endfor %}
 #define {{ ecu.prefix }}_COM_SIG_COUNT  {{ "%4d"|format(ns.com_id) }}u
+{% if ecu.rte_aliases %}
+
+/* ====================================================================
+ * RTE Signal Aliases (application-level → generated signal IDs)
+ * These map SWC-friendly names to the DBC-derived signal IDs above.
+ * SWC code uses: Rte_Read(RZC_SIG_BATTERY_MV, &val)
+ * which resolves to: Rte_Read(RZC_SIG_BATTERY_STATUS_BATTERY_VOLTAGE_M_V, &val)
+ * ==================================================================== */
+
+{% for alias_name, gen_signal in ecu.rte_aliases.items() %}
+#define {{ alias_name }}  {{ ecu.prefix }}_SIG_{{ gen_signal | upper_snake }}
+{% endfor %}
+{% endif %}
 {% if ecu.dtc_events %}
 
 /* ====================================================================
@@ -69,7 +94,9 @@
  * ==================================================================== */
 
 {% for name, value in ecu.e2e_data_ids.items() %}
-#define {{ name }}  {{ value | hex2 }}u
+#ifndef {{ name }}
+  #define {{ name }}  {{ value | hex2 }}u
+#endif
 {% endfor %}
 {% endif %}
 {% if ecu.enums %}
@@ -79,7 +106,9 @@
  * ==================================================================== */
 
 {% for name, value in ecu.enums.items() %}
-#define {{ name }}  {{ "%4d"|format(value) }}u
+#ifndef {{ name }}
+  #define {{ name }}  {{ "%4d"|format(value) }}u
+#endif
 {% endfor %}
 {% endif %}
 {% if ecu.thresholds %}
@@ -89,7 +118,9 @@
  * ==================================================================== */
 
 {% for name, value in ecu.thresholds.items() %}
-#define {{ name }}  {{ "%4d"|format(value) }}u
+#ifndef {{ name }}
+  #define {{ name }}  {{ "%4d"|format(value) }}u
+#endif
 {% endfor %}
 {% endif %}
 

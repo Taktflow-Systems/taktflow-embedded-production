@@ -27,8 +27,12 @@
 #if defined(PLATFORM_POSIX) || defined(PLATFORM_HIL)
 
 #include "Com.h"
+#include "Rte.h"
 #include "IoHwAb.h"
 #include "IoHwAb_Inject.h"
+#ifdef SIL_DIAG
+#include <stdio.h>
+#endif
 
 /* ==================================================================
  * Module State
@@ -79,10 +83,26 @@ void Swc_RzcSensorFeeder_MainFunction(void)
     motor_temp      = 0u;
     battery_voltage = 0u;
 
-    /* Read virtual sensor signals from Com (populated by CAN 0x601 RX) */
-    (void)Com_ReceiveSignal(RZC_COM_SIG_RX_VIRT_MOTOR_CURRENT,   &motor_current);
-    (void)Com_ReceiveSignal(RZC_COM_SIG_RX_VIRT_MOTOR_TEMP,      &motor_temp);
-    (void)Com_ReceiveSignal(RZC_COM_SIG_RX_VIRT_BATTERY_VOLTAGE, &battery_voltage);
+    /* Read virtual sensor signals from RTE (auto-bound from Com RX by
+     * Com_RxIndication → Rte_Write).  SWCs must use Rte_Read, not
+     * Com_ReceiveSignal — AUTOSAR layering: SWC ↔ RTE ↔ Com. */
+    (void)Rte_Read(RZC_SIG_RZC_VIRTUAL_SENSORS_MOTOR_CURRENT_M_A,  &motor_current);
+    (void)Rte_Read(RZC_SIG_RZC_VIRTUAL_SENSORS_MOTOR_TEMP_D_C, &motor_temp);
+    (void)Rte_Read(RZC_SIG_RZC_VIRTUAL_SENSORS_BATT_VOLTAGE_M_V,   &battery_voltage);
+
+#ifdef SIL_DIAG
+    {
+        static uint16 diag_cnt = 0u;
+        if (diag_cnt < 5u || (diag_cnt % 1000u == 0u)) {
+            fprintf(stderr, "[VSENSOR] c=%u mc=%u mt=%u batt=%u\n",
+                    (unsigned)diag_cnt,
+                    (unsigned)motor_current,
+                    (unsigned)motor_temp,
+                    (unsigned)battery_voltage);
+        }
+        diag_cnt++;
+    }
+#endif
 
     /* Hold nominal defaults until plant-sim sends real data on CAN 0x601.
      * Com shadow buffer defaults to 0.  Plant-sim sends battery_voltage in
@@ -114,7 +134,7 @@ void Swc_RzcSensorFeeder_MainFunction(void)
      * Encoder SWC computes: rpm = (delta * 6000) / PPR
      * Reverse:              delta = rpm * PPR / 6000        */
     motor_rpm = 0u;
-    (void)Com_ReceiveSignal(RZC_COM_SIG_RX_VIRT_MOTOR_RPM, &motor_rpm);
+    (void)Rte_Read(RZC_SIG_RZC_VIRTUAL_SENSORS_MOTOR_SPEED_RPM, &motor_rpm);
 
     delta = ((uint32)motor_rpm * RZC_ENCODER_PPR) / 6000u;
     SensorFeeder_EncCount += delta;

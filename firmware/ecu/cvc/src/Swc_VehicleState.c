@@ -103,18 +103,18 @@ static const uint8 transition_table[CVC_STATE_COUNT][CVC_EVT_COUNT] = {
         CVC_STATE_INVALID,     /* EVT_SELF_TEST_FAIL     -> (invalid)    */
         CVC_STATE_DEGRADED,    /* EVT_PEDAL_FAULT_SINGLE -> DEGRADED     */
         CVC_STATE_SAFE_STOP,   /* EVT_PEDAL_FAULT_DUAL   -> SAFE_STOP    */
-        CVC_STATE_LIMP,        /* EVT_CAN_TIMEOUT_SINGLE -> LIMP         */
+        CVC_STATE_SAFE_STOP,   /* EVT_CAN_TIMEOUT_SINGLE -> SAFE_STOP (HARA: no backup zone) */
         CVC_STATE_SAFE_STOP,   /* EVT_CAN_TIMEOUT_DUAL   -> SAFE_STOP    */
         CVC_STATE_SAFE_STOP,   /* EVT_ESTOP              -> SAFE_STOP    */
         CVC_STATE_SAFE_STOP,   /* EVT_SC_KILL            -> SAFE_STOP    */
         CVC_STATE_INVALID,     /* EVT_FAULT_CLEARED      -> (invalid)    */
         CVC_STATE_INVALID,     /* EVT_CAN_RESTORED       -> (invalid)    */
         CVC_STATE_INVALID,     /* EVT_VEHICLE_STOPPED    -> (invalid)    */
-        CVC_STATE_DEGRADED,    /* EVT_MOTOR_CUTOFF       -> DEGRADED     */
+        CVC_STATE_SAFE_STOP,   /* EVT_MOTOR_CUTOFF       -> SAFE_STOP (HARA: no backup) */
         CVC_STATE_SAFE_STOP,   /* EVT_BRAKE_FAULT        -> SAFE_STOP    */
-        CVC_STATE_DEGRADED,    /* EVT_STEERING_FAULT     -> DEGRADED     */
-        CVC_STATE_DEGRADED,    /* EVT_BATTERY_WARN       -> DEGRADED     */
-        CVC_STATE_LIMP,        /* EVT_BATTERY_CRIT       -> LIMP         */
+        CVC_STATE_SAFE_STOP,   /* EVT_STEERING_FAULT     -> SAFE_STOP (HARA: no backup) */
+        CVC_STATE_DEGRADED,    /* EVT_BATTERY_WARN       -> DEGRADED (graceful degradation) */
+        CVC_STATE_LIMP,        /* EVT_BATTERY_CRIT       -> LIMP (reduced torque + speed limit) */
         CVC_STATE_SAFE_STOP    /* EVT_CREEP_FAULT        -> SAFE_STOP    */
     },
     /* CVC_STATE_DEGRADED */
@@ -123,7 +123,7 @@ static const uint8 transition_table[CVC_STATE_COUNT][CVC_EVT_COUNT] = {
         CVC_STATE_INVALID,     /* EVT_SELF_TEST_FAIL     -> (invalid)    */
         CVC_STATE_INVALID,     /* EVT_PEDAL_FAULT_SINGLE -> (invalid)    */
         CVC_STATE_SAFE_STOP,   /* EVT_PEDAL_FAULT_DUAL   -> SAFE_STOP    */
-        CVC_STATE_LIMP,        /* EVT_CAN_TIMEOUT_SINGLE -> LIMP         */
+        CVC_STATE_SAFE_STOP,   /* EVT_CAN_TIMEOUT_SINGLE -> SAFE_STOP (HARA: no backup zone) */
         CVC_STATE_SAFE_STOP,   /* EVT_CAN_TIMEOUT_DUAL   -> SAFE_STOP    */
         CVC_STATE_SAFE_STOP,   /* EVT_ESTOP              -> SAFE_STOP    */
         CVC_STATE_SAFE_STOP,   /* EVT_SC_KILL            -> SAFE_STOP    */
@@ -224,6 +224,9 @@ static uint16 safe_stop_clear_count;
  *          value stays at 0 (transparent — guards always pass). */
 static uint16 post_init_grace_counter;
 
+/** @brief  CAN timeout debounce — must see 50 consecutive timeout cycles (500ms) */
+static uint16 can_tmo_debounce;
+
 /** @brief  Fault latch array — TRUE if that fault triggered SAFE_STOP */
 static uint8  fault_latched[CVC_LATCH_COUNT];
 
@@ -273,6 +276,7 @@ void Swc_VehicleState_Init(void)
     init_hold_counter      = 0u;
     safe_stop_clear_count  = 0u;
     post_init_grace_counter = 0u;
+    can_tmo_debounce        = 0u;
     creep_debounce_count    = 0u;
 
     for (i = 0u; i < CVC_FAULT_CONFIRM_COUNT; i++)
@@ -596,16 +600,28 @@ void Swc_VehicleState_MainFunction(void)
         Swc_VehicleState_OnEvent(CVC_EVT_SC_KILL);
     }
 
-    /* CAN communication faults */
-    if ((fzc_comm == CVC_COMM_TIMEOUT) && (rzc_comm == CVC_COMM_TIMEOUT))
+    /* CAN communication faults (debounced: 50 consecutive timeout cycles = 500ms) */
+    if (post_init_grace_counter == 0u)
     {
-        Swc_VehicleState_OnEvent(CVC_EVT_CAN_TIMEOUT_DUAL);
-    }
-    else if ((fzc_comm == CVC_COMM_TIMEOUT) || (rzc_comm == CVC_COMM_TIMEOUT))
-    {
-        if ((current_state == CVC_STATE_RUN) || (current_state == CVC_STATE_DEGRADED))
+        if ((fzc_comm == CVC_COMM_TIMEOUT) || (rzc_comm == CVC_COMM_TIMEOUT))
         {
-            Swc_VehicleState_OnEvent(CVC_EVT_CAN_TIMEOUT_SINGLE);
+            can_tmo_debounce++;
+        }
+        else
+        {
+            can_tmo_debounce = 0u;
+        }
+
+        if (can_tmo_debounce >= 50u)
+        {
+            if ((fzc_comm == CVC_COMM_TIMEOUT) && (rzc_comm == CVC_COMM_TIMEOUT))
+            {
+                Swc_VehicleState_OnEvent(CVC_EVT_CAN_TIMEOUT_DUAL);
+            }
+            else if ((current_state == CVC_STATE_RUN) || (current_state == CVC_STATE_DEGRADED))
+            {
+                Swc_VehicleState_OnEvent(CVC_EVT_CAN_TIMEOUT_SINGLE);
+            }
         }
     }
     else
@@ -743,6 +759,14 @@ void Swc_VehicleState_MainFunction(void)
                 VSM_DIAG("post-INIT grace remaining: %u", (unsigned)post_init_grace_counter);
             }
 #endif
+            /* When grace expires, reset heartbeat comm status so stale
+             * timeouts accumulated during Docker boot don't immediately
+             * trigger CAN_TMO_S on the first post-grace cycle. */
+            if (post_init_grace_counter == 0u)
+            {
+                extern void Swc_Heartbeat_ResetCommStatus(void);
+                Swc_Heartbeat_ResetCommStatus();
+            }
         }
 
         if (suppress_faults == FALSE)

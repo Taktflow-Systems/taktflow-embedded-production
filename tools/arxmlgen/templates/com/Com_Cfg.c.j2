@@ -26,20 +26,20 @@ static {{ sig | c_type }}  sig_rx_{{ sig.name | lower }};
  * ================================================================== */
 
 static const Com_SignalConfigType {{ ecu.name }}_signal_config[] = {
-    /* TX signals */
-    /* id, bitPos, bitSize, type,       pduId,                      shadowBuf */
+    /* TX signals — no RTE binding (TX uses Rte_Read → Com_SendSignal path) */
+    /* id, bitPos, bitSize, type,       pduId,                      shadowBuf,       rteSignalId */
 {% set ns = namespace(com_id=0) %}
 {% for pdu in ecu.tx_pdus %}
 {% for sig in pdu.signals %}
-    { {{ "%2d"|format(ns.com_id) }}u, {{ "%4d"|format(sig.bit_position) }}u, {{ "%5d"|format(sig.bit_size) }}u, {{ sig | com_type }}, {{ ecu.prefix }}_COM_TX_{{ pdu.name | upper_snake }}, &sig_tx_{{ sig.name | lower }} },
+    { {{ "%2d"|format(ns.com_id) }}u, {{ "%4d"|format(sig.bit_position) }}u, {{ "%5d"|format(sig.bit_size) }}u, {{ sig | com_type }}, {{ ecu.prefix }}_COM_TX_{{ pdu.name | upper_snake }}, &sig_tx_{{ sig.name | lower }}, COM_RTE_SIGNAL_NONE },
 {% set ns.com_id = ns.com_id + 1 %}
 {% endfor %}
 {% endfor %}
 
-    /* RX signals */
+    /* RX signals — auto-push to RTE on reception */
 {% for pdu in ecu.rx_pdus %}
 {% for sig in pdu.signals %}
-    { {{ "%2d"|format(ns.com_id) }}u, {{ "%4d"|format(sig.bit_position) }}u, {{ "%5d"|format(sig.bit_size) }}u, {{ sig | com_type }}, {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }}, &sig_rx_{{ sig.name | lower }} },
+    { {{ "%2d"|format(ns.com_id) }}u, {{ "%4d"|format(sig.bit_position) }}u, {{ "%5d"|format(sig.bit_size) }}u, {{ sig | com_type }}, {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }}, &sig_rx_{{ sig.name | lower }}, {{ ecu.prefix }}_SIG_{{ sig.name | upper_snake }} },
 {% set ns.com_id = ns.com_id + 1 %}
 {% endfor %}
 {% endfor %}

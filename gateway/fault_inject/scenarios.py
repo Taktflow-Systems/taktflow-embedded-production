@@ -29,6 +29,8 @@ def _scaled_sleep(seconds: float) -> None:
 from .pedal_udp import (
     clear_pedal_override,
     pedal_pct_to_angle,
+    send_estop_activate,
+    send_estop_clear,
     send_pedal_override,
 )
 from .plant_inject import (
@@ -623,19 +625,15 @@ def can_loss() -> str:
 
 
 def estop() -> str:
-    """Send E-Stop frame (0x001) with EStop_Active=1.
+    """Activate E-Stop via UDP DIO pin injection to CVC.
 
-    The CVC broadcasts EStop to all ECUs.  All actuators are disabled,
-    motor is de-energized, brakes are applied (emergency mode), and the
-    vehicle enters SAFE_STOP state.
+    CVC reads E-Stop from IoHwAb DIO pin, not from CAN RX.
+    The UDP packet triggers IoHwAb_Inject_SetDigitalPin(ESTOP, HIGH)
+    in the CVC's Spi_Posix UDP listener (port 9100).
+    CVC then broadcasts EStop_Broadcast (0x001) to all ECUs.
     """
-    bus = _get_bus()
-    try:
-        # Send E-Stop active with source=1 (CAN_request)
-        _send(bus, CAN_ESTOP, _estop_frame(active=True, source=1))
-    finally:
-        bus.shutdown()
-    return "E-Stop activated: EStop_Active=1, source=CAN_request"
+    send_estop_activate()
+    return "E-Stop activated via UDP DIO injection"
 
 
 log = logging.getLogger("fault_inject")
@@ -651,10 +649,10 @@ log = logging.getLogger("fault_inject")
 # Phase 2: SC (needs FZC/RZC heartbeats during its 5s grace)
 # Phase 3: 2s sleep (let SC stabilize)
 # Phase 4: CVC (needs SC relay OK + FZC/RZC heartbeats)
+_PLANT_CONTAINER = "docker-plant-sim-1"
 _ZONE_CONTAINERS = [
     "docker-fzc-1", "docker-rzc-1",
     "docker-bcm-1", "docker-icu-1", "docker-tcu-1",
-    "docker-plant-sim-1",
 ]
 _SC_CONTAINER = "docker-sc-1"
 _CVC_CONTAINER = "docker-cvc-1"
@@ -674,7 +672,7 @@ def _clear_nvm_files() -> None:
     Deleting the NvM files ensures a truly clean reset with no DTC carryover.
     """
     client = docker.from_env()
-    all_containers = _ZONE_CONTAINERS + [_SC_CONTAINER, _CVC_CONTAINER]
+    all_containers = _ZONE_CONTAINERS + [_PLANT_CONTAINER, _SC_CONTAINER, _CVC_CONTAINER]
     for name in all_containers:
         try:
             c = client.containers.get(name)
@@ -703,14 +701,16 @@ def _reset_all_containers() -> list[str]:
     import concurrent.futures
 
     client = docker.from_env()
-    all_ecu_names = _ZONE_CONTAINERS + [_SC_CONTAINER, _CVC_CONTAINER]
+    # Plant-sim IS restarted — MQTT reset alone isn't sufficient because
+    # CVC may still be sending stale commands (e.g. steer=-45° from SAFE_STOP)
+    # between the MQTT reset and the container kill, causing plant-sim to
+    # re-track to stale values. Restarting plant-sim ensures clean physics.
+    all_ecu_names = _ZONE_CONTAINERS + [_PLANT_CONTAINER, _SC_CONTAINER, _CVC_CONTAINER]
     restarted: list[str] = []
 
-    # Phase 1: stop ALL containers in parallel.  Use stop() (not kill()) so
-    # Docker's restart_policy does NOT auto-restart them — the phased start
-    # in Phase 2-4 controls the ordering (SC must send SC_Status before CVC
-    # boots, otherwise CVC's Com RX timeout zeros the relay shadow buffer
-    # and CVC interprets it as SC relay killed).
+    # Phase 1: stop ALL ECU containers in parallel.
+    # Plant-sim stays running — it has already received the MQTT reset
+    # and is publishing neutral CAN frames (brake=0%, steer=0°).
     def _stop_container(name: str) -> None:
         try:
             c = client.containers.get(name)
@@ -725,7 +725,21 @@ def _reset_all_containers() -> list[str]:
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
         pool.map(_stop_container, all_ecu_names)
 
-    # Phase 2: start zone controllers + plant-sim (heartbeat senders first)
+    # Phase 2a: start plant-sim FIRST so it publishes neutral sensors
+    # before zone ECUs boot and read them
+    try:
+        c = client.containers.get(_PLANT_CONTAINER)
+        c.start()
+        restarted.append(_PLANT_CONTAINER)
+    except docker.errors.NotFound:
+        log.warning("Container %s not found — skipping start", _PLANT_CONTAINER)
+    except Exception as exc:
+        log.warning("Failed to start %s: %s", _PLANT_CONTAINER, exc)
+
+    # Brief pause — let plant-sim's neutral frames propagate on CAN bus
+    _scaled_sleep(1)
+
+    # Phase 2b: start zone controllers (heartbeat senders)
     for name in _ZONE_CONTAINERS:
         try:
             c = client.containers.get(name)
@@ -763,24 +777,62 @@ def _reset_all_containers() -> list[str]:
 def reset() -> str:
     """Power-cycle reset: restart ECU containers to clear all latched faults.
 
-    1. Clears the SPI pedal override
-    2. Publishes MQTT reset (ML detector + ws_bridge + plant-sim clear state)
-    3. Restarts all ECU + plant-sim containers (clears latched firmware faults)
+    Order is critical — plant-sim must be at neutral BEFORE any ECU boots:
+    1. Kill ALL ECU containers — stops stale CAN commands (brake=100%, steer=-45°)
+    2. Reset plant-sim via MQTT — with no ECUs sending, physics settles to neutral
+    3. Wait 1s for plant-sim to publish neutral CAN frames on vcan0
+    4. Start ECU containers in phased order — they read neutral on first cycle
     """
+    import concurrent.futures
     clear_pedal_override()
+    send_estop_clear()
+    _clear_nvm_files()
 
-    # Publish MQTT reset command for ML detector, ws_bridge, and plant-sim
+    client = docker.from_env()
+    all_ecu_names = _ZONE_CONTAINERS + [_SC_CONTAINER, _CVC_CONTAINER]
+
+    # Phase 1: Kill ALL ECU containers (plant-sim stays running)
+    def _stop(name):
+        try:
+            client.containers.get(name).stop(timeout=2)
+        except Exception:
+            pass
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
+        pool.map(_stop, all_ecu_names)
+
+    # Phase 2: Reset plant-sim physics — ECUs are dead, no one fights the reset
     if _mqtt_client is not None:
         reset_payload = json.dumps({"action": "reset", "ts": time.time()})
         _mqtt_client.publish("taktflow/command/reset", reset_payload, qos=1)
         reset_plant_faults(_mqtt_client)
 
-    # Clear NvM persistence files before restart — prevents stale DTC data
-    # from overflowing into Com/RTE buffers on next boot (NvM overflow bug)
-    _clear_nvm_files()
+    # Phase 3: Wait for plant-sim to settle at neutral (brake=0%, steer=0°)
+    _scaled_sleep(2)
 
-    # Power-cycle: stop ALL then start in order (no stale-data race)
-    restarted = _reset_all_containers()
+    # Phase 4: Start zone controllers (heartbeat senders)
+    restarted = []
+    for name in _ZONE_CONTAINERS:
+        try:
+            client.containers.get(name).start()
+            restarted.append(name)
+        except Exception as exc:
+            log.warning("Failed to start %s: %s", name, exc)
+
+    # Phase 5: Start SC (needs heartbeats)
+    try:
+        client.containers.get(_SC_CONTAINER).start()
+        restarted.append(_SC_CONTAINER)
+    except Exception as exc:
+        log.warning("Failed to start %s: %s", _SC_CONTAINER, exc)
+
+    # Phase 6: Wait for SC to boot, then start CVC
+    _scaled_sleep(2)
+    try:
+        client.containers.get(_CVC_CONTAINER).start()
+        restarted.append(_CVC_CONTAINER)
+    except Exception as exc:
+        log.warning("Failed to start %s: %s", _CVC_CONTAINER, exc)
+
     log.info("Power-cycle reset: restarted %d containers", len(restarted))
 
     return f"Power-cycle reset: {len(restarted)} containers restarted"

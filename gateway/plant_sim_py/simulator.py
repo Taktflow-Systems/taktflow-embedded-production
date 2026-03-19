@@ -188,12 +188,12 @@ class PlantSimulator:
             self.brake.fault = True
             log.info("Injected brake fault")
         elif cmd_type == "reset":
-            self.motor.reset_faults()
-            self.steering.clear_fault()
-            self.brake.clear_fault()
-            self.battery.clear_override()
+            self.motor.reset_state()
+            self.steering.reset_state()
+            self.brake.reset_state()
+            self.battery.reset_state()
             self._active_dtcs.clear()
-            log.info("Plant faults cleared via MQTT reset")
+            log.info("Plant FULL RESET — all physics returned to power-on defaults")
 
     def _next_alive(self, msg_id: int) -> int:
         val = self._alive.get(msg_id, 0)
@@ -559,69 +559,47 @@ class PlantSimulator:
     def _tx_fzc_virtual_sensors(self):
         """Send FZC virtual sensor data (0x600) every 10ms. No E2E.
 
-        Plant-sim physics → this CAN message → FZC sensor feeder SWC →
+        Plant-sim physics → DBC-encoded CAN message → FZC sensor feeder SWC →
         MCAL injection → IoHwAb → SWC fault detection.
-        """
-        payload = bytearray(8)
 
-        # Bytes 0-1: steering_angle (uint16 LE, 14-bit SPI format 0-16383)
-        # Steering model gives actual_angle in degrees (-45..+45).
-        # Convert to 14-bit SPI format: (angle + 45) / 90 * 16383
-        # When steering.fault is injected, override sensor to +45 deg so
-        # FZC's plausibility check fires (|cmd - actual| >= 5 deg threshold).
+        Encoding defined in DBC: FZC_Virtual_Sensors (0x600).
+        Signals are raw sensor format (not physical) — matches AS5048A SPI.
+        """
         angle_deg = 45.0 if self.steering.fault else self.steering.actual_angle
         angle_raw = int((angle_deg + 45.0) / 90.0 * 16383.0)
         angle_raw = max(0, min(16383, angle_raw))
-        struct.pack_into('<H', payload, 0, angle_raw)
 
-        # Bytes 2-3: brake_position (uint16 LE, 0-1000 ADC counts)
-        # Brake model gives position_int (0-100%), map to ADC counts 0-1000.
-        # When brake.fault is injected, override sensor to 50% so FZC's
-        # deviation check fires (|cmd - actual| > 2% threshold for 50 cycles).
-        # CVC sends brake_cmd=0 during normal drive, so reporting 50% position
-        # creates a 50% deviation that exceeds the 2% threshold.
         if self.brake.fault:
-            brake_pos = 500  # report 50% position (500 ADC counts) while cmd=0
+            brake_adc = 500
         else:
-            brake_pos = int(self.brake.position_int * 10)
-        brake_pos = max(0, min(1000, brake_pos))
-        struct.pack_into('<H', payload, 2, brake_pos)
+            brake_adc = int(self.brake.position_int * 10)
+        brake_adc = max(0, min(1000, brake_adc))
 
-        # Bytes 4-5: brake_current (uint16 LE, mA)
-        brake_current_ma = self.brake.servo_current_ma
-        struct.pack_into('<H', payload, 4, min(65535, brake_current_ma))
-
-        # Bytes 6-7: reserved
+        data = self.db.encode_message('FZC_Virtual_Sensors', {
+            'VSensor_SteerAngle_Raw': angle_raw,
+            'VSensor_BrakePos_ADC': brake_adc,
+            'VSensor_BrakeCurrent': min(65535, self.brake.servo_current_ma),
+        })
         self.bus.send(can.Message(arbitration_id=TX_FZC_VIRTUAL_SENSORS,
-                                  data=bytes(payload), is_extended_id=False))
+                                  data=data, is_extended_id=False))
 
     def _tx_rzc_virtual_sensors(self):
         """Send RZC virtual sensor data (0x601) every 10ms. No E2E.
 
-        Plant-sim physics → this CAN message → RZC sensor feeder SWC →
+        Plant-sim physics → DBC-encoded CAN message → RZC sensor feeder SWC →
         ADC injection → IoHwAb → SWC fault detection.
+
+        Encoding defined in DBC: RZC_Virtual_Sensors (0x601).
+        DBC is the single source of truth — no manual byte packing.
         """
-        payload = bytearray(8)
-
-        # Bytes 0-1: motor_current (uint16 LE, mA)
-        current_ma = self.motor.current_ma_int
-        struct.pack_into('<H', payload, 0, min(65535, current_ma))
-
-        # Bytes 2-3: motor_temp (uint16 LE, 0.1°C units, 0-2000 = 0-200.0°C)
-        temp_dc = int(self.motor.temp_c * 10)
-        temp_dc = max(0, min(2000, temp_dc))
-        struct.pack_into('<H', payload, 2, temp_dc)
-
-        # Bytes 4-5: battery_voltage (uint16 LE, mV)
-        batt_mv = self.battery.voltage_mv
-        struct.pack_into('<H', payload, 4, min(65535, batt_mv))
-
-        # Bytes 6-7: motor_rpm (uint16 LE, RPM 0-10000)
-        rpm = max(0, min(10000, self.motor.rpm_int))
-        struct.pack_into('<H', payload, 6, rpm)
-
+        data = self.db.encode_message('RZC_Virtual_Sensors', {
+            'VSensor_MotorCurrent': min(65535, self.motor.current_ma_int),
+            'VSensor_MotorTemp_dC': int(self.motor.temp_c * 10),
+            'VSensor_BattVoltage': min(20000, self.battery.voltage_mv),
+            'VSensor_MotorRPM': max(0, min(10000, self.motor.rpm_int)),
+        })
         self.bus.send(can.Message(arbitration_id=TX_RZC_VIRTUAL_SENSORS,
-                                  data=bytes(payload), is_extended_id=False))
+                                  data=data, is_extended_id=False))
 
     async def run(self):
         """Main simulation loop at 100 Hz (scaled by SIL_TIME_SCALE)."""

@@ -71,15 +71,15 @@ static const Rte_SignalConfigType rzc_signal_config[RZC_SIG_COUNT] = {
     { RZC_SIG_BCM_HEARTBEAT_E_2_E_CRC_8, 0u },   /* 18: BCM_Heartbeat_E2E_CRC8 */
     { RZC_SIG_BCM_HEARTBEAT_E_2_E_DATA_ID, 0u },   /* 19: BCM_Heartbeat_E2E_DataID */
     { RZC_SIG_BCM_HEARTBEAT_ECU_ID, 0u },   /* 20: BCM_Heartbeat_ECU_ID */
-    { RZC_SIG_BATTERY_STATUS_BATTERY_STATUS, 0u },   /* 21: Battery_Status_BatteryStatus */
-    { RZC_SIG_BATTERY_STATUS_BATTERY_VOLTAGE_M_V, 0u },   /* 22: Battery_Status_BatteryVoltage_mV */
-    { RZC_SIG_BATTERY_STATUS_E_2_E_ALIVE_COUNTER, 0u },   /* 23: Battery_Status_E2E_AliveCounter */
-    { RZC_SIG_BATTERY_STATUS_E_2_E_CRC_8, 0u },   /* 24: Battery_Status_E2E_CRC8 */
-    { RZC_SIG_BATTERY_STATUS_E_2_E_DATA_ID, 0u },   /* 25: Battery_Status_E2E_DataID */
+    { RZC_SIG_BATTERY_STATUS_BATTERY_VOLTAGE_M_V, 0u },   /* 21: Battery_Status_BatteryVoltage_mV */
+    { RZC_SIG_BATTERY_STATUS_E_2_E_ALIVE_COUNTER, 0u },   /* 22: Battery_Status_E2E_AliveCounter */
+    { RZC_SIG_BATTERY_STATUS_E_2_E_CRC_8, 0u },   /* 23: Battery_Status_E2E_CRC8 */
+    { RZC_SIG_BATTERY_STATUS_E_2_E_DATA_ID, 0u },   /* 24: Battery_Status_E2E_DataID */
+    { RZC_SIG_BATTERY_STATUS_LEVEL, 0u },   /* 25: Battery_Status_Level */
     { RZC_SIG_BODY_CONTROL_CMD_DOOR_LOCK_CMD, 0u },   /* 26: Body_Control_Cmd_DoorLockCmd */
-    { RZC_SIG_BODY_CONTROL_CMD_HAZARD_CMD, 0u },   /* 27: Body_Control_Cmd_HazardCmd */
+    { RZC_SIG_BODY_CONTROL_CMD_HAZARD_ACTIVE, 0u },   /* 27: Body_Control_Cmd_HazardActive */
     { RZC_SIG_BODY_CONTROL_CMD_HEADLIGHT_CMD, 0u },   /* 28: Body_Control_Cmd_HeadlightCmd */
-    { RZC_SIG_BODY_CONTROL_CMD_TAIL_LIGHT_CMD, 0u },   /* 29: Body_Control_Cmd_TailLightCmd */
+    { RZC_SIG_BODY_CONTROL_CMD_TAIL_LIGHT_ON, 0u },   /* 29: Body_Control_Cmd_TailLightOn */
     { RZC_SIG_BODY_CONTROL_CMD_TURN_SIGNAL_CMD, 0u },   /* 30: Body_Control_Cmd_TurnSignalCmd */
     { RZC_SIG_BRAKE_COMMAND_BRAKE_FORCE_CMD, 0u },   /* 31: Brake_Command_BrakeForceCmd */
     { RZC_SIG_BRAKE_COMMAND_BRAKE_MODE, 0u },   /* 32: Brake_Command_BrakeMode */
@@ -107,132 +107,139 @@ static const Rte_SignalConfigType rzc_signal_config[RZC_SIG_COUNT] = {
     { RZC_SIG_CVC_HEARTBEAT_ECU_ID, 0u },   /* 54: CVC_Heartbeat_ECU_ID */
     { RZC_SIG_CVC_HEARTBEAT_FAULT_STATUS, 0u },   /* 55: CVC_Heartbeat_FaultStatus */
     { RZC_SIG_CVC_HEARTBEAT_OPERATING_MODE, 0u },   /* 56: CVC_Heartbeat_OperatingMode */
-    { RZC_SIG_DTC_BROADCAST_DTC_NUMBER, 0u },   /* 57: DTC_Broadcast_DTC_Number */
-    { RZC_SIG_DTC_BROADCAST_DTC_STATUS, 0u },   /* 58: DTC_Broadcast_DTC_Status */
-    { RZC_SIG_DTC_BROADCAST_ECU_SOURCE, 0u },   /* 59: DTC_Broadcast_ECU_Source */
-    { RZC_SIG_DTC_BROADCAST_FREEZE_FRAME_0, 0u },   /* 60: DTC_Broadcast_FreezeFrame0 */
-    { RZC_SIG_DTC_BROADCAST_FREEZE_FRAME_1, 0u },   /* 61: DTC_Broadcast_FreezeFrame1 */
-    { RZC_SIG_DTC_BROADCAST_OCCURRENCE_COUNT, 0u },   /* 62: DTC_Broadcast_OccurrenceCount */
+    { RZC_SIG_DTC_BROADCAST_ECU_SOURCE, 0u },   /* 57: DTC_Broadcast_ECU_Source */
+    { RZC_SIG_DTC_BROADCAST_FREEZE_FRAME_0, 0u },   /* 58: DTC_Broadcast_FreezeFrame0 */
+    { RZC_SIG_DTC_BROADCAST_FREEZE_FRAME_1, 0u },   /* 59: DTC_Broadcast_FreezeFrame1 */
+    { RZC_SIG_DTC_BROADCAST_NUMBER, 0u },   /* 60: DTC_Broadcast_Number */
+    { RZC_SIG_DTC_BROADCAST_OCCURRENCE_COUNT, 0u },   /* 61: DTC_Broadcast_OccurrenceCount */
+    { RZC_SIG_DTC_BROADCAST_STATUS, 0u },   /* 62: DTC_Broadcast_Status */
     { RZC_SIG_DOOR_LOCK_STATUS_CENTRAL_LOCK, 0u },   /* 63: Door_Lock_Status_CentralLock */
     { RZC_SIG_DOOR_LOCK_STATUS_FRONT_LEFT_LOCK, 0u },   /* 64: Door_Lock_Status_FrontLeftLock */
     { RZC_SIG_DOOR_LOCK_STATUS_FRONT_RIGHT_LOCK, 0u },   /* 65: Door_Lock_Status_FrontRightLock */
     { RZC_SIG_DOOR_LOCK_STATUS_REAR_LEFT_LOCK, 0u },   /* 66: Door_Lock_Status_RearLeftLock */
     { RZC_SIG_DOOR_LOCK_STATUS_REAR_RIGHT_LOCK, 0u },   /* 67: Door_Lock_Status_RearRightLock */
-    { RZC_SIG_ESTOP_BROADCAST_E_2_E_ALIVE_COUNTER, 0u },   /* 68: EStop_Broadcast_E2E_AliveCounter */
-    { RZC_SIG_ESTOP_BROADCAST_E_2_E_CRC_8, 0u },   /* 69: EStop_Broadcast_E2E_CRC8 */
-    { RZC_SIG_ESTOP_BROADCAST_E_2_E_DATA_ID, 0u },   /* 70: EStop_Broadcast_E2E_DataID */
-    { RZC_SIG_ESTOP_BROADCAST_ESTOP_ACTIVE, 0u },   /* 71: EStop_Broadcast_EStop_Active */
-    { RZC_SIG_ESTOP_BROADCAST_ESTOP_SOURCE, 0u },   /* 72: EStop_Broadcast_EStop_Source */
+    { RZC_SIG_ESTOP_BROADCAST_ACTIVE, 0u },   /* 68: EStop_Broadcast_Active */
+    { RZC_SIG_ESTOP_BROADCAST_E_2_E_ALIVE_COUNTER, 0u },   /* 69: EStop_Broadcast_E2E_AliveCounter */
+    { RZC_SIG_ESTOP_BROADCAST_E_2_E_CRC_8, 0u },   /* 70: EStop_Broadcast_E2E_CRC8 */
+    { RZC_SIG_ESTOP_BROADCAST_E_2_E_DATA_ID, 0u },   /* 71: EStop_Broadcast_E2E_DataID */
+    { RZC_SIG_ESTOP_BROADCAST_SOURCE, 0u },   /* 72: EStop_Broadcast_Source */
     { RZC_SIG_FZC_HEARTBEAT_E_2_E_ALIVE_COUNTER, 0u },   /* 73: FZC_Heartbeat_E2E_AliveCounter */
     { RZC_SIG_FZC_HEARTBEAT_E_2_E_CRC_8, 0u },   /* 74: FZC_Heartbeat_E2E_CRC8 */
     { RZC_SIG_FZC_HEARTBEAT_E_2_E_DATA_ID, 0u },   /* 75: FZC_Heartbeat_E2E_DataID */
     { RZC_SIG_FZC_HEARTBEAT_ECU_ID, 0u },   /* 76: FZC_Heartbeat_ECU_ID */
     { RZC_SIG_FZC_HEARTBEAT_FAULT_STATUS, 0u },   /* 77: FZC_Heartbeat_FaultStatus */
     { RZC_SIG_FZC_HEARTBEAT_OPERATING_MODE, 0u },   /* 78: FZC_Heartbeat_OperatingMode */
-    { RZC_SIG_ICU_HEARTBEAT_ALIVE_COUNTER, 0u },   /* 79: ICU_Heartbeat_AliveCounter */
-    { RZC_SIG_ICU_HEARTBEAT_E_2_E_ALIVE_COUNTER, 0u },   /* 80: ICU_Heartbeat_E2E_AliveCounter */
-    { RZC_SIG_ICU_HEARTBEAT_E_2_E_CRC_8, 0u },   /* 81: ICU_Heartbeat_E2E_CRC8 */
-    { RZC_SIG_ICU_HEARTBEAT_E_2_E_DATA_ID, 0u },   /* 82: ICU_Heartbeat_E2E_DataID */
-    { RZC_SIG_ICU_HEARTBEAT_ECU_ID, 0u },   /* 83: ICU_Heartbeat_ECU_ID */
-    { RZC_SIG_INDICATOR_STATE_BLINK_STATE, 0u },   /* 84: Indicator_State_BlinkState */
-    { RZC_SIG_INDICATOR_STATE_HAZARD_ACTIVE, 0u },   /* 85: Indicator_State_HazardActive */
-    { RZC_SIG_INDICATOR_STATE_LEFT_INDICATOR, 0u },   /* 86: Indicator_State_LeftIndicator */
-    { RZC_SIG_INDICATOR_STATE_RIGHT_INDICATOR, 0u },   /* 87: Indicator_State_RightIndicator */
-    { RZC_SIG_LIDAR_DISTANCE_DISTANCE_CM, 0u },   /* 88: Lidar_Distance_Distance_cm */
-    { RZC_SIG_LIDAR_DISTANCE_E_2_E_ALIVE_COUNTER, 0u },   /* 89: Lidar_Distance_E2E_AliveCounter */
-    { RZC_SIG_LIDAR_DISTANCE_E_2_E_CRC_8, 0u },   /* 90: Lidar_Distance_E2E_CRC8 */
-    { RZC_SIG_LIDAR_DISTANCE_E_2_E_DATA_ID, 0u },   /* 91: Lidar_Distance_E2E_DataID */
-    { RZC_SIG_LIDAR_DISTANCE_OBSTACLE_ZONE, 0u },   /* 92: Lidar_Distance_ObstacleZone */
-    { RZC_SIG_LIDAR_DISTANCE_SENSOR_STATUS, 0u },   /* 93: Lidar_Distance_SensorStatus */
-    { RZC_SIG_LIDAR_DISTANCE_SIGNAL_STRENGTH, 0u },   /* 94: Lidar_Distance_SignalStrength */
-    { RZC_SIG_LIGHT_STATUS_BRAKE_LIGHT_ON, 0u },   /* 95: Light_Status_BrakeLightOn */
-    { RZC_SIG_LIGHT_STATUS_FOG_LIGHT_ON, 0u },   /* 96: Light_Status_FogLightOn */
-    { RZC_SIG_LIGHT_STATUS_HEADLIGHT_LEVEL, 0u },   /* 97: Light_Status_HeadlightLevel */
-    { RZC_SIG_LIGHT_STATUS_HEADLIGHT_ON, 0u },   /* 98: Light_Status_HeadlightOn */
-    { RZC_SIG_LIGHT_STATUS_TAIL_LIGHT_ON, 0u },   /* 99: Light_Status_TailLightOn */
-    { RZC_SIG_MOTOR_CURRENT_CURRENT_DIRECTION, 0u },   /* 100: Motor_Current_CurrentDirection */
-    { RZC_SIG_MOTOR_CURRENT_CURRENT_M_A, 0u },   /* 101: Motor_Current_Current_mA */
-    { RZC_SIG_MOTOR_CURRENT_E_2_E_ALIVE_COUNTER, 0u },   /* 102: Motor_Current_E2E_AliveCounter */
-    { RZC_SIG_MOTOR_CURRENT_E_2_E_CRC_8, 0u },   /* 103: Motor_Current_E2E_CRC8 */
-    { RZC_SIG_MOTOR_CURRENT_E_2_E_DATA_ID, 0u },   /* 104: Motor_Current_E2E_DataID */
-    { RZC_SIG_MOTOR_CURRENT_MOTOR_ENABLE, 0u },   /* 105: Motor_Current_MotorEnable */
-    { RZC_SIG_MOTOR_CURRENT_OVERCURRENT_FLAG, 0u },   /* 106: Motor_Current_OvercurrentFlag */
-    { RZC_SIG_MOTOR_CURRENT_TORQUE_ECHO, 0u },   /* 107: Motor_Current_TorqueEcho */
-    { RZC_SIG_MOTOR_CUTOFF_REQ_E_2_E_ALIVE_COUNTER, 0u },   /* 108: Motor_Cutoff_Req_E2E_AliveCounter */
-    { RZC_SIG_MOTOR_CUTOFF_REQ_E_2_E_CRC_8, 0u },   /* 109: Motor_Cutoff_Req_E2E_CRC8 */
-    { RZC_SIG_MOTOR_CUTOFF_REQ_E_2_E_DATA_ID, 0u },   /* 110: Motor_Cutoff_Req_E2E_DataID */
-    { RZC_SIG_MOTOR_CUTOFF_REQ_REASON, 0u },   /* 111: Motor_Cutoff_Req_Reason */
-    { RZC_SIG_MOTOR_CUTOFF_REQ_REQUEST_TYPE, 0u },   /* 112: Motor_Cutoff_Req_RequestType */
-    { RZC_SIG_MOTOR_STATUS_E_2_E_ALIVE_COUNTER, 0u },   /* 113: Motor_Status_E2E_AliveCounter */
-    { RZC_SIG_MOTOR_STATUS_E_2_E_CRC_8, 0u },   /* 114: Motor_Status_E2E_CRC8 */
-    { RZC_SIG_MOTOR_STATUS_E_2_E_DATA_ID, 0u },   /* 115: Motor_Status_E2E_DataID */
-    { RZC_SIG_MOTOR_STATUS_MOTOR_DIRECTION, 0u },   /* 116: Motor_Status_MotorDirection */
-    { RZC_SIG_MOTOR_STATUS_MOTOR_ENABLE, 0u },   /* 117: Motor_Status_MotorEnable */
-    { RZC_SIG_MOTOR_STATUS_MOTOR_FAULT_STATUS, 0u },   /* 118: Motor_Status_MotorFaultStatus */
-    { RZC_SIG_MOTOR_STATUS_MOTOR_SPEED_RPM, 0u },   /* 119: Motor_Status_MotorSpeed_RPM */
-    { RZC_SIG_MOTOR_STATUS_TORQUE_ECHO, 0u },   /* 120: Motor_Status_TorqueEcho */
-    { RZC_SIG_MOTOR_TEMPERATURE_DERATING_PERCENT, 0u },   /* 121: Motor_Temperature_DeratingPercent */
-    { RZC_SIG_MOTOR_TEMPERATURE_E_2_E_ALIVE_COUNTER, 0u },   /* 122: Motor_Temperature_E2E_AliveCounter */
-    { RZC_SIG_MOTOR_TEMPERATURE_E_2_E_CRC_8, 0u },   /* 123: Motor_Temperature_E2E_CRC8 */
-    { RZC_SIG_MOTOR_TEMPERATURE_E_2_E_DATA_ID, 0u },   /* 124: Motor_Temperature_E2E_DataID */
-    { RZC_SIG_MOTOR_TEMPERATURE_WINDING_TEMP_1_C, 0u },   /* 125: Motor_Temperature_WindingTemp1_C */
-    { RZC_SIG_MOTOR_TEMPERATURE_WINDING_TEMP_2_C, 0u },   /* 126: Motor_Temperature_WindingTemp2_C */
-    { RZC_SIG_RZC_HEARTBEAT_E_2_E_ALIVE_COUNTER, 0u },   /* 127: RZC_Heartbeat_E2E_AliveCounter */
-    { RZC_SIG_RZC_HEARTBEAT_E_2_E_CRC_8, 0u },   /* 128: RZC_Heartbeat_E2E_CRC8 */
-    { RZC_SIG_RZC_HEARTBEAT_E_2_E_DATA_ID, 0u },   /* 129: RZC_Heartbeat_E2E_DataID */
-    { RZC_SIG_RZC_HEARTBEAT_ECU_ID, 0u },   /* 130: RZC_Heartbeat_ECU_ID */
-    { RZC_SIG_RZC_HEARTBEAT_FAULT_STATUS, 0u },   /* 131: RZC_Heartbeat_FaultStatus */
-    { RZC_SIG_RZC_HEARTBEAT_OPERATING_MODE, 0u },   /* 132: RZC_Heartbeat_OperatingMode */
-    { RZC_SIG_SC_STATUS_ECU_HEALTH, 0u },   /* 133: SC_Status_ECU_Health */
-    { RZC_SIG_SC_STATUS_FAULT_REASON, 0u },   /* 134: SC_Status_FaultReason */
-    { RZC_SIG_SC_STATUS_RELAY_STATE, 0u },   /* 135: SC_Status_RelayState */
-    { RZC_SIG_SC_STATUS_SC_ALIVE_COUNTER, 0u },   /* 136: SC_Status_SC_AliveCounter */
-    { RZC_SIG_SC_STATUS_SC_CRC_8, 0u },   /* 137: SC_Status_SC_CRC8 */
-    { RZC_SIG_SC_STATUS_SC_FAULT_FLAGS, 0u },   /* 138: SC_Status_SC_FaultFlags */
-    { RZC_SIG_SC_STATUS_SC_MODE, 0u },   /* 139: SC_Status_SC_Mode */
-    { RZC_SIG_STEER_COMMAND_E_2_E_ALIVE_COUNTER, 0u },   /* 140: Steer_Command_E2E_AliveCounter */
-    { RZC_SIG_STEER_COMMAND_E_2_E_CRC_8, 0u },   /* 141: Steer_Command_E2E_CRC8 */
-    { RZC_SIG_STEER_COMMAND_E_2_E_DATA_ID, 0u },   /* 142: Steer_Command_E2E_DataID */
-    { RZC_SIG_STEER_COMMAND_STEER_ANGLE_CMD, 0u },   /* 143: Steer_Command_SteerAngleCmd */
-    { RZC_SIG_STEER_COMMAND_STEER_RATE_LIMIT, 0u },   /* 144: Steer_Command_SteerRateLimit */
-    { RZC_SIG_STEER_COMMAND_VEHICLE_STATE, 0u },   /* 145: Steer_Command_VehicleState */
-    { RZC_SIG_STEERING_STATUS_ACTUAL_ANGLE, 0u },   /* 146: Steering_Status_ActualAngle */
-    { RZC_SIG_STEERING_STATUS_COMMANDED_ANGLE, 0u },   /* 147: Steering_Status_CommandedAngle */
-    { RZC_SIG_STEERING_STATUS_E_2_E_ALIVE_COUNTER, 0u },   /* 148: Steering_Status_E2E_AliveCounter */
-    { RZC_SIG_STEERING_STATUS_E_2_E_CRC_8, 0u },   /* 149: Steering_Status_E2E_CRC8 */
-    { RZC_SIG_STEERING_STATUS_E_2_E_DATA_ID, 0u },   /* 150: Steering_Status_E2E_DataID */
-    { RZC_SIG_STEERING_STATUS_SERVO_CURRENT_M_A, 0u },   /* 151: Steering_Status_ServoCurrent_mA */
-    { RZC_SIG_STEERING_STATUS_STEER_FAULT_STATUS, 0u },   /* 152: Steering_Status_SteerFaultStatus */
-    { RZC_SIG_STEERING_STATUS_STEER_MODE, 0u },   /* 153: Steering_Status_SteerMode */
-    { RZC_SIG_TCU_HEARTBEAT_ALIVE_COUNTER, 0u },   /* 154: TCU_Heartbeat_AliveCounter */
-    { RZC_SIG_TCU_HEARTBEAT_E_2_E_ALIVE_COUNTER, 0u },   /* 155: TCU_Heartbeat_E2E_AliveCounter */
-    { RZC_SIG_TCU_HEARTBEAT_E_2_E_CRC_8, 0u },   /* 156: TCU_Heartbeat_E2E_CRC8 */
-    { RZC_SIG_TCU_HEARTBEAT_E_2_E_DATA_ID, 0u },   /* 157: TCU_Heartbeat_E2E_DataID */
-    { RZC_SIG_TCU_HEARTBEAT_ECU_ID, 0u },   /* 158: TCU_Heartbeat_ECU_ID */
-    { RZC_SIG_TORQUE_REQUEST_DIRECTION, 0u },   /* 159: Torque_Request_Direction */
-    { RZC_SIG_TORQUE_REQUEST_E_2_E_ALIVE_COUNTER, 0u },   /* 160: Torque_Request_E2E_AliveCounter */
-    { RZC_SIG_TORQUE_REQUEST_E_2_E_CRC_8, 0u },   /* 161: Torque_Request_E2E_CRC8 */
-    { RZC_SIG_TORQUE_REQUEST_E_2_E_DATA_ID, 0u },   /* 162: Torque_Request_E2E_DataID */
-    { RZC_SIG_TORQUE_REQUEST_PEDAL_FAULT, 0u },   /* 163: Torque_Request_PedalFault */
-    { RZC_SIG_TORQUE_REQUEST_PEDAL_POSITION_1, 0u },   /* 164: Torque_Request_PedalPosition1 */
-    { RZC_SIG_TORQUE_REQUEST_PEDAL_POSITION_2, 0u },   /* 165: Torque_Request_PedalPosition2 */
-    { RZC_SIG_TORQUE_REQUEST_TORQUE_REQUEST, 0u },   /* 166: Torque_Request_TorqueRequest */
-    { RZC_SIG_UDS_FUNC_REQUEST_UDS_DATA, 0u },   /* 167: UDS_Func_Request_UDS_Data */
-    { RZC_SIG_UDS_PHYS_REQ_CVC_UDS_DATA, 0u },   /* 168: UDS_Phys_Req_CVC_UDS_Data */
-    { RZC_SIG_UDS_PHYS_REQ_FZC_UDS_DATA, 0u },   /* 169: UDS_Phys_Req_FZC_UDS_Data */
-    { RZC_SIG_UDS_PHYS_REQ_RZC_UDS_DATA, 0u },   /* 170: UDS_Phys_Req_RZC_UDS_Data */
-    { RZC_SIG_UDS_PHYS_REQ_TCU_UDS_DATA, 0u },   /* 171: UDS_Phys_Req_TCU_UDS_Data */
-    { RZC_SIG_UDS_RESP_CVC_UDS_DATA, 0u },   /* 172: UDS_Resp_CVC_UDS_Data */
-    { RZC_SIG_UDS_RESP_FZC_UDS_DATA, 0u },   /* 173: UDS_Resp_FZC_UDS_Data */
-    { RZC_SIG_UDS_RESP_RZC_UDS_DATA, 0u },   /* 174: UDS_Resp_RZC_UDS_Data */
-    { RZC_SIG_UDS_RESP_TCU_UDS_DATA, 0u },   /* 175: UDS_Resp_TCU_UDS_Data */
-    { RZC_SIG_VEHICLE_STATE_E_2_E_ALIVE_COUNTER, 0u },   /* 176: Vehicle_State_E2E_AliveCounter */
-    { RZC_SIG_VEHICLE_STATE_E_2_E_CRC_8, 0u },   /* 177: Vehicle_State_E2E_CRC8 */
-    { RZC_SIG_VEHICLE_STATE_E_2_E_DATA_ID, 0u },   /* 178: Vehicle_State_E2E_DataID */
-    { RZC_SIG_VEHICLE_STATE_FAULT_MASK, 0u },   /* 179: Vehicle_State_FaultMask */
-    { RZC_SIG_VEHICLE_STATE_SPEED_LIMIT, 0u },   /* 180: Vehicle_State_SpeedLimit */
-    { RZC_SIG_VEHICLE_STATE_TORQUE_LIMIT, 0u },   /* 181: Vehicle_State_TorqueLimit */
-    { RZC_SIG_VEHICLE_STATE_VEHICLE_STATE, 0u },   /* 182: Vehicle_State_VehicleState */
+    { RZC_SIG_FZC_VIRTUAL_SENSORS_BRAKE_CURRENT_M_A, 0u },   /* 79: FZC_Virtual_Sensors_BrakeCurrent_mA */
+    { RZC_SIG_FZC_VIRTUAL_SENSORS_BRAKE_POS_ADC, 0u },   /* 80: FZC_Virtual_Sensors_BrakePos_ADC */
+    { RZC_SIG_FZC_VIRTUAL_SENSORS_STEER_ANGLE_RAW, 0u },   /* 81: FZC_Virtual_Sensors_SteerAngle_Raw */
+    { RZC_SIG_ICU_HEARTBEAT_ALIVE_COUNTER, 0u },   /* 82: ICU_Heartbeat_AliveCounter */
+    { RZC_SIG_ICU_HEARTBEAT_E_2_E_ALIVE_COUNTER, 0u },   /* 83: ICU_Heartbeat_E2E_AliveCounter */
+    { RZC_SIG_ICU_HEARTBEAT_E_2_E_CRC_8, 0u },   /* 84: ICU_Heartbeat_E2E_CRC8 */
+    { RZC_SIG_ICU_HEARTBEAT_E_2_E_DATA_ID, 0u },   /* 85: ICU_Heartbeat_E2E_DataID */
+    { RZC_SIG_ICU_HEARTBEAT_ECU_ID, 0u },   /* 86: ICU_Heartbeat_ECU_ID */
+    { RZC_SIG_INDICATOR_STATE_BLINK_PHASE_HIGH, 0u },   /* 87: Indicator_State_BlinkPhaseHigh */
+    { RZC_SIG_INDICATOR_STATE_HAZARD_ACTIVE, 0u },   /* 88: Indicator_State_HazardActive */
+    { RZC_SIG_INDICATOR_STATE_LEFT_ON, 0u },   /* 89: Indicator_State_LeftOn */
+    { RZC_SIG_INDICATOR_STATE_RIGHT_ON, 0u },   /* 90: Indicator_State_RightOn */
+    { RZC_SIG_LIDAR_DISTANCE_E_2_E_ALIVE_COUNTER, 0u },   /* 91: Lidar_Distance_E2E_AliveCounter */
+    { RZC_SIG_LIDAR_DISTANCE_E_2_E_CRC_8, 0u },   /* 92: Lidar_Distance_E2E_CRC8 */
+    { RZC_SIG_LIDAR_DISTANCE_E_2_E_DATA_ID, 0u },   /* 93: Lidar_Distance_E2E_DataID */
+    { RZC_SIG_LIDAR_DISTANCE_OBSTACLE_ZONE, 0u },   /* 94: Lidar_Distance_ObstacleZone */
+    { RZC_SIG_LIDAR_DISTANCE_RANGE_CM, 0u },   /* 95: Lidar_Distance_Range_cm */
+    { RZC_SIG_LIDAR_DISTANCE_SENSOR_STATUS, 0u },   /* 96: Lidar_Distance_SensorStatus */
+    { RZC_SIG_LIDAR_DISTANCE_SIGNAL_STRENGTH, 0u },   /* 97: Lidar_Distance_SignalStrength */
+    { RZC_SIG_LIGHT_STATUS_BRAKE_LIGHT_ON, 0u },   /* 98: Light_Status_BrakeLightOn */
+    { RZC_SIG_LIGHT_STATUS_FOG_LIGHT_ON, 0u },   /* 99: Light_Status_FogLightOn */
+    { RZC_SIG_LIGHT_STATUS_HEADLIGHT_LEVEL, 0u },   /* 100: Light_Status_HeadlightLevel */
+    { RZC_SIG_LIGHT_STATUS_HEADLIGHT_ON, 0u },   /* 101: Light_Status_HeadlightOn */
+    { RZC_SIG_LIGHT_STATUS_TAIL_LIGHT_ON, 0u },   /* 102: Light_Status_TailLightOn */
+    { RZC_SIG_MOTOR_CURRENT_DIR_IS_REVERSE, 0u },   /* 103: Motor_Current_DirIsReverse */
+    { RZC_SIG_MOTOR_CURRENT_E_2_E_ALIVE_COUNTER, 0u },   /* 104: Motor_Current_E2E_AliveCounter */
+    { RZC_SIG_MOTOR_CURRENT_E_2_E_CRC_8, 0u },   /* 105: Motor_Current_E2E_CRC8 */
+    { RZC_SIG_MOTOR_CURRENT_E_2_E_DATA_ID, 0u },   /* 106: Motor_Current_E2E_DataID */
+    { RZC_SIG_MOTOR_CURRENT_MOTOR_ENABLE, 0u },   /* 107: Motor_Current_MotorEnable */
+    { RZC_SIG_MOTOR_CURRENT_OVERCURRENT_FLAG, 0u },   /* 108: Motor_Current_OvercurrentFlag */
+    { RZC_SIG_MOTOR_CURRENT_PHASE_M_A, 0u },   /* 109: Motor_Current_Phase_mA */
+    { RZC_SIG_MOTOR_CURRENT_TORQUE_ECHO, 0u },   /* 110: Motor_Current_TorqueEcho */
+    { RZC_SIG_MOTOR_CUTOFF_REQ_E_2_E_ALIVE_COUNTER, 0u },   /* 111: Motor_Cutoff_Req_E2E_AliveCounter */
+    { RZC_SIG_MOTOR_CUTOFF_REQ_E_2_E_CRC_8, 0u },   /* 112: Motor_Cutoff_Req_E2E_CRC8 */
+    { RZC_SIG_MOTOR_CUTOFF_REQ_E_2_E_DATA_ID, 0u },   /* 113: Motor_Cutoff_Req_E2E_DataID */
+    { RZC_SIG_MOTOR_CUTOFF_REQ_REASON, 0u },   /* 114: Motor_Cutoff_Req_Reason */
+    { RZC_SIG_MOTOR_CUTOFF_REQ_REQUEST_TYPE, 0u },   /* 115: Motor_Cutoff_Req_RequestType */
+    { RZC_SIG_MOTOR_STATUS_E_2_E_ALIVE_COUNTER, 0u },   /* 116: Motor_Status_E2E_AliveCounter */
+    { RZC_SIG_MOTOR_STATUS_E_2_E_CRC_8, 0u },   /* 117: Motor_Status_E2E_CRC8 */
+    { RZC_SIG_MOTOR_STATUS_E_2_E_DATA_ID, 0u },   /* 118: Motor_Status_E2E_DataID */
+    { RZC_SIG_MOTOR_STATUS_MOTOR_DIRECTION, 0u },   /* 119: Motor_Status_MotorDirection */
+    { RZC_SIG_MOTOR_STATUS_MOTOR_ENABLE, 0u },   /* 120: Motor_Status_MotorEnable */
+    { RZC_SIG_MOTOR_STATUS_MOTOR_FAULT_STATUS, 0u },   /* 121: Motor_Status_MotorFaultStatus */
+    { RZC_SIG_MOTOR_STATUS_MOTOR_SPEED_RPM, 0u },   /* 122: Motor_Status_MotorSpeed_RPM */
+    { RZC_SIG_MOTOR_STATUS_TORQUE_ECHO, 0u },   /* 123: Motor_Status_TorqueEcho */
+    { RZC_SIG_MOTOR_TEMPERATURE_DERATING_PERCENT, 0u },   /* 124: Motor_Temperature_DeratingPercent */
+    { RZC_SIG_MOTOR_TEMPERATURE_E_2_E_ALIVE_COUNTER, 0u },   /* 125: Motor_Temperature_E2E_AliveCounter */
+    { RZC_SIG_MOTOR_TEMPERATURE_E_2_E_CRC_8, 0u },   /* 126: Motor_Temperature_E2E_CRC8 */
+    { RZC_SIG_MOTOR_TEMPERATURE_E_2_E_DATA_ID, 0u },   /* 127: Motor_Temperature_E2E_DataID */
+    { RZC_SIG_MOTOR_TEMPERATURE_WINDING_TEMP_1_C, 0u },   /* 128: Motor_Temperature_WindingTemp1_C */
+    { RZC_SIG_MOTOR_TEMPERATURE_WINDING_TEMP_2_C, 0u },   /* 129: Motor_Temperature_WindingTemp2_C */
+    { RZC_SIG_RZC_HEARTBEAT_E_2_E_ALIVE_COUNTER, 0u },   /* 130: RZC_Heartbeat_E2E_AliveCounter */
+    { RZC_SIG_RZC_HEARTBEAT_E_2_E_CRC_8, 0u },   /* 131: RZC_Heartbeat_E2E_CRC8 */
+    { RZC_SIG_RZC_HEARTBEAT_E_2_E_DATA_ID, 0u },   /* 132: RZC_Heartbeat_E2E_DataID */
+    { RZC_SIG_RZC_HEARTBEAT_ECU_ID, 0u },   /* 133: RZC_Heartbeat_ECU_ID */
+    { RZC_SIG_RZC_HEARTBEAT_FAULT_STATUS, 0u },   /* 134: RZC_Heartbeat_FaultStatus */
+    { RZC_SIG_RZC_HEARTBEAT_OPERATING_MODE, 0u },   /* 135: RZC_Heartbeat_OperatingMode */
+    { RZC_SIG_RZC_VIRTUAL_SENSORS_BATT_VOLTAGE_M_V, 0u },   /* 136: RZC_Virtual_Sensors_BattVoltage_mV */
+    { RZC_SIG_RZC_VIRTUAL_SENSORS_MOTOR_CURRENT_M_A, 0u },   /* 137: RZC_Virtual_Sensors_MotorCurrent_mA */
+    { RZC_SIG_RZC_VIRTUAL_SENSORS_MOTOR_SPEED_RPM, 0u },   /* 138: RZC_Virtual_Sensors_MotorSpeed_RPM */
+    { RZC_SIG_RZC_VIRTUAL_SENSORS_MOTOR_TEMP_D_C, 0u },   /* 139: RZC_Virtual_Sensors_MotorTemp_dC */
+    { RZC_SIG_SC_STATUS_ALIVE_COUNTER, 0u },   /* 140: SC_Status_AliveCounter */
+    { RZC_SIG_SC_STATUS_CRC_8, 0u },   /* 141: SC_Status_CRC8 */
+    { RZC_SIG_SC_STATUS_ECU_HEALTH, 0u },   /* 142: SC_Status_ECU_Health */
+    { RZC_SIG_SC_STATUS_FAULT_FLAGS, 0u },   /* 143: SC_Status_FaultFlags */
+    { RZC_SIG_SC_STATUS_FAULT_REASON, 0u },   /* 144: SC_Status_FaultReason */
+    { RZC_SIG_SC_STATUS_MODE, 0u },   /* 145: SC_Status_Mode */
+    { RZC_SIG_SC_STATUS_RELAY_ENERGIZED, 0u },   /* 146: SC_Status_RelayEnergized */
+    { RZC_SIG_STEER_COMMAND_E_2_E_ALIVE_COUNTER, 0u },   /* 147: Steer_Command_E2E_AliveCounter */
+    { RZC_SIG_STEER_COMMAND_E_2_E_CRC_8, 0u },   /* 148: Steer_Command_E2E_CRC8 */
+    { RZC_SIG_STEER_COMMAND_E_2_E_DATA_ID, 0u },   /* 149: Steer_Command_E2E_DataID */
+    { RZC_SIG_STEER_COMMAND_STEER_ANGLE_CMD, 0u },   /* 150: Steer_Command_SteerAngleCmd */
+    { RZC_SIG_STEER_COMMAND_STEER_RATE_LIMIT, 0u },   /* 151: Steer_Command_SteerRateLimit */
+    { RZC_SIG_STEER_COMMAND_VEHICLE_STATE, 0u },   /* 152: Steer_Command_VehicleState */
+    { RZC_SIG_STEERING_STATUS_ACTUAL_ANGLE, 0u },   /* 153: Steering_Status_ActualAngle */
+    { RZC_SIG_STEERING_STATUS_COMMANDED_ANGLE, 0u },   /* 154: Steering_Status_CommandedAngle */
+    { RZC_SIG_STEERING_STATUS_E_2_E_ALIVE_COUNTER, 0u },   /* 155: Steering_Status_E2E_AliveCounter */
+    { RZC_SIG_STEERING_STATUS_E_2_E_CRC_8, 0u },   /* 156: Steering_Status_E2E_CRC8 */
+    { RZC_SIG_STEERING_STATUS_E_2_E_DATA_ID, 0u },   /* 157: Steering_Status_E2E_DataID */
+    { RZC_SIG_STEERING_STATUS_SERVO_CURRENT_M_A, 0u },   /* 158: Steering_Status_ServoCurrent_mA */
+    { RZC_SIG_STEERING_STATUS_STEER_FAULT_STATUS, 0u },   /* 159: Steering_Status_SteerFaultStatus */
+    { RZC_SIG_STEERING_STATUS_STEER_MODE, 0u },   /* 160: Steering_Status_SteerMode */
+    { RZC_SIG_TCU_HEARTBEAT_ALIVE_COUNTER, 0u },   /* 161: TCU_Heartbeat_AliveCounter */
+    { RZC_SIG_TCU_HEARTBEAT_E_2_E_ALIVE_COUNTER, 0u },   /* 162: TCU_Heartbeat_E2E_AliveCounter */
+    { RZC_SIG_TCU_HEARTBEAT_E_2_E_CRC_8, 0u },   /* 163: TCU_Heartbeat_E2E_CRC8 */
+    { RZC_SIG_TCU_HEARTBEAT_E_2_E_DATA_ID, 0u },   /* 164: TCU_Heartbeat_E2E_DataID */
+    { RZC_SIG_TCU_HEARTBEAT_ECU_ID, 0u },   /* 165: TCU_Heartbeat_ECU_ID */
+    { RZC_SIG_TORQUE_REQUEST_COMMAND_PCT, 0u },   /* 166: Torque_Request_Command_pct */
+    { RZC_SIG_TORQUE_REQUEST_DIRECTION, 0u },   /* 167: Torque_Request_Direction */
+    { RZC_SIG_TORQUE_REQUEST_E_2_E_ALIVE_COUNTER, 0u },   /* 168: Torque_Request_E2E_AliveCounter */
+    { RZC_SIG_TORQUE_REQUEST_E_2_E_CRC_8, 0u },   /* 169: Torque_Request_E2E_CRC8 */
+    { RZC_SIG_TORQUE_REQUEST_E_2_E_DATA_ID, 0u },   /* 170: Torque_Request_E2E_DataID */
+    { RZC_SIG_TORQUE_REQUEST_PEDAL_FAULT, 0u },   /* 171: Torque_Request_PedalFault */
+    { RZC_SIG_TORQUE_REQUEST_PEDAL_POSITION_1, 0u },   /* 172: Torque_Request_PedalPosition1 */
+    { RZC_SIG_TORQUE_REQUEST_PEDAL_POSITION_2, 0u },   /* 173: Torque_Request_PedalPosition2 */
+    { RZC_SIG_UDS_FUNC_REQUEST_UDS_DATA, 0u },   /* 174: UDS_Func_Request_UDS_Data */
+    { RZC_SIG_UDS_PHYS_REQ_CVC_UDS_DATA, 0u },   /* 175: UDS_Phys_Req_CVC_UDS_Data */
+    { RZC_SIG_UDS_PHYS_REQ_FZC_UDS_DATA, 0u },   /* 176: UDS_Phys_Req_FZC_UDS_Data */
+    { RZC_SIG_UDS_PHYS_REQ_RZC_UDS_DATA, 0u },   /* 177: UDS_Phys_Req_RZC_UDS_Data */
+    { RZC_SIG_UDS_PHYS_REQ_TCU_UDS_DATA, 0u },   /* 178: UDS_Phys_Req_TCU_UDS_Data */
+    { RZC_SIG_UDS_RESP_CVC_UDS_DATA, 0u },   /* 179: UDS_Resp_CVC_UDS_Data */
+    { RZC_SIG_UDS_RESP_FZC_UDS_DATA, 0u },   /* 180: UDS_Resp_FZC_UDS_Data */
+    { RZC_SIG_UDS_RESP_RZC_UDS_DATA, 0u },   /* 181: UDS_Resp_RZC_UDS_Data */
+    { RZC_SIG_UDS_RESP_TCU_UDS_DATA, 0u },   /* 182: UDS_Resp_TCU_UDS_Data */
+    { RZC_SIG_VEHICLE_STATE_E_2_E_ALIVE_COUNTER, 0u },   /* 183: Vehicle_State_E2E_AliveCounter */
+    { RZC_SIG_VEHICLE_STATE_E_2_E_CRC_8, 0u },   /* 184: Vehicle_State_E2E_CRC8 */
+    { RZC_SIG_VEHICLE_STATE_E_2_E_DATA_ID, 0u },   /* 185: Vehicle_State_E2E_DataID */
+    { RZC_SIG_VEHICLE_STATE_FAULT_MASK, 0u },   /* 186: Vehicle_State_FaultMask */
+    { RZC_SIG_VEHICLE_STATE_MODE, 0u },   /* 187: Vehicle_State_Mode */
+    { RZC_SIG_VEHICLE_STATE_SPEED_LIMIT, 0u },   /* 188: Vehicle_State_SpeedLimit */
+    { RZC_SIG_VEHICLE_STATE_TORQUE_LIMIT, 0u },   /* 189: Vehicle_State_TorqueLimit */
 };
 
 /* ==================================================================

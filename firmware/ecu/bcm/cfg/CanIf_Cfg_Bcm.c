@@ -56,6 +56,8 @@ static const CanIf_RxPduConfigType bcm_rx_pdu_config[] = {
     { 0x303u,  BCM_COM_RX_BATTERY_STATUS,  6u, FALSE },
     { 0x350u,  BCM_COM_RX_BODY_CONTROL_CMD,  4u, FALSE },
     { 0x500u,  BCM_COM_RX_DTC_BROADCAST,  8u, FALSE },
+    { 0x600u,  BCM_COM_RX_FZC_VIRTUAL_SENSORS,  8u, FALSE },
+    { 0x601u,  BCM_COM_RX_RZC_VIRTUAL_SENSORS,  8u, FALSE },
     { 0x644u,  BCM_COM_RX_UDS_RESP_TCU,  8u, FALSE },
     { 0x7DFu,  BCM_COM_RX_UDS_FUNC_REQUEST,  8u, FALSE },
     { 0x7E0u,  BCM_COM_RX_UDS_PHYS_REQ_CVC,  8u, FALSE },

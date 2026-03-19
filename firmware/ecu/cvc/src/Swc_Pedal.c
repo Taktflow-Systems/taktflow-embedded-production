@@ -482,7 +482,7 @@ void Swc_Pedal_MainFunction(void)
      * ---------------------------------------------------------- */
     {
         uint16 tx_torque = (uint16)torque;
-        (void)Com_SendSignal(CVC_COM_SIG_TORQUE_REQUEST_TORQUE_REQUEST, &tx_torque);
+        (void)Com_SendSignal(CVC_COM_SIG_TORQUE_REQUEST_COMMAND_PCT, &tx_torque);
     }
 
     /* ----------------------------------------------------------

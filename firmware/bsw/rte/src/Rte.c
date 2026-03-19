@@ -39,6 +39,7 @@ static uint32 rte_tick_counter = 0u;
  */
 static void Rte_DispatchRunnables(uint32 tick)
 {
+#if RTE_MAX_RUNNABLES > 0u
     uint8 i;
     boolean visited[RTE_MAX_RUNNABLES];
     boolean se_checkpointed[RTE_MAX_RUNNABLES];
@@ -98,6 +99,9 @@ static void Rte_DispatchRunnables(uint32 tick)
             }
         }
     }
+#else
+    (void)tick;
+#endif /* RTE_MAX_RUNNABLES > 0 */
 }
 
 /* ---- API Implementation ---- */

@@ -87,9 +87,7 @@ typedef struct {
 /* ---- External Dependencies ---- */
 
 extern Std_ReturnType PduR_DcmTransmit(PduIdType TxPduId, const PduInfoType* PduInfoPtr);
-#ifdef CANTP_ENABLED
 extern Std_ReturnType CanTp_Transmit(PduIdType TxPduId, const PduInfoType* PduInfoPtr);
-#endif
 /* BswM_RequestMode declared via BswM.h include above */
 
 /* ---- API Functions ---- */

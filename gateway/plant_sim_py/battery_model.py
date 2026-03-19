@@ -29,6 +29,12 @@ class BatteryModel:
         self._override_voltage = None
         self._override_soc = None
 
+    def reset_state(self):
+        """Full physics reset — return to power-on defaults."""
+        self.voltage_mv = self.V_NOMINAL_MV
+        self.soc = 100
+        self.clear_override()
+
     def update(self, motor_current_ma: float, dt: float):
         # Check if override is active and not expired
         if self._override_voltage is not None:

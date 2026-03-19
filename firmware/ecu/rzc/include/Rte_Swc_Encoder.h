@@ -22,14 +22,14 @@
  * ==================================================================== */
 
 /**
- * @brief  Read SpeedLimit (uint8_t)
+ * @brief  Read Vehicle_State_SpeedLimit (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_SpeedLimit(uint8_t *data)
+static inline Rte_StatusType Rte_Read_Vehicle_State_SpeedLimit(uint8_t *data)
 {
     uint32_t tmp;
-    Rte_StatusType status = Rte_Read(RZC_SIG_SPEED_LIMIT, &tmp);
+    Rte_StatusType status = Rte_Read(RZC_SIG_VEHICLE_STATE_SPEED_LIMIT, &tmp);
     if (status == RTE_E_OK)
     {
         *data = (uint8_t)tmp;
@@ -38,13 +38,29 @@ static inline Rte_StatusType Rte_Read_SpeedLimit(uint8_t *data)
 }
 
 /**
- * @brief  Write MotorSpeed_RPM (uint16_t)
+ * @brief  Read RZC_Virtual_Sensors_MotorSpeed_RPM (uint16_t)
+ * @param  data  Pointer to receive the signal value
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Read_RZC_Virtual_Sensors_MotorSpeed_RPM(uint16_t *data)
+{
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(RZC_SIG_RZC_VIRTUAL_SENSORS_MOTOR_SPEED_RPM, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint16_t)tmp;
+    }
+    return status;
+}
+
+/**
+ * @brief  Write Motor_Status_MotorSpeed_RPM (uint16_t)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_MotorSpeed_RPM(uint16_t value)
+static inline Rte_StatusType Rte_Write_Motor_Status_MotorSpeed_RPM(uint16_t value)
 {
-    return Rte_Write(RZC_SIG_MOTOR_SPEED_RPM, (uint32_t)value);
+    return Rte_Write(RZC_SIG_MOTOR_STATUS_MOTOR_SPEED_RPM, (uint32_t)value);
 }
 
 #endif /* RTE_SWC_ENCODER_H */

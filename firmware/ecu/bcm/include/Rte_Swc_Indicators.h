@@ -22,14 +22,14 @@
  * ==================================================================== */
 
 /**
- * @brief  Read TurnSignalCmd (uint8_t)
+ * @brief  Read Body_Control_Cmd_TurnSignalCmd (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_TurnSignalCmd(uint8_t *data)
+static inline Rte_StatusType Rte_Read_Body_Control_Cmd_TurnSignalCmd(uint8_t *data)
 {
     uint32_t tmp;
-    Rte_StatusType status = Rte_Read(BCM_SIG_TURN_SIGNAL_CMD, &tmp);
+    Rte_StatusType status = Rte_Read(BCM_SIG_BODY_CONTROL_CMD_TURN_SIGNAL_CMD, &tmp);
     if (status == RTE_E_OK)
     {
         *data = (uint8_t)tmp;
@@ -38,23 +38,43 @@ static inline Rte_StatusType Rte_Read_TurnSignalCmd(uint8_t *data)
 }
 
 /**
- * @brief  Write RightIndicator (boolean)
+ * @brief  Write Indicator_State_RightOn (boolean)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_RightIndicator(boolean value)
+static inline Rte_StatusType Rte_Write_Indicator_State_RightOn(boolean value)
 {
-    return Rte_Write(BCM_SIG_RIGHT_INDICATOR, (uint32_t)value);
+    return Rte_Write(BCM_SIG_INDICATOR_STATE_RIGHT_ON, (uint32_t)value);
 }
 
 /**
- * @brief  Write LeftIndicator (boolean)
+ * @brief  Write Indicator_State_BlinkPhaseHigh (boolean)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_LeftIndicator(boolean value)
+static inline Rte_StatusType Rte_Write_Indicator_State_BlinkPhaseHigh(boolean value)
 {
-    return Rte_Write(BCM_SIG_LEFT_INDICATOR, (uint32_t)value);
+    return Rte_Write(BCM_SIG_INDICATOR_STATE_BLINK_PHASE_HIGH, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Indicator_State_LeftOn (boolean)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Indicator_State_LeftOn(boolean value)
+{
+    return Rte_Write(BCM_SIG_INDICATOR_STATE_LEFT_ON, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Indicator_State_HazardActive (boolean)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Indicator_State_HazardActive(boolean value)
+{
+    return Rte_Write(BCM_SIG_INDICATOR_STATE_HAZARD_ACTIVE, (uint32_t)value);
 }
 
 #endif /* RTE_SWC_INDICATORS_H */

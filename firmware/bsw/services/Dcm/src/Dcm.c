@@ -88,13 +88,10 @@ static void dcm_send_response(const uint8* data, PduLengthType length)
     pdu_info.SduDataPtr = (uint8*)data;  /* cast away const for AUTOSAR PduInfoType */
     pdu_info.SduLength  = length;
 
-#ifdef CANTP_ENABLED
     if (length > 7u) {
         /* Multi-frame: route through CanTp for ISO-TP segmentation */
         (void)CanTp_Transmit(dcm_config->TxPduId, &pdu_info);
-    } else
-#endif
-    {
+    } else {
         /* Single-frame: direct PduR path */
         (void)PduR_DcmTransmit(dcm_config->TxPduId, &pdu_info);
     }

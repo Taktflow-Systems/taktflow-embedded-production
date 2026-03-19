@@ -45,6 +45,7 @@ extern Std_ReturnType Spi_Hw_Init(void);
 extern Std_ReturnType Spi_Hw_Transmit(uint8 Channel, const uint16* TxBuf,
                                        uint16* RxBuf, uint8 Length);
 extern uint8          Spi_Hw_GetStatus(void);
+extern void           Spi_Hw_PollUdp(void);
 
 /* ---- API Functions ---- */
 

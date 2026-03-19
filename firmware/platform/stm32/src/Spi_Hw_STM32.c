@@ -54,3 +54,8 @@ uint8 Spi_Hw_GetStatus(void)
     /* TODO:HARDWARE — read SPI SR register BSY flag */
     return 1u; /* SPI_IDLE */
 }
+
+void Spi_Hw_PollUdp(void)
+{
+    /* No UDP on real hardware — stub */
+}

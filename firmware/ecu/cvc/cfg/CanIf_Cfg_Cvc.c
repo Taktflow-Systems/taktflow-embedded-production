@@ -26,6 +26,8 @@ static const CanIf_TxPduConfigType cvc_tx_pdu_config[] = {
     { 0x103u,  CVC_COM_TX_BRAKE_COMMAND,  8u, 0u },
     { 0x350u,  CVC_COM_TX_BODY_CONTROL_CMD,  4u, 0u },
     { 0x500u,  CVC_COM_TX_DTC_BROADCAST,  8u, 0u },
+    { 0x600u,  CVC_COM_TX_FZC_VIRTUAL_SENSORS,  8u, 0u },
+    { 0x601u,  CVC_COM_TX_RZC_VIRTUAL_SENSORS,  8u, 0u },
     { 0x7E8u,  CVC_COM_TX_UDS_RESP_CVC,  8u, 0u },
 };
 

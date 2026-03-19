@@ -1,0 +1,1679 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AUTOSAR xmlns="http://autosar.org/schema/r4.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://autosar.org/schema/r4.0 AUTOSAR_00054.xsd">
+  <AR-PACKAGES>
+    <AR-PACKAGE>
+      <SHORT-NAME>Compositions</SHORT-NAME>
+      <ELEMENTS>
+        <COMPOSITION-SW-COMPONENT-TYPE>
+          <SHORT-NAME>CVC_Composition</SHORT-NAME>
+          <COMPONENTS>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_CanMonitor</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/CVC/CVC_Swc_CanMonitor</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_CvcCom</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/CVC/CVC_Swc_CvcCom</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_CvcDcm</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/CVC/CVC_Swc_CvcDcm</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_Dashboard</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/CVC/CVC_Swc_Dashboard</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_EStop</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/CVC/CVC_Swc_EStop</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_Heartbeat</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/CVC/CVC_Swc_Heartbeat</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_Nvm</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/CVC/CVC_Swc_Nvm</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_Pedal</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/CVC/CVC_Swc_Pedal</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_Scheduler</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/CVC/CVC_Swc_Scheduler</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_SelfTest</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/CVC/CVC_Swc_SelfTest</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_VehicleState</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_Watchdog</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/CVC/CVC_Swc_Watchdog</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+          </COMPONENTS>
+          <CONNECTORS>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_CvcCom_CVC_SIG_STEERING_FAULT_to_Swc_VehicleState</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_CvcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_CvcCom/PP_CVC_SIG_STEERING_FAULT</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_VehicleState</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState/RP_CVC_SIG_STEERING_FAULT</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_CvcCom_CVC_SIG_MOTOR_CUTOFF_to_Swc_VehicleState</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_CvcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_CvcCom/PP_CVC_SIG_MOTOR_CUTOFF</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_VehicleState</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState/RP_CVC_SIG_MOTOR_CUTOFF</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_CvcCom_CVC_SIG_FAULT_MASK_to_Swc_Dashboard</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_CvcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_CvcCom/PP_CVC_SIG_FAULT_MASK</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Dashboard</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_Dashboard/RP_CVC_SIG_FAULT_MASK</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_CvcCom_CVC_SIG_BATTERY_STATUS_to_Swc_VehicleState</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_CvcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_CvcCom/PP_CVC_SIG_BATTERY_STATUS</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_VehicleState</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState/RP_CVC_SIG_BATTERY_STATUS</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_CvcCom_CVC_SIG_SC_RELAY_KILL_to_Swc_VehicleState</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_CvcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_CvcCom/PP_CVC_SIG_SC_RELAY_KILL</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_VehicleState</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState/RP_CVC_SIG_SC_RELAY_KILL</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_CvcCom_CVC_SIG_MOTOR_FAULT_RZC_to_Swc_VehicleState</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_CvcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_CvcCom/PP_CVC_SIG_MOTOR_FAULT_RZC</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_VehicleState</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState/RP_CVC_SIG_MOTOR_FAULT_RZC</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_CvcCom_CVC_SIG_BRAKE_FAULT_to_Swc_VehicleState</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_CvcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_CvcCom/PP_CVC_SIG_BRAKE_FAULT</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_VehicleState</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState/RP_CVC_SIG_BRAKE_FAULT</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_EStop_CVC_SIG_ESTOP_ACTIVE_to_Swc_CvcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_EStop</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_EStop/PP_CVC_SIG_ESTOP_ACTIVE</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_CvcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_CvcCom/RP_CVC_SIG_ESTOP_ACTIVE</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_EStop_CVC_SIG_ESTOP_ACTIVE_to_Swc_VehicleState</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_EStop</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_EStop/PP_CVC_SIG_ESTOP_ACTIVE</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_VehicleState</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState/RP_CVC_SIG_ESTOP_ACTIVE</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Heartbeat_CVC_SIG_RZC_COMM_STATUS_to_Swc_CvcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Heartbeat</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_Heartbeat/PP_CVC_SIG_RZC_COMM_STATUS</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_CvcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_CvcCom/RP_CVC_SIG_RZC_COMM_STATUS</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Heartbeat_CVC_SIG_RZC_COMM_STATUS_to_Swc_VehicleState</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Heartbeat</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_Heartbeat/PP_CVC_SIG_RZC_COMM_STATUS</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_VehicleState</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState/RP_CVC_SIG_RZC_COMM_STATUS</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Heartbeat_CVC_SIG_FZC_COMM_STATUS_to_Swc_CvcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Heartbeat</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_Heartbeat/PP_CVC_SIG_FZC_COMM_STATUS</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_CvcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_CvcCom/RP_CVC_SIG_FZC_COMM_STATUS</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Heartbeat_CVC_SIG_FZC_COMM_STATUS_to_Swc_VehicleState</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Heartbeat</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_Heartbeat/PP_CVC_SIG_FZC_COMM_STATUS</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_VehicleState</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState/RP_CVC_SIG_FZC_COMM_STATUS</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Pedal_CVC_SIG_TORQUE_REQUEST_to_Swc_CvcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Pedal</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_Pedal/PP_CVC_SIG_TORQUE_REQUEST</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_CvcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_CvcCom/RP_CVC_SIG_TORQUE_REQUEST</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Pedal_CVC_SIG_TORQUE_REQUEST_to_Swc_VehicleState</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Pedal</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_Pedal/PP_CVC_SIG_TORQUE_REQUEST</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_VehicleState</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState/RP_CVC_SIG_TORQUE_REQUEST</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Pedal_CVC_SIG_PEDAL_FAULT_to_Swc_CvcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Pedal</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_Pedal/PP_CVC_SIG_PEDAL_FAULT</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_CvcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_CvcCom/RP_CVC_SIG_PEDAL_FAULT</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Pedal_CVC_SIG_PEDAL_FAULT_to_Swc_CvcDcm</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Pedal</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_Pedal/PP_CVC_SIG_PEDAL_FAULT</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_CvcDcm</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_CvcDcm/RP_CVC_SIG_PEDAL_FAULT</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Pedal_CVC_SIG_PEDAL_FAULT_to_Swc_VehicleState</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Pedal</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_Pedal/PP_CVC_SIG_PEDAL_FAULT</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_VehicleState</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState/RP_CVC_SIG_PEDAL_FAULT</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Pedal_CVC_SIG_PEDAL_POSITION_to_Swc_CvcDcm</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Pedal</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_Pedal/PP_CVC_SIG_PEDAL_POSITION</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_CvcDcm</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_CvcDcm/RP_CVC_SIG_PEDAL_POSITION</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Pedal_CVC_SIG_PEDAL_POSITION_to_Swc_Dashboard</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Pedal</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_Pedal/PP_CVC_SIG_PEDAL_POSITION</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Dashboard</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_Dashboard/RP_CVC_SIG_PEDAL_POSITION</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Pedal_CVC_SIG_PEDAL_POSITION_to_Swc_VehicleState</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Pedal</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_Pedal/PP_CVC_SIG_PEDAL_POSITION</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_VehicleState</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState/RP_CVC_SIG_PEDAL_POSITION</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_VehicleState_CVC_SIG_VEHICLE_STATE_to_Swc_CvcDcm</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_VehicleState</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState/PP_CVC_SIG_VEHICLE_STATE</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_CvcDcm</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_CvcDcm/RP_CVC_SIG_VEHICLE_STATE</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_VehicleState_CVC_SIG_VEHICLE_STATE_to_Swc_Dashboard</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_VehicleState</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState/PP_CVC_SIG_VEHICLE_STATE</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Dashboard</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_Dashboard/RP_CVC_SIG_VEHICLE_STATE</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_VehicleState_CVC_SIG_VEHICLE_STATE_to_Swc_Heartbeat</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_VehicleState</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState/PP_CVC_SIG_VEHICLE_STATE</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Heartbeat</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_Heartbeat/RP_CVC_SIG_VEHICLE_STATE</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_VehicleState_CVC_SIG_VEHICLE_STATE_to_Swc_Pedal</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_VehicleState</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState/PP_CVC_SIG_VEHICLE_STATE</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Pedal</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/CVC/CVC_Swc_Pedal/RP_CVC_SIG_VEHICLE_STATE</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+          </CONNECTORS>
+        </COMPOSITION-SW-COMPONENT-TYPE>
+        <COMPOSITION-SW-COMPONENT-TYPE>
+          <SHORT-NAME>FZC_Composition</SHORT-NAME>
+          <COMPONENTS>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_Brake</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/FZC/FZC_Swc_Brake</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_Buzzer</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/FZC/FZC_Swc_Buzzer</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_FzcCanMonitor</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcCanMonitor</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_FzcCom</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcCom</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_FzcDcm</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcDcm</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_FzcNvm</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcNvm</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_FzcSafety</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcSafety</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_FzcScheduler</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcScheduler</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_FzcSensorFeeder</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcSensorFeeder</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_Heartbeat</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/FZC/FZC_Swc_Heartbeat</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_Lidar</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/FZC/FZC_Swc_Lidar</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_Steering</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/FZC/FZC_Swc_Steering</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+          </COMPONENTS>
+          <CONNECTORS>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Brake_FZC_SIG_BRAKE_POS_to_Swc_FzcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Brake</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Brake/PP_FZC_SIG_BRAKE_POS</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcCom/RP_FZC_SIG_BRAKE_POS</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Brake_FZC_SIG_BRAKE_POS_to_Swc_FzcDcm</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Brake</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Brake/PP_FZC_SIG_BRAKE_POS</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcDcm</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcDcm/RP_FZC_SIG_BRAKE_POS</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_FzcSafety_FZC_SIG_MOTOR_CUTOFF_to_Swc_FzcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcSafety</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcSafety/PP_FZC_SIG_MOTOR_CUTOFF</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcCom/RP_FZC_SIG_MOTOR_CUTOFF</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Brake_FZC_SIG_BRAKE_FAULT_to_Swc_FzcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Brake</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Brake/PP_FZC_SIG_BRAKE_FAULT</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcCom/RP_FZC_SIG_BRAKE_FAULT</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Brake_FZC_SIG_BRAKE_FAULT_to_Swc_FzcSafety</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Brake</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Brake/PP_FZC_SIG_BRAKE_FAULT</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcSafety</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcSafety/RP_FZC_SIG_BRAKE_FAULT</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_FzcCom_FZC_SIG_STEER_CMD_to_Swc_Steering</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcCom/PP_FZC_SIG_STEER_CMD</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Steering</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Steering/RP_FZC_SIG_STEER_CMD</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_FzcCom_FZC_SIG_BRAKE_CMD_to_Swc_Brake</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcCom/PP_FZC_SIG_BRAKE_CMD</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Brake</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Brake/RP_FZC_SIG_BRAKE_CMD</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_FzcCom_FZC_SIG_VEHICLE_STATE_to_Swc_Buzzer</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcCom/PP_FZC_SIG_VEHICLE_STATE</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Buzzer</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Buzzer/RP_FZC_SIG_VEHICLE_STATE</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_FzcCom_FZC_SIG_VEHICLE_STATE_to_Swc_FzcSafety</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcCom/PP_FZC_SIG_VEHICLE_STATE</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcSafety</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcSafety/RP_FZC_SIG_VEHICLE_STATE</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_FzcCom_FZC_SIG_VEHICLE_STATE_to_Swc_Heartbeat</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcCom/PP_FZC_SIG_VEHICLE_STATE</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Heartbeat</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Heartbeat/RP_FZC_SIG_VEHICLE_STATE</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_FzcCom_FZC_SIG_ESTOP_ACTIVE_to_Swc_Brake</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcCom/PP_FZC_SIG_ESTOP_ACTIVE</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Brake</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Brake/RP_FZC_SIG_ESTOP_ACTIVE</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_FzcSafety_FZC_SIG_FAULT_MASK_to_Swc_Heartbeat</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcSafety</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcSafety/PP_FZC_SIG_FAULT_MASK</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Heartbeat</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Heartbeat/RP_FZC_SIG_FAULT_MASK</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Lidar_FZC_SIG_LIDAR_FAULT_to_Swc_FzcSafety</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Lidar</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Lidar/PP_FZC_SIG_LIDAR_FAULT</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcSafety</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcSafety/RP_FZC_SIG_LIDAR_FAULT</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Lidar_FZC_SIG_LIDAR_DIST_to_Swc_FzcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Lidar</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Lidar/PP_FZC_SIG_LIDAR_DIST</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcCom/RP_FZC_SIG_LIDAR_DIST</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Lidar_FZC_SIG_LIDAR_DIST_to_Swc_FzcDcm</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Lidar</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Lidar/PP_FZC_SIG_LIDAR_DIST</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcDcm</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcDcm/RP_FZC_SIG_LIDAR_DIST</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Lidar_FZC_SIG_LIDAR_ZONE_to_Swc_Buzzer</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Lidar</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Lidar/PP_FZC_SIG_LIDAR_ZONE</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Buzzer</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Buzzer/RP_FZC_SIG_LIDAR_ZONE</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Lidar_FZC_SIG_LIDAR_ZONE_to_Swc_FzcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Lidar</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Lidar/PP_FZC_SIG_LIDAR_ZONE</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcCom/RP_FZC_SIG_LIDAR_ZONE</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Lidar_FZC_SIG_LIDAR_ZONE_to_Swc_FzcDcm</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Lidar</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Lidar/PP_FZC_SIG_LIDAR_ZONE</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcDcm</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcDcm/RP_FZC_SIG_LIDAR_ZONE</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Lidar_FZC_SIG_LIDAR_SIGNAL_to_Swc_FzcDcm</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Lidar</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Lidar/PP_FZC_SIG_LIDAR_SIGNAL</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcDcm</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcDcm/RP_FZC_SIG_LIDAR_SIGNAL</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Steering_FZC_SIG_STEER_ANGLE_to_Swc_FzcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Steering</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Steering/PP_FZC_SIG_STEER_ANGLE</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcCom/RP_FZC_SIG_STEER_ANGLE</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Steering_FZC_SIG_STEER_ANGLE_to_Swc_FzcDcm</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Steering</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Steering/PP_FZC_SIG_STEER_ANGLE</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcDcm</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcDcm/RP_FZC_SIG_STEER_ANGLE</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Steering_FZC_SIG_STEER_FAULT_to_Swc_FzcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Steering</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Steering/PP_FZC_SIG_STEER_FAULT</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcCom/RP_FZC_SIG_STEER_FAULT</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Steering_FZC_SIG_STEER_FAULT_to_Swc_FzcSafety</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Steering</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_Steering/PP_FZC_SIG_STEER_FAULT</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcSafety</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/FZC/FZC_Swc_FzcSafety/RP_FZC_SIG_STEER_FAULT</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <!-- WARNING: missing SWC type for connector Swc_FzcSelfTest → Swc_FzcSafety -->
+          </CONNECTORS>
+        </COMPOSITION-SW-COMPONENT-TYPE>
+        <COMPOSITION-SW-COMPONENT-TYPE>
+          <SHORT-NAME>RZC_Composition</SHORT-NAME>
+          <COMPONENTS>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_Battery</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/RZC/RZC_Swc_Battery</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_CurrentMonitor</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/RZC/RZC_Swc_CurrentMonitor</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_Encoder</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/RZC/RZC_Swc_Encoder</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_Heartbeat</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/RZC/RZC_Swc_Heartbeat</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_Motor</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/RZC/RZC_Swc_Motor</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_RzcCom</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_RzcDcm</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcDcm</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_RzcNvm</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcNvm</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_RzcSafety</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcSafety</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_RzcScheduler</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcScheduler</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_RzcSelfTest</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcSelfTest</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_RzcSensorFeeder</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcSensorFeeder</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_TempMonitor</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/RZC/RZC_Swc_TempMonitor</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+          </COMPONENTS>
+          <CONNECTORS>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Battery_RZC_SIG_BATTERY_MV_to_Swc_RzcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Battery</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Battery/PP_BatSt_BatteryVoltage_mV</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom/RP_BatSt_BatteryVoltage_mV</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Battery_RZC_SIG_BATTERY_MV_to_Swc_RzcDcm</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Battery</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Battery/PP_BatSt_BatteryVoltage_mV</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcDcm</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcDcm/RP_BatSt_BatteryVoltage_mV</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Battery_RZC_SIG_BATTERY_STATUS_to_Swc_RzcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Battery</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Battery/PP_BatSt_Status</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom/RP_BatSt_Status</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Battery_RZC_SIG_BATTERY_STATUS_to_Swc_RzcSafety</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Battery</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Battery/PP_BatSt_Status</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcSafety</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcSafety/RP_BatSt_Status</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Battery_RZC_SIG_BATTERY_SOC_to_Swc_RzcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Battery</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Battery/PP_BatSt_Status</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom/RP_BatSt_Status</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_CurrentMonitor_RZC_SIG_CURRENT_MA_to_Swc_RzcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_CurrentMonitor</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_CurrentMonitor/PP_MtrCur_Current_mA</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom/RP_MtrCur_Current_mA</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_CurrentMonitor_RZC_SIG_CURRENT_MA_to_Swc_RzcDcm</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_CurrentMonitor</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_CurrentMonitor/PP_MtrCur_Current_mA</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcDcm</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcDcm/RP_MtrCur_Current_mA</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_CurrentMonitor_RZC_SIG_OVERCURRENT_to_Swc_Motor</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_CurrentMonitor</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_CurrentMonitor/PP_MtrCur_OvercurrentFlag</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Motor</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Motor/RP_MtrCur_OvercurrentFlag</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_CurrentMonitor_RZC_SIG_OVERCURRENT_to_Swc_RzcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_CurrentMonitor</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_CurrentMonitor/PP_MtrCur_OvercurrentFlag</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom/RP_MtrCur_OvercurrentFlag</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_CurrentMonitor_RZC_SIG_OVERCURRENT_to_Swc_RzcSafety</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_CurrentMonitor</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_CurrentMonitor/PP_MtrCur_OvercurrentFlag</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcSafety</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcSafety/RP_MtrCur_OvercurrentFlag</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Encoder_RZC_SIG_ENCODER_SPEED_to_Swc_RzcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Encoder</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Encoder/PP_RZC_SIG_ENCODER_SPEED</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom/RP_RZC_SIG_ENCODER_SPEED</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Encoder_RZC_SIG_ENCODER_SPEED_to_Swc_RzcDcm</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Encoder</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Encoder/PP_RZC_SIG_ENCODER_SPEED</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcDcm</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcDcm/RP_RZC_SIG_ENCODER_SPEED</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Encoder_RZC_SIG_ENCODER_STALL_to_Swc_RzcSafety</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Encoder</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Encoder/PP_RZC_SIG_ENCODER_STALL</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcSafety</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcSafety/RP_RZC_SIG_ENCODER_STALL</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Encoder_RZC_SIG_ENCODER_DIR_to_Swc_RzcSafety</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Encoder</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Encoder/PP_RZC_SIG_ENCODER_DIR</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcSafety</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcSafety/RP_RZC_SIG_ENCODER_DIR</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Motor_RZC_SIG_MOTOR_FAULT_to_Swc_RzcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Motor</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Motor/PP_MtrSt_MotorFaultStatus</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom/RP_MtrSt_MotorFaultStatus</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Motor_RZC_SIG_MOTOR_ENABLE_to_Swc_RzcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Motor</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Motor/PP_MtrSt_MotorEnable</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom/RP_MtrSt_MotorEnable</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Motor_RZC_SIG_TORQUE_ECHO_to_Swc_Encoder</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Motor</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Motor/PP_MtrCur_TorqueEcho</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Encoder</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Encoder/RP_MtrCur_TorqueEcho</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Motor_RZC_SIG_TORQUE_ECHO_to_Swc_RzcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Motor</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Motor/PP_MtrCur_TorqueEcho</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom/RP_MtrCur_TorqueEcho</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Motor_RZC_SIG_TORQUE_ECHO_to_Swc_RzcDcm</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Motor</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Motor/PP_MtrCur_TorqueEcho</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcDcm</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcDcm/RP_MtrCur_TorqueEcho</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Motor_RZC_SIG_MOTOR_DIR_to_Swc_Encoder</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Motor</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Motor/PP_MtrSt_MotorDirection</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Encoder</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Encoder/RP_MtrSt_MotorDirection</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Motor_RZC_SIG_MOTOR_DIR_to_Swc_RzcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Motor</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Motor/PP_MtrSt_MotorDirection</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom/RP_MtrSt_MotorDirection</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_RzcCom_RZC_SIG_TORQUE_CMD_to_Swc_Motor</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom/PP_TrqRq_Torque_pct</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Motor</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Motor/RP_TrqRq_Torque_pct</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_RzcCom_RZC_SIG_ESTOP_ACTIVE_to_Swc_Motor</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom/PP_EStBc_EStop_Active</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Motor</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Motor/RP_EStBc_EStop_Active</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_RzcCom_RZC_SIG_ESTOP_ACTIVE_to_Swc_RzcSafety</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom/PP_EStBc_EStop_Active</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcSafety</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcSafety/RP_EStBc_EStop_Active</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_RzcSafety_RZC_SIG_FAULT_MASK_to_Swc_Heartbeat</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcSafety</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcSafety/PP_VehSt_FaultMask</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Heartbeat</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Heartbeat/RP_VehSt_FaultMask</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_TempMonitor_RZC_SIG_DERATING_PCT_to_Swc_Motor</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_TempMonitor</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_TempMonitor/PP_MtrTmp_DeratingPercent</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Motor</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Motor/RP_MtrTmp_DeratingPercent</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_TempMonitor_RZC_SIG_DERATING_PCT_to_Swc_RzcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_TempMonitor</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_TempMonitor/PP_MtrTmp_DeratingPercent</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom/RP_MtrTmp_DeratingPercent</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_TempMonitor_RZC_SIG_DERATING_PCT_to_Swc_RzcDcm</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_TempMonitor</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_TempMonitor/PP_MtrTmp_DeratingPercent</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcDcm</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcDcm/RP_MtrTmp_DeratingPercent</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_TempMonitor_RZC_SIG_TEMP_FAULT_to_Swc_Motor</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_TempMonitor</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_TempMonitor/PP_RZC_SIG_TEMP_FAULT</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Motor</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_Motor/RP_RZC_SIG_TEMP_FAULT</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_TempMonitor_RZC_SIG_TEMP_FAULT_to_Swc_RzcSafety</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_TempMonitor</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_TempMonitor/PP_RZC_SIG_TEMP_FAULT</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcSafety</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcSafety/RP_RZC_SIG_TEMP_FAULT</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_TempMonitor_RZC_SIG_TEMP1_DC_to_Swc_RzcCom</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_TempMonitor</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_TempMonitor/PP_MtrTmp_WindingTemp1_C</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcCom</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom/RP_MtrTmp_WindingTemp1_C</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_TempMonitor_RZC_SIG_TEMP1_DC_to_Swc_RzcDcm</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_TempMonitor</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_TempMonitor/PP_MtrTmp_WindingTemp1_C</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcDcm</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/RZC/RZC_Swc_RzcDcm/RP_MtrTmp_WindingTemp1_C</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <!-- WARNING: port not found: P=PP_RzcHb_FaultStatus(MISSING) R=RP_RzcHb_FaultStatus(OK) -->
+          </CONNECTORS>
+        </COMPOSITION-SW-COMPONENT-TYPE>
+        <COMPOSITION-SW-COMPONENT-TYPE>
+          <SHORT-NAME>BCM_Composition</SHORT-NAME>
+          <COMPONENTS>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_BcmCan</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/BCM/BCM_Swc_BcmCan</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_BcmMain</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/BCM/BCM_Swc_BcmMain</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_DoorLock</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/BCM/BCM_Swc_DoorLock</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_Indicators</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/BCM/BCM_Swc_Indicators</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_Lights</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/BCM/BCM_Swc_Lights</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+          </COMPONENTS>
+          <CONNECTORS>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_DoorLock_BCM_SIG_DOOR_LOCK_STATUS_FRONT_LEFT_LOCK_to_Swc_BcmCan</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_DoorLock</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_DoorLock/PP_DlkSt_FrontLeftLock</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_BcmCan</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_BcmCan/RP_DlkSt_FrontLeftLock</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Indicators_BCM_SIG_INDICATOR_STATE_RIGHT_INDICATOR_to_Swc_BcmCan</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_Indicators</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_Indicators/PP_IndSt_RightOn</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_BcmCan</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_BcmCan/RP_IndSt_RightOn</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Indicators_BCM_SIG_INDICATOR_STATE_HAZARD_ACTIVE_to_Swc_BcmCan</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_Indicators</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_Indicators/PP_IndSt_HazardActive</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_BcmCan</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_BcmCan/RP_IndSt_HazardActive</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Indicators_BCM_SIG_INDICATOR_STATE_LEFT_INDICATOR_to_Swc_BcmCan</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_Indicators</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_Indicators/PP_IndSt_LeftOn</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_BcmCan</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_BcmCan/RP_IndSt_LeftOn</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Lights_BCM_SIG_LIGHT_STATUS_HEADLIGHT_ON_to_Swc_BcmCan</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_Lights</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_Lights/PP_LtSt_HeadlightOn</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_BcmCan</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_BcmCan/RP_LtSt_HeadlightOn</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_Lights_BCM_SIG_LIGHT_STATUS_TAIL_LIGHT_ON_to_Swc_BcmCan</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_Lights</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_Lights/PP_LtSt_TailLightOn</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_BcmCan</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_BcmCan/RP_LtSt_TailLightOn</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_BcmCan_BCM_SIG_VEHICLE_STATE_VEHICLE_STATE_to_Swc_DoorLock</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_BcmCan</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_BcmCan/PP_VehSt_Mode</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_DoorLock</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_DoorLock/RP_VehSt_Mode</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_BcmCan_BCM_SIG_VEHICLE_STATE_VEHICLE_STATE_to_Swc_Lights</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_BcmCan</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_BcmCan/PP_VehSt_Mode</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_Lights</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_Lights/RP_VehSt_Mode</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_BcmCan_BCM_SIG_BODY_CONTROL_CMD_HEADLIGHT_CMD_to_Swc_Lights</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_BcmCan</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_BcmCan/PP_BdyCmd_HeadlightCmd</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_Lights</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_Lights/RP_BdyCmd_HeadlightCmd</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>Swc_BcmCan_BCM_SIG_ESTOP_BROADCAST_ESTOP_ACTIVE_to_Swc_Indicators</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_BcmCan</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_BcmCan/PP_BCM_SIG_ESTOP_BROADCAST_ESTOP_ACTIVE</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_Indicators</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/Taktflow/SWCs/BCM/BCM_Swc_Indicators/RP_BCM_SIG_ESTOP_BROADCAST_ESTOP_ACTIVE</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+          </CONNECTORS>
+        </COMPOSITION-SW-COMPONENT-TYPE>
+        <COMPOSITION-SW-COMPONENT-TYPE>
+          <SHORT-NAME>ICU_Composition</SHORT-NAME>
+          <COMPONENTS>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_Dashboard</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/ICU/ICU_Swc_Dashboard</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_DtcDisplay</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/ICU/ICU_Swc_DtcDisplay</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+          </COMPONENTS>
+        </COMPOSITION-SW-COMPONENT-TYPE>
+        <COMPOSITION-SW-COMPONENT-TYPE>
+          <SHORT-NAME>TCU_Composition</SHORT-NAME>
+          <COMPONENTS>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_DataAggregator</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/TCU/TCU_Swc_DataAggregator</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_DtcStore</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/TCU/TCU_Swc_DtcStore</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_Obd2Pids</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/TCU/TCU_Swc_Obd2Pids</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>Swc_UdsServer</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/Taktflow/SWCs/TCU/TCU_Swc_UdsServer</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+          </COMPONENTS>
+        </COMPOSITION-SW-COMPONENT-TYPE>
+      </ELEMENTS>
+    </AR-PACKAGE>
+    <AR-PACKAGE>
+      <SHORT-NAME>SystemMapping</SHORT-NAME>
+      <ELEMENTS>
+        <SYSTEM>
+          <SHORT-NAME>TaktflowSystem</SHORT-NAME>
+          <MAPPINGS>
+            <SYSTEM-MAPPING>
+              <SHORT-NAME>EcuMapping</SHORT-NAME>
+              <SW-MAPPINGS>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_CanMonitor_to_CVC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_CanMonitor</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/CVC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_CvcCom_to_CVC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_CvcCom</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/CVC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_CvcDcm_to_CVC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_CvcDcm</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/CVC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_Dashboard_to_CVC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Dashboard</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/CVC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_EStop_to_CVC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_EStop</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/CVC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_Heartbeat_to_CVC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Heartbeat</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/CVC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_Nvm_to_CVC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Nvm</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/CVC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_Pedal_to_CVC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Pedal</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/CVC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_Scheduler_to_CVC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Scheduler</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/CVC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_SelfTest_to_CVC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_SelfTest</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/CVC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_VehicleState_to_CVC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_VehicleState</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/CVC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_Watchdog_to_CVC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/CVC_Composition/Swc_Watchdog</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/CVC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_Brake_to_FZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Brake</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/FZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_Buzzer_to_FZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Buzzer</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/FZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_FzcCanMonitor_to_FZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcCanMonitor</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/FZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_FzcCom_to_FZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcCom</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/FZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_FzcDcm_to_FZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcDcm</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/FZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_FzcNvm_to_FZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcNvm</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/FZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_FzcSafety_to_FZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcSafety</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/FZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_FzcScheduler_to_FZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcScheduler</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/FZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_FzcSensorFeeder_to_FZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_FzcSensorFeeder</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/FZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_Heartbeat_to_FZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Heartbeat</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/FZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_Lidar_to_FZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Lidar</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/FZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_Steering_to_FZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/FZC_Composition/Swc_Steering</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/FZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_Battery_to_RZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Battery</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/RZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_CurrentMonitor_to_RZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_CurrentMonitor</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/RZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_Encoder_to_RZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Encoder</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/RZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_Heartbeat_to_RZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Heartbeat</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/RZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_Motor_to_RZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_Motor</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/RZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_RzcCom_to_RZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcCom</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/RZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_RzcDcm_to_RZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcDcm</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/RZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_RzcNvm_to_RZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcNvm</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/RZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_RzcSafety_to_RZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcSafety</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/RZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_RzcScheduler_to_RZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcScheduler</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/RZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_RzcSelfTest_to_RZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcSelfTest</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/RZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_RzcSensorFeeder_to_RZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_RzcSensorFeeder</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/RZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_TempMonitor_to_RZC</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/RZC_Composition/Swc_TempMonitor</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/RZC</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_BcmCan_to_BCM</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_BcmCan</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/BCM</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_BcmMain_to_BCM</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_BcmMain</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/BCM</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_DoorLock_to_BCM</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_DoorLock</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/BCM</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_Indicators_to_BCM</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_Indicators</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/BCM</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_Lights_to_BCM</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/BCM_Composition/Swc_Lights</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/BCM</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_Dashboard_to_ICU</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/ICU_Composition/Swc_Dashboard</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/ICU</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_DtcDisplay_to_ICU</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/ICU_Composition/Swc_DtcDisplay</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/ICU</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_DataAggregator_to_TCU</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/TCU_Composition/Swc_DataAggregator</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/TCU</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_DtcStore_to_TCU</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/TCU_Composition/Swc_DtcStore</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/TCU</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_Obd2Pids_to_TCU</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/TCU_Composition/Swc_Obd2Pids</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/TCU</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>Swc_UdsServer_to_TCU</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/Compositions/TCU_Composition/Swc_UdsServer</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/Taktflow/ECUs/TCU</ECU-INSTANCE-REF>
+                </SWC-TO-ECU-MAPPING>
+              </SW-MAPPINGS>
+            </SYSTEM-MAPPING>
+          </MAPPINGS>
+        </SYSTEM>
+      </ELEMENTS>
+    </AR-PACKAGE>
+  </AR-PACKAGES>
+</AUTOSAR>

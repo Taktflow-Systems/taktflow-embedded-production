@@ -31,7 +31,7 @@ typedef struct {
 
 static const E2E_PduProtectCfgType bcm_e2e_tx_config[] = {
     /* pduId,                                      dataId,  counterBit, crcBit */
-    { BCM_COM_TX_BCM_HEARTBEAT,  0x51u,  4u,  8u },   /* BCM_Heartbeat */
+    { BCM_COM_TX_BCM_HEARTBEAT,  0x12u,  4u,  8u },   /* BCM_Heartbeat */
 };
 
 #define BCM_E2E_TX_PROTECT_COUNT  1u
@@ -43,24 +43,24 @@ static const E2E_PduProtectCfgType bcm_e2e_tx_config[] = {
 static const E2E_PduProtectCfgType bcm_e2e_rx_config[] = {
     /* pduId,                                      dataId,  counterBit, crcBit */
     { BCM_COM_RX_ESTOP_BROADCAST,  0x01u,  4u,  8u },   /* EStop_Broadcast */
-    { BCM_COM_RX_CVC_HEARTBEAT,  0x04u,  4u,  8u },   /* CVC_Heartbeat */
-    { BCM_COM_RX_FZC_HEARTBEAT,  0x11u,  4u,  8u },   /* FZC_Heartbeat */
-    { BCM_COM_RX_RZC_HEARTBEAT,  0x21u,  4u,  8u },   /* RZC_Heartbeat */
-    { BCM_COM_RX_ICU_HEARTBEAT,  0x31u,  4u,  8u },   /* ICU_Heartbeat */
-    { BCM_COM_RX_TCU_HEARTBEAT,  0x41u,  4u,  8u },   /* TCU_Heartbeat */
-    { BCM_COM_RX_VEHICLE_STATE,  0x02u,  4u,  8u },   /* Vehicle_State */
-    { BCM_COM_RX_TORQUE_REQUEST,  0x24u,  4u,  8u },   /* Torque_Request */
-    { BCM_COM_RX_STEER_COMMAND,  0x14u,  4u,  8u },   /* Steer_Command */
-    { BCM_COM_RX_BRAKE_COMMAND,  0x15u,  4u,  8u },   /* Brake_Command */
-    { BCM_COM_RX_STEERING_STATUS,  0x12u,  4u,  8u },   /* Steering_Status */
-    { BCM_COM_RX_BRAKE_STATUS,  0x13u,  4u,  8u },   /* Brake_Status */
-    { BCM_COM_RX_BRAKE_FAULT,  0x16u,  4u,  8u },   /* Brake_Fault */
-    { BCM_COM_RX_MOTOR_CUTOFF_REQ,  0x17u,  4u,  8u },   /* Motor_Cutoff_Req */
-    { BCM_COM_RX_LIDAR_DISTANCE,  0x18u,  4u,  8u },   /* Lidar_Distance */
-    { BCM_COM_RX_MOTOR_STATUS,  0x22u,  4u,  8u },   /* Motor_Status */
-    { BCM_COM_RX_MOTOR_CURRENT,  0x23u,  4u,  8u },   /* Motor_Current */
-    { BCM_COM_RX_MOTOR_TEMPERATURE,  0x25u,  4u,  8u },   /* Motor_Temperature */
-    { BCM_COM_RX_BATTERY_STATUS,  0x26u,  4u,  8u },   /* Battery_Status */
+    { BCM_COM_RX_CVC_HEARTBEAT,  0x02u,  4u,  8u },   /* CVC_Heartbeat */
+    { BCM_COM_RX_FZC_HEARTBEAT,  0x03u,  4u,  8u },   /* FZC_Heartbeat */
+    { BCM_COM_RX_RZC_HEARTBEAT,  0x04u,  4u,  8u },   /* RZC_Heartbeat */
+    { BCM_COM_RX_ICU_HEARTBEAT,  0x10u,  4u,  8u },   /* ICU_Heartbeat */
+    { BCM_COM_RX_TCU_HEARTBEAT,  0x11u,  4u,  8u },   /* TCU_Heartbeat */
+    { BCM_COM_RX_VEHICLE_STATE,  0x05u,  4u,  8u },   /* Vehicle_State */
+    { BCM_COM_RX_TORQUE_REQUEST,  0x06u,  4u,  8u },   /* Torque_Request */
+    { BCM_COM_RX_STEER_COMMAND,  0x07u,  4u,  8u },   /* Steer_Command */
+    { BCM_COM_RX_BRAKE_COMMAND,  0x08u,  4u,  8u },   /* Brake_Command */
+    { BCM_COM_RX_STEERING_STATUS,  0x09u,  4u,  8u },   /* Steering_Status */
+    { BCM_COM_RX_BRAKE_STATUS,  0x0Au,  4u,  8u },   /* Brake_Status */
+    { BCM_COM_RX_BRAKE_FAULT,  0x0Bu,  4u,  8u },   /* Brake_Fault */
+    { BCM_COM_RX_MOTOR_CUTOFF_REQ,  0x0Cu,  4u,  8u },   /* Motor_Cutoff_Req */
+    { BCM_COM_RX_LIDAR_DISTANCE,  0x0Du,  4u,  8u },   /* Lidar_Distance */
+    { BCM_COM_RX_MOTOR_STATUS,  0x0Eu,  4u,  8u },   /* Motor_Status */
+    { BCM_COM_RX_MOTOR_CURRENT,  0x0Fu,  4u,  8u },   /* Motor_Current */
+    { BCM_COM_RX_MOTOR_TEMPERATURE,  0x00u,  4u,  8u },   /* Motor_Temperature */
+    { BCM_COM_RX_BATTERY_STATUS,  0x13u,  4u,  8u },   /* Battery_Status */
 };
 
 #define BCM_E2E_RX_PROTECT_COUNT  19u

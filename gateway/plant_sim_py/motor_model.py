@@ -137,6 +137,16 @@ class MotorModel:
         self._overcurrent_latch = False
         self._injected_current_ma = 0.0
 
+    def reset_state(self):
+        """Full physics reset — return to power-on defaults."""
+        self.rpm = 0.0
+        self.current_ma = 0.0
+        self.temp_c = self.T_AMBIENT
+        self.direction = 0
+        self.enabled = False
+        self.duty_pct = 0.0
+        self.reset_faults()
+
     @property
     def temp_c_int(self) -> int:
         return int(max(-40, min(215, self.temp_c)))

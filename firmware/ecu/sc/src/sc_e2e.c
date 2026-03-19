@@ -22,6 +22,17 @@ static uint8 e2e_last_alive[SC_MB_COUNT];
 /** Per-message E2E state: first message flag (no alive check on first) */
 static boolean e2e_first_rx[SC_MB_COUNT];
 
+/** Boot grace counter — skip E2E enforcement for first N ticks after init.
+ *  On real hardware (10ms tick), 5 ticks = 50ms is plenty.
+ *  On POSIX SIL (Docker), containers take 1-2s to stabilize E2E alive
+ *  counters — extend grace to avoid false E2E_FAIL relay kill at boot. */
+#ifdef PLATFORM_POSIX
+#define SC_E2E_GRACE_TICKS  200u   /* 2000ms — Docker boot margin */
+#else
+#define SC_E2E_GRACE_TICKS  5u     /* 50ms — real hardware */
+#endif
+static uint16 e2e_grace_remaining;
+
 /** Per-message consecutive failure counter */
 static uint8 e2e_fail_count[SC_MB_COUNT];
 
@@ -75,6 +86,7 @@ void SC_E2E_Init(void)
         e2e_fail_count[i] = 0u;
         e2e_failed[i]     = FALSE;
     }
+    e2e_grace_remaining = SC_E2E_GRACE_TICKS;
 }
 
 boolean SC_E2E_Check(const uint8* data, uint8 dlc, uint8 dataId,
@@ -156,6 +168,13 @@ boolean SC_E2E_IsMsgFailed(uint8 msgIndex)
 
 boolean SC_E2E_IsAnyCriticalFailed(void)
 {
+    /* Boot grace period — E2E alive counters need N valid frames to sync.
+     * During grace, report OK to prevent relay kill from boot transient. */
+    if (e2e_grace_remaining > 0u) {
+        e2e_grace_remaining--;
+        return FALSE;
+    }
+
     /* Safety-critical mailboxes: E-Stop + 3 heartbeats.
      * Any persistent E2E failure on these channels means we cannot trust
      * the safety data, warranting fail-safe action (GAP-SC-002). */

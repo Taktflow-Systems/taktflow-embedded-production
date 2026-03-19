@@ -24,29 +24,11 @@
 
 /* ====================================================================
  * RTE Signal IDs (SWC-level short names)
- * These map to internal RTE signal slots used by Rte_Read/Rte_Write.
+ * All FZC_SIG_* defines are GENERATED in Fzc_Cfg.h:
+ *   - CAN-derived signals: via sidecar rte_aliases (e.g., FZC_SIG_STEER_CMD)
+ *   - Internal signals: via sidecar rte_internal_signals (e.g., FZC_SIG_BUZZER_PATTERN)
+ * Do NOT duplicate them here — see Fzc_Cfg.h for authoritative values.
  * ==================================================================== */
-
-#define FZC_SIG_STEER_CMD          16u
-#define FZC_SIG_STEER_ANGLE        17u
-#define FZC_SIG_STEER_FAULT        18u
-#define FZC_SIG_BRAKE_CMD          19u
-#define FZC_SIG_BRAKE_POS          20u
-#define FZC_SIG_BRAKE_FAULT        21u
-#define FZC_SIG_LIDAR_DIST         22u
-#define FZC_SIG_LIDAR_SIGNAL       23u
-#define FZC_SIG_LIDAR_ZONE         24u
-#define FZC_SIG_LIDAR_FAULT        25u
-#define FZC_SIG_VEHICLE_STATE      26u
-#define FZC_SIG_ESTOP_ACTIVE       27u
-#define FZC_SIG_BUZZER_PATTERN     28u
-#define FZC_SIG_MOTOR_CUTOFF       29u
-#define FZC_SIG_FAULT_MASK         30u
-#define FZC_SIG_STEER_PWM_DISABLE  31u
-#define FZC_SIG_BRAKE_PWM_DISABLE  32u
-#define FZC_SIG_SELF_TEST_RESULT   33u
-#define FZC_SIG_HEARTBEAT_ALIVE    34u
-#define FZC_SIG_SAFETY_STATUS      35u
 
 /* ====================================================================
  * Com TX Signal IDs (index into Com signal config table)
@@ -54,16 +36,17 @@
  * signal ID.  The PDU IDs are in generated Fzc_Cfg.h.
  * ==================================================================== */
 
-#define FZC_COM_SIG_TX_BRAKE_FAULT     FZC_COM_SIG_BRAKE_FAULT_FAULT_TYPE       /* 25u */
-#define FZC_COM_SIG_TX_MOTOR_CUTOFF    FZC_COM_SIG_MOTOR_CUTOFF_REQ_REQUEST_TYPE /* 31u */
+#define FZC_COM_SIG_TX_BRAKE_FAULT     FZC_COM_SIG_BRAKE_FAULT_FAULT_TYPE
+#define FZC_COM_SIG_TX_MOTOR_CUTOFF    FZC_COM_SIG_MOTOR_CUTOFF_REQ_REQUEST_TYPE
 
 /* ====================================================================
  * Com Signal IDs for Virtual Sensors (RX from plant-sim, SIL only)
  * ==================================================================== */
 
-#define FZC_COM_SIG_RX_VIRT_STEER_ANGLE   14u  /* uint16 LE, 14-bit SPI format */
-#define FZC_COM_SIG_RX_VIRT_BRAKE_POS     15u  /* uint16 LE, 0-1000 ADC counts */
-#define FZC_COM_SIG_RX_VIRT_BRAKE_CURRENT 16u  /* uint16 LE, mA               */
+/* Use generated signal IDs from Fzc_Cfg.h (DBC→ARXML→codegen) */
+#define FZC_COM_SIG_RX_VIRT_STEER_ANGLE   FZC_COM_SIG_FZC_VIRTUAL_SENSORS_STEER_ANGLE_RAW
+#define FZC_COM_SIG_RX_VIRT_BRAKE_POS     FZC_COM_SIG_FZC_VIRTUAL_SENSORS_BRAKE_POS_ADC
+#define FZC_COM_SIG_RX_VIRT_BRAKE_CURRENT FZC_COM_SIG_FZC_VIRTUAL_SENSORS_BRAKE_CURRENT_M_A
 
 /* ADC group/channel for brake position injection (SIL) */
 #define FZC_BRAKE_ADC_GROUP    3u   /* Must match iohwab_config.BrakePositionAdcGroup */
@@ -217,8 +200,8 @@
 #define FZC_COM_RX_STEER_CMD       FZC_COM_RX_STEER_COMMAND
 #define FZC_COM_RX_BRAKE_CMD       FZC_COM_RX_BRAKE_COMMAND
 
-/* Virtual sensors PDU (SIL only, not in DBC/ARXML) */
-#define FZC_COM_RX_VIRT_SENSORS    27u   /* CAN 0x600 — plant-sim virtual sensors */
+/* Virtual sensors PDU — now in DBC/ARXML, use generated ID */
+#define FZC_COM_RX_VIRT_SENSORS    FZC_COM_RX_FZC_VIRTUAL_SENSORS
 
 /* Det module and API IDs are in Det_ErrIds.h */
 

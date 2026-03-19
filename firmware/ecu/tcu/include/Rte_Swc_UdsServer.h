@@ -22,13 +22,33 @@
  * ==================================================================== */
 
 /**
- * @brief  Write UDS_Data (uint32_t)
+ * @brief  Read UDS_Func_Request_UDS_Data (uint32_t)
+ * @param  data  Pointer to receive the signal value
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Read_UDS_Func_Request_UDS_Data(uint32_t *data)
+{
+    return Rte_Read(TCU_SIG_UDS_FUNC_REQUEST_UDS_DATA, data);
+}
+
+/**
+ * @brief  Read UDS_Phys_Req_TCU_UDS_Data (uint32_t)
+ * @param  data  Pointer to receive the signal value
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Read_UDS_Phys_Req_TCU_UDS_Data(uint32_t *data)
+{
+    return Rte_Read(TCU_SIG_UDS_PHYS_REQ_TCU_UDS_DATA, data);
+}
+
+/**
+ * @brief  Write UDS_Resp_TCU_UDS_Data (uint32_t)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_UDS_Data(uint32_t value)
+static inline Rte_StatusType Rte_Write_UDS_Resp_TCU_UDS_Data(uint32_t value)
 {
-    return Rte_Write(TCU_SIG_UDS_DATA, (uint32_t)value);
+    return Rte_Write(TCU_SIG_UDS_RESP_TCU_UDS_DATA, (uint32_t)value);
 }
 
 #endif /* RTE_SWC_UDSSERVER_H */

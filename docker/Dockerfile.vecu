@@ -25,16 +25,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY firmware/ /build/firmware/
 WORKDIR /build
 
-# Clean stale build artifacts, then build all 7 simulated ECU binaries
-# DIAG=1 enables SIL diagnostic printf for state machine tracing
-RUN rm -rf build && \
-    make -f firmware/platform/posix/Makefile.posix TARGET=bcm DIAG=1 && \
-    make -f firmware/platform/posix/Makefile.posix TARGET=icu DIAG=1 && \
-    make -f firmware/platform/posix/Makefile.posix TARGET=tcu DIAG=1 && \
-    make -f firmware/platform/posix/Makefile.posix TARGET=cvc DIAG=1 && \
-    make -f firmware/platform/posix/Makefile.posix TARGET=fzc DIAG=1 && \
-    make -f firmware/platform/posix/Makefile.posix TARGET=rzc DIAG=1 && \
-    make -f firmware/platform/posix/Makefile.posix TARGET=sc  DIAG=1
+# Build all 7 simulated ECU binaries.
+# CRITICAL: clean between each ECU — shared BSW .o files in build/ are compiled
+# with per-ECU config includes (Com_Cfg, Rte_Cfg, etc.). Without cleaning,
+# later ECUs link against the first ECU's config objects → silent malfunction.
+# DIAG=1 enables SIL diagnostic printf for state machine tracing.
+RUN set -e && for ecu in bcm icu tcu cvc fzc rzc sc; do \
+        echo "=== Building $ecu ===" && \
+        rm -rf build && \
+        make -f firmware/platform/posix/Makefile.posix TARGET=$ecu DIAG=1 && \
+        cp build/${ecu}_posix /tmp/${ecu}_posix; \
+    done && \
+    mkdir -p build && \
+    cp /tmp/*_posix build/
 
 # ---------------------------------------------------------------------------
 # Runtime stage — minimal image with CAN utilities

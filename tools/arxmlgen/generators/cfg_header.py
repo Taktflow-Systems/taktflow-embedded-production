@@ -31,9 +31,9 @@ class CfgHeaderGenerator:
             key=lambda x: x[1],
         )
 
-        # Total signal count (16 BSW reserved + ECU-specific from map)
+        # Total signal count (16 BSW reserved + ECU-specific from map + internal)
         # rte_signal_map only contains app signals (ID >= 16)
-        sig_count = 16 + len(ecu_app_signals)
+        sig_count = 16 + len(ecu_app_signals) + ecu.rte_internal_signal_count
 
         # Count periodic runnables (exclude init-only) for RTE_MAX_RUNNABLES
         runnable_count = 0
@@ -42,6 +42,17 @@ class CfgHeaderGenerator:
                 if not r.is_init and r.period_ms > 0:
                     runnable_count += 1
 
+        # Total Com signal count (TX + RX signals across all PDUs)
+        com_signal_count = sum(len(p.signals) for p in ecu.tx_pdus) + \
+                           sum(len(p.signals) for p in ecu.rx_pdus)
+
+        # Build internal signal defines: (name, id) starting after app signals
+        internal_base = 16 + len(ecu_app_signals)
+        rte_internal_signals = [
+            (name, internal_base + i)
+            for i, name in enumerate(ecu.rte_internal_signals)
+        ]
+
         context = {
             "ecu": ecu,
             "filename": f"{ecu.prefix.capitalize()}_Cfg.h",
@@ -49,8 +60,10 @@ class CfgHeaderGenerator:
             "tool_version": "1.0.0",
             "arxml_source": "TaktflowSystem.arxml",
             "ecu_app_signals": ecu_app_signals,
+            "rte_internal_signals": rte_internal_signals,
             "sig_count": sig_count,
             "runnable_count": runnable_count,
+            "com_signal_count": com_signal_count,
         }
 
         content = engine.render("cfg/Ecu_Cfg.h.j2", context)

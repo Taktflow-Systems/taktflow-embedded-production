@@ -87,6 +87,16 @@ class SteeringModel:
         self._direction_changes.clear()
         self._prev_direction = 0
 
+    def reset_state(self):
+        """Full physics reset — return to neutral (called on power-cycle reset)."""
+        self.actual_angle = 0.0
+        self.commanded_angle = 0.0
+        self.servo_current_ma = 0
+        self.fault = False
+        self._prev_cmd = 0.0
+        self._prev_direction = 0
+        self._direction_changes.clear()
+
     @property
     def actual_raw(self) -> int:
         """Raw 16-bit signed value for DBC: direct degrees (1,0)."""

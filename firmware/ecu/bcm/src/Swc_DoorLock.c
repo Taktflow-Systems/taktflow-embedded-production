@@ -100,7 +100,7 @@ void Swc_DoorLock_100ms(void)
     /* --- 1. Read input signals ---------------------------------------- */
     (void)Rte_Read(BCM_SIG_BODY_CONTROL_CMD_DOOR_LOCK_CMD, &body_cmd);
     (void)Rte_Read(BCM_SIG_MOTOR_STATUS_MOTOR_SPEED_RPM, &vehicle_speed);
-    (void)Rte_Read(BCM_SIG_VEHICLE_STATE_VEHICLE_STATE, &vehicle_state);
+    (void)Rte_Read(BCM_SIG_VEHICLE_STATE_MODE, &vehicle_state);
 
     /* --- 2. Manual lock command (discrete signal: 0=unlock, 1=lock) --- */
     manual_lock = (body_cmd != 0u) ? TRUE : FALSE;
