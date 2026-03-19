@@ -89,3 +89,30 @@ Session-level lessons from firmware bringup, HIL test automation, and platform p
 4. **`arm-none-eabi-nm` for symbol lookup** — When HardFault gives you a PC address, look it up in the symbol table to identify which function faulted.
 
 **Principle**: On bare-metal without a debugger, your only diagnostic is what you can print before the crash. Configure UART as early as possible (in SystemInit, before constructors), and always implement a HardFault handler that dumps fault registers. Never deploy firmware without a HardFault handler — even "hello world" level code.
+
+## 2026-03-19 — E-Stop 0x001 never on CAN: 4 bugs in the injection chain
+
+**Context**: SIL E-Stop test (SIL-003). UDP fault-inject sends E-Stop command to CVC. CVC should detect via DIO, transition to SAFE_STOP, and broadcast CAN 0x001. Vehicle went to SAFE_STOP (local state) but 0x001 never appeared on the bus.
+
+**Mistakes (4 layered bugs)**:
+1. **SPI UDP socket never drained** — `IoHwAb_ReadPedalAngle` on POSIX reads from injected sensor values, not SPI. Nobody called `Spi_Hw_Transmit`, so the UDP socket that receives pedal/E-Stop commands was never read.
+2. **DIO channel mismatch** — `IoHwAb_Inject_SetDigitalPin(IOHWAB_PIN_ESTOP=0, HIGH)` wrote DIO channel 0. But `IoHwAb_ReadEStop` reads `Dio_ReadChannel(config->EStopDioChannel=5)`. Wrong channel.
+3. **Dual static config pointer** — `IoHwAb.c` and `IoHwAb_Posix.c` both define `static iohwab_config`. `IoHwAb_Init` (from IoHwAb.c) only sets its own copy. The Posix copy stays NULL, so the config-guarded Dio write was skipped.
+4. **Stale CAN injection resets DIO every cycle** — `Swc_CvcCom_BridgeRxToRte()` called `Com_ReceiveSignal(19u)` (dev-repo leftover, always returns 0), then `CvcCom_Hw_InjectEstop(0)` which wrote DIO channel 5 = LOW every 10ms. The UDP-injected HIGH was overwritten within one cycle.
+
+**Fixes**:
+1. Added `Spi_Hw_PollUdp()` called from CVC main loop every 10ms — drains UDP, writes pedal angles to IoHwAb sensor values.
+2. Hardcoded DIO channel 5 for E-Stop in `IoHwAb_Inject_SetDigitalPin` (bypasses NULL config).
+3. Same as #2 — removed config guard.
+4. Removed the broken `Com_ReceiveSignal(19u)` → `CvcCom_Hw_InjectEstop` path entirely.
+
+**Additional fix — broadcast pattern**:
+- Old: 4 fire-and-forget sends then silent. Other ECUs could miss E-Stop if frames lost or if they reset after activation.
+- New: Cyclic broadcast every 10ms while latched (IfActive pattern). Industry standard per ISO 26262 FTTI compliance — CAN has no application-layer ACK, cyclic is the only way to guarantee all nodes receive.
+
+**Principles**:
+1. **When two .c files both define `static X`, the linker picks one — the other is silently ignored.** If both files are linked, functions in file A use A's static, functions in file B use B's. This is correct C behavior but creates hidden state splits. Never link two files that both implement the same API with separate static state.
+2. **Every "temporary" dev hack that writes to shared state will eventually conflict with production code.** The `Com_ReceiveSignal(19u)` was harmless when it was the only E-Stop path. Once the real DIO path was added, the old hack silently undid every E-Stop activation.
+3. **Safety-critical signals must be cyclic, not event-only.** Fire-and-forget violates the FTTI contract — recovering nodes, late-joining testers, and bus-off recovery all need to see the current state. IfActive (cyclic while latched) is the industry standard.
+4. **Test the full chain, not just the endpoint.** SIL-003 was "passing" by checking only CVC's local state (0x100 = SAFE_STOP). The real safety chain requires 0x001 on the bus. A test that doesn't check the broadcast is a false pass.
+5. **On POSIX/SIL, verify the hardware abstraction actually connects.** The IoHwAb, DIO, and SPI layers form a 4-layer abstraction on POSIX. A break at any layer is invisible unless you trace the value end-to-end (DIO readback trace was the key diagnostic).
