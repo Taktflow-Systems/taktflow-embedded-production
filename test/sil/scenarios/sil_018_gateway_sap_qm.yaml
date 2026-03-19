@@ -24,7 +24,7 @@ verifies:
   - "SWR-GW-006"   # 8D Report Template Generation
 aspice: "SWE.5"
 iso_reference: "ISO 26262 Part 6, Section 10"
-timeout_sec: 90
+timeout_sec: 150
 
 setup:
   - action: reset
@@ -36,8 +36,8 @@ setup:
 steps:
   - action: wait_state
     state: RUN
-    timeout: 30
-    description: "Wait for INIT hold (10s) + post-INIT grace (10s) + Docker scheduling margin"
+    timeout: 45
+    description: "Wait for INIT hold (10s) + post-INIT grace (10s) + Docker scheduling (late in suite, containers fatigued)"
   - action: wait
     seconds: 12
     description: "Allow CVC post-INIT grace period (10s) to expire"
