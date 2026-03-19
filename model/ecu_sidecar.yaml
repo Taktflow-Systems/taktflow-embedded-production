@@ -160,6 +160,30 @@ ecus:
       FZC_STATE_SHUTDOWN: 5
       FZC_STATE_COUNT: 6
 
+    rte_internal_signals:
+      - BUZZER_PATTERN
+      - STEER_PWM_DISABLE
+      - BRAKE_PWM_DISABLE
+      - SELF_TEST_RESULT
+      - SAFETY_STATUS
+      - HEARTBEAT_ALIVE
+      - FAULT_MASK
+
+    rte_aliases:
+      FZC_SIG_STEER_CMD:          Steer_Command_SteerAngleCmd
+      FZC_SIG_STEER_ANGLE:        Steering_Status_ActualAngle
+      FZC_SIG_STEER_FAULT:        Steering_Status_SteerFaultStatus
+      FZC_SIG_BRAKE_CMD:          Brake_Command_BrakeForceCmd
+      FZC_SIG_BRAKE_POS:          Brake_Status_BrakePosition
+      FZC_SIG_BRAKE_FAULT:        Brake_Status_BrakeFaultStatus
+      FZC_SIG_LIDAR_DIST:         Lidar_Distance_Distance_cm
+      FZC_SIG_LIDAR_SIGNAL:       Lidar_Distance_SignalStrength
+      FZC_SIG_LIDAR_ZONE:         Lidar_Distance_ObstacleZone
+      FZC_SIG_LIDAR_FAULT:        Lidar_Distance_SensorStatus
+      FZC_SIG_VEHICLE_STATE:      Vehicle_State_Mode
+      FZC_SIG_ESTOP_ACTIVE:       EStop_Broadcast_EStop_Active
+      FZC_SIG_MOTOR_CUTOFF:       Motor_Cutoff_Req_RequestType
+
     thresholds:
       FZC_RTE_PERIOD_MS: 10
       FZC_COMM_TIMEOUT: 100
@@ -402,6 +426,19 @@ ecus:
     pdu_e2e_map:
       ICU_Heartbeat: 0x31
 
+    rte_aliases:
+      ICU_SIG_MOTOR_RPM:          Motor_Status_MotorSpeed_RPM
+      ICU_SIG_TORQUE_PCT:         Torque_Request_Torque_pct
+      ICU_SIG_MOTOR_TEMP:         Motor_Temperature_WindingTemp1_C
+      ICU_SIG_BATTERY_VOLTAGE:    Battery_Status_BatteryVoltage_mV
+      ICU_SIG_VEHICLE_STATE:      Vehicle_State_Mode
+      ICU_SIG_ESTOP_ACTIVE:       EStop_Broadcast_EStop_Active
+      ICU_SIG_HEARTBEAT_CVC:      CVC_Heartbeat_E2E_AliveCounter
+      ICU_SIG_HEARTBEAT_FZC:      FZC_Heartbeat_E2E_AliveCounter
+      ICU_SIG_HEARTBEAT_RZC:      RZC_Heartbeat_E2E_AliveCounter
+      ICU_SIG_OVERCURRENT_FLAG:   Motor_Current_OvercurrentFlag
+      ICU_SIG_DTC_BROADCAST:      DTC_Broadcast_DTC_Number
+
     thresholds:
       ICU_RTE_PERIOD_MS: 50
       ICU_COMM_TIMEOUT: 200
@@ -417,6 +454,15 @@ ecus:
 
     pdu_e2e_map:
       TCU_Heartbeat: 0x41
+
+    rte_aliases:
+      TCU_SIG_VEHICLE_SPEED:      Motor_Status_MotorSpeed_RPM
+      TCU_SIG_MOTOR_TEMP:         Motor_Temperature_WindingTemp1_C
+      TCU_SIG_BATTERY_VOLTAGE:    Battery_Status_BatteryVoltage_mV
+      TCU_SIG_MOTOR_CURRENT:      Motor_Current_Current_mA
+      TCU_SIG_TORQUE_PCT:         Torque_Request_Torque_pct
+      TCU_SIG_MOTOR_RPM:          Motor_Status_MotorSpeed_RPM
+      TCU_SIG_DTC_BROADCAST:      DTC_Broadcast_DTC_Number
 
     thresholds:
       TCU_RTE_PERIOD_MS: 10
