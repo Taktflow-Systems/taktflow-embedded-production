@@ -98,12 +98,8 @@ void Bcm_ComBridge_10ms(void)
     }
 
     /* ---- RX bridge: Com RX → RTE inputs ---- */
-    {
-        uint8  rx_u8;
-
-        /* Com→RTE auto-binding handles Vehicle_State, Body_Control_Cmd,
-         * EStop_Broadcast — no manual bridge needed (AUTOSAR layering). */
-    }
+    /* Com→RTE auto-binding handles Vehicle_State, Body_Control_Cmd,
+     * EStop_Broadcast — no manual bridge needed (AUTOSAR layering). */
 }
 
 /* ==================================================================

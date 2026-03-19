@@ -9,20 +9,7 @@
 #ifndef ICU_APP_H
 #define ICU_APP_H
 
-/* --- Simplified signal IDs for SWC code --- */
-#define ICU_SIG_MOTOR_RPM         16u
-#define ICU_SIG_TORQUE_PCT        17u
-#define ICU_SIG_MOTOR_TEMP        18u
-#define ICU_SIG_BATTERY_VOLTAGE   19u
-#define ICU_SIG_VEHICLE_STATE     20u
-#define ICU_SIG_ESTOP_ACTIVE      21u
-#define ICU_SIG_HEARTBEAT_CVC     22u
-#define ICU_SIG_HEARTBEAT_FZC     23u
-#define ICU_SIG_HEARTBEAT_RZC     24u
-#define ICU_SIG_OVERCURRENT_FLAG  25u
-#define ICU_SIG_LIGHT_STATUS      26u
-#define ICU_SIG_INDICATOR_STATE   27u
-#define ICU_SIG_DTC_BROADCAST     28u
+/* Signal IDs are generated in Icu_Cfg.h — do not duplicate here */
 
 /* --- TX PDU aliases (icu_main.c uses short names) --- */
 #define ICU_COM_TX_HEARTBEAT      ICU_COM_TX_ICU_HEARTBEAT
