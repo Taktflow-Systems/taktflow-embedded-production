@@ -22,6 +22,7 @@
 #include "Std_Types.h"
 #include "IoHwAb_Inject.h"
 #include "IoHwAb_Posix.h"
+#include "Dio.h"
 
 /* ---- POSIX headers for UDP pedal override ---- */
 #include <sys/socket.h>
@@ -374,6 +375,14 @@ void Spi_Hw_PollUdp(void)
     uint16 rx_angle = 0u;
     /* Spi_Hw_Transmit drains the UDP socket and returns simulated angle */
     (void)Spi_Hw_Transmit(0u, NULL_PTR, &rx_angle, 1u);
+
+    /* Verify DIO E-Stop channel after drain */
+    {
+        uint8 dio5 = Dio_ReadChannel(5u);
+        if (dio5 != 0u) {
+            fprintf(stderr, "[SPI-POLL] DIO5=%u (E-Stop active)\n", dio5);
+        }
+    }
 
     /* Write the SPI-simulated angle into IoHwAb sensor values so that
      * IoHwAb_ReadPedalAngle() (which reads from injected values, not SPI)
