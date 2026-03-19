@@ -431,6 +431,7 @@ int main(void)
         if ((tick_us - last_10ms_us) >= 10000u)
         {
             last_10ms_us = tick_us;
+            Spi_Hw_PollUdp();  /* Drain UDP pedal/E-Stop override socket */
             CanTp_MainFunction();
             Dcm_MainFunction();
             BswM_MainFunction();

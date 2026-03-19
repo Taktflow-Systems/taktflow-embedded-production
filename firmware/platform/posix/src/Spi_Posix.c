@@ -355,3 +355,29 @@ uint8 Spi_Hw_GetStatus(void)
 {
     return 1u; /* SPI_IDLE */
 }
+
+/**
+ * @brief  Drain the UDP pedal override socket (POSIX only)
+ *
+ * On POSIX, IoHwAb_ReadPedalAngle reads from injected sensor values,
+ * not from SPI. The SPI UDP socket is used for E-Stop and pedal override
+ * injection from the fault-inject container. This function must be called
+ * periodically (e.g., every 10ms from the main loop) to process incoming
+ * UDP commands that set DIO pins and pedal angle overrides.
+ */
+void Spi_Hw_PollUdp(void)
+{
+    if (spi_udp_fd < 0) {
+        return;
+    }
+
+    uint16 rx_angle = 0u;
+    /* Spi_Hw_Transmit drains the UDP socket and returns simulated angle */
+    (void)Spi_Hw_Transmit(0u, NULL_PTR, &rx_angle, 1u);
+
+    /* Write the SPI-simulated angle into IoHwAb sensor values so that
+     * IoHwAb_ReadPedalAngle() (which reads from injected values, not SPI)
+     * picks up the UDP pedal override. Both pedal sensors get same value. */
+    IoHwAb_Inject_SetSensorValue(IOHWAB_SENSOR_PEDAL_0, rx_angle);
+    IoHwAb_Inject_SetSensorValue(IOHWAB_SENSOR_PEDAL_1, rx_angle);
+}
