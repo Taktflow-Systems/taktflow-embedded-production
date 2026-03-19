@@ -212,7 +212,11 @@ def main():
     all_conns = []
     for ecu, conns in cmap.items():
         all_conns.extend(conns)
-    sample = random.sample(all_conns, max(1, len(all_conns) // 10))
+    if not all_conns:
+        warn("No connectors to sample", "run build_connectors.py")
+        sample = []
+    else:
+        sample = random.sample(all_conns, max(1, len(all_conns) // 10))
 
     sample_pass = 0
     sample_fail = 0
