@@ -46,6 +46,23 @@ ifdef DIAG
   CFLAGS += -DSIL_DIAG
 endif
 
+<<<<<<< Updated upstream
+=======
+# --- ThreadX RTOS (pass THREADX=1 to enable) ---
+ifdef THREADX
+  CFLAGS += -DUSE_THREADX -DTX_INCLUDE_USER_DEFINE_FILE -Wno-error=unused-parameter
+  XCUBE_DIR = $(FW)/lib/x-cube-azrtos-g4/Middlewares/ST
+  THREADX_DIR = $(XCUBE_DIR)/threadx
+  THREADX_PORT = $(THREADX_DIR)/ports/cortex_m4/gnu
+  CMSIS_RTOS_DIR = $(XCUBE_DIR)/cmsis_rtos_threadx
+  CMSIS6_DIR = $(FW)/lib/cmsis6/CMSIS/RTOS2/Include
+  CFLAGS += -I$(THREADX_DIR)/common/inc
+  CFLAGS += -I$(THREADX_PORT)/inc
+  CFLAGS += -I$(CMSIS6_DIR)
+  CFLAGS += -I$(CMSIS_RTOS_DIR)
+endif
+
+>>>>>>> Stashed changes
 # --- HIL mode (pass HIL=1 to enable IoHwAb sensor override from CAN) ---
 ifdef HIL
   CFLAGS += -DPLATFORM_HIL
@@ -199,6 +216,31 @@ ECU_SRCS_ALL = $(wildcard $(ECU)/$(TARGET)/src/*.c) $(wildcard $(ECU)/$(TARGET)/
 ECU_HW_STM32 = $(wildcard $(PLAT)/src/$(TARGET)_hw_stm32.c)
 ECU_SRCS = $(filter-out %_posix.c %_tms570.c,$(ECU_SRCS_ALL)) $(ECU_HW_STM32)
 
+<<<<<<< Updated upstream
+=======
+# --- ThreadX kernel sources (only when THREADX=1) ---
+ifdef THREADX
+THREADX_SRCS = $(wildcard $(THREADX_DIR)/common/src/*.c) \
+    $(CMSIS_RTOS_DIR)/cmsis_os2.c \
+
+THREADX_ASM_SRCS = \
+    $(THREADX_PORT)/src/tx_thread_context_save.S \
+    $(THREADX_PORT)/src/tx_thread_context_restore.S \
+    $(THREADX_PORT)/src/tx_thread_interrupt_control.S \
+    $(THREADX_PORT)/src/tx_thread_interrupt_disable.S \
+    $(THREADX_PORT)/src/tx_thread_interrupt_restore.S \
+    $(THREADX_PORT)/src/tx_thread_schedule.S \
+    $(THREADX_PORT)/src/tx_thread_stack_build.S \
+    $(THREADX_PORT)/src/tx_thread_system_return.S \
+    $(THREADX_PORT)/src/tx_timer_interrupt.S
+THREADX_SRCS += $(PLAT)/src/tx_stubs.c $(PLAT)/src/stm32g4xx_it_threadx.c $(PLAT)/src/stm32g4xx_hal_timebase_tim.c
+THREADX_ASM_SRCS += $(PLAT)/src/tx_initialize_low_level.S
+else
+THREADX_SRCS =
+THREADX_ASM_SRCS =
+endif
+
+>>>>>>> Stashed changes
 # --- All application sources ---
 APP_SRCS = $(BSW_SRCS) $(HAL_SRCS) $(BSP_SRCS) $(CUBEMX_SRCS) $(ECU_SRCS)
 
