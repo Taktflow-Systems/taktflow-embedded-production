@@ -114,3 +114,43 @@ All non-AFE-vendor tests pass. ADI ADES1830 tests also pass after clean.
 - Python venv: `/home/an-dao/foxbms-2/.venv/`
 - Ruby 3.2.3 + Ceedling 1.0.1 installed
 - waf configure fails (no TI CGT) — needs patching for host-only build
+
+## foxBMS POSIX vECU — WORKING (2026-03-20)
+
+### Achievement
+foxBMS 2 v1.10.0 running as a native Linux x86-64 process on Ubuntu laptop.
+Sends CAN messages (0x220 BMS State, 0x600/0x601 debug AFE) on vcan0.
+
+### How It Works
+- FreeRTOS POSIX port (ThirdParty/GCC/Posix) provides real task scheduling via pthreads
+- 7 FreeRTOS threads created: TaskEngine, Task1ms, Task10ms, Task100ms, TaskAlgo, TaskAFE, TaskI2C
+- foxBMS's own main.c drives initialization (not custom entry point)
+- HAL stubs replace hardware register access (IO, CRC, SPI, I2C, ADC, etc.)
+- SocketCAN via canInit() stub opens vcan0 automatically
+
+### Files (in foxbms-2/posix/)
+- `Makefile` — builds 170+ foxBMS source files with GCC
+- `hal_stubs_posix.c` — 50+ HAL function stubs
+- `posix_overrides.h` — force-included, stubs `__asm` and `__curpc`
+- `foxbms_posix_main.c` — SocketCAN helper functions
+- `config_cpu_clock_hz.h` — defines CPU clock for FreeRTOS config
+
+### Excluded Source Files (variants we don't use)
+- AFE: adi, nxp, maxim, ltc, ti, debug/default (keep debug/can only)
+- IMD: bender, no-imd (keep imd.c with none config)
+- SOC/SOE/SOH: debug and none variants (keep counting)
+- TS: all except epcos b57251v5103j060
+- Others: ethernet, bal/history, bal/none, polynomial, fstartup, io.c, crc.c
+
+### Build & Run
+```bash
+cd /home/an-dao/foxbms-2/posix
+make -j4                              # Build
+sudo ip link add vcan0 type vcan      # Create virtual CAN
+sudo ip link set vcan0 up
+./foxbms-vecu                         # Run (Ctrl+C to stop)
+candump vcan0                         # See CAN output in another terminal
+```
+
+### Environment Variable
+`FOXBMS_CAN_IF=can0` to use real CAN instead of vcan0
