@@ -30,6 +30,11 @@ static boolean com_tx_pending[COM_MAX_PDUS];
 /* TX cycle counters (ms elapsed since last send per PDU) */
 static uint16 com_tx_cycle_cnt[COM_MAX_PDUS];
 
+/* Debug: per-PDU TX send count (read from UART debug) */
+volatile uint32 com_tx_send_count[COM_MAX_PDUS];
+volatile uint32 g_dbg_com_tx_skip[COM_MAX_PDUS];
+volatile uint32 g_dbg_com_tx_calls = 0u;
+
 /** Com_MainFunction_Tx call period in ms — must match BSW timer config */
 #define COM_TX_MAIN_PERIOD_MS  10u
 
@@ -263,6 +268,8 @@ void Com_MainFunction_Tx(void)
         return;
     }
 
+    g_dbg_com_tx_calls++;
+
     for (i = 0u; i < com_config->txPduCount; i++) {
         PduIdType pdu_id = com_config->txPduConfig[i].PduId;
         uint16 cycle_ms = com_config->txPduConfig[i].CycleTimeMs;
@@ -300,9 +307,13 @@ void Com_MainFunction_Tx(void)
             if (PduR_Transmit(pdu_id, &pdu_info) == E_OK) {
                 SchM_Enter_Com_COM_EXCLUSIVE_AREA_0();
                 com_tx_pending[pdu_id] = FALSE;
+                com_tx_send_count[pdu_id]++;
                 SchM_Exit_Com_COM_EXCLUSIVE_AREA_0();
             }
         } else {
+            if (com_tx_pending[pdu_id] == TRUE) {
+                g_dbg_com_tx_skip[pdu_id]++;  /* throttled — pending but not time yet */
+            }
             SchM_Exit_Com_COM_EXCLUSIVE_AREA_0();
         }
     }

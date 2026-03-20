@@ -295,10 +295,20 @@ void MainThread_Entry(ULONG thread_input)
   {
     HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
 
-    printf("ThreadX tick=%lu BSW CAN_RX=%lu last_ID=0x%03lX\r\n",
-           (unsigned long)tx_time_get(),
-           (unsigned long)g_can_rx_count,
-           (unsigned long)g_can_rx_last_id);
+    {
+      extern volatile uint32 com_tx_send_count[];
+      extern volatile uint32 g_dbg_com_tx_skip[];
+      extern volatile uint32 g_dbg_com_tx_calls;
+      extern volatile uint32 g_dbg_hw_tx_total;
+      extern volatile uint32 g_dbg_hw_tx_0x200;
+      printf("t=%lu comCalls=%lu sent1=%lu skip1=%lu hw=%lu hw200=%lu\r\n",
+             (unsigned long)tx_time_get(),
+             (unsigned long)g_dbg_com_tx_calls,
+             (unsigned long)com_tx_send_count[1],
+             (unsigned long)g_dbg_com_tx_skip[1],
+             (unsigned long)g_dbg_hw_tx_total,
+             (unsigned long)g_dbg_hw_tx_0x200);
+    }
 
     /* Thread sleep for 5s (5000 ticks at 1000Hz) */
     tx_thread_sleep(5000);
@@ -437,13 +447,12 @@ static void CAN_Periodic_Callback(ULONG arg)
 
   can_tx_count++;
 
-  /* Bus-off auto-recovery */
+  /* Bus-off auto-recovery — only re-init, DON'T run Com (avoids extra TX) */
   if ((FDCAN1->PSR & 0x80u) != 0u)
   {
     extern FDCAN_HandleTypeDef hfdcan1;
     HAL_FDCAN_Stop(&hfdcan1);
     HAL_FDCAN_DeInit(&hfdcan1);
-    /* Re-init inline (same config as MX_FDCAN1_Init in main.c) */
     __HAL_RCC_FDCAN_CLK_ENABLE();
     __HAL_RCC_FDCAN_CONFIG(RCC_FDCANCLKSOURCE_PCLK1);
     hfdcan1.Instance = FDCAN1;
@@ -467,6 +476,7 @@ static void CAN_Periodic_Callback(ULONG arg)
     HAL_FDCAN_Init(&hfdcan1);
     HAL_FDCAN_ConfigGlobalFilter(&hfdcan1, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_REJECT, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE);
     HAL_FDCAN_Start(&hfdcan1);
+    return;  /* Skip Com/BSW this cycle — just recovered */
   }
 
   /* Poll CAN RX via BSW */

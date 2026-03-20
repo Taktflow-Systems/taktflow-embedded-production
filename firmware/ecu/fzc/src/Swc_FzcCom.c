@@ -84,6 +84,10 @@ static uint8  FzcCom_TxPendLidarWarn;
 /** TX schedule cycle counter (paces fault frames to avoid FDCAN FIFO overflow) */
 static uint16 FzcCom_TxScheduleCycle;
 
+/* Debug counters for 0x200 Steering_Status tracing */
+volatile uint32 g_dbg_steer_com_send = 0u;   /* Com_SendSignal calls */
+volatile uint32 g_dbg_steer_rte_dispatch = 0u; /* TransmitSchedule calls */
+
 /** @brief E2E configs for TX data messages — shared BSW E2E (Profile 1)
  *  @safety_req SWR-FZC-019 */
 static const E2E_ConfigType fzc_e2e_brake_fault_cfg = {
@@ -297,6 +301,8 @@ void Swc_FzcCom_TransmitSchedule(void)
         return;
     }
 
+    g_dbg_steer_rte_dispatch++;
+
     pdu_info.SduDataPtr = txBuf;
     pdu_info.SduLength  = 8u;
 
@@ -325,6 +331,7 @@ void Swc_FzcCom_TransmitSchedule(void)
             uint8  fault = (uint8)fault_val;
             (void)Com_SendSignal(FZC_COM_SIG_STEERING_STATUS_ACTUAL_ANGLE, &angle);
             (void)Com_SendSignal(FZC_COM_SIG_STEERING_STATUS_STEER_FAULT_STATUS, &fault);
+            g_dbg_steer_com_send++;
         }
 
         /* TX: brake_pos (uint8) → Brake_Status PDU */

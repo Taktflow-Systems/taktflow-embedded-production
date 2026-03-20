@@ -175,12 +175,19 @@ void Can_Hw_Stop(void)
  *  drain time if the FIFO is full when we try to enqueue. */
 #define CAN_HW_TX_RETRY_LIMIT  5000u
 
+/* Debug: count actual HAL TX calls per CAN ID (0x200 = index for steering) */
+volatile uint32 g_dbg_hw_tx_total = 0u;
+volatile uint32 g_dbg_hw_tx_0x200 = 0u;
+
 Std_ReturnType Can_Hw_Transmit(Can_IdType id, const uint8* data, uint8 dlc)
 {
     FDCAN_TxHeaderTypeDef txHeader;
     uint8 txData[8];
     uint8 i;
     uint16 retry;
+
+    g_dbg_hw_tx_total++;
+    if (id == (Can_IdType)0x200u) { g_dbg_hw_tx_0x200++; }
 
     if (dlc > 8u)
     {

@@ -102,7 +102,7 @@ ecus:
         priority: 5
         wdgm_se_id: 1
       Swc_Heartbeat_MainFunction:
-        period_ms: 10
+        period_ms: 50
         priority: 4
         wdgm_se_id: 3
       Swc_Dashboard_MainFunction:
@@ -232,7 +232,7 @@ ecus:
         priority: 8
         wdgm_se_id: 2
       Swc_Heartbeat_MainFunction:
-        period_ms: 10
+        period_ms: 50
         priority: 7
         wdgm_se_id: 3
       Swc_FzcSafety_MainFunction:

@@ -255,7 +255,7 @@ static const Rte_RunnableConfigType fzc_runnable_config[] = {
     { Swc_Steering_MainFunction,                  10u,    10u, 0x00u },
     { Swc_Brake_MainFunction,                     10u,     9u, 0x01u },
     { Swc_Lidar_MainFunction,                     10u,     8u, 0x02u },
-    { Swc_Heartbeat_MainFunction,                 10u,     7u, 0x03u },
+    { Swc_Heartbeat_MainFunction,                 50u,     7u, 0x03u },
     { Swc_FzcSafety_MainFunction,                 10u,     6u, 0x04u },
     { Swc_Buzzer_MainFunction,                    10u,     5u, 0x05u },
     { Swc_FzcCanMonitor_Check,                    10u,     4u, 0xFFu },
