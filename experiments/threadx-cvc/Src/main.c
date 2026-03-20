@@ -173,11 +173,20 @@ static UCHAR        pool_mem[POOL_SIZE];
 
 static volatile uint32_t can_tx_count = 0;
 
-/* 10ms: CAN RX/TX + Com (SAME as FZC experiment) */
+/* 10ms: CAN RX/TX + Com + bus-off recovery */
 static void BSW_10ms_Callback(ULONG arg)
 {
     (void)arg;
     can_tx_count++;
+
+    /* Bus-off auto-recovery: re-init FDCAN if bus-off detected */
+    if ((FDCAN1->PSR & 0x80u) != 0u) /* BO bit */
+    {
+        HAL_FDCAN_Stop(&hfdcan1);
+        HAL_FDCAN_DeInit(&hfdcan1);
+        MX_FDCAN1_Init();  /* re-inits + starts */
+    }
+
     Can_MainFunction_Read();
     Com_MainFunction_Tx();
     Com_MainFunction_Rx();

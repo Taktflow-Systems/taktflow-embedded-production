@@ -117,11 +117,12 @@ Std_ReturnType Can_Hw_Init(uint32 baudrate)
 {
     (void)baudrate;
 
-    /* Init in loopback first — bxCAN can't exit sleep in normal mode
-     * without seeing recessive level on RX pin. Loopback bypasses this.
-     * After loopback init succeeds (clock enabled, SLAK cleared),
-     * switch to normal mode. */
-    if (Can_Hw_InitMode(CAN_MODE_LOOPBACK) != E_OK)
+    /* Init in SILENT loopback first — bxCAN can't exit sleep in normal
+     * mode without seeing recessive level on RX pin. Silent loopback
+     * bypasses this WITHOUT driving the TX pin (no bus disruption).
+     * After init succeeds (clock enabled, SLAK cleared), switch to
+     * normal mode. */
+    if (Can_Hw_InitMode(CAN_MODE_SILENT_LOOPBACK) != E_OK)
     {
         return E_NOT_OK;
     }

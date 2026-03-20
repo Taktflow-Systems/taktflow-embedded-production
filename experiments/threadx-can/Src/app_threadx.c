@@ -437,6 +437,38 @@ static void CAN_Periodic_Callback(ULONG arg)
 
   can_tx_count++;
 
+  /* Bus-off auto-recovery */
+  if ((FDCAN1->PSR & 0x80u) != 0u)
+  {
+    extern FDCAN_HandleTypeDef hfdcan1;
+    HAL_FDCAN_Stop(&hfdcan1);
+    HAL_FDCAN_DeInit(&hfdcan1);
+    /* Re-init inline (same config as MX_FDCAN1_Init in main.c) */
+    __HAL_RCC_FDCAN_CLK_ENABLE();
+    __HAL_RCC_FDCAN_CONFIG(RCC_FDCANCLKSOURCE_PCLK1);
+    hfdcan1.Instance = FDCAN1;
+    hfdcan1.Init.ClockDivider = FDCAN_CLOCK_DIV1;
+    hfdcan1.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
+    hfdcan1.Init.Mode = FDCAN_MODE_NORMAL;
+    hfdcan1.Init.AutoRetransmission = ENABLE;
+    hfdcan1.Init.TransmitPause = DISABLE;
+    hfdcan1.Init.ProtocolException = DISABLE;
+    hfdcan1.Init.NominalPrescaler = 34;
+    hfdcan1.Init.NominalSyncJumpWidth = 1;
+    hfdcan1.Init.NominalTimeSeg1 = 7;
+    hfdcan1.Init.NominalTimeSeg2 = 2;
+    hfdcan1.Init.DataPrescaler = 34;
+    hfdcan1.Init.DataSyncJumpWidth = 1;
+    hfdcan1.Init.DataTimeSeg1 = 7;
+    hfdcan1.Init.DataTimeSeg2 = 2;
+    hfdcan1.Init.StdFiltersNbr = 0;
+    hfdcan1.Init.ExtFiltersNbr = 0;
+    hfdcan1.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
+    HAL_FDCAN_Init(&hfdcan1);
+    HAL_FDCAN_ConfigGlobalFilter(&hfdcan1, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_REJECT, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE);
+    HAL_FDCAN_Start(&hfdcan1);
+  }
+
   /* Poll CAN RX via BSW */
   Can_MainFunction_Read();
 
