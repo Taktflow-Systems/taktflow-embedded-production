@@ -3,10 +3,10 @@
  * @brief   STM32F4 hardware backend for RZC_F4 (RZC on NUCLEO-F413ZH)
  * @date    2026-03-14
  *
- * @details Board bring-up: HSE 8 MHz -> PLL 96 MHz, bare-metal USART3 debug TX
+ * @details Board bring-up: HSI 16 MHz -> PLL 96 MHz, bare-metal USART3 debug TX
  *          (PD8=TX, ST-LINK VCP), SysTick via HAL, CAN loopback self-test.
  *
- *          Clock: HSE 8 MHz -> PLL (M=8, N=384, P=4) = 96 MHz
+ *          Clock: HSI 16 MHz -> PLL (M=16, N=384, P=4) = 96 MHz
  *          UART:  USART3 PD8=TX (AF7), 115200 baud @ 48 MHz APB1
  *          CAN:   CAN1 PD0=RX, PD1=TX (AF9), 500 kbps @ 48 MHz APB1
  *
@@ -38,8 +38,9 @@ void Error_Handler(void)
  * ================================================================== */
 
 /**
- * @brief  Configure system clocks: HSE 8 MHz -> PLL -> 96 MHz
- * @note   Derived from CubeMX cuberzccf4fg project.
+ * @brief  Configure system clocks: HSI 16 MHz -> PLL -> 96 MHz
+ * @note   Derived from CubeMX cuberzccf4fg project, switched to HSI.
+ *         HSE bypass requires ST-LINK MCO which may not be available.
  *         APB1 = 48 MHz (div 2), APB2 = 96 MHz (div 1).
  *         Flash latency 3 WS for 96 MHz @ 3.3V.
  */
@@ -51,12 +52,13 @@ static void Ecu_SystemClock_Config(void)
     __HAL_RCC_PWR_CLK_ENABLE();
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-    /* HSE 8 MHz (bypass — ST-LINK MCO) -> PLL: M=8, N=384, P=4 -> 96 MHz */
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-    RCC_OscInitStruct.HSEState       = RCC_HSE_BYPASS;
+    /* HSI 16 MHz -> PLL: M=16, N=384, P=4 -> 96 MHz */
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+    RCC_OscInitStruct.HSIState       = RCC_HSI_ON;
+    RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
     RCC_OscInitStruct.PLL.PLLState   = RCC_PLL_ON;
-    RCC_OscInitStruct.PLL.PLLSource  = RCC_PLLSOURCE_HSE;
-    RCC_OscInitStruct.PLL.PLLM       = 8u;
+    RCC_OscInitStruct.PLL.PLLSource  = RCC_PLLSOURCE_HSI;
+    RCC_OscInitStruct.PLL.PLLM       = 16u;
     RCC_OscInitStruct.PLL.PLLN       = 384u;
     RCC_OscInitStruct.PLL.PLLP       = RCC_PLLP_DIV4;
     RCC_OscInitStruct.PLL.PLLQ       = 8u;
