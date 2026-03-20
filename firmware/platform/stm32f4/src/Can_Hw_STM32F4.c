@@ -115,7 +115,18 @@ static Std_ReturnType Can_Hw_InitMode(uint32 mode)
  */
 Std_ReturnType Can_Hw_Init(uint32 baudrate)
 {
-    (void)baudrate; /* Timing hardcoded for 500 kbps @ 48 MHz APB1 */
+    (void)baudrate;
+
+    /* Init in loopback first — bxCAN can't exit sleep in normal mode
+     * without seeing recessive level on RX pin. Loopback bypasses this.
+     * After loopback init succeeds (clock enabled, SLAK cleared),
+     * switch to normal mode. */
+    if (Can_Hw_InitMode(CAN_MODE_LOOPBACK) != E_OK)
+    {
+        return E_NOT_OK;
+    }
+
+    /* Now re-init in normal mode — peripheral is awake, clock running */
     return Can_Hw_InitMode(CAN_MODE_NORMAL);
 }
 
