@@ -155,7 +155,8 @@ static int CAN_TX(uint32_t id, const uint8_t* data, uint8_t dlc)
 
 static TX_THREAD   main_thread;
 static TX_THREAD   can_rx_thread;
-static TX_TIMER    bsw_timer;
+static TX_TIMER    bsw_10ms_timer;
+static TX_TIMER    bsw_1ms_timer;
 static TX_EVENT_FLAGS_GROUP can_event;
 static TX_BYTE_POOL byte_pool;
 static UCHAR       pool_mem[POOL_SIZE];
@@ -166,22 +167,22 @@ static volatile uint32_t bsw_tick = 0;
 /* CAN RX: BSW uses polling (Can_Hw_Receive) from timer callback.
  * For Step 7a, poll from CAN RX thread instead of ISR. */
 
-/* BSW 1ms timer callback — runs CAN RX/TX + Com at 10ms intervals */
+/* SINGLE 1ms timer (proven working on this board) */
 static void bsw_timer_callback(ULONG param)
 {
     (void)param;
     bsw_tick++;
     HAL_IncTick();
 
-    /* CAN main functions every 10ms */
+    /* CAN + Com every 10ms */
     if ((bsw_tick % 10u) == 0u)
     {
         Can_MainFunction_Read();
-        Com_MainFunction_Rx();
         Com_MainFunction_Tx();
+        Com_MainFunction_Rx();
     }
 
-    /* Rte scheduler every 1ms */
+    /* Rte every 1ms */
     Rte_MainFunction();
 }
 
@@ -237,6 +238,15 @@ static void main_thread_entry(ULONG param)
 
     /* Wait for BSW to start processing */
     tx_thread_sleep(100);
+
+    /* Debug: manually call Com_SendSignal to test TX path */
+    {
+        uint8_t val = 3u;
+        Com_SendSignal(RZC_COM_SIG_RZC_HEARTBEAT_ECU_ID, &val);
+        Uart_Print("Forced Com_SendSignal(ECU_ID=3)\r\n");
+    }
+
+    tx_thread_sleep(100); /* let Com_MainFunction_Tx process it */
 
     Uart_Print("BSW running. Monitoring CAN...\r\n");
     while (1)
@@ -315,8 +325,8 @@ void tx_application_define(void *first_unused_memory)
     /* Event flags */
     tx_event_flags_create(&can_event, "CAN_EVT");
 
-    /* 1ms BSW timer */
-    tx_timer_create(&bsw_timer, "BSW_1ms", bsw_timer_callback, 0,
+    /* Single 1ms timer (two-timer crashes on F413 — investigate later) */
+    tx_timer_create(&bsw_10ms_timer, "BSW_1ms", bsw_timer_callback, 0,
                     1, 1, TX_AUTO_ACTIVATE);
 }
 
