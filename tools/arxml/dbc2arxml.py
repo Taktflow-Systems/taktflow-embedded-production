@@ -156,16 +156,24 @@ class Dbc2Arxml:
                         safe_name(receiver), []
                     ).append((msg_name, sn, sig))
 
-    def convert(self):
-        """Run the full conversion pipeline."""
+    def convert_base(self):
+        """Step 2: Generate ARXML base (signals, PDUs, frames, ECUs)."""
         self._create_platform_types()
         self._create_system()
         self._create_ecus()
         self._create_data_types()
         self._create_sr_interfaces()
         self._create_communication()
+
+    def convert_enrich(self):
+        """Step 3: Enrich ARXML with E2E + SWCs (requires base first)."""
         self._create_e2e_annotations()
         self._create_swc_types()
+
+    def convert(self):
+        """Run the full conversion pipeline (step 2 + step 3)."""
+        self.convert_base()
+        self.convert_enrich()
 
     def write(self, output_dir, output_name="TaktflowSystem.arxml"):
         """Write ARXML file to output directory."""
@@ -667,26 +675,34 @@ class Dbc2Arxml:
 
 
 def main():
-    if len(sys.argv) < 3:
-        print("Usage: %s <dbc-file> <output-dir> [ecu-model-json]" % sys.argv[0])
+    import argparse
+    parser = argparse.ArgumentParser(description="DBC to ARXML converter")
+    parser.add_argument("dbc", help="DBC file path")
+    parser.add_argument("output", help="Output directory")
+    parser.add_argument("model", nargs="?", help="ECU model JSON (optional)")
+    parser.add_argument("--step", choices=["base", "enrich", "all"], default="all",
+                        help="Pipeline step: base (step 2), enrich (step 3), all (both)")
+    args = parser.parse_args()
+
+    if not os.path.isfile(args.dbc):
+        print("Error: DBC file not found: %s" % args.dbc)
         sys.exit(1)
 
-    dbc_path = sys.argv[1]
-    output_dir = sys.argv[2]
-    model_path = sys.argv[3] if len(sys.argv) > 3 else None
+    print("Converting %s -> ARXML (step=%s)..." % (args.dbc, args.step))
+    if args.model:
+        print("  ECU model: %s" % args.model)
 
-    if not os.path.isfile(dbc_path):
-        print("Error: DBC file not found: %s" % dbc_path)
-        sys.exit(1)
+    c = Dbc2Arxml(args.dbc, args.model)
 
-    print("Converting %s -> ARXML..." % dbc_path)
-    if model_path:
-        print("  ECU model: %s" % model_path)
+    if args.step == "base":
+        c.convert_base()
+    elif args.step == "enrich":
+        c.convert_enrich()
+    else:
+        c.convert()
 
-    c = Dbc2Arxml(dbc_path, model_path)
-    c.convert()
     c.report()
-    c.write(output_dir)
+    c.write(args.output)
     print("\nDone.")
 
 

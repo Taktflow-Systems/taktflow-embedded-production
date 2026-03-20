@@ -38,26 +38,6 @@ static inline Rte_StatusType Rte_Read_RZC_Virtual_Sensors_BattVoltage_mV(uint16_
 }
 
 /**
- * @brief  Write Battery_Status_BatteryVoltage_mV (uint16_t)
- * @param  value  Signal value to transmit
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Write_Battery_Status_BatteryVoltage_mV(uint16_t value)
-{
-    return Rte_Write(RZC_SIG_BATTERY_STATUS_BATTERY_VOLTAGE_M_V, (uint32_t)value);
-}
-
-/**
- * @brief  Write Battery_Status_E2E_DataID (uint8_t)
- * @param  value  Signal value to transmit
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Write_Battery_Status_E2E_DataID(uint8_t value)
-{
-    return Rte_Write(RZC_SIG_BATTERY_STATUS_E_2_E_DATA_ID, (uint32_t)value);
-}
-
-/**
  * @brief  Write Battery_Status_E2E_AliveCounter (uint8_t)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
@@ -65,6 +45,16 @@ static inline Rte_StatusType Rte_Write_Battery_Status_E2E_DataID(uint8_t value)
 static inline Rte_StatusType Rte_Write_Battery_Status_E2E_AliveCounter(uint8_t value)
 {
     return Rte_Write(RZC_SIG_BATTERY_STATUS_E_2_E_ALIVE_COUNTER, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Battery_Status_E2E_CRC8 (uint8_t)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Battery_Status_E2E_CRC8(uint8_t value)
+{
+    return Rte_Write(RZC_SIG_BATTERY_STATUS_E_2_E_CRC_8, (uint32_t)value);
 }
 
 /**
@@ -78,13 +68,23 @@ static inline Rte_StatusType Rte_Write_Battery_Status_Level(uint8_t value)
 }
 
 /**
- * @brief  Write Battery_Status_E2E_CRC8 (uint8_t)
+ * @brief  Write Battery_Status_E2E_DataID (uint8_t)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_Battery_Status_E2E_CRC8(uint8_t value)
+static inline Rte_StatusType Rte_Write_Battery_Status_E2E_DataID(uint8_t value)
 {
-    return Rte_Write(RZC_SIG_BATTERY_STATUS_E_2_E_CRC_8, (uint32_t)value);
+    return Rte_Write(RZC_SIG_BATTERY_STATUS_E_2_E_DATA_ID, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Battery_Status_BatteryVoltage_mV (uint16_t)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Battery_Status_BatteryVoltage_mV(uint16_t value)
+{
+    return Rte_Write(RZC_SIG_BATTERY_STATUS_BATTERY_VOLTAGE_M_V, (uint32_t)value);
 }
 
 #endif /* RTE_SWC_BATTERY_H */

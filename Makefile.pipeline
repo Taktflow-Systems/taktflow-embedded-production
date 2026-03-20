@@ -23,10 +23,16 @@ step1:
 	@echo "========== Step 1: Validate DBC =========="
 	C:\Python314\python.exe tools/pipeline/step1_validate_dbc.py $(DBC)
 
-# Step 2+3: Generate ARXML from DBC (base + E2E enrichment)
-# Currently combined in dbc2arxml.py — will split later
+# Step 2: Generate ARXML base ONLY (for inspection)
 step2:
-	@echo "========== Step 2+3: Generate ARXML =========="
+	@echo "========== Step 2: ARXML Base (inspect only) =========="
+	C:\Python314\python.exe tools/arxml/dbc2arxml.py --step=base $(DBC) arxml_v2/ $(SWC_MODEL)
+	@echo "Base ARXML at arxml_v2/ — inspect before step3"
+
+# Step 3: Generate full ARXML (base + E2E + SWCs)
+# Runs both base and enrich in one pass (enrich needs base in same model)
+step3:
+	@echo "========== Step 3: Full ARXML (base + enrich) =========="
 	C:\Python314\python.exe tools/arxml/dbc2arxml.py $(DBC) arxml_v2/ $(SWC_MODEL)
 	cp $(ARXML_V2) $(ARXML)
 	@echo "ARXML generated: $(ARXML)"
@@ -41,12 +47,20 @@ step5:
 	@echo "========== Step 5: Generate C Configs =========="
 	C:\Python314\python.exe -m tools.arxmlgen --config $(PROJECT)
 
-# Step 6: Validate C configs (syntax check)
+# Step 6: Validate C configs (round-trip check + syntax)
 step6:
-	@echo "========== Step 6: Validate C Configs =========="
+	@echo "========== Step 6a: Round-trip Check =========="
+	C:\Python314\python.exe tools/pipeline/step6_validate_configs.py $(DBC)
+	@echo "========== Step 6b: Syntax Check =========="
 	@echo "gcc -fsyntax-only on all ECU configs..."
 	@PASS=0; FAIL=0; \
 	for ecu in cvc fzc rzc sc bcm icu tcu; do \
+		PLAT_INC=""; \
+		if [ -d "firmware/ecu/$$ecu/cfg/platform_posix" ]; then \
+			PLAT_INC="-Ifirmware/ecu/$$ecu/cfg/platform_posix"; \
+		elif [ -d "firmware/ecu/$$ecu/cfg/platform_target" ]; then \
+			PLAT_INC="-Ifirmware/ecu/$$ecu/cfg/platform_target"; \
+		fi; \
 		for src in firmware/ecu/$$ecu/cfg/*.c; do \
 			if gcc -fsyntax-only -DPLATFORM_POSIX -DCANTP_ENABLED \
 				-Ifirmware/bsw/include -Ifirmware/bsw/services/Com/include \
@@ -62,7 +76,7 @@ step6:
 				-Ifirmware/bsw/ecual/PduR/include -Ifirmware/bsw/ecual/IoHwAb/include \
 				-Ifirmware/bsw/os/include -Ifirmware/bsw/os/bootstrap/include \
 				-Ifirmware/bsw/rte/include -Ifirmware/platform/posix/include \
-				-Ifirmware/ecu/$$ecu/include -Ifirmware/ecu/$$ecu/cfg \
+				-Ifirmware/ecu/$$ecu/include -Ifirmware/ecu/$$ecu/cfg $$PLAT_INC \
 				$$src 2>/dev/null; then \
 				PASS=$$((PASS+1)); \
 			else \
@@ -74,7 +88,7 @@ step6:
 	test $$FAIL -eq 0
 
 # Full pipeline — stops on first failure
-generate: step1 step2 step4 step5 step6
+generate: step1 step2 step3 step4 step5 step6
 	@echo ""
 	@echo "=========================================="
 	@echo "  PIPELINE COMPLETE — ALL STEPS PASSED"

@@ -142,6 +142,30 @@ def run(arxml_path, dbc_path):
     check(f"6. ADMIN-DATA traceability on E2E ({has_satisfies}/{arxml_e2e_count})",
           has_satisfies == arxml_e2e_count)
 
+    # 7. SWC types present
+    swc_count = 0
+    for _, elem in model.elements_dfs:
+        if str(elem.element_name) == "APPLICATION-SW-COMPONENT-TYPE":
+            swc_count += 1
+    check(f"7. SWC types present ({swc_count})", swc_count > 0)
+
+    # 8. Runnables present
+    runnable_count = 0
+    for _, elem in model.elements_dfs:
+        if str(elem.element_name) == "RUNNABLE-ENTITY":
+            runnable_count += 1
+    check(f"8. Runnables present ({runnable_count})", runnable_count > 0)
+
+    # 9. ECU instances match DBC nodes
+    arxml_ecu_count = 0
+    for _, elem in model.elements_dfs:
+        if str(elem.element_name) == "ECU-INSTANCE":
+            arxml_ecu_count += 1
+    dbc_node_count = len(db.nodes)
+    check(f"9. ECU instances (ARXML={arxml_ecu_count} vs DBC nodes={dbc_node_count})",
+          arxml_ecu_count == dbc_node_count,
+          f"Mismatch")
+
     print()
     print(f"Result: {checks_passed}/{checks_total} checks passed, {len(issues)} issues")
     if issues:
