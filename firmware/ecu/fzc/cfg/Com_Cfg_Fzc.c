@@ -402,8 +402,8 @@ static const Com_SignalConfigType fzc_signal_config[] = {
 static const Com_TxPduConfigType fzc_tx_pdu_config[] = {
     /* pduId,                      dlc, cycleMs */
     { FZC_COM_TX_FZC_HEARTBEAT,     4u,    50u },   /* CAN 0x011 */
-    { FZC_COM_TX_STEERING_STATUS,     8u,    20u },   /* CAN 0x200 */
-    { FZC_COM_TX_BRAKE_STATUS,     8u,    20u },   /* CAN 0x201 */
+    { FZC_COM_TX_STEERING_STATUS,     8u,   100u },   /* CAN 0x200 */
+    { FZC_COM_TX_BRAKE_STATUS,     8u,   100u },   /* CAN 0x201 */
     { FZC_COM_TX_BRAKE_FAULT,     4u,     0u },   /* CAN 0x210 */
     { FZC_COM_TX_MOTOR_CUTOFF_REQ,     4u,    10u },   /* CAN 0x211 */
     { FZC_COM_TX_LIDAR_DISTANCE,     8u,    10u },   /* CAN 0x220 */

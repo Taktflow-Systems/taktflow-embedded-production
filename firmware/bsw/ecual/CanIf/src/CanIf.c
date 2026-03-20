@@ -51,6 +51,12 @@ Std_ReturnType CanIf_Transmit(PduIdType TxPduId, const PduInfoType* PduInfoPtr)
         return E_NOT_OK;
     }
 
+    /* Debug counter */
+    {
+        static volatile uint32 canif_tx_count[16] = {0};
+        if (TxPduId < 16u) { canif_tx_count[TxPduId]++; }
+    }
+
     /* Map PDU ID to CAN ID */
     const CanIf_TxPduConfigType* tx_cfg = &canif_config->txPduConfig[TxPduId];
 
