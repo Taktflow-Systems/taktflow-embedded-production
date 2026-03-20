@@ -1,8 +1,22 @@
 # Plan: Firmware Rewrite — HARA-Driven Architecture
 
-**Status**: PLANNING
+**Status**: Phase 0 DONE, Phase 0.5 IN PROGRESS
 **Date**: 2026-03-20
 **Goal**: Rewrite firmware architecture top-down from HARA, not from code bugs.
+
+---
+
+## Mandatory Process Per Phase
+
+Every phase MUST follow this sequence:
+
+1. **Research** — what does industry do for this phase? Find golden examples.
+2. **Gap analysis** — compare our approach against research. List all gaps.
+3. **Execute** — fix all gaps. No partial fixes.
+4. **Verify** — run automated checks. All must pass.
+5. **Lesson learned** — write `docs/lessons-learned/embedded/phaseN-<topic>-<date>.md`
+6. **HITL review** — present results with HITL lock blocks. Wait for approval.
+7. **Next phase** — only after HITL approval.
 
 ---
 
@@ -86,7 +100,25 @@ CVC Vehicle State Machine must transition to SAFE_STOP when:
 
 ## Rewrite Phases (HARA-Ordered)
 
-### Phase 0: DBC Audit
+### Phase 0: DBC Audit — DONE
+
+12-point audit, all checks pass. 7 findings fixed. Lessons: `docs/lessons-learned/embedded/phase0-dbc-audit-2026-03-20.md`
+
+### Phase 0.5: ARXML Generation — IN PROGRESS
+
+**Research finding**: Our ARXML generator puts E2E info in free-text descriptions, not structured AUTOSAR elements. The codegen reads DBC directly for E2E, bypassing ARXML. This breaks the traceability chain.
+
+**Fix required**: Add `END-TO-END-PROTECTION-SET` to ARXML using `autosar_data` library:
+- Per E2E-protected message: `END-TO-END-PROTECTION` with Profile P01
+- Fields: DATA-ID, MAX-DELTA-COUNTER, DATA-LENGTH, CRC-OFFSET, COUNTER-OFFSET
+- Reference to I-SIGNAL-I-PDU
+- `ADMIN-DATA > SDGS` with `Satisfies` for traceability
+
+**Golden reference**: AUTOSAR Approach A (`END-TO-END-PROTECTION-SET`), structure confirmed from AUTOSAR PRS E2E Protocol spec and cantools `system-4.2.arxml`.
+
+**After Phase 0.5**: ARXML is the complete system description. Codegen reads ARXML (not DBC) for all parameters.
+
+### Phase 1: Codegen
 
 Verify every safety-relevant message in DBC has:
 - [ ] Correct `GenMsgCycleTime` derived from FTTI
