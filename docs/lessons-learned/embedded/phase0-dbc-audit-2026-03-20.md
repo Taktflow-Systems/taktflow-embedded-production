@@ -91,3 +91,27 @@
 **Fix**: From now on, every phase writes lessons learned — what we did right, what we missed, what to do differently next time. This file is the start.
 
 **Principle**: Lessons learned are not just for failures. They capture the evolution of our process. Future sessions start by reading the lessons from previous sessions.
+
+---
+
+## Lesson 9: Understand the Commercial Workflow Before Building Your Own
+
+**Context**: Built our own DBC→codegen pipeline without understanding how Vector/EB/ETAS do it.
+
+**Finding**: In commercial AUTOSAR, E2E is NOT configured in the DBC. It's configured in the AUTOSAR Configurator GUI and stored in the ARXML ECUC. The DBC only carries signal layout. Our custom DBC attributes (E2E_DataID, E2E_MaxDeltaCounter) are a valid shortcut — they replace the configurator GUI — but the data must still flow through ARXML before reaching codegen.
+
+**Our mistake**: dbc2arxml.py creates ARXML with signal structure but skips E2E protection config. The codegen reads DBC directly for E2E, bypassing ARXML. This breaks the single-source-of-truth principle.
+
+**Fix**: dbc2arxml.py must create `END-TO-END-PROTECTION-SET` in ARXML from DBC+sidecar. The arxmlgen codegen then reads E2E params from ARXML, not DBC.
+
+**Principle**: Before building tooling, map your pipeline to the commercial equivalent. Understand which tool owns which data. Then replicate the data flow, not the GUI.
+
+---
+
+## Lesson 10: The Sidecar is Our Configurator
+
+**Context**: Wondered where E2E, scheduling, DTCs, enums go since we don't have DaVinci Configurator.
+
+**Finding**: The `ecu_sidecar.yaml` IS our configurator. It holds everything that DBC can't express and that the AUTOSAR configurator GUI would normally provide: runnable periods, E2E receiver configs, DTC mappings, RTE aliases.
+
+**Principle**: The sidecar is not a hack — it's an intentional design choice. It replaces the GUI. But its data must flow through ARXML, not directly to codegen.
