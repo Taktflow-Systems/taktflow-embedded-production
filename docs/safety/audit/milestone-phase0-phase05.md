@@ -101,40 +101,32 @@ Phase 0.5: ARXML generation with END-TO-END-PROTECTION-SET and full traceability
 ### Phase 0 DBC Audit
 
 **Q1**: Motor_Temperature (0x302) ASIL A — E2E removed, using timeout-based detection instead. 1000ms FTTI allows 10+ missed frames before fault detection via Com RX deadline monitoring.
-- [ ] APPROVE: Timeout-based detection is sufficient for ASIL A
-- [ ] REJECT: Restore E2E (requires migrating to Profile P02 for 8-bit DataID to fit 17 ASIL messages in >16 slots)
+- [x] **APPROVED** (An Dao, 2026-03-20): Timeout-based detection is sufficient for ASIL A
 
 **Q2**: Vehicle_State (0x100) and Torque_Request (0x101) — MaxDeltaCounter reduced from 2 to 1. This means a single missed frame + one more triggers E2E failure. More sensitive to CAN jitter.
-- [ ] APPROVE: Tighter detection is correct for ASIL D, FTTI=50ms
-- [ ] REJECT: Keep MaxDelta=2 (requires increasing FTTI to 60ms in HARA, or reducing T_react+T_safe)
+- [x] **APPROVED** (An Dao, 2026-03-20): OK for bench. Tighter detection correct for ASIL D.
 
 **Q3**: DTC_Broadcast Number field reduced from 24-bit to 16-bit to fix signal overlap. ISO 14229 UDS DTCs are 3 bytes (24-bit) but standard DTCs (P0000-P3FFF, C0000-C3FFF, etc.) fit in 16 bits. OEM-specific DTCs in the upper byte are lost.
-- [ ] APPROVE: Our DTCs are all in 16-bit range
-- [ ] REJECT: Fix overlap differently (shift Status signal to byte 3, keep 24-bit Number)
+- [x] **APPROVED** (An Dao, 2026-03-20): Our DTCs are all in 16-bit range. OK for bench.
 
 **Q4**: Cycle time changes — Steering_Status/Brake_Status at 50ms (was 20ms), Motor_Cutoff at 50ms (was 10ms), SC_Status at 100ms (was 500ms). All derived from FTTI budgets.
-- [ ] APPROVE: Cycle times match FTTI requirements
-- [ ] REJECT: Specify different values with justification
+- [x] **APPROVED** (An Dao, 2026-03-20): 50ms is acceptable. SC_Status at 100ms justified — SC monitors CVC at 50ms (critical path), CVC monitors SC at 100ms (secondary path, 500ms FTTI gives 170ms margin).
 
 **Q5**: Event retransmission — Brake_Fault and Motor_Cutoff now have GenMsgCycleTimeFast=10ms, NrOfRepetition=3. On event trigger, send 3 times at 10ms intervals to survive CAN errors.
-- [ ] APPROVE: 3 retransmissions at 10ms is sufficient
-- [ ] REJECT: Specify different strategy
+- [x] **APPROVED** (An Dao, 2026-03-20)
 
 ### Phase 0.5 ARXML
 
 **Q6**: ARXML now contains END-TO-END-PROTECTION-SET with 20 protections. Each has structured E2E profile parameters + ADMIN-DATA traceability (ASIL, Satisfies, CAN_ID, CycleMS, I-PDU path).
-- [ ] APPROVE: ARXML E2E representation is sufficient for codegen
-- [ ] REJECT: Specify what's missing
+- [x] **APPROVED** (An Dao, 2026-03-20)
 
 **Q7**: I-SIGNAL-I-PDUS reference not supported under END-TO-END-PROTECTION in AUTOSAR R22-11. I-PDU link stored in ADMIN-DATA/SDGS as custom GID="I-PDU-PATH" instead.
-- [ ] APPROVE: Custom metadata is acceptable (our codegen reads it)
-- [ ] REJECT: Require standard-compliant I-PDU linking (may need different ARXML version)
+- [x] **APPROVED** (An Dao, 2026-03-20): Custom metadata acceptable for our codegen.
 
 ### Process
 
 **Q8**: Mandatory 7-step process per phase (research → gap analysis → execute → verify → lesson learned → HITL review → next phase). Applied from Phase 0 onwards.
-- [ ] APPROVE: Process is appropriate
-- [ ] REJECT: Modify process
+- [x] **APPROVED** (An Dao, 2026-03-20)
 
-**Sign-off**: ______________________ Date: ______________
+**Sign-off**: An Dao — 2026-03-20 — Phase 0 + 0.5 APPROVED. Proceed to Phase 1.
 <!-- HITL-LOCK END:MILESTONE-P0-P05-REVIEW -->
