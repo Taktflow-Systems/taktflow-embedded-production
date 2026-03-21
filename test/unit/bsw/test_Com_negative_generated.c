@@ -24,6 +24,7 @@
 #include "Com.h"
 #include "E2E.h"
 #include "Det.h"
+#include "Dem.h"
 
 #include <string.h>
 
