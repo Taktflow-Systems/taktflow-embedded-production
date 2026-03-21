@@ -73,16 +73,7 @@ static uint8   rzc_last_alive;
 
 static boolean initialized;
 
-/** @brief E2E configuration for heartbeat TX protection
- *  @safety_req SWR-CVC-021 */
-static const E2E_ConfigType hb_e2e_config = {
-    CVC_E2E_HEARTBEAT_DATA_ID,   /* DataId = 0x02 */
-    15u,                          /* MaxDeltaCounter */
-    HB_PDU_LENGTH                 /* DataLength = 8 */
-};
-
-/** @brief E2E state for heartbeat TX alive counter tracking */
-static E2E_StateType hb_e2e_state;
+/* E2E protection moved to Com_MainFunction_Tx (Phase 2) */
 
 /** @brief E2E SM per-ECU configurations (const, flash)
  *  @safety_req SWR-CVC-022 */
