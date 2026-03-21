@@ -518,6 +518,8 @@ BA_ "E2E_DataID" BO_ 529 12;
 BA_ "E2E_DataID" BO_ 544 13;
 BA_ "E2E_DataID" BO_ 768 14;
 BA_ "E2E_DataID" BO_ 769 15;
+BA_ "E2E_DataID" BO_ 770 0;
+BA_ "E2E_DataID" BO_ 771 1;
 BA_ "Owner" BO_ 1 "CVC Application";
 BA_ "Owner" BO_ 16 "CVC Application";
 BA_ "Owner" BO_ 17 "FZC Application";

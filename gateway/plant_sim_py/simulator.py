@@ -1,7 +1,9 @@
 """Main plant simulator — reads actuator commands from CAN, runs physics,
 writes sensor data back to CAN.
 
-Runs at 100 Hz (10ms cycle). Uses python-can + cantools for CAN I/O.
+Runs at 100 Hz (10ms cycle). Uses python-can for CAN I/O and CanEncoder
+(gateway.lib.dbc_encoder) for all CAN encoding — single source of truth
+for signal packing and E2E protection.
 """
 
 import asyncio
@@ -9,11 +11,9 @@ import json
 import logging
 import os
 import struct
-import sys
 import time
 
 import can
-import cantools
 import paho.mqtt.client as paho_mqtt
 
 from .motor_model import MotorModel
@@ -21,6 +21,14 @@ from .steering_model import SteeringModel
 from .brake_model import BrakeModel
 from .battery_model import BatteryModel
 from .lidar_model import LidarModel
+
+# CanEncoder lives in gateway/lib/ — use absolute import so it works both
+# as a package (docker) and with PYTHONPATH pointing at repo root.
+import sys as _sys
+_repo = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _repo not in _sys.path:
+    _sys.path.insert(0, _repo)
+from gateway.lib.dbc_encoder import CanEncoder
 
 logging.basicConfig(
     level=logging.INFO,
@@ -36,24 +44,8 @@ RX_BRAKE_COMMAND = 0x103
 RX_ESTOP = 0x001
 RX_SC_RELAY_STATUS = 0x013
 
-# CAN IDs we write (sensor feedback to ECUs)
-TX_VEHICLE_STATE = 0x100
-TX_STEERING_STATUS = 0x200
-TX_BRAKE_STATUS = 0x201
-TX_LIDAR_DISTANCE = 0x220
-TX_MOTOR_STATUS = 0x300
-TX_MOTOR_CURRENT = 0x301
-TX_MOTOR_TEMP = 0x302
-TX_BATTERY_STATUS = 0x303
-TX_BRAKE_FAULT_EVENT = 0x210   # Brake_Fault event (DBC ID 528) — read by CVC
-TX_MOTOR_CUTOFF_REQ = 0x211   # Motor_Cutoff_Req event (DBC ID 529) — read by CVC
-TX_DTC_BROADCAST = 0x500
-
-# Virtual sensor CAN IDs (plant-sim → ECU sensor feeders, SIL only, no E2E)
-TX_FZC_VIRTUAL_SENSORS = 0x600   # steering angle, brake pos, brake current
-TX_RZC_VIRTUAL_SENSORS = 0x601   # motor current, motor temp, battery voltage
-
 # DTC codes — 24-bit big-endian, must match firmware Dem_SetDtcCode() values
+# DBC DTC_Broadcast_Number is 16-bit, so only lower 16 bits are sent.
 DTC_OVERCURRENT = 0x00E301   # RZC: Dem_SetDtcCode(RZC_DTC_OVERCURRENT, 0x00E301u)
 DTC_STEER_FAULT = 0x00D001   # FZC: Dem_SetDtcCode(FZC_DTC_STEER_PLAUSIBILITY, 0x00D001u)
 DTC_BRAKE_FAULT = 0x00E202   # FZC: no firmware Dem equivalent yet — keep for plant-sim
@@ -74,7 +66,7 @@ VS_SHUTDOWN = 5
 
 class PlantSimulator:
     def __init__(self, dbc_path: str, channel: str = "vcan0"):
-        self.db = cantools.database.load_file(dbc_path)
+        self.encoder = CanEncoder(dbc_path)
         self.channel = channel
         self.bus = None
 
@@ -84,9 +76,6 @@ class PlantSimulator:
         self.brake = BrakeModel()
         self.battery = BatteryModel()
         self.lidar = LidarModel()
-
-        # Alive counters for E2E (4-bit, wraps at 15)
-        self._alive = {}
 
         # E-stop state
         self.estop_active = False
@@ -195,38 +184,6 @@ class PlantSimulator:
             self._active_dtcs.clear()
             log.info("Plant FULL RESET — all physics returned to power-on defaults")
 
-    def _next_alive(self, msg_id: int) -> int:
-        val = self._alive.get(msg_id, 0)
-        self._alive[msg_id] = (val + 1) & 0x0F
-        return val
-
-    def _crc8_j1850(self, data_id: int, payload: bytes, start: int = 2) -> int:
-        """CRC-8 SAE J1850 over data_id + payload[start:]."""
-        crc = 0xFF
-        for byte in [data_id] + list(payload[start:]):
-            crc ^= byte
-            for _ in range(8):
-                if crc & 0x80:
-                    crc = ((crc << 1) ^ 0x1D) & 0xFF
-                else:
-                    crc = (crc << 1) & 0xFF
-        return crc
-
-    def _build_e2e_header(self, msg_id: int, data_id: int) -> tuple:
-        """Return (byte0, alive) for E2E header."""
-        alive = self._next_alive(msg_id)
-        byte0 = (alive << 4) | (data_id & 0x0F)
-        return byte0, alive
-
-    def _encode_with_e2e(self, msg_id: int, data_id: int,
-                         payload_bytes: bytearray) -> bytes:
-        """Insert E2E header (byte 0) and CRC (byte 1) into payload."""
-        byte0, _ = self._build_e2e_header(msg_id, data_id)
-        payload_bytes[0] = byte0
-        crc = self._crc8_j1850(data_id, bytes(payload_bytes))
-        payload_bytes[1] = crc
-        return bytes(payload_bytes)
-
     def _process_rx(self, msg: can.Message):
         """Process a received CAN frame from ECU actuator commands."""
         arb_id = msg.arbitration_id
@@ -278,8 +235,8 @@ class PlantSimulator:
 
         # NOTE: CAN 0x303 handler removed — RZC is sole authority for
         # Battery_Status on the CAN bus. Processing 0x303 here created a
-        # feedback loop (RZC TX → plant-sim override → plant-sim TX on
-        # 0x601 → RZC reads → RZC TX). Battery overrides now use MQTT
+        # feedback loop (RZC TX -> plant-sim override -> plant-sim TX on
+        # 0x601 -> RZC reads -> RZC TX). Battery overrides now use MQTT
         # only (taktflow/command/plant_inject {"type":"voltage"}).
 
         elif arb_id == RX_TORQUE_REQUEST:
@@ -293,7 +250,7 @@ class PlantSimulator:
         elif arb_id == RX_STEER_COMMAND:
             if len(data) >= 4 and not self.estop_active:
                 # CVC Com sends plain degrees as sint16 (no DBC scaling).
-                # 0 = center, +10 = 10° right, -10 = 10° left.
+                # 0 = center, +10 = 10 deg right, -10 = 10 deg left.
                 raw = struct.unpack_from('<h', data, 2)[0]  # sint16 LE
                 angle = max(-45.0, min(45.0, float(raw)))
                 self.steering.record_command(angle)
@@ -302,29 +259,12 @@ class PlantSimulator:
             if len(data) >= 3 and not self.estop_active:
                 self.brake.record_command(float(data[2]))
 
-    def _tx_motor_status(self):
-        """Send Motor_Status (0x300) every 20ms.
+    # ------------------------------------------------------------------
+    # TX methods — all use self.encoder.encode() (DBC + E2E)
+    # ------------------------------------------------------------------
 
-        Byte layout per taktflow.dbc:
-          [0-1] E2E (DataID + AliveCounter + CRC8)
-          [2]   TorqueEcho (duty %)
-          [3-4] MotorSpeed_RPM (16-bit LE)
-          [5]   MotorDirection (0=stopped, 1=fwd, 2=rev)
-          [6]   MotorEnable (0/1)
-          [7]   MotorFaultStatus (bit0=overcurrent, bit1=overtemp, bit2=stall)
-        """
-        payload = bytearray(8)
-        # Byte 2: TorqueEcho
-        payload[2] = int(min(100, self.motor.duty_pct))
-        # Byte 3-4: MotorSpeed_RPM (16-bit LE)
-        rpm = self.motor.rpm_int
-        payload[3] = rpm & 0xFF
-        payload[4] = (rpm >> 8) & 0xFF
-        # Byte 5: MotorDirection
-        payload[5] = self.motor.direction & 0xFF
-        # Byte 6: MotorEnable
-        payload[6] = 1 if self.motor.enabled else 0
-        # Byte 7: MotorFaultStatus
+    def _tx_motor_status(self):
+        """Send Motor_Status (0x300) every 20ms."""
         fault_bits = 0
         if self.motor.overcurrent:
             fault_bits |= 0x01
@@ -332,93 +272,64 @@ class PlantSimulator:
             fault_bits |= 0x02
         if self.motor.stall_fault:
             fault_bits |= 0x04
-        payload[7] = fault_bits
 
-        data = self._encode_with_e2e(TX_MOTOR_STATUS, 0x0E, payload)
-        self.bus.send(can.Message(arbitration_id=TX_MOTOR_STATUS,
-                                  data=data, is_extended_id=False))
+        data = self.encoder.encode("Motor_Status", {
+            "Motor_Status_TorqueEcho": int(min(100, self.motor.duty_pct)),
+            "Motor_Status_MotorSpeed_RPM": self.motor.rpm_int,
+            "Motor_Status_MotorDirection": self.motor.direction & 0xFF,
+            "Motor_Status_MotorEnable": 1 if self.motor.enabled else 0,
+            "Motor_Status_MotorFaultStatus": fault_bits,
+        })
+        self.bus.send(can.Message(
+            arbitration_id=self.encoder.get_id("Motor_Status"),
+            data=data, is_extended_id=False))
 
     def _tx_motor_current(self):
-        """Send Motor_Current (0x301) every 10ms.
-
-        Byte layout per taktflow.dbc:
-          [0-1] E2E (DataID + AliveCounter + CRC8)
-          [2-3] Current_mA       16|16 (uint16 LE, 0-30000 mA)
-          [4]   CurrentDirection  32|1  (bit 0: 0=fwd, 1=rev)
-                MotorEnable       33|1  (bit 1)
-                OvercurrentFlag   34|1  (bit 2)
-                TorqueEcho low    35|5  (bits 3-7)
-          [5]   TorqueEcho high          (bits 0-2)
-        """
-        payload = bytearray(8)
-        current = self.motor.current_ma_int
-        payload[2] = current & 0xFF
-        payload[3] = (current >> 8) & 0xFF
-        direction_bit = 0 if self.motor.direction != 2 else 1
-        enable_bit = 1 if self.motor.enabled else 0
-        oc_bit = 1 if self.motor.overcurrent else 0
-        payload[4] = direction_bit | (enable_bit << 1) | (oc_bit << 2)
-        torque = int(self.motor.duty_pct) & 0xFF
-        payload[4] |= (torque & 0x1F) << 3
-        payload[5] = (torque >> 5) & 0x07
-
-        data = self._encode_with_e2e(TX_MOTOR_CURRENT, 0x0F, payload)
-        self.bus.send(can.Message(arbitration_id=TX_MOTOR_CURRENT,
-                                  data=data, is_extended_id=False))
+        """Send Motor_Current (0x301) every 10ms."""
+        data = self.encoder.encode("Motor_Current", {
+            "Motor_Current_Phase_mA": self.motor.current_ma_int,
+            "Motor_Current_DirIsReverse": 1 if self.motor.direction == 2 else 0,
+            "Motor_Current_MotorEnable": 1 if self.motor.enabled else 0,
+            "Motor_Current_OvercurrentFlag": 1 if self.motor.overcurrent else 0,
+            "Motor_Current_TorqueEcho": int(self.motor.duty_pct) & 0xFF,
+        })
+        self.bus.send(can.Message(
+            arbitration_id=self.encoder.get_id("Motor_Current"),
+            data=data, is_extended_id=False))
 
     def _tx_motor_temp(self):
         """Send Motor_Temperature (0x302) every 100ms.
 
-        Byte layout per taktflow.dbc:
-          [0-1] E2E (DataID + AliveCounter + CRC8)
-          [2-3] WindingTemp1_C  16|16 (factor 0.1, offset +40 raw)
-          [4-5] WindingTemp2_C  32|16 (factor 0.1, offset +40 raw)
-          [6]   DeratingPct     48|8  (0-100%)
-          [7]   TempFaultStatus 56|4  (bit2=overtemp, bit3=derating)
+        DBC signals use factor 0.1 — pass physical deg C, cantools scales.
         """
-        payload = bytearray(6)
-        # Byte 2: winding temp 1 (raw = temp + 40)
-        payload[2] = int(self.motor.temp_c + 40) & 0xFF
-        # Byte 3: winding temp 2 (board temp, slightly lower)
-        payload[3] = int(self.motor.temp_c * 0.8 + 40) & 0xFF
-        # Byte 4: derating percent
+        # Derating percent
         if self.motor.overtemp:
-            payload[4] = 0
+            derating = 0
         elif self.motor.temp_c > 80:
-            payload[4] = 50
+            derating = 50
         elif self.motor.temp_c > 60:
-            payload[4] = 75
+            derating = 75
         else:
-            payload[4] = 100
-        # Byte 5: fault status (4 bits)
-        fault = 0
-        if self.motor.overtemp:
-            fault |= 0x04  # bit2 = overtemp
-            fault |= 0x08  # bit3 = derating active
-        elif self.motor.temp_c > 60:
-            fault |= 0x08  # derating active
-        payload[5] = fault & 0x0F
+            derating = 100
 
-        data = self._encode_with_e2e(TX_MOTOR_TEMP, 0x00, payload)
-        self.bus.send(can.Message(arbitration_id=TX_MOTOR_TEMP,
-                                  data=data, is_extended_id=False))
+        data = self.encoder.encode("Motor_Temperature", {
+            "Motor_Temperature_WindingTemp1_C": self.motor.temp_c,
+            "Motor_Temperature_WindingTemp2_C": self.motor.temp_c * 0.8,
+            "Motor_Temperature_DeratingPercent": derating,
+        })
+        self.bus.send(can.Message(
+            arbitration_id=self.encoder.get_id("Motor_Temperature"),
+            data=data, is_extended_id=False))
 
     def _tx_battery_status(self):
-        """Send Battery_Status (0x303) every 1000ms. No E2E.
-
-        Byte layout per taktflow.dbc:
-          [0-1] BattVoltage_mV  0|16 (uint16 LE, mV)
-          [2]   BattSoC         16|8 (0-100%)
-          [3]   BattStatus      24|4 (0=UV, 1=low, 2=nominal, 3=full)
-        """
-        payload = bytearray(4)
-        v = self.battery.voltage_mv
-        payload[0] = v & 0xFF
-        payload[1] = (v >> 8) & 0xFF
-        payload[2] = int(self.battery.soc) & 0xFF
-        payload[3] = self.battery.status & 0x0F
-        self.bus.send(can.Message(arbitration_id=TX_BATTERY_STATUS,
-                                  data=payload, is_extended_id=False))
+        """Send Battery_Status (0x303) every 1000ms."""
+        data = self.encoder.encode("Battery_Status", {
+            "Battery_Status_BatteryVoltage_mV": min(20000, self.battery.voltage_mv),
+            "Battery_Status_Level": self.battery.status,
+        })
+        self.bus.send(can.Message(
+            arbitration_id=self.encoder.get_id("Battery_Status"),
+            data=data, is_extended_id=False))
 
     def _send_dtc(self, dtc_code: int, ecu_source: int):
         """Send DTC_Broadcast (0x500, 8 bytes, no E2E). Only fires once per DTC."""
@@ -428,15 +339,17 @@ class PlantSimulator:
         count = self._dtc_occurrence.get(dtc_code, 0) + 1
         self._dtc_occurrence[dtc_code] = count
 
-        payload = bytearray(8)
-        payload[0] = (dtc_code >> 16) & 0xFF   # DTC high byte (24-bit BE)
-        payload[1] = (dtc_code >> 8) & 0xFF    # DTC mid byte
-        payload[2] = dtc_code & 0xFF           # DTC low byte
-        payload[3] = 0x01                      # DTC_Status: active
-        payload[4] = ecu_source & 0xFF
-        payload[5] = min(255, count)
-        self.bus.send(can.Message(arbitration_id=TX_DTC_BROADCAST,
-                                  data=payload, is_extended_id=False))
+        data = self.encoder.encode("DTC_Broadcast", {
+            "DTC_Broadcast_Number": dtc_code & 0xFFFF,
+            "DTC_Broadcast_Status": 0x01,
+            "DTC_Broadcast_ECU_Source": ecu_source & 0xFF,
+            "DTC_Broadcast_OccurrenceCount": min(255, count),
+            "DTC_Broadcast_FreezeFrame0": 0,
+            "DTC_Broadcast_FreezeFrame1": 0,
+        })
+        self.bus.send(can.Message(
+            arbitration_id=self.encoder.get_id("DTC_Broadcast"),
+            data=data, is_extended_id=False))
         log.info("DTC 0x%06X from ECU %d (occurrence %d)", dtc_code, ecu_source, count)
 
     def _check_and_send_dtcs(self):
@@ -453,116 +366,82 @@ class PlantSimulator:
     def _tx_steering_status(self):
         """Send Steering_Status (0x200) every 20ms.
 
-        Byte layout per taktflow.dbc:
-          [0-1] E2E (DataID + AliveCounter + CRC8)
-          [2-3] SteerAngle_Actual  16|16 (sint16 LE, factor 0.1 deg)
-          [4-5] SteerAngle_Cmd     32|16 (sint16 LE, factor 0.1 deg)
-          [6]   SteerFaultStatus   48|4  (bits 0-3)
-          [7]   ServoCurrent       56|8  (factor 10 mA)
+        ServoCurrent_mA has DBC scale=10 — pass physical mA, cantools divides.
         """
-        payload = bytearray(8)
-        actual_raw = self.steering.actual_raw
-        payload[2] = actual_raw & 0xFF
-        payload[3] = (actual_raw >> 8) & 0xFF
-        cmd_raw = self.steering.commanded_raw
-        payload[4] = cmd_raw & 0xFF
-        payload[5] = (cmd_raw >> 8) & 0xFF
-        # Byte 6: fault(4) + mode(4)
-        fault = 0x01 if self.steering.fault else 0x00
-        payload[6] = fault
-        # Byte 7: servo current (factor 10)
-        payload[7] = min(255, self.steering.servo_current_ma // 10)
-
-        data = self._encode_with_e2e(TX_STEERING_STATUS, 0x09, payload)
-        self.bus.send(can.Message(arbitration_id=TX_STEERING_STATUS,
-                                  data=data, is_extended_id=False))
+        data = self.encoder.encode("Steering_Status", {
+            "Steering_Status_ActualAngle": self.steering.actual_raw,
+            "Steering_Status_CommandedAngle": self.steering.commanded_raw,
+            "Steering_Status_SteerFaultStatus": 0x01 if self.steering.fault else 0x00,
+            "Steering_Status_SteerMode": 0,
+            "Steering_Status_ServoCurrent_mA": min(2550, self.steering.servo_current_ma),
+        })
+        self.bus.send(can.Message(
+            arbitration_id=self.encoder.get_id("Steering_Status"),
+            data=data, is_extended_id=False))
 
     def _tx_brake_status(self):
-        """Send Brake_Status (0x201) every 20ms.
-
-        Byte layout per taktflow.dbc:
-          [0-1] E2E (DataID + AliveCounter + CRC8)
-          [2]   BrakePosition      16|8  (0-100%)
-          [3]   BrakeCommand       24|8  (0-100%)
-          [4-5] ServoCurrent       32|16 (uint16 LE, mA)
-          [6]   BrakeFaultStatus   48|4  (bits 0-3)
-          [7]   BrakeMode          56|4  (bits 0-3)
-        """
-        payload = bytearray(8)
-        payload[2] = self.brake.position_int
-        payload[3] = int(self.brake.commanded_pct)
-        # Bytes 4-5: servo current (16-bit LE)
-        sc = self.brake.servo_current_ma
-        payload[4] = sc & 0xFF
-        payload[5] = (sc >> 8) & 0xFF
-        # Byte 6: fault(4) + mode(4)
-        payload[6] = 0x01 if self.brake.fault else 0x00
-
-        data = self._encode_with_e2e(TX_BRAKE_STATUS, 0x0A, payload)
-        self.bus.send(can.Message(arbitration_id=TX_BRAKE_STATUS,
-                                  data=data, is_extended_id=False))
+        """Send Brake_Status (0x201) every 20ms."""
+        data = self.encoder.encode("Brake_Status", {
+            "Brake_Status_BrakePosition": self.brake.position_int,
+            "Brake_Status_BrakeCommandEcho": int(self.brake.commanded_pct),
+            "Brake_Status_ServoCurrent_mA": min(65535, self.brake.servo_current_ma),
+            "Brake_Status_BrakeFaultStatus": 0x01 if self.brake.fault else 0x00,
+            "Brake_Status_BrakeMode": 0,
+        })
+        self.bus.send(can.Message(
+            arbitration_id=self.encoder.get_id("Brake_Status"),
+            data=data, is_extended_id=False))
 
     def _tx_brake_fault_event(self):
         """Send Brake_Fault event (0x210) when brake fault is active.
 
-        Byte layout per taktflow.dbc (4 bytes, E2E protected):
-          [0]   E2E: AliveCounter[7:4] | DataID[3:0]
-          [1]   E2E: CRC8
-          [2]   FaultType[3:0]   (1=deviation, 2=sensor, 3=actuator)
-                CommandedBrake[7:4]+[11:8] at bits 20-27
-          [3]   MeasuredBrake[3:0] at bits 28-31
-        CVC reads byte 2 as sig_rx_brake_fault (bitPos=16, bitSize=8).
-        Any non-zero value triggers EVT_BRAKE_FAULT -> SAFE_STOP.
+        CVC reads Brake_Fault_FaultType — any non-zero triggers
+        EVT_BRAKE_FAULT -> SAFE_STOP.
         """
         if not self.brake.fault:
             return
-        # Use 8-byte frame to match FZC firmware DLC (CVC Com expects DLC=8)
-        payload = bytearray(8)
-        payload[2] = 0x01  # FaultType=1 (deviation)
-        data = self._encode_with_e2e(TX_BRAKE_FAULT_EVENT, 0x0B, payload)
-        self.bus.send(can.Message(arbitration_id=TX_BRAKE_FAULT_EVENT,
-                                  data=data, is_extended_id=False))
+        data = self.encoder.encode("Brake_Fault", {
+            "Brake_Fault_FaultType": 1,  # deviation
+            "Brake_Fault_CommandedBrake": 0,
+            "Brake_Fault_MeasuredBrake": 0,
+        })
+        self.bus.send(can.Message(
+            arbitration_id=self.encoder.get_id("Brake_Fault"),
+            data=data, is_extended_id=False))
 
     def _tx_vehicle_state(self):
         """Send Vehicle_State (0x100) every 100ms."""
-        payload = bytearray(8)
-        # Byte 2: VehicleState (4 bits)
-        payload[2] = self.vehicle_state & 0x0F
-        # Byte 3: FaultMask (8 bits) — 0 for normal
-        payload[3] = 0
-        # Byte 4: TorqueLimit (0-100) — actual motor duty, not fixed ceiling
-        payload[4] = int(self.motor.duty_pct) & 0xFF if self.vehicle_state == VS_RUN else 0
-        # Byte 5: SpeedLimit (0-100)
-        payload[5] = 100 if self.vehicle_state == VS_RUN else 0
-
-        data = self._encode_with_e2e(TX_VEHICLE_STATE, 0x06, payload)
-        self.bus.send(can.Message(arbitration_id=TX_VEHICLE_STATE,
-                                  data=data, is_extended_id=False))
+        data = self.encoder.encode("Vehicle_State", {
+            "Vehicle_State_Mode": self.vehicle_state & 0x0F,
+            "Vehicle_State_FaultMask": 0,
+            "Vehicle_State_TorqueLimit": (
+                int(self.motor.duty_pct) & 0xFF
+                if self.vehicle_state == VS_RUN else 0
+            ),
+            "Vehicle_State_SpeedLimit": 100 if self.vehicle_state == VS_RUN else 0,
+        })
+        self.bus.send(can.Message(
+            arbitration_id=self.encoder.get_id("Vehicle_State"),
+            data=data, is_extended_id=False))
 
     def _tx_lidar_distance(self):
         """Send Lidar_Distance (0x220) every 10ms."""
-        payload = bytearray(8)
-        d = self.lidar.distance_cm
-        payload[2] = d & 0xFF
-        payload[3] = (d >> 8) & 0xFF
-        ss = self.lidar.signal_strength
-        payload[4] = ss & 0xFF
-        payload[5] = (ss >> 8) & 0xFF
-        zone = self.lidar.obstacle_zone
-        sensor_status = 0x01 if self.lidar.fault else 0x00
-        payload[6] = (zone & 0x0F) | ((sensor_status & 0x0F) << 4)
-
-        data = self._encode_with_e2e(TX_LIDAR_DISTANCE, 0x0D, payload)
-        self.bus.send(can.Message(arbitration_id=TX_LIDAR_DISTANCE,
-                                  data=data, is_extended_id=False))
+        data = self.encoder.encode("Lidar_Distance", {
+            "Lidar_Distance_Range_cm": self.lidar.distance_cm,
+            "Lidar_Distance_SignalStrength": self.lidar.signal_strength,
+            "Lidar_Distance_ObstacleZone": self.lidar.obstacle_zone,
+            "Lidar_Distance_SensorStatus": 0x01 if self.lidar.fault else 0x00,
+        })
+        self.bus.send(can.Message(
+            arbitration_id=self.encoder.get_id("Lidar_Distance"),
+            data=data, is_extended_id=False))
 
     def _tx_fzc_virtual_sensors(self):
         """Send FZC virtual sensor data (0x600) every 10ms. No E2E.
 
-        Plant-sim physics → DBC-encoded CAN message → FZC sensor feeder SWC →
-        MCAL injection → IoHwAb → SWC fault detection.
+        Plant-sim physics -> DBC-encoded CAN message -> FZC sensor feeder SWC ->
+        MCAL injection -> IoHwAb -> SWC fault detection.
 
-        Encoding defined in DBC: FZC_Virtual_Sensors (0x600).
         Signals are raw sensor format (not physical) — matches AS5048A SPI.
         """
         angle_deg = 45.0 if self.steering.fault else self.steering.actual_angle
@@ -575,31 +454,30 @@ class PlantSimulator:
             brake_adc = int(self.brake.position_int * 10)
         brake_adc = max(0, min(1000, brake_adc))
 
-        data = self.db.encode_message('FZC_Virtual_Sensors', {
-            'VSensor_SteerAngle_Raw': angle_raw,
-            'VSensor_BrakePos_ADC': brake_adc,
-            'VSensor_BrakeCurrent': min(65535, self.brake.servo_current_ma),
+        data = self.encoder.encode("FZC_Virtual_Sensors", {
+            "FZC_Virtual_Sensors_SteerAngle_Raw": angle_raw,
+            "FZC_Virtual_Sensors_BrakePos_ADC": brake_adc,
+            "FZC_Virtual_Sensors_BrakeCurrent_mA": min(65535, self.brake.servo_current_ma),
         })
-        self.bus.send(can.Message(arbitration_id=TX_FZC_VIRTUAL_SENSORS,
-                                  data=data, is_extended_id=False))
+        self.bus.send(can.Message(
+            arbitration_id=self.encoder.get_id("FZC_Virtual_Sensors"),
+            data=data, is_extended_id=False))
 
     def _tx_rzc_virtual_sensors(self):
         """Send RZC virtual sensor data (0x601) every 10ms. No E2E.
 
-        Plant-sim physics → DBC-encoded CAN message → RZC sensor feeder SWC →
-        ADC injection → IoHwAb → SWC fault detection.
-
-        Encoding defined in DBC: RZC_Virtual_Sensors (0x601).
-        DBC is the single source of truth — no manual byte packing.
+        Plant-sim physics -> DBC-encoded CAN message -> RZC sensor feeder SWC ->
+        ADC injection -> IoHwAb -> SWC fault detection.
         """
-        data = self.db.encode_message('RZC_Virtual_Sensors', {
-            'VSensor_MotorCurrent': min(65535, self.motor.current_ma_int),
-            'VSensor_MotorTemp_dC': int(self.motor.temp_c * 10),
-            'VSensor_BattVoltage': min(20000, self.battery.voltage_mv),
-            'VSensor_MotorRPM': max(0, min(10000, self.motor.rpm_int)),
+        data = self.encoder.encode("RZC_Virtual_Sensors", {
+            "RZC_Virtual_Sensors_MotorCurrent_mA": min(65535, self.motor.current_ma_int),
+            "RZC_Virtual_Sensors_MotorTemp_dC": int(self.motor.temp_c * 10),
+            "RZC_Virtual_Sensors_BattVoltage_mV": min(20000, self.battery.voltage_mv),
+            "RZC_Virtual_Sensors_MotorSpeed_RPM": max(0, min(10000, self.motor.rpm_int)),
         })
-        self.bus.send(can.Message(arbitration_id=TX_RZC_VIRTUAL_SENSORS,
-                                  data=data, is_extended_id=False))
+        self.bus.send(can.Message(
+            arbitration_id=self.encoder.get_id("RZC_Virtual_Sensors"),
+            data=data, is_extended_id=False))
 
     async def run(self):
         """Main simulation loop at 100 Hz (scaled by SIL_TIME_SCALE)."""
@@ -607,10 +485,10 @@ class PlantSimulator:
                                      interface="socketcan")
         self._init_mqtt()
         log.info("Plant simulator started on %s", self.channel)
-        log.info("Loaded DBC with %d messages", len(self.db.messages))
+        log.info("Loaded DBC with %d messages", len(self.encoder.db.messages))
 
         # SIL time acceleration: physics dt stays 10ms virtual, but wall-clock
-        # sleep is divided by scale so physics runs N× faster
+        # sleep is divided by scale so physics runs Nx faster
         sil_scale = int(os.environ.get("SIL_TIME_SCALE", "1"))
         sil_scale = max(1, min(100, sil_scale))
         dt = 0.01  # 10ms virtual time step (physics always sees 10ms)
@@ -690,9 +568,9 @@ class PlantSimulator:
                     log.info("Vehicle state -> INIT (safety triggers cleared, re-initializing)")
 
                 # Transition to SAFE_STOP/DEGRADED/LIMP on faults
-                # SG-003 (ASIL D): steer fault → SAFE_STOP (SS-MOTOR-OFF)
-                # SG-004 (ASIL D): brake fault → SAFE_STOP (SS-MOTOR-OFF)
-                # SG-006 (ASIL A): overcurrent → SAFE_STOP (SS-MOTOR-OFF)
+                # SG-003 (ASIL D): steer fault -> SAFE_STOP (SS-MOTOR-OFF)
+                # SG-004 (ASIL D): brake fault -> SAFE_STOP (SS-MOTOR-OFF)
+                # SG-006 (ASIL A): overcurrent -> SAFE_STOP (SS-MOTOR-OFF)
                 safe_stop_fault = (
                     self.brake.fault or self.steering.fault
                     or self.motor.overcurrent
@@ -768,7 +646,7 @@ class PlantSimulator:
 def main():
     dbc_path = os.environ.get(
         "DBC_PATH",
-        os.path.join(os.path.dirname(__file__), "..", "taktflow.dbc"),
+        os.path.join(os.path.dirname(__file__), "..", "taktflow_vehicle.dbc"),
     )
     channel = os.environ.get("CAN_CHANNEL", "vcan0")
 
