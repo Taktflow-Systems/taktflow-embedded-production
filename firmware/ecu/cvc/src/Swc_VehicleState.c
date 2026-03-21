@@ -425,21 +425,10 @@ static void Swc_VehicleState_ConfirmFault(
                 }
             }
 
-            /* E2E status check */
-            if ((confirmed == TRUE) && (e2eRxIndex != 0xFFu))
-            {
-                Swc_CvcCom_RxStatusType rx_status;
-                rx_status.failCount     = 0u;
-                rx_status.useSafeDefault = FALSE;
-
-                if (Swc_CvcCom_GetRxStatus(e2eRxIndex, &rx_status) == E_OK)
-                {
-                    if (rx_status.useSafeDefault == TRUE)
-                    {
-                        confirmed = FALSE;
-                    }
-                }
-            }
+            /* E2E status check: Com_RxIndication now discards frames with
+             * bad E2E (CRC/counter mismatch). If a signal reaches the shadow
+             * buffer, it passed E2E. Legacy CvcCom_GetRxStatus removed. */
+            (void)e2eRxIndex;
 
             if (confirmed == TRUE)
             {
