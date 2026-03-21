@@ -15,6 +15,9 @@
  */
 #include "Std_Types.h"
 #include "Cvc_Cfg.h"
+#ifdef SIL_DIAG
+#include <stdio.h>
+#endif
 
 /* ==================================================================
  * BSW Module Headers
@@ -436,11 +439,22 @@ int main(void)
             FiM_MainFunction();
         }
 
-        /* 5s debug task: platform-specific status print (UART on STM32, no-op on POSIX) */
+        /* 5s debug task */
         if ((tick_us - last_5s_us) >= 5000000u)
         {
             last_5s_us = tick_us;
             Main_Hw_DebugPrintStatus(tick_us);
+#ifdef SIL_DIAG
+            {
+                extern volatile uint32 g_dbg_com_tx_calls;
+                extern volatile uint32 com_tx_send_count[];
+                fprintf(stderr, "[MAIN] t=%us com_tx_calls=%u hb_sends=%u vs_sends=%u\n",
+                    (unsigned)(tick_us / 1000000u),
+                    (unsigned)g_dbg_com_tx_calls,
+                    (unsigned)com_tx_send_count[1],  /* heartbeat PDU */
+                    (unsigned)com_tx_send_count[2]);  /* vehicle state PDU */
+            }
+#endif
         }
     }
 
