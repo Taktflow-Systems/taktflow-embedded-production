@@ -137,27 +137,11 @@ static const CanIf_ConfigType canif_config = {
     .e2eRxCheck  = NULL_PTR,
 };
 
-/** PduR RX routing: CanIf RX PDU ID → Com or Dcm */
-static const PduR_RoutingTableType cvc_pdur_routing[] = {
-    { CVC_COM_RX_FZC_HB,        PDUR_DEST_COM, CVC_COM_RX_FZC_HB        },
-    { CVC_COM_RX_RZC_HB,        PDUR_DEST_COM, CVC_COM_RX_RZC_HB        },
-    { CVC_COM_RX_BRAKE_FAULT,   PDUR_DEST_COM, CVC_COM_RX_BRAKE_FAULT   },
-    { CVC_COM_RX_MOTOR_CUTOFF,  PDUR_DEST_COM, CVC_COM_RX_MOTOR_CUTOFF  },
-    { CVC_COM_RX_LIDAR,         PDUR_DEST_COM, CVC_COM_RX_LIDAR         },
-    { CVC_COM_RX_MOTOR_CURRENT, PDUR_DEST_COM, CVC_COM_RX_MOTOR_CURRENT },
-    { CVC_COM_RX_SC_RELAY,      PDUR_DEST_COM, CVC_COM_RX_SC_RELAY      },
-    { CVC_COM_RX_BATTERY_STATUS, PDUR_DEST_COM, CVC_COM_RX_BATTERY_STATUS },
-    { CVC_COM_RX_ESTOP_INJECT,   PDUR_DEST_COM, CVC_COM_RX_ESTOP_INJECT  },
-    { CVC_COM_RX_STEER_STATUS,  PDUR_DEST_COM, CVC_COM_RX_STEER_STATUS },
-    { CVC_COM_RX_MOTOR_STATUS,  PDUR_DEST_COM, CVC_COM_RX_MOTOR_STATUS },
-    { 0xFFu,                    PDUR_DEST_CANTP, 0u                      },
-    { 0xFEu,                    PDUR_DEST_CANTP, 0u                      },
-};
-
-static const PduR_ConfigType cvc_pdur_config = {
-    .routingTable = cvc_pdur_routing,
-    .routingCount = (uint8)(sizeof(cvc_pdur_routing) / sizeof(cvc_pdur_routing[0])),
-};
+/* PduR config — use GENERATED routing table from PduR_Cfg_Cvc.c
+ * DO NOT hand-write routing tables here. All routing is generated from
+ * DBC → ARXML → codegen. The generated config includes XCP, UDS, and
+ * all Com RX PDU routing. */
+extern const PduR_ConfigType cvc_pdur_config;
 
 /** CanTp configuration — single channel for UDS diagnostics */
 static const CanTp_ConfigType cantp_config = {
