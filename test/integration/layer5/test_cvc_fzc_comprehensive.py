@@ -224,6 +224,10 @@ cvc = start_ecu(CVC_BIN, IFACE)
 fzc = start_ecu(FZC_BIN, IFACE)
 time.sleep(6)  # Boot both, let heartbeat exchange settle (timeout clear needs ~3 HBs)
 
+# Flush stale frames from recv buffer to get fresh state
+while bus.recv(timeout=0.01):
+    pass
+
 # With FZC alive, CVC might reach RUN if self-test passes and FZC+RZC heartbeats OK.
 # But RZC is missing, so CVC stays DEGRADED or goes to timeout.
 f = wait_for_frame(bus, 0x100, timeout_s=2)
