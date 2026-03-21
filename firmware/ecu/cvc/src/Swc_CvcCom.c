@@ -71,25 +71,11 @@ void Swc_CvcCom_Init(void)
  */
 void Swc_CvcCom_TransmitSchedule(uint32 currentTimeMs)
 {
-    uint8  i;
-    uint32 elapsed;
+    (void)currentTimeMs;  /* Timing now handled by Com PERIODIC mode */
 
     if (CvcCom_Initialized != TRUE)
     {
         return;
-    }
-
-    for (i = 0u; i < CVCCOM_TX_TABLE_SIZE; i++)
-    {
-        elapsed = currentTimeMs - CvcCom_TxLastTimeMs[i];
-
-        if (elapsed >= (uint32)CvcCom_TxTable[i].periodMs)
-        {
-            CvcCom_TxLastTimeMs[i] = currentTimeMs;
-
-            /* Transmit is handled by the caller after E2E protect.
-             * Mark the slot as due for transmission. */
-        }
     }
 
     /* ---- TX: Heartbeat signals → Com (50ms cycle enforced by Com config) ---- */
