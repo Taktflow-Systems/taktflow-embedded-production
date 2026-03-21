@@ -258,6 +258,9 @@ Std_ReturnType Swc_CvcCom_GetRxStatus(uint8 rxIndex,
     return E_OK;
 }
 
+/* Stub: Swc_Heartbeat_ResetCommStatus (called by VSM on recovery) */
+void Swc_Heartbeat_ResetCommStatus(void) {}
+
 /* ==================================================================
  * SWC Under Test — declarations
  * ================================================================== */
