@@ -53,15 +53,23 @@ typedef uint8           Std_ReturnType;
 /* Com TX PDU IDs (mirrors Cvc_Cfg.h) */
 #define CVC_COM_TX_VEHICLE_STATE   2u
 
-/* Com Signal IDs used by Swc_CvcCom.c (mirrors Cvc_Cfg.h) */
-#define CVC_COM_SIG_STEER_COMMAND_STEER_ANGLE_CMD            29u
+/* Com Signal IDs used by Swc_CvcCom.c (must match Cvc_Cfg.h generated values) */
+#define CVC_COM_SIG_ESTOP_BROADCAST_ACTIVE                     3u
+#define CVC_COM_SIG_ESTOP_BROADCAST_SOURCE                     4u
+#define CVC_COM_SIG_CVC_HEARTBEAT_ECU_ID                       8u
+#define CVC_COM_SIG_CVC_HEARTBEAT_OPERATING_MODE               9u
+#define CVC_COM_SIG_VEHICLE_STATE_MODE                        14u
+#define CVC_COM_SIG_VEHICLE_STATE_FAULT_MASK                  15u
+#define CVC_COM_SIG_VEHICLE_STATE_TORQUE_LIMIT                16u
+#define CVC_COM_SIG_TORQUE_REQUEST_COMMAND_PCT                21u
+#define CVC_COM_SIG_STEER_COMMAND_STEER_ANGLE_CMD             29u
 #define CVC_COM_SIG_BRAKE_COMMAND_BRAKE_FORCE_CMD             35u
+#define CVC_COM_SIG_SC_STATUS_RELAY_ENERGIZED                 76u
+#define CVC_COM_SIG_STEERING_STATUS_STEER_FAULT_STATUS        89u
 #define CVC_COM_SIG_BRAKE_FAULT_FAULT_TYPE                   103u
 #define CVC_COM_SIG_MOTOR_CUTOFF_REQ_REQUEST_TYPE            109u
-#define CVC_COM_SIG_SC_STATUS_RELAY_STATE                     68u
-#define CVC_COM_SIG_BATTERY_STATUS_LEVEL            144u
-#define CVC_COM_SIG_STEERING_STATUS_STEER_FAULT_STATUS        89u
 #define CVC_COM_SIG_MOTOR_STATUS_MOTOR_FAULT_STATUS          125u
+#define CVC_COM_SIG_BATTERY_STATUS_LEVEL                     144u
 
 /* Vehicle state constants (mirrors Cvc_Cfg.h) */
 #define CVC_STATE_INIT        0u
