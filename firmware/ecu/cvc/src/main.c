@@ -409,25 +409,28 @@ int main(void)
 
         tick_us = Main_Hw_GetTick();
 
+        /* 10ms tasks: bridge signals BEFORE RTE dispatches Com_MainFunction_Tx.
+         * CvcCom_TransmitSchedule writes signal values to Com PDU buffers.
+         * Com_MainFunction_Tx (dispatched by RTE at 10ms) reads those buffers.
+         * If these ran after RTE, PERIODIC TX would send stale/zero values. */
+        if ((tick_us - last_10ms_us) >= 10000u)
+        {
+            last_10ms_us = tick_us;
+            Spi_Hw_PollUdp();  /* Drain UDP pedal/E-Stop override socket */
+            Swc_CvcCom_BridgeRxToRte();
+            Swc_CvcCom_TransmitSchedule(tick_us / 1000u);
+            CanTp_MainFunction();
+            Dcm_MainFunction();
+            BswM_MainFunction();
+            CanSM_MainFunction();
+        }
+
         /* 1ms task: RTE scheduler (dispatches runnables internally)
          * Main_Hw_GetTick() returns microseconds; 1ms = 1000us */
         if ((tick_us - last_1ms_us) >= 1000u)
         {
             last_1ms_us = tick_us;
             Rte_MainFunction();
-        }
-
-        /* 10ms tasks: CanTp, Dcm, BswM, Com->RTE bridge, CAN TX schedule */
-        if ((tick_us - last_10ms_us) >= 10000u)
-        {
-            last_10ms_us = tick_us;
-            Spi_Hw_PollUdp();  /* Drain UDP pedal/E-Stop override socket */
-            CanTp_MainFunction();
-            Dcm_MainFunction();
-            BswM_MainFunction();
-            CanSM_MainFunction();
-            Swc_CvcCom_BridgeRxToRte();
-            Swc_CvcCom_TransmitSchedule(tick_us / 1000u);
         }
 
         /* 100ms tasks: WdgM, Dem (DTC broadcast) */
