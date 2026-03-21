@@ -25,7 +25,9 @@
 #include <unistd.h>
 #include <time.h>
 #include <stdint.h>
+#ifndef PLATFORM_QNX
 #include <sys/timerfd.h>
+#endif
 
 /* ================================================================== */
 
@@ -78,8 +80,17 @@ void Sil_Time_Sleep(uint32 period_us)
         wall_us = 10u;
     }
 
+#ifdef PLATFORM_QNX
+    /* QNX: use nanosleep (POSIX, no timerfd) */
+    {
+        struct timespec ts;
+        ts.tv_sec  = wall_us / 1000000u;
+        ts.tv_nsec = (long)(wall_us % 1000000u) * 1000L;
+        nanosleep(&ts, NULL);
+    }
+#else
     /*
-     * Use timerfd for intervals < 2ms (where usleep precision degrades).
+     * Linux: use timerfd for intervals < 2ms (where usleep precision degrades).
      * For longer sleeps, usleep is fine and avoids fd overhead.
      */
     if (wall_us < 2000u) {
@@ -94,16 +105,16 @@ void Sil_Time_Sleep(uint32 period_us)
             if (timerfd_settime(tfd, 0, &its, NULL) == 0) {
                 uint64_t expirations;
                 ssize_t n = read(tfd, &expirations, sizeof(expirations));
-                (void)n; /* Block until timer fires; value unused */
+                (void)n;
             }
             close(tfd);
         } else {
-            /* Fallback if timerfd unavailable */
             usleep(wall_us);
         }
     } else {
         usleep(wall_us);
     }
+#endif
 }
 
 uint32 Sil_Time_GetTickUs(void)
