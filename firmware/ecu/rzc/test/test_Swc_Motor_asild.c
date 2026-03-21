@@ -3,7 +3,7 @@
  * @brief   Unit tests for Swc_Motor -- BTS7960 H-bridge motor control SWC
  * @date    2026-02-23
  *
- * @verifies SWR-RZC-001, SWR-RZC-002, SWR-RZC-003, SWR-RZC-004,
+ * @verifies , SSR-RZC-001, SSR-RZC-002, SSR-RZC-003, SSR-RZC-006, SSR-RZC-007, SSR-RZC-011, SSR-RZC-012, SSR-RZC-013, SSR-RZC-014, SSR-RZC-017, SSR-RZC-018, SSR-RZC-019, SSR-RZC-020, SSR-RZC-021, SSR-RZC-022, SSR-RZC-023, SSR-RZC-024, SWR-RZC-001, SWR-RZC-002, SWR-RZC-003, SWR-RZC-004
  *           SWR-RZC-015, SWR-RZC-016
  *
  * Tests motor initialization, torque-to-PWM conversion, mode-based torque

@@ -3,7 +3,7 @@
  * @brief   Unit tests for Default Error Tracer module
  * @date    2026-03-03
  *
- * @verifies SWR-BSW-040
+ * @verifies SWR-BSW-019, SWR-BSW-040
  *
  * Tests DET error reporting, ring buffer behavior, callback hook,
  * and boundary conditions.

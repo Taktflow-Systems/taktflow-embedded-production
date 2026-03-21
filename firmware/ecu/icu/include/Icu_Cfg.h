@@ -189,7 +189,15 @@
 #define ICU_SIG_VEHICLE_STATE_MODE   187u
 #define ICU_SIG_VEHICLE_STATE_SPEED_LIMIT   188u
 #define ICU_SIG_VEHICLE_STATE_TORQUE_LIMIT   189u
-#define ICU_SIG_COUNT   190u
+#define ICU_SIG_XCP_REQ_CVC_DATA   190u
+#define ICU_SIG_XCP_REQ_FZC_DATA   191u
+#define ICU_SIG_XCP_REQ_RZC_DATA   192u
+#define ICU_SIG_XCP_REQ_SC_DATA   193u
+#define ICU_SIG_XCP_RESP_CVC_DATA   194u
+#define ICU_SIG_XCP_RESP_FZC_DATA   195u
+#define ICU_SIG_XCP_RESP_RZC_DATA   196u
+#define ICU_SIG_XCP_RESP_SC_DATA   197u
+#define ICU_SIG_COUNT   198u
 
 
 /* ====================================================================
@@ -228,17 +236,25 @@
 #define ICU_COM_RX_INDICATOR_STATE    22u   /* CAN 0x401 */
 #define ICU_COM_RX_DOOR_LOCK_STATUS    23u   /* CAN 0x402 */
 #define ICU_COM_RX_DTC_BROADCAST    24u   /* CAN 0x500 */
-#define ICU_COM_RX_FZC_VIRTUAL_SENSORS    25u   /* CAN 0x600 */
-#define ICU_COM_RX_RZC_VIRTUAL_SENSORS    26u   /* CAN 0x601 */
-#define ICU_COM_RX_UDS_RESP_TCU    27u   /* CAN 0x644 */
-#define ICU_COM_RX_UDS_FUNC_REQUEST    28u   /* CAN 0x7DF */
-#define ICU_COM_RX_UDS_PHYS_REQ_CVC    29u   /* CAN 0x7E0 */
-#define ICU_COM_RX_UDS_PHYS_REQ_FZC    30u   /* CAN 0x7E1 */
-#define ICU_COM_RX_UDS_PHYS_REQ_RZC    31u   /* CAN 0x7E2 */
-#define ICU_COM_RX_UDS_PHYS_REQ_TCU    32u   /* CAN 0x7E3 */
-#define ICU_COM_RX_UDS_RESP_CVC    33u   /* CAN 0x7E8 */
-#define ICU_COM_RX_UDS_RESP_FZC    34u   /* CAN 0x7E9 */
-#define ICU_COM_RX_UDS_RESP_RZC    35u   /* CAN 0x7EA */
+#define ICU_COM_RX_XCP_REQ_CVC    25u   /* CAN 0x550 */
+#define ICU_COM_RX_XCP_RESP_CVC    26u   /* CAN 0x551 */
+#define ICU_COM_RX_XCP_REQ_FZC    27u   /* CAN 0x552 */
+#define ICU_COM_RX_XCP_RESP_FZC    28u   /* CAN 0x553 */
+#define ICU_COM_RX_XCP_REQ_RZC    29u   /* CAN 0x554 */
+#define ICU_COM_RX_XCP_RESP_RZC    30u   /* CAN 0x555 */
+#define ICU_COM_RX_XCP_REQ_SC    31u   /* CAN 0x556 */
+#define ICU_COM_RX_XCP_RESP_SC    32u   /* CAN 0x557 */
+#define ICU_COM_RX_FZC_VIRTUAL_SENSORS    33u   /* CAN 0x600 */
+#define ICU_COM_RX_RZC_VIRTUAL_SENSORS    34u   /* CAN 0x601 */
+#define ICU_COM_RX_UDS_RESP_TCU    35u   /* CAN 0x644 */
+#define ICU_COM_RX_UDS_FUNC_REQUEST    36u   /* CAN 0x7DF */
+#define ICU_COM_RX_UDS_PHYS_REQ_CVC    37u   /* CAN 0x7E0 */
+#define ICU_COM_RX_UDS_PHYS_REQ_FZC    38u   /* CAN 0x7E1 */
+#define ICU_COM_RX_UDS_PHYS_REQ_RZC    39u   /* CAN 0x7E2 */
+#define ICU_COM_RX_UDS_PHYS_REQ_TCU    40u   /* CAN 0x7E3 */
+#define ICU_COM_RX_UDS_RESP_CVC    41u   /* CAN 0x7E8 */
+#define ICU_COM_RX_UDS_RESP_FZC    42u   /* CAN 0x7E9 */
+#define ICU_COM_RX_UDS_RESP_RZC    43u   /* CAN 0x7EA */
 
 /* ====================================================================
  * Com Signal IDs (index into Com signal config table)
@@ -409,23 +425,31 @@
 /* ICU_COM_SIG_DTC_BROADCAST_OCCURRENCE_COUNT =  161u   RX DTC_Broadcast (dup, ID only) */
 /* ICU_COM_SIG_DTC_BROADCAST_FREEZE_FRAME_0 =  162u   RX DTC_Broadcast (dup, ID only) */
 /* ICU_COM_SIG_DTC_BROADCAST_FREEZE_FRAME_1 =  163u   RX DTC_Broadcast (dup, ID only) */
-#define ICU_COM_SIG_FZC_VIRTUAL_SENSORS_STEER_ANGLE_RAW   164u   /* RX FZC_Virtual_Sensors */
-#define ICU_COM_SIG_FZC_VIRTUAL_SENSORS_BRAKE_POS_ADC   165u   /* RX FZC_Virtual_Sensors */
-#define ICU_COM_SIG_FZC_VIRTUAL_SENSORS_BRAKE_CURRENT_M_A   166u   /* RX FZC_Virtual_Sensors */
-#define ICU_COM_SIG_RZC_VIRTUAL_SENSORS_MOTOR_CURRENT_M_A   167u   /* RX RZC_Virtual_Sensors */
-#define ICU_COM_SIG_RZC_VIRTUAL_SENSORS_MOTOR_TEMP_D_C   168u   /* RX RZC_Virtual_Sensors */
-#define ICU_COM_SIG_RZC_VIRTUAL_SENSORS_BATT_VOLTAGE_M_V   169u   /* RX RZC_Virtual_Sensors */
-#define ICU_COM_SIG_RZC_VIRTUAL_SENSORS_MOTOR_SPEED_RPM   170u   /* RX RZC_Virtual_Sensors */
-#define ICU_COM_SIG_UDS_RESP_TCU_UDS_DATA   171u   /* RX UDS_Resp_TCU */
-#define ICU_COM_SIG_UDS_FUNC_REQUEST_UDS_DATA   172u   /* RX UDS_Func_Request */
-#define ICU_COM_SIG_UDS_PHYS_REQ_CVC_UDS_DATA   173u   /* RX UDS_Phys_Req_CVC */
-#define ICU_COM_SIG_UDS_PHYS_REQ_FZC_UDS_DATA   174u   /* RX UDS_Phys_Req_FZC */
-#define ICU_COM_SIG_UDS_PHYS_REQ_RZC_UDS_DATA   175u   /* RX UDS_Phys_Req_RZC */
-#define ICU_COM_SIG_UDS_PHYS_REQ_TCU_UDS_DATA   176u   /* RX UDS_Phys_Req_TCU */
-#define ICU_COM_SIG_UDS_RESP_CVC_UDS_DATA   177u   /* RX UDS_Resp_CVC */
-#define ICU_COM_SIG_UDS_RESP_FZC_UDS_DATA   178u   /* RX UDS_Resp_FZC */
-#define ICU_COM_SIG_UDS_RESP_RZC_UDS_DATA   179u   /* RX UDS_Resp_RZC */
-#define ICU_COM_SIG_COUNT   180u
+#define ICU_COM_SIG_XCP_REQ_CVC_DATA   164u   /* RX XCP_Req_CVC */
+#define ICU_COM_SIG_XCP_RESP_CVC_DATA   165u   /* RX XCP_Resp_CVC */
+#define ICU_COM_SIG_XCP_REQ_FZC_DATA   166u   /* RX XCP_Req_FZC */
+#define ICU_COM_SIG_XCP_RESP_FZC_DATA   167u   /* RX XCP_Resp_FZC */
+#define ICU_COM_SIG_XCP_REQ_RZC_DATA   168u   /* RX XCP_Req_RZC */
+#define ICU_COM_SIG_XCP_RESP_RZC_DATA   169u   /* RX XCP_Resp_RZC */
+#define ICU_COM_SIG_XCP_REQ_SC_DATA   170u   /* RX XCP_Req_SC */
+#define ICU_COM_SIG_XCP_RESP_SC_DATA   171u   /* RX XCP_Resp_SC */
+#define ICU_COM_SIG_FZC_VIRTUAL_SENSORS_STEER_ANGLE_RAW   172u   /* RX FZC_Virtual_Sensors */
+#define ICU_COM_SIG_FZC_VIRTUAL_SENSORS_BRAKE_POS_ADC   173u   /* RX FZC_Virtual_Sensors */
+#define ICU_COM_SIG_FZC_VIRTUAL_SENSORS_BRAKE_CURRENT_M_A   174u   /* RX FZC_Virtual_Sensors */
+#define ICU_COM_SIG_RZC_VIRTUAL_SENSORS_MOTOR_CURRENT_M_A   175u   /* RX RZC_Virtual_Sensors */
+#define ICU_COM_SIG_RZC_VIRTUAL_SENSORS_MOTOR_TEMP_D_C   176u   /* RX RZC_Virtual_Sensors */
+#define ICU_COM_SIG_RZC_VIRTUAL_SENSORS_BATT_VOLTAGE_M_V   177u   /* RX RZC_Virtual_Sensors */
+#define ICU_COM_SIG_RZC_VIRTUAL_SENSORS_MOTOR_SPEED_RPM   178u   /* RX RZC_Virtual_Sensors */
+#define ICU_COM_SIG_UDS_RESP_TCU_UDS_DATA   179u   /* RX UDS_Resp_TCU */
+#define ICU_COM_SIG_UDS_FUNC_REQUEST_UDS_DATA   180u   /* RX UDS_Func_Request */
+#define ICU_COM_SIG_UDS_PHYS_REQ_CVC_UDS_DATA   181u   /* RX UDS_Phys_Req_CVC */
+#define ICU_COM_SIG_UDS_PHYS_REQ_FZC_UDS_DATA   182u   /* RX UDS_Phys_Req_FZC */
+#define ICU_COM_SIG_UDS_PHYS_REQ_RZC_UDS_DATA   183u   /* RX UDS_Phys_Req_RZC */
+#define ICU_COM_SIG_UDS_PHYS_REQ_TCU_UDS_DATA   184u   /* RX UDS_Phys_Req_TCU */
+#define ICU_COM_SIG_UDS_RESP_CVC_UDS_DATA   185u   /* RX UDS_Resp_CVC */
+#define ICU_COM_SIG_UDS_RESP_FZC_UDS_DATA   186u   /* RX UDS_Resp_FZC */
+#define ICU_COM_SIG_UDS_RESP_RZC_UDS_DATA   187u   /* RX UDS_Resp_RZC */
+#define ICU_COM_SIG_COUNT   188u
 
 /* ====================================================================
  * RTE Signal Aliases (application-level → generated signal IDs)

@@ -3,7 +3,7 @@
  * @brief   Unit tests for OBD-II PID handler SWC
  * @date    2026-02-23
  *
- * @verifies SWR-TCU-010
+ * @verifies SSR-TCU-002, SWR-TCU-010
  *
  * Tests OBD-II Mode 01 PIDs (supported bitmap, engine load, coolant temp,
  * engine RPM, vehicle speed, control voltage, unsupported PID), Mode 03

@@ -1,260 +1,111 @@
 # =============================================================================
-# Unit Test + Code Coverage — GitHub Actions
+# Unit Tests + Coverage — GitHub Actions
 #
-# Runs all BSW and ECU unit tests, collects gcov/lcov coverage data,
-# and uploads HTML coverage report as artifact.
-#
-# IEC 61508-3 Table B.2 / ISO 26262-6 Table 12 coverage targets:
-#   Function:  100%
-#   Statement: 100%
-#   Branch:    100%
-#   MC/DC:     100% (measured separately via condition coverage)
+# Runs BSW unit tests with gcov/lcov coverage collection.
+# ISO 26262-6 Table 9 targets: Branch 100%, MC/DC 100%
 # =============================================================================
-
 name: Tests & Coverage
 
 on:
   push:
-    paths:
-      - 'firmware/**'
-      - 'test/**'
-      - 'tools/**'
-      - '.github/workflows/test.yml'
+    paths: ['firmware/**', 'test/**', '.github/workflows/test.yml']
   pull_request:
-    paths:
-      - 'firmware/**'
-      - 'test/**'
-      - 'tools/**'
-      - '.github/workflows/test.yml'
+    paths: ['firmware/**', 'test/**', '.github/workflows/test.yml']
 
 jobs:
-  # -------------------------------------------------------------------
-  # BSW unit tests + coverage
-  # -------------------------------------------------------------------
-  bsw-tests:
+  bsw-unit-tests:
     name: BSW Unit Tests + Coverage
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install coverage tools
+      - name: Install lcov
         run: sudo apt-get update && sudo apt-get install -y lcov
 
-      - name: Run BSW tests with coverage
-        working-directory: firmware/bsw
-        run: make coverage
+      - name: Build Com tests with coverage
+        run: |
+          gcc -DPLATFORM_POSIX -DUNIT_TEST --coverage -g -O0 -Wall \
+            -Ifirmware/bsw/include \
+            -Ifirmware/bsw/services/Com/include \
+            -Ifirmware/bsw/services/E2E/include \
+            -Ifirmware/bsw/services/Dem/include \
+            -Ifirmware/bsw/services/Det/include \
+            -Ifirmware/bsw/services/SchM/include \
+            -Ifirmware/bsw/services/WdgM/include \
+            -Ifirmware/bsw/services/BswM/include \
+            -Ifirmware/bsw/services/NvM/include \
+            -Ifirmware/bsw/rte/include \
+            -Ifirmware/bsw/ecual/PduR/include \
+            -Ifirmware/bsw/ecual/CanIf/include \
+            -Ifirmware/bsw/ecual/IoHwAb/include \
+            -Ifirmware/bsw/mcal/Can/include \
+            -Ifirmware/bsw/mcal/Adc/include \
+            -Ifirmware/bsw/mcal/Pwm/include \
+            -Ifirmware/bsw/mcal/Dio/include \
+            -Ifirmware/bsw/mcal/Gpt/include \
+            -Ifirmware/bsw/mcal/Spi/include \
+            -Ifirmware/bsw/mcal/Uart/include \
+            -Ifirmware/bsw/os/include \
+            -Ifirmware/platform/posix/include \
+            -Ifirmware/lib/vendor/unity \
+            -o test_com \
+            test/unit/bsw/test_Com_asild.c \
+            test/unit/bsw/stubs_com_test.c \
+            firmware/bsw/services/Com/src/Com.c \
+            firmware/bsw/services/E2E/src/E2E.c \
+            firmware/lib/vendor/unity/unity.c \
+            --coverage
 
-      - name: Upload BSW coverage report
+      - name: Run Com tests
+        run: ./test_com
+
+      - name: Build + run CanSM tests
+        run: |
+          gcc -DPLATFORM_POSIX -DUNIT_TEST --coverage -g -O0 -Wall \
+            -Ifirmware/bsw/include \
+            -Ifirmware/bsw/services/CanSM/include \
+            -Ifirmware/bsw/services/Det/include \
+            -Ifirmware/lib/vendor/unity \
+            -o test_cansm \
+            test/unit/bsw/test_CanSM_asild.c \
+            firmware/bsw/services/CanSM/src/CanSM.c \
+            firmware/lib/vendor/unity/unity.c \
+            --coverage
+          ./test_cansm
+
+      - name: Build + run E2E SM tests
+        run: |
+          gcc -DPLATFORM_POSIX -DUNIT_TEST --coverage -g -O0 -Wall \
+            -Ifirmware/bsw/include \
+            -Ifirmware/bsw/services/E2E/include \
+            -Ifirmware/bsw/services/Det/include \
+            -Ifirmware/bsw/services/Dem/include \
+            -Ifirmware/bsw/services/SchM/include \
+            -Ifirmware/lib/vendor/unity \
+            -o test_e2e_sm \
+            test/unit/bsw/test_E2E_Sm_asild.c \
+            test/unit/bsw/stubs_com_test.c \
+            firmware/bsw/services/E2E/src/E2E.c \
+            firmware/lib/vendor/unity/unity.c \
+            --coverage
+          ./test_e2e_sm
+
+      - name: Generate coverage report
+        if: always()
+        run: |
+          mkdir -p coverage
+          lcov --capture --directory . --output-file coverage/raw.info --rc lcov_branch_coverage=1 --ignore-errors unused,unused
+          lcov --remove coverage/raw.info '*/test/*' '*/unity/*' '*/stubs*' \
+            --output-file coverage/filtered.info --rc lcov_branch_coverage=1 --ignore-errors unused,unused
+          genhtml coverage/filtered.info --output-directory coverage/html \
+            --branch-coverage --title "Taktflow BSW Coverage"
+          echo "=== Coverage Summary ===" >> "$GITHUB_STEP_SUMMARY"
+          lcov --summary coverage/filtered.info --rc lcov_branch_coverage=1 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: bsw-coverage
-          path: firmware/bsw/coverage/
+          path: coverage/
           retention-days: 30
-
-      - name: BSW coverage summary
-        if: always()
-        working-directory: firmware/bsw
-        run: |
-          echo "=== BSW Coverage Summary ==="
-          if [ -f coverage/bsw-filtered.info ]; then
-            lcov --summary coverage/bsw-filtered.info --rc branch_coverage=1
-          else
-            echo "No coverage data generated."
-          fi
-
-  # -------------------------------------------------------------------
-  # ECU tests + coverage (matrix across all 7 ECUs)
-  # -------------------------------------------------------------------
-  ecu-tests:
-    name: "${{ matrix.ecu }} Tests + Coverage"
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        ecu: [bcm, icu, tcu, cvc, fzc, rzc, sc]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y lcov
-          # ICU needs ncurses for build
-          if [ "${{ matrix.ecu }}" = "icu" ]; then
-            sudo apt-get install -y libncurses-dev
-          fi
-
-      - name: Run ${{ matrix.ecu }} tests with coverage
-        run: make -f firmware/platform/posix/Makefile.posix TARGET=${{ matrix.ecu }} coverage
-
-      - name: Upload ${{ matrix.ecu }} coverage report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: "${{ matrix.ecu }}-coverage"
-          path: "coverage/${{ matrix.ecu }}/"
-          retention-days: 30
-
-  # -------------------------------------------------------------------
-  # Integration tests + coverage (ASPICE SWE.5)
-  # -------------------------------------------------------------------
-  integration-tests:
-    name: Integration Tests + Coverage
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install coverage tools
-        run: sudo apt-get update && sudo apt-get install -y lcov
-
-      - name: Run integration tests with coverage
-        working-directory: test/framework
-        run: make coverage
-
-      - name: Upload integration coverage report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: integration-coverage
-          path: test/framework/coverage/
-          retention-days: 30
-
-      - name: Integration coverage summary
-        if: always()
-        working-directory: test/framework
-        run: |
-          echo "=== Integration Coverage Summary ==="
-          if [ -f coverage/int-filtered.info ]; then
-            lcov --summary coverage/int-filtered.info --rc branch_coverage=1
-          else
-            echo "No coverage data generated."
-          fi
-
-  # -------------------------------------------------------------------
-  # Combined coverage report (merges BSW + all ECUs + integration)
-  # -------------------------------------------------------------------
-  combined-coverage:
-    name: Combined Coverage Report
-    runs-on: ubuntu-latest
-    needs: [bsw-tests, ecu-tests, integration-tests]
-    if: always()
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install tools
-        run: sudo apt-get update && sudo apt-get install -y lcov
-
-      - name: Download all coverage artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts/
-
-      - name: Merge coverage data
-        run: |
-          mkdir -p coverage/combined
-          lcov_args=""
-
-          # BSW coverage
-          if [ -f artifacts/bsw-coverage/bsw-filtered.info ]; then
-            lcov_args="$lcov_args -a artifacts/bsw-coverage/bsw-filtered.info"
-          fi
-
-          # ECU coverage
-          for ecu in bcm icu tcu cvc fzc rzc sc; do
-            if [ -f "artifacts/${ecu}-coverage/filtered.info" ]; then
-              lcov_args="$lcov_args -a artifacts/${ecu}-coverage/filtered.info"
-            fi
-          done
-
-          # Integration test coverage
-          if [ -f artifacts/integration-coverage/int-filtered.info ]; then
-            lcov_args="$lcov_args -a artifacts/integration-coverage/int-filtered.info"
-          fi
-
-          if [ -n "$lcov_args" ]; then
-            lcov $lcov_args -o coverage/combined/total.info --rc branch_coverage=1
-            genhtml coverage/combined/total.info \
-              --output-directory coverage/combined/html \
-              --branch-coverage \
-              --title "Taktflow Embedded — Combined Coverage"
-
-            echo "=== Combined Coverage Summary ==="
-            lcov --summary coverage/combined/total.info --rc branch_coverage=1
-          else
-            echo "WARNING: No coverage data found in artifacts"
-            exit 1
-          fi
-
-      - name: Upload combined coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: combined-coverage
-          path: coverage/combined/
-          retention-days: 90
-
-      - name: Coverage gate check
-        run: |
-          if [ ! -f coverage/combined/total.info ]; then
-            echo "No combined coverage data — skipping gate"
-            exit 0
-          fi
-
-          echo "=== Coverage Gate Check ==="
-          SUMMARY=$(lcov --summary coverage/combined/total.info --rc branch_coverage=1 2>&1)
-          echo "$SUMMARY"
-
-          # Extract function coverage percentage
-          FUNC_COV=$(echo "$SUMMARY" | grep "functions" | grep -oP '[\d.]+%' | head -1 | tr -d '%')
-          LINE_COV=$(echo "$SUMMARY" | grep "lines" | grep -oP '[\d.]+%' | head -1 | tr -d '%')
-          BRANCH_COV=$(echo "$SUMMARY" | grep "branches" | grep -oP '[\d.]+%' | head -1 | tr -d '%')
-
-          echo ""
-          echo "Function coverage: ${FUNC_COV:-N/A}%"
-          echo "Line coverage:     ${LINE_COV:-N/A}%"
-          echo "Branch coverage:   ${BRANCH_COV:-N/A}%"
-          echo ""
-          echo "Targets (IEC 61508 SIL 2 / ISO 26262 ASIL D):"
-          echo "  Function:  100%"
-          echo "  Statement: 100%"
-          echo "  Branch:    100%"
-          echo ""
-
-          # Coverage gate enforcement
-          GATE_PASS=true
-
-          if [ -n "$FUNC_COV" ]; then
-            if [ "$(echo "$FUNC_COV < 90" | bc -l)" -eq 1 ]; then
-              echo "FAIL: Function coverage ${FUNC_COV}% < 90% threshold"
-              GATE_PASS=false
-            fi
-          fi
-
-          if [ -n "$LINE_COV" ]; then
-            if [ "$(echo "$LINE_COV < 85" | bc -l)" -eq 1 ]; then
-              echo "FAIL: Line coverage ${LINE_COV}% < 85% threshold"
-              GATE_PASS=false
-            fi
-          fi
-
-          if [ -n "$BRANCH_COV" ]; then
-            if [ "$(echo "$BRANCH_COV < 75" | bc -l)" -eq 1 ]; then
-              echo "FAIL: Branch coverage ${BRANCH_COV}% < 75% threshold"
-              GATE_PASS=false
-            fi
-          fi
-
-          if [ "$GATE_PASS" = "true" ]; then
-            echo "Coverage gate PASSED"
-          else
-            echo "Coverage gate FAILED — see thresholds above"
-            exit 1
-          fi

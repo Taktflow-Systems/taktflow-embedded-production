@@ -3,7 +3,7 @@
  * @brief   Unit tests for sc_selftest — startup + runtime self-test
  * @date    2026-02-23
  *
- * @verifies SWR-SC-016, SWR-SC-017, SWR-SC-018, SWR-SC-019,
+ * @verifies , SSR-SC-016, SSR-SC-017, SWR-SC-016, SWR-SC-017, SWR-SC-018, SWR-SC-019
  *           SWR-SC-020, SWR-SC-021
  *
  * Tests stack canary plant/check, RAM pattern write/verify, startup

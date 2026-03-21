@@ -3,7 +3,7 @@
  * @brief   Unit tests for Swc_Steering — steering servo control SWC (ASIL D)
  * @date    2026-02-23
  *
- * @verifies SWR-FZC-001, SWR-FZC-002, SWR-FZC-003, SWR-FZC-004,
+ * @verifies , SSR-FZC-001, SSR-FZC-002, SSR-FZC-003, SSR-FZC-008, SSR-FZC-009, SSR-FZC-012, SSR-FZC-013, SSR-FZC-017, SWR-FZC-001, SWR-FZC-002, SWR-FZC-003, SWR-FZC-004
  *           SWR-FZC-005, SWR-FZC-006, SWR-FZC-007, SWR-FZC-008,
  *           SWR-FZC-028
  *

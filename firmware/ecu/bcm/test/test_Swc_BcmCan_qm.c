@@ -3,7 +3,7 @@
  * @brief   Unit tests for BCM CAN interface — init, state RX, command RX, status TX
  * @date    2026-02-24
  *
- * @verifies SWR-BCM-001, SWR-BCM-002, SWR-BCM-010, SWR-BCM-011
+ * @verifies SSR-BCM-001, SSR-BCM-002, SSR-BCM-010, SSR-BCM-011, SWR-BCM-001, SWR-BCM-002, SWR-BCM-010, SWR-BCM-011
  *
  * Tests SocketCAN initialization with retry logic, vehicle state reception
  * with E2E validation and 500ms timeout, body control command reception

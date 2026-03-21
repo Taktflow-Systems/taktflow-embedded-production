@@ -3,7 +3,7 @@
  * @brief   Unit tests for SPI MCAL driver
  * @date    2026-02-21
  *
- * @verifies SWR-BSW-006
+ * @verifies SWR-BSW-005, SWR-BSW-006
  *
  * Tests SPI driver initialization, write/read internal buffers,
  * synchronous transmit, and defensive error handling. Hardware is

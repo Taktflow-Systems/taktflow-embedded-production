@@ -4,7 +4,7 @@
  *          with stall detection and direction plausibility (ASIL C)
  * @date    2026-02-23
  *
- * @verifies SWR-RZC-012, SWR-RZC-013, SWR-RZC-014
+ * @verifies SSR-RZC-005, SSR-RZC-026, SSR-RZC-027, SSR-RZC-028, SSR-RZC-029, SSR-RZC-030, SWR-RZC-005, SWR-RZC-012, SWR-RZC-013, SWR-RZC-014
  *
  * Tests encoder initialization, speed/RPM calculation, direction reporting,
  * stall detection with grace period, direction plausibility checking with

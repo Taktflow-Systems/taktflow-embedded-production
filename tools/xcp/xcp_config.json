@@ -1,0 +1,17 @@
+{
+  "TRANSPORT_LAYER": "CAN",
+  "CAN": {
+    "INTERFACE": "pcan",
+    "CHANNEL": "PCAN_USBBUS1",
+    "BITRATE": 500000,
+    "RECEIVE_ID": "0x551",
+    "SEND_ID": "0x550",
+    "PADDING_VALUE": 0
+  },
+  "GENERAL": {
+    "LOGLEVEL": "WARN",
+    "BYTE_ORDER": "LITTLE_ENDIAN",
+    "TIMEOUT": 2.0
+  },
+  "_comment": "XCP config for CVC (0x550=req, 0x551=resp). For other ECUs: FZC=0x552/0x553, RZC=0x554/0x555, SC=0x556/0x557"
+}

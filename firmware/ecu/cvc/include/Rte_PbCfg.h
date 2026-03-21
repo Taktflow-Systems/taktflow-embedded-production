@@ -17,7 +17,7 @@
  * These values size the static signal buffer and runnable arrays in Rte.c.
  * They MUST be consistent across all translation units that include Rte.h.
  */
-#define RTE_MAX_SIGNALS    190u
+#define RTE_MAX_SIGNALS    198u
 #define RTE_MAX_RUNNABLES  9u
 
 #endif /* RTE_PBCFG_H */

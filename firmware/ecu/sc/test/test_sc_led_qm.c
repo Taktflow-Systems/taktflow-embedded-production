@@ -3,7 +3,7 @@
  * @brief   Unit tests for sc_led — fault LED panel driver
  * @date    2026-02-23
  *
- * @verifies SWR-SC-013
+ * @verifies SSR-SC-013, SWR-SC-013
  *
  * Tests LED initialization, steady ON, blink pattern, and OFF state.
  *

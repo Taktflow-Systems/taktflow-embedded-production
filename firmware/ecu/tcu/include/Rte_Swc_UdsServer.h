@@ -22,16 +22,6 @@
  * ==================================================================== */
 
 /**
- * @brief  Read UDS_Func_Request_UDS_Data (uint32_t)
- * @param  data  Pointer to receive the signal value
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Read_UDS_Func_Request_UDS_Data(uint32_t *data)
-{
-    return Rte_Read(TCU_SIG_UDS_FUNC_REQUEST_UDS_DATA, data);
-}
-
-/**
  * @brief  Read UDS_Phys_Req_TCU_UDS_Data (uint32_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
@@ -39,6 +29,16 @@ static inline Rte_StatusType Rte_Read_UDS_Func_Request_UDS_Data(uint32_t *data)
 static inline Rte_StatusType Rte_Read_UDS_Phys_Req_TCU_UDS_Data(uint32_t *data)
 {
     return Rte_Read(TCU_SIG_UDS_PHYS_REQ_TCU_UDS_DATA, data);
+}
+
+/**
+ * @brief  Read UDS_Func_Request_UDS_Data (uint32_t)
+ * @param  data  Pointer to receive the signal value
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Read_UDS_Func_Request_UDS_Data(uint32_t *data)
+{
+    return Rte_Read(TCU_SIG_UDS_FUNC_REQUEST_UDS_DATA, data);
 }
 
 /**

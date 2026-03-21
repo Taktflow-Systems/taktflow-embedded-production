@@ -3,7 +3,7 @@
  * @brief   Unit tests for TCU CAN data aggregation with timeout detection
  * @date    2026-02-24
  *
- * @verifies SWR-TCU-014
+ * @verifies SSR-TCU-014, SWR-TCU-014
  *
  * Tests caching of CAN values from 6 data sources with per-source
  * timeout detection (200ms-2000ms range). Verifies stale data flagging.

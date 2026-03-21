@@ -3,7 +3,7 @@
  * @brief   Unit tests for ADC MCAL driver
  * @date    2026-02-21
  *
- * @verifies SWR-BSW-007
+ * @verifies SWR-BSW-001, SWR-BSW-007
  *
  * Tests ADC driver initialization, group conversion start, result
  * reading, and defensive error handling. Hardware is mocked via

@@ -225,3 +225,96 @@ E2E_CheckStatusType E2E_Check(const E2E_ConfigType* Config,
 
     return E2E_STATUS_OK;
 }
+
+/* ==================================================================
+ * E2E Supervision State Machine
+ *
+ * Windowed evaluation: a single CRC error does NOT immediately
+ * invalidate the signal. Only consecutive errors (>= WindowSizeInvalid)
+ * transition to INVALID. Similarly, recovery requires consecutive
+ * OK checks (>= WindowSizeValid).
+ *
+ * State transitions:
+ *   NODATA  →  INIT     (any check result received)
+ *   INIT    →  VALID    (OkCount >= WindowSizeInit)
+ *   INIT    →  INVALID  (ErrCount >= WindowSizeInvalid)
+ *   VALID   →  INVALID  (ErrCount >= WindowSizeInvalid)
+ *   INVALID →  VALID    (OkCount >= WindowSizeValid)
+ * ================================================================== */
+
+void E2E_SMInit(E2E_SMType* SM)
+{
+    if (SM == NULL_PTR) {
+        return;
+    }
+    SM->State    = E2E_SM_NODATA;
+    SM->OkCount  = 0u;
+    SM->ErrCount = 0u;
+}
+
+E2E_SMStateType E2E_SMCheck(const E2E_SMConfigType* SMConfig,
+                            E2E_SMType* SM,
+                            E2E_CheckStatusType CheckStatus)
+{
+    if ((SMConfig == NULL_PTR) || (SM == NULL_PTR)) {
+        return E2E_SM_INVALID;
+    }
+
+    /* Classify check result: only STATUS_OK counts as valid.
+     * REPEATED = sender stuck (same counter), must NOT count as OK.
+     * Per AUTOSAR E2E Profile P01: recovery requires NEW valid frames. */
+    boolean is_ok;
+    if (CheckStatus == E2E_STATUS_OK) {
+        is_ok = TRUE;
+    } else {
+        /* REPEATED, WRONG_SEQ, ERROR, NO_NEW_DATA — all problematic */
+        is_ok = FALSE;
+    }
+
+    /* Update consecutive counters */
+    if (is_ok == TRUE) {
+        if (SM->OkCount < 255u) {
+            SM->OkCount++;
+        }
+        SM->ErrCount = 0u;
+    } else {
+        if (SM->ErrCount < 255u) {
+            SM->ErrCount++;
+        }
+        SM->OkCount = 0u;
+    }
+
+    /* State transitions */
+    switch (SM->State) {
+    case E2E_SM_NODATA:
+        /* Any check result (even error) moves to INIT — we have data now */
+        SM->State = E2E_SM_INIT;
+        break;
+
+    case E2E_SM_INIT:
+        if (SM->OkCount >= SMConfig->WindowSizeInit) {
+            SM->State = E2E_SM_VALID;
+        } else if (SM->ErrCount >= SMConfig->WindowSizeInvalid) {
+            SM->State = E2E_SM_INVALID;
+        }
+        break;
+
+    case E2E_SM_VALID:
+        if (SM->ErrCount >= SMConfig->WindowSizeInvalid) {
+            SM->State = E2E_SM_INVALID;
+        }
+        break;
+
+    case E2E_SM_INVALID:
+        if (SM->OkCount >= SMConfig->WindowSizeValid) {
+            SM->State = E2E_SM_VALID;
+        }
+        break;
+
+    default:
+        SM->State = E2E_SM_INVALID;
+        break;
+    }
+
+    return SM->State;
+}

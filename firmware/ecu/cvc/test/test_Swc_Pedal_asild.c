@@ -3,7 +3,7 @@
  * @brief   Unit tests for Swc_Pedal — dual pedal sensor processing SWC
  * @date    2026-02-21
  *
- * @verifies SWR-CVC-001, SWR-CVC-002, SWR-CVC-003, SWR-CVC-004,
+ * @verifies , SSR-CVC-001, SSR-CVC-002, SSR-CVC-003, SSR-CVC-008, SSR-CVC-009, SWR-CVC-001, SWR-CVC-002, SWR-CVC-003, SWR-CVC-004, SWR-CVC-008, SWR-CVC-009
  *           SWR-CVC-005, SWR-CVC-006, SWR-CVC-007, SWR-CVC-008
  *
  * Tests pedal initialization, dual-sensor reading, plausibility checking,

@@ -65,6 +65,7 @@ static uint8_t  sig_tx_dtc_broadcast_ecu_source;
 static uint8_t  sig_tx_dtc_broadcast_occurrencecount;
 static uint8_t  sig_tx_dtc_broadcast_freezeframe0;
 static uint8_t  sig_tx_dtc_broadcast_freezeframe1;
+static uint32_t  sig_tx_xcp_resp_cvc_data;
 static uint16_t  sig_tx_fzc_virtual_sensors_steerangle_raw;
 static uint16_t  sig_tx_fzc_virtual_sensors_brakepos_adc;
 static uint16_t  sig_tx_fzc_virtual_sensors_brakecurrent_ma;
@@ -184,6 +185,13 @@ static boolean  sig_rx_door_lock_status_frontrightlock;
 static boolean  sig_rx_door_lock_status_rearleftlock;
 static boolean  sig_rx_door_lock_status_rearrightlock;
 static boolean  sig_rx_door_lock_status_centrallock;
+static uint32_t  sig_rx_xcp_req_cvc_data;
+static uint32_t  sig_rx_xcp_req_fzc_data;
+static uint32_t  sig_rx_xcp_resp_fzc_data;
+static uint32_t  sig_rx_xcp_req_rzc_data;
+static uint32_t  sig_rx_xcp_resp_rzc_data;
+static uint32_t  sig_rx_xcp_req_sc_data;
+static uint32_t  sig_rx_xcp_resp_sc_data;
 static uint32_t  sig_rx_uds_resp_tcu_uds_data;
 static uint32_t  sig_rx_uds_func_request_uds_data;
 static uint32_t  sig_rx_uds_phys_req_cvc_uds_data;
@@ -200,183 +208,191 @@ static uint32_t  sig_rx_uds_resp_rzc_uds_data;
 
 static const Com_SignalConfigType cvc_signal_config[] = {
     /* TX signals — no RTE binding (TX uses Rte_Read → Com_SendSignal path) */
-    /* id, bitPos, bitSize, type,       pduId,                      shadowBuf,       rteSignalId */
-    {  0u,    0u,     4u, COM_UINT8, CVC_COM_TX_ESTOP_BROADCAST, &sig_tx_estop_broadcast_e2e_dataid, COM_RTE_SIGNAL_NONE },
-    {  1u,    4u,     4u, COM_UINT8, CVC_COM_TX_ESTOP_BROADCAST, &sig_tx_estop_broadcast_e2e_alivecounter, COM_RTE_SIGNAL_NONE },
-    {  2u,    8u,     8u, COM_UINT8, CVC_COM_TX_ESTOP_BROADCAST, &sig_tx_estop_broadcast_e2e_crc8, COM_RTE_SIGNAL_NONE },
-    {  3u,   16u,     8u, COM_UINT8, CVC_COM_TX_ESTOP_BROADCAST, &sig_tx_estop_broadcast_active, COM_RTE_SIGNAL_NONE },
-    {  4u,   24u,     8u, COM_UINT8, CVC_COM_TX_ESTOP_BROADCAST, &sig_tx_estop_broadcast_source, COM_RTE_SIGNAL_NONE },
-    {  5u,    0u,     4u, COM_UINT8, CVC_COM_TX_CVC_HEARTBEAT, &sig_tx_cvc_heartbeat_e2e_dataid, COM_RTE_SIGNAL_NONE },
-    {  6u,    4u,     4u, COM_UINT8, CVC_COM_TX_CVC_HEARTBEAT, &sig_tx_cvc_heartbeat_e2e_alivecounter, COM_RTE_SIGNAL_NONE },
-    {  7u,    8u,     8u, COM_UINT8, CVC_COM_TX_CVC_HEARTBEAT, &sig_tx_cvc_heartbeat_e2e_crc8, COM_RTE_SIGNAL_NONE },
-    {  8u,   16u,     8u, COM_UINT8, CVC_COM_TX_CVC_HEARTBEAT, &sig_tx_cvc_heartbeat_ecu_id, COM_RTE_SIGNAL_NONE },
-    {  9u,   24u,     4u, COM_UINT8, CVC_COM_TX_CVC_HEARTBEAT, &sig_tx_cvc_heartbeat_operatingmode, COM_RTE_SIGNAL_NONE },
-    { 10u,   28u,     4u, COM_UINT8, CVC_COM_TX_CVC_HEARTBEAT, &sig_tx_cvc_heartbeat_faultstatus, COM_RTE_SIGNAL_NONE },
-    { 11u,    0u,     4u, COM_UINT8, CVC_COM_TX_VEHICLE_STATE, &sig_tx_vehicle_state_e2e_dataid, COM_RTE_SIGNAL_NONE },
-    { 12u,    4u,     4u, COM_UINT8, CVC_COM_TX_VEHICLE_STATE, &sig_tx_vehicle_state_e2e_alivecounter, COM_RTE_SIGNAL_NONE },
-    { 13u,    8u,     8u, COM_UINT8, CVC_COM_TX_VEHICLE_STATE, &sig_tx_vehicle_state_e2e_crc8, COM_RTE_SIGNAL_NONE },
-    { 14u,   16u,     4u, COM_UINT8, CVC_COM_TX_VEHICLE_STATE, &sig_tx_vehicle_state_mode, COM_RTE_SIGNAL_NONE },
-    { 15u,   20u,    12u, COM_UINT16, CVC_COM_TX_VEHICLE_STATE, &sig_tx_vehicle_state_faultmask, COM_RTE_SIGNAL_NONE },
-    { 16u,   32u,     8u, COM_UINT8, CVC_COM_TX_VEHICLE_STATE, &sig_tx_vehicle_state_torquelimit, COM_RTE_SIGNAL_NONE },
-    { 17u,   40u,     8u, COM_UINT8, CVC_COM_TX_VEHICLE_STATE, &sig_tx_vehicle_state_speedlimit, COM_RTE_SIGNAL_NONE },
-    { 18u,    0u,     4u, COM_UINT8, CVC_COM_TX_TORQUE_REQUEST, &sig_tx_torque_request_e2e_dataid, COM_RTE_SIGNAL_NONE },
-    { 19u,    4u,     4u, COM_UINT8, CVC_COM_TX_TORQUE_REQUEST, &sig_tx_torque_request_e2e_alivecounter, COM_RTE_SIGNAL_NONE },
-    { 20u,    8u,     8u, COM_UINT8, CVC_COM_TX_TORQUE_REQUEST, &sig_tx_torque_request_e2e_crc8, COM_RTE_SIGNAL_NONE },
-    { 21u,   16u,     8u, COM_UINT8, CVC_COM_TX_TORQUE_REQUEST, &sig_tx_torque_request_command_pct, COM_RTE_SIGNAL_NONE },
-    { 22u,   24u,     2u, COM_UINT8, CVC_COM_TX_TORQUE_REQUEST, &sig_tx_torque_request_direction, COM_RTE_SIGNAL_NONE },
-    { 23u,   26u,    14u, COM_UINT16, CVC_COM_TX_TORQUE_REQUEST, &sig_tx_torque_request_pedalposition1, COM_RTE_SIGNAL_NONE },
-    { 24u,   40u,    14u, COM_UINT16, CVC_COM_TX_TORQUE_REQUEST, &sig_tx_torque_request_pedalposition2, COM_RTE_SIGNAL_NONE },
-    { 25u,   54u,     1u, COM_UINT8, CVC_COM_TX_TORQUE_REQUEST, &sig_tx_torque_request_pedalfault, COM_RTE_SIGNAL_NONE },
-    { 26u,    0u,     4u, COM_UINT8, CVC_COM_TX_STEER_COMMAND, &sig_tx_steer_command_e2e_dataid, COM_RTE_SIGNAL_NONE },
-    { 27u,    4u,     4u, COM_UINT8, CVC_COM_TX_STEER_COMMAND, &sig_tx_steer_command_e2e_alivecounter, COM_RTE_SIGNAL_NONE },
-    { 28u,    8u,     8u, COM_UINT8, CVC_COM_TX_STEER_COMMAND, &sig_tx_steer_command_e2e_crc8, COM_RTE_SIGNAL_NONE },
-    { 29u,   16u,    16u, COM_UINT16, CVC_COM_TX_STEER_COMMAND, &sig_tx_steer_command_steeranglecmd, COM_RTE_SIGNAL_NONE },
-    { 30u,   32u,     8u, COM_UINT8, CVC_COM_TX_STEER_COMMAND, &sig_tx_steer_command_steerratelimit, COM_RTE_SIGNAL_NONE },
-    { 31u,   40u,     4u, COM_UINT8, CVC_COM_TX_STEER_COMMAND, &sig_tx_steer_command_vehiclestate, COM_RTE_SIGNAL_NONE },
-    { 32u,    0u,     4u, COM_UINT8, CVC_COM_TX_BRAKE_COMMAND, &sig_tx_brake_command_e2e_dataid, COM_RTE_SIGNAL_NONE },
-    { 33u,    4u,     4u, COM_UINT8, CVC_COM_TX_BRAKE_COMMAND, &sig_tx_brake_command_e2e_alivecounter, COM_RTE_SIGNAL_NONE },
-    { 34u,    8u,     8u, COM_UINT8, CVC_COM_TX_BRAKE_COMMAND, &sig_tx_brake_command_e2e_crc8, COM_RTE_SIGNAL_NONE },
-    { 35u,   16u,     8u, COM_UINT8, CVC_COM_TX_BRAKE_COMMAND, &sig_tx_brake_command_brakeforcecmd, COM_RTE_SIGNAL_NONE },
-    { 36u,   24u,     4u, COM_UINT8, CVC_COM_TX_BRAKE_COMMAND, &sig_tx_brake_command_brakemode, COM_RTE_SIGNAL_NONE },
-    { 37u,   28u,     4u, COM_UINT8, CVC_COM_TX_BRAKE_COMMAND, &sig_tx_brake_command_vehiclestate, COM_RTE_SIGNAL_NONE },
-    { 38u,    0u,     2u, COM_UINT8, CVC_COM_TX_BODY_CONTROL_CMD, &sig_tx_body_control_cmd_headlightcmd, COM_RTE_SIGNAL_NONE },
-    { 39u,    2u,     1u, COM_UINT8, CVC_COM_TX_BODY_CONTROL_CMD, &sig_tx_body_control_cmd_taillighton, COM_RTE_SIGNAL_NONE },
-    { 40u,    3u,     1u, COM_UINT8, CVC_COM_TX_BODY_CONTROL_CMD, &sig_tx_body_control_cmd_hazardactive, COM_RTE_SIGNAL_NONE },
-    { 41u,    4u,     2u, COM_UINT8, CVC_COM_TX_BODY_CONTROL_CMD, &sig_tx_body_control_cmd_turnsignalcmd, COM_RTE_SIGNAL_NONE },
-    { 42u,    6u,     1u, COM_UINT8, CVC_COM_TX_BODY_CONTROL_CMD, &sig_tx_body_control_cmd_doorlockcmd, COM_RTE_SIGNAL_NONE },
-    { 43u,    7u,    16u, COM_UINT16, CVC_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_number, COM_RTE_SIGNAL_NONE },
-    { 44u,   24u,     8u, COM_UINT8, CVC_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_status, COM_RTE_SIGNAL_NONE },
-    { 45u,   32u,     8u, COM_UINT8, CVC_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_ecu_source, COM_RTE_SIGNAL_NONE },
-    { 46u,   40u,     8u, COM_UINT8, CVC_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_occurrencecount, COM_RTE_SIGNAL_NONE },
-    { 47u,   48u,     8u, COM_UINT8, CVC_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_freezeframe0, COM_RTE_SIGNAL_NONE },
-    { 48u,   56u,     8u, COM_UINT8, CVC_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_freezeframe1, COM_RTE_SIGNAL_NONE },
-    { 49u,    0u,    16u, COM_UINT16, CVC_COM_TX_FZC_VIRTUAL_SENSORS, &sig_tx_fzc_virtual_sensors_steerangle_raw, COM_RTE_SIGNAL_NONE },
-    { 50u,   16u,    16u, COM_UINT16, CVC_COM_TX_FZC_VIRTUAL_SENSORS, &sig_tx_fzc_virtual_sensors_brakepos_adc, COM_RTE_SIGNAL_NONE },
-    { 51u,   32u,    16u, COM_UINT16, CVC_COM_TX_FZC_VIRTUAL_SENSORS, &sig_tx_fzc_virtual_sensors_brakecurrent_ma, COM_RTE_SIGNAL_NONE },
-    { 52u,    0u,    16u, COM_UINT16, CVC_COM_TX_RZC_VIRTUAL_SENSORS, &sig_tx_rzc_virtual_sensors_motorcurrent_ma, COM_RTE_SIGNAL_NONE },
-    { 53u,   16u,    16u, COM_UINT16, CVC_COM_TX_RZC_VIRTUAL_SENSORS, &sig_tx_rzc_virtual_sensors_motortemp_dc, COM_RTE_SIGNAL_NONE },
-    { 54u,   32u,    16u, COM_UINT16, CVC_COM_TX_RZC_VIRTUAL_SENSORS, &sig_tx_rzc_virtual_sensors_battvoltage_mv, COM_RTE_SIGNAL_NONE },
-    { 55u,   48u,    16u, COM_UINT16, CVC_COM_TX_RZC_VIRTUAL_SENSORS, &sig_tx_rzc_virtual_sensors_motorspeed_rpm, COM_RTE_SIGNAL_NONE },
-    { 56u,    0u,    64u, COM_UINT32, CVC_COM_TX_UDS_RESP_CVC, &sig_tx_uds_resp_cvc_uds_data, COM_RTE_SIGNAL_NONE },
+    /* id, bitPos, bitSize, type,       pduId,                      shadowBuf,       rteSignalId,  updateBit */
+    {  0u,    0u,     4u, COM_UINT8, CVC_COM_TX_ESTOP_BROADCAST, &sig_tx_estop_broadcast_e2e_dataid, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    {  1u,    4u,     4u, COM_UINT8, CVC_COM_TX_ESTOP_BROADCAST, &sig_tx_estop_broadcast_e2e_alivecounter, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    {  2u,    8u,     8u, COM_UINT8, CVC_COM_TX_ESTOP_BROADCAST, &sig_tx_estop_broadcast_e2e_crc8, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    {  3u,   16u,     8u, COM_UINT8, CVC_COM_TX_ESTOP_BROADCAST, &sig_tx_estop_broadcast_active, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    {  4u,   24u,     8u, COM_UINT8, CVC_COM_TX_ESTOP_BROADCAST, &sig_tx_estop_broadcast_source, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    {  5u,    0u,     4u, COM_UINT8, CVC_COM_TX_CVC_HEARTBEAT, &sig_tx_cvc_heartbeat_e2e_dataid, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    {  6u,    4u,     4u, COM_UINT8, CVC_COM_TX_CVC_HEARTBEAT, &sig_tx_cvc_heartbeat_e2e_alivecounter, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    {  7u,    8u,     8u, COM_UINT8, CVC_COM_TX_CVC_HEARTBEAT, &sig_tx_cvc_heartbeat_e2e_crc8, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    {  8u,   16u,     8u, COM_UINT8, CVC_COM_TX_CVC_HEARTBEAT, &sig_tx_cvc_heartbeat_ecu_id, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    {  9u,   24u,     4u, COM_UINT8, CVC_COM_TX_CVC_HEARTBEAT, &sig_tx_cvc_heartbeat_operatingmode, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 10u,   28u,     4u, COM_UINT8, CVC_COM_TX_CVC_HEARTBEAT, &sig_tx_cvc_heartbeat_faultstatus, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 11u,    0u,     4u, COM_UINT8, CVC_COM_TX_VEHICLE_STATE, &sig_tx_vehicle_state_e2e_dataid, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 12u,    4u,     4u, COM_UINT8, CVC_COM_TX_VEHICLE_STATE, &sig_tx_vehicle_state_e2e_alivecounter, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 13u,    8u,     8u, COM_UINT8, CVC_COM_TX_VEHICLE_STATE, &sig_tx_vehicle_state_e2e_crc8, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 14u,   16u,     4u, COM_UINT8, CVC_COM_TX_VEHICLE_STATE, &sig_tx_vehicle_state_mode, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 15u,   20u,    12u, COM_UINT16, CVC_COM_TX_VEHICLE_STATE, &sig_tx_vehicle_state_faultmask, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 16u,   32u,     8u, COM_UINT8, CVC_COM_TX_VEHICLE_STATE, &sig_tx_vehicle_state_torquelimit, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 17u,   40u,     8u, COM_UINT8, CVC_COM_TX_VEHICLE_STATE, &sig_tx_vehicle_state_speedlimit, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 18u,    0u,     4u, COM_UINT8, CVC_COM_TX_TORQUE_REQUEST, &sig_tx_torque_request_e2e_dataid, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 19u,    4u,     4u, COM_UINT8, CVC_COM_TX_TORQUE_REQUEST, &sig_tx_torque_request_e2e_alivecounter, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 20u,    8u,     8u, COM_UINT8, CVC_COM_TX_TORQUE_REQUEST, &sig_tx_torque_request_e2e_crc8, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 21u,   16u,     8u, COM_UINT8, CVC_COM_TX_TORQUE_REQUEST, &sig_tx_torque_request_command_pct, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 22u,   24u,     2u, COM_UINT8, CVC_COM_TX_TORQUE_REQUEST, &sig_tx_torque_request_direction, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 23u,   26u,    14u, COM_UINT16, CVC_COM_TX_TORQUE_REQUEST, &sig_tx_torque_request_pedalposition1, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 24u,   40u,    14u, COM_UINT16, CVC_COM_TX_TORQUE_REQUEST, &sig_tx_torque_request_pedalposition2, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 25u,   54u,     1u, COM_UINT8, CVC_COM_TX_TORQUE_REQUEST, &sig_tx_torque_request_pedalfault, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 26u,    0u,     4u, COM_UINT8, CVC_COM_TX_STEER_COMMAND, &sig_tx_steer_command_e2e_dataid, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 27u,    4u,     4u, COM_UINT8, CVC_COM_TX_STEER_COMMAND, &sig_tx_steer_command_e2e_alivecounter, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 28u,    8u,     8u, COM_UINT8, CVC_COM_TX_STEER_COMMAND, &sig_tx_steer_command_e2e_crc8, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 29u,   16u,    16u, COM_UINT16, CVC_COM_TX_STEER_COMMAND, &sig_tx_steer_command_steeranglecmd, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 30u,   32u,     8u, COM_UINT8, CVC_COM_TX_STEER_COMMAND, &sig_tx_steer_command_steerratelimit, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 31u,   40u,     4u, COM_UINT8, CVC_COM_TX_STEER_COMMAND, &sig_tx_steer_command_vehiclestate, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 32u,    0u,     4u, COM_UINT8, CVC_COM_TX_BRAKE_COMMAND, &sig_tx_brake_command_e2e_dataid, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 33u,    4u,     4u, COM_UINT8, CVC_COM_TX_BRAKE_COMMAND, &sig_tx_brake_command_e2e_alivecounter, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 34u,    8u,     8u, COM_UINT8, CVC_COM_TX_BRAKE_COMMAND, &sig_tx_brake_command_e2e_crc8, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 35u,   16u,     8u, COM_UINT8, CVC_COM_TX_BRAKE_COMMAND, &sig_tx_brake_command_brakeforcecmd, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 36u,   24u,     4u, COM_UINT8, CVC_COM_TX_BRAKE_COMMAND, &sig_tx_brake_command_brakemode, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 37u,   28u,     4u, COM_UINT8, CVC_COM_TX_BRAKE_COMMAND, &sig_tx_brake_command_vehiclestate, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 38u,    0u,     2u, COM_UINT8, CVC_COM_TX_BODY_CONTROL_CMD, &sig_tx_body_control_cmd_headlightcmd, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 39u,    2u,     1u, COM_UINT8, CVC_COM_TX_BODY_CONTROL_CMD, &sig_tx_body_control_cmd_taillighton, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 40u,    3u,     1u, COM_UINT8, CVC_COM_TX_BODY_CONTROL_CMD, &sig_tx_body_control_cmd_hazardactive, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 41u,    4u,     2u, COM_UINT8, CVC_COM_TX_BODY_CONTROL_CMD, &sig_tx_body_control_cmd_turnsignalcmd, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 42u,    6u,     1u, COM_UINT8, CVC_COM_TX_BODY_CONTROL_CMD, &sig_tx_body_control_cmd_doorlockcmd, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 43u,    7u,    16u, COM_UINT16, CVC_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_number, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 44u,   24u,     8u, COM_UINT8, CVC_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_status, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 45u,   32u,     8u, COM_UINT8, CVC_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_ecu_source, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 46u,   40u,     8u, COM_UINT8, CVC_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_occurrencecount, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 47u,   48u,     8u, COM_UINT8, CVC_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_freezeframe0, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 48u,   56u,     8u, COM_UINT8, CVC_COM_TX_DTC_BROADCAST, &sig_tx_dtc_broadcast_freezeframe1, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 49u,    0u,    64u, COM_UINT32, CVC_COM_TX_XCP_RESP_CVC, &sig_tx_xcp_resp_cvc_data, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 50u,    0u,    16u, COM_UINT16, CVC_COM_TX_FZC_VIRTUAL_SENSORS, &sig_tx_fzc_virtual_sensors_steerangle_raw, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 51u,   16u,    16u, COM_UINT16, CVC_COM_TX_FZC_VIRTUAL_SENSORS, &sig_tx_fzc_virtual_sensors_brakepos_adc, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 52u,   32u,    16u, COM_UINT16, CVC_COM_TX_FZC_VIRTUAL_SENSORS, &sig_tx_fzc_virtual_sensors_brakecurrent_ma, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 53u,    0u,    16u, COM_UINT16, CVC_COM_TX_RZC_VIRTUAL_SENSORS, &sig_tx_rzc_virtual_sensors_motorcurrent_ma, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 54u,   16u,    16u, COM_UINT16, CVC_COM_TX_RZC_VIRTUAL_SENSORS, &sig_tx_rzc_virtual_sensors_motortemp_dc, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 55u,   32u,    16u, COM_UINT16, CVC_COM_TX_RZC_VIRTUAL_SENSORS, &sig_tx_rzc_virtual_sensors_battvoltage_mv, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 56u,   48u,    16u, COM_UINT16, CVC_COM_TX_RZC_VIRTUAL_SENSORS, &sig_tx_rzc_virtual_sensors_motorspeed_rpm, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+    { 57u,    0u,    64u, COM_UINT32, CVC_COM_TX_UDS_RESP_CVC, &sig_tx_uds_resp_cvc_uds_data, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
 
     /* RX signals — auto-push to RTE on reception */
-    { 57u,    0u,     4u, COM_UINT8, CVC_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_e2e_dataid, CVC_SIG_FZC_HEARTBEAT_E_2_E_DATA_ID },
-    { 58u,    4u,     4u, COM_UINT8, CVC_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_e2e_alivecounter, CVC_SIG_FZC_HEARTBEAT_E_2_E_ALIVE_COUNTER },
-    { 59u,    8u,     8u, COM_UINT8, CVC_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_e2e_crc8, CVC_SIG_FZC_HEARTBEAT_E_2_E_CRC_8 },
-    { 60u,   16u,     8u, COM_UINT8, CVC_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_ecu_id, CVC_SIG_FZC_HEARTBEAT_ECU_ID },
-    { 61u,   24u,     4u, COM_UINT8, CVC_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_operatingmode, CVC_SIG_FZC_HEARTBEAT_OPERATING_MODE },
-    { 62u,   28u,     4u, COM_UINT8, CVC_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_faultstatus, CVC_SIG_FZC_HEARTBEAT_FAULT_STATUS },
-    { 63u,    0u,     4u, COM_UINT8, CVC_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_e2e_dataid, CVC_SIG_RZC_HEARTBEAT_E_2_E_DATA_ID },
-    { 64u,    4u,     4u, COM_UINT8, CVC_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_e2e_alivecounter, CVC_SIG_RZC_HEARTBEAT_E_2_E_ALIVE_COUNTER },
-    { 65u,    8u,     8u, COM_UINT8, CVC_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_e2e_crc8, CVC_SIG_RZC_HEARTBEAT_E_2_E_CRC_8 },
-    { 66u,   16u,     8u, COM_UINT8, CVC_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_ecu_id, CVC_SIG_RZC_HEARTBEAT_ECU_ID },
-    { 67u,   24u,     4u, COM_UINT8, CVC_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_operatingmode, CVC_SIG_RZC_HEARTBEAT_OPERATING_MODE },
-    { 68u,   28u,     4u, COM_UINT8, CVC_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_faultstatus, CVC_SIG_RZC_HEARTBEAT_FAULT_STATUS },
-    { 69u,    0u,     8u, COM_UINT8, CVC_COM_RX_SC_STATUS, &sig_rx_sc_status_alivecounter, CVC_SIG_SC_STATUS_ALIVE_COUNTER },
-    { 70u,    8u,     8u, COM_UINT8, CVC_COM_RX_SC_STATUS, &sig_rx_sc_status_crc8, CVC_SIG_SC_STATUS_CRC_8 },
-    { 71u,   16u,     4u, COM_UINT8, CVC_COM_RX_SC_STATUS, &sig_rx_sc_status_mode, CVC_SIG_SC_STATUS_MODE },
-    { 72u,   20u,     4u, COM_UINT8, CVC_COM_RX_SC_STATUS, &sig_rx_sc_status_faultflags, CVC_SIG_SC_STATUS_FAULT_FLAGS },
-    { 73u,   24u,     3u, COM_UINT8, CVC_COM_RX_SC_STATUS, &sig_rx_sc_status_ecu_health, CVC_SIG_SC_STATUS_ECU_HEALTH },
-    { 74u,   27u,     4u, COM_UINT8, CVC_COM_RX_SC_STATUS, &sig_rx_sc_status_faultreason, CVC_SIG_SC_STATUS_FAULT_REASON },
-    { 75u,   31u,     1u, COM_UINT8, CVC_COM_RX_SC_STATUS, &sig_rx_sc_status_relayenergized, CVC_SIG_SC_STATUS_RELAY_ENERGIZED },
-    { 76u,    0u,     4u, COM_UINT8, CVC_COM_RX_ICU_HEARTBEAT, &sig_rx_icu_heartbeat_e2e_dataid, CVC_SIG_ICU_HEARTBEAT_E_2_E_DATA_ID },
-    { 77u,    4u,     4u, COM_UINT8, CVC_COM_RX_ICU_HEARTBEAT, &sig_rx_icu_heartbeat_e2e_alivecounter, CVC_SIG_ICU_HEARTBEAT_E_2_E_ALIVE_COUNTER },
-    { 78u,    8u,     8u, COM_UINT8, CVC_COM_RX_ICU_HEARTBEAT, &sig_rx_icu_heartbeat_e2e_crc8, CVC_SIG_ICU_HEARTBEAT_E_2_E_CRC_8 },
-    { 79u,   16u,     8u, COM_UINT8, CVC_COM_RX_ICU_HEARTBEAT, &sig_rx_icu_heartbeat_alivecounter, CVC_SIG_ICU_HEARTBEAT_ALIVE_COUNTER },
-    { 80u,   24u,     8u, COM_UINT8, CVC_COM_RX_ICU_HEARTBEAT, &sig_rx_icu_heartbeat_ecu_id, CVC_SIG_ICU_HEARTBEAT_ECU_ID },
-    { 81u,    0u,     4u, COM_UINT8, CVC_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_e2e_dataid, CVC_SIG_TCU_HEARTBEAT_E_2_E_DATA_ID },
-    { 82u,    4u,     4u, COM_UINT8, CVC_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_e2e_alivecounter, CVC_SIG_TCU_HEARTBEAT_E_2_E_ALIVE_COUNTER },
-    { 83u,    8u,     8u, COM_UINT8, CVC_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_e2e_crc8, CVC_SIG_TCU_HEARTBEAT_E_2_E_CRC_8 },
-    { 84u,   16u,     8u, COM_UINT8, CVC_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_alivecounter, CVC_SIG_TCU_HEARTBEAT_ALIVE_COUNTER },
-    { 85u,   24u,     8u, COM_UINT8, CVC_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_ecu_id, CVC_SIG_TCU_HEARTBEAT_ECU_ID },
-    { 86u,    0u,     4u, COM_UINT8, CVC_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_e2e_dataid, CVC_SIG_BCM_HEARTBEAT_E_2_E_DATA_ID },
-    { 87u,    4u,     4u, COM_UINT8, CVC_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_e2e_alivecounter, CVC_SIG_BCM_HEARTBEAT_E_2_E_ALIVE_COUNTER },
-    { 88u,    8u,     8u, COM_UINT8, CVC_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_e2e_crc8, CVC_SIG_BCM_HEARTBEAT_E_2_E_CRC_8 },
-    { 89u,   16u,     8u, COM_UINT8, CVC_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_alivecounter, CVC_SIG_BCM_HEARTBEAT_ALIVE_COUNTER },
-    { 90u,   24u,     8u, COM_UINT8, CVC_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_ecu_id, CVC_SIG_BCM_HEARTBEAT_ECU_ID },
-    { 91u,    0u,     4u, COM_UINT8, CVC_COM_RX_STEERING_STATUS, &sig_rx_steering_status_e2e_dataid, CVC_SIG_STEERING_STATUS_E_2_E_DATA_ID },
-    { 92u,    4u,     4u, COM_UINT8, CVC_COM_RX_STEERING_STATUS, &sig_rx_steering_status_e2e_alivecounter, CVC_SIG_STEERING_STATUS_E_2_E_ALIVE_COUNTER },
-    { 93u,    8u,     8u, COM_UINT8, CVC_COM_RX_STEERING_STATUS, &sig_rx_steering_status_e2e_crc8, CVC_SIG_STEERING_STATUS_E_2_E_CRC_8 },
-    { 94u,   16u,    16u, COM_UINT16, CVC_COM_RX_STEERING_STATUS, &sig_rx_steering_status_actualangle, CVC_SIG_STEERING_STATUS_ACTUAL_ANGLE },
-    { 95u,   32u,    16u, COM_UINT16, CVC_COM_RX_STEERING_STATUS, &sig_rx_steering_status_commandedangle, CVC_SIG_STEERING_STATUS_COMMANDED_ANGLE },
-    { 96u,   48u,     4u, COM_UINT8, CVC_COM_RX_STEERING_STATUS, &sig_rx_steering_status_steerfaultstatus, CVC_SIG_STEERING_STATUS_STEER_FAULT_STATUS },
-    { 97u,   52u,     4u, COM_UINT8, CVC_COM_RX_STEERING_STATUS, &sig_rx_steering_status_steermode, CVC_SIG_STEERING_STATUS_STEER_MODE },
-    { 98u,   56u,     8u, COM_UINT8, CVC_COM_RX_STEERING_STATUS, &sig_rx_steering_status_servocurrent_ma, CVC_SIG_STEERING_STATUS_SERVO_CURRENT_M_A },
-    { 99u,    0u,     4u, COM_UINT8, CVC_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_e2e_dataid, CVC_SIG_BRAKE_STATUS_E_2_E_DATA_ID },
-    { 100u,    4u,     4u, COM_UINT8, CVC_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_e2e_alivecounter, CVC_SIG_BRAKE_STATUS_E_2_E_ALIVE_COUNTER },
-    { 101u,    8u,     8u, COM_UINT8, CVC_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_e2e_crc8, CVC_SIG_BRAKE_STATUS_E_2_E_CRC_8 },
-    { 102u,   16u,     8u, COM_UINT8, CVC_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_brakeposition, CVC_SIG_BRAKE_STATUS_BRAKE_POSITION },
-    { 103u,   24u,     8u, COM_UINT8, CVC_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_brakecommandecho, CVC_SIG_BRAKE_STATUS_BRAKE_COMMAND_ECHO },
-    { 104u,   32u,    16u, COM_UINT16, CVC_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_servocurrent_ma, CVC_SIG_BRAKE_STATUS_SERVO_CURRENT_M_A },
-    { 105u,   48u,     4u, COM_UINT8, CVC_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_brakefaultstatus, CVC_SIG_BRAKE_STATUS_BRAKE_FAULT_STATUS },
-    { 106u,   52u,     4u, COM_UINT8, CVC_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_brakemode, CVC_SIG_BRAKE_STATUS_BRAKE_MODE },
-    { 107u,    0u,     4u, COM_UINT8, CVC_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_e2e_dataid, CVC_SIG_BRAKE_FAULT_E_2_E_DATA_ID },
-    { 108u,    4u,     4u, COM_UINT8, CVC_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_e2e_alivecounter, CVC_SIG_BRAKE_FAULT_E_2_E_ALIVE_COUNTER },
-    { 109u,    8u,     8u, COM_UINT8, CVC_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_e2e_crc8, CVC_SIG_BRAKE_FAULT_E_2_E_CRC_8 },
-    { 110u,   16u,     4u, COM_UINT8, CVC_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_faulttype, CVC_SIG_BRAKE_FAULT_FAULT_TYPE },
-    { 111u,   20u,     8u, COM_UINT8, CVC_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_commandedbrake, CVC_SIG_BRAKE_FAULT_COMMANDED_BRAKE },
-    { 112u,   28u,     4u, COM_UINT8, CVC_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_measuredbrake, CVC_SIG_BRAKE_FAULT_MEASURED_BRAKE },
-    { 113u,    0u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_e2e_dataid, CVC_SIG_MOTOR_CUTOFF_REQ_E_2_E_DATA_ID },
-    { 114u,    4u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_e2e_alivecounter, CVC_SIG_MOTOR_CUTOFF_REQ_E_2_E_ALIVE_COUNTER },
-    { 115u,    8u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_e2e_crc8, CVC_SIG_MOTOR_CUTOFF_REQ_E_2_E_CRC_8 },
-    { 116u,   16u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_requesttype, CVC_SIG_MOTOR_CUTOFF_REQ_REQUEST_TYPE },
-    { 117u,   20u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_reason, CVC_SIG_MOTOR_CUTOFF_REQ_REASON },
-    { 118u,    0u,     4u, COM_UINT8, CVC_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_e2e_dataid, CVC_SIG_LIDAR_DISTANCE_E_2_E_DATA_ID },
-    { 119u,    4u,     4u, COM_UINT8, CVC_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_e2e_alivecounter, CVC_SIG_LIDAR_DISTANCE_E_2_E_ALIVE_COUNTER },
-    { 120u,    8u,     8u, COM_UINT8, CVC_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_e2e_crc8, CVC_SIG_LIDAR_DISTANCE_E_2_E_CRC_8 },
-    { 121u,   16u,    16u, COM_UINT16, CVC_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_range_cm, CVC_SIG_LIDAR_DISTANCE_RANGE_CM },
-    { 122u,   32u,    16u, COM_UINT16, CVC_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_signalstrength, CVC_SIG_LIDAR_DISTANCE_SIGNAL_STRENGTH },
-    { 123u,   48u,     4u, COM_UINT8, CVC_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_obstaclezone, CVC_SIG_LIDAR_DISTANCE_OBSTACLE_ZONE },
-    { 124u,   52u,     4u, COM_UINT8, CVC_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_sensorstatus, CVC_SIG_LIDAR_DISTANCE_SENSOR_STATUS },
-    { 125u,    0u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_e2e_dataid, CVC_SIG_MOTOR_STATUS_E_2_E_DATA_ID },
-    { 126u,    4u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_e2e_alivecounter, CVC_SIG_MOTOR_STATUS_E_2_E_ALIVE_COUNTER },
-    { 127u,    8u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_e2e_crc8, CVC_SIG_MOTOR_STATUS_E_2_E_CRC_8 },
-    { 128u,   16u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_torqueecho, CVC_SIG_MOTOR_STATUS_TORQUE_ECHO },
-    { 129u,   24u,    16u, COM_UINT16, CVC_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_motorspeed_rpm, CVC_SIG_MOTOR_STATUS_MOTOR_SPEED_RPM },
-    { 130u,   40u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_motordirection, CVC_SIG_MOTOR_STATUS_MOTOR_DIRECTION },
-    { 131u,   48u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_motorenable, CVC_SIG_MOTOR_STATUS_MOTOR_ENABLE },
-    { 132u,   56u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_motorfaultstatus, CVC_SIG_MOTOR_STATUS_MOTOR_FAULT_STATUS },
-    { 133u,    0u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_e2e_dataid, CVC_SIG_MOTOR_CURRENT_E_2_E_DATA_ID },
-    { 134u,    4u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_e2e_alivecounter, CVC_SIG_MOTOR_CURRENT_E_2_E_ALIVE_COUNTER },
-    { 135u,    8u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_e2e_crc8, CVC_SIG_MOTOR_CURRENT_E_2_E_CRC_8 },
-    { 136u,   16u,    16u, COM_UINT16, CVC_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_phase_ma, CVC_SIG_MOTOR_CURRENT_PHASE_M_A },
-    { 137u,   32u,     1u, COM_UINT8, CVC_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_dirisreverse, CVC_SIG_MOTOR_CURRENT_DIR_IS_REVERSE },
-    { 138u,   33u,     1u, COM_UINT8, CVC_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_motorenable, CVC_SIG_MOTOR_CURRENT_MOTOR_ENABLE },
-    { 139u,   34u,     1u, COM_UINT8, CVC_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_overcurrentflag, CVC_SIG_MOTOR_CURRENT_OVERCURRENT_FLAG },
-    { 140u,   35u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_torqueecho, CVC_SIG_MOTOR_CURRENT_TORQUE_ECHO },
-    { 141u,    0u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_e2e_dataid, CVC_SIG_MOTOR_TEMPERATURE_E_2_E_DATA_ID },
-    { 142u,    4u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_e2e_alivecounter, CVC_SIG_MOTOR_TEMPERATURE_E_2_E_ALIVE_COUNTER },
-    { 143u,    8u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_e2e_crc8, CVC_SIG_MOTOR_TEMPERATURE_E_2_E_CRC_8 },
-    { 144u,   16u,    16u, COM_UINT16, CVC_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_windingtemp1_c, CVC_SIG_MOTOR_TEMPERATURE_WINDING_TEMP_1_C },
-    { 145u,   32u,    16u, COM_UINT16, CVC_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_windingtemp2_c, CVC_SIG_MOTOR_TEMPERATURE_WINDING_TEMP_2_C },
-    { 146u,   48u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_deratingpercent, CVC_SIG_MOTOR_TEMPERATURE_DERATING_PERCENT },
-    { 147u,    0u,     4u, COM_UINT8, CVC_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_e2e_dataid, CVC_SIG_BATTERY_STATUS_E_2_E_DATA_ID },
-    { 148u,    4u,     4u, COM_UINT8, CVC_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_e2e_alivecounter, CVC_SIG_BATTERY_STATUS_E_2_E_ALIVE_COUNTER },
-    { 149u,    8u,     8u, COM_UINT8, CVC_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_e2e_crc8, CVC_SIG_BATTERY_STATUS_E_2_E_CRC_8 },
-    { 150u,   16u,    16u, COM_UINT16, CVC_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_batteryvoltage_mv, CVC_SIG_BATTERY_STATUS_BATTERY_VOLTAGE_M_V },
-    { 151u,   32u,     8u, COM_UINT8, CVC_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_level, CVC_SIG_BATTERY_STATUS_LEVEL },
-    { 152u,    0u,     1u, COM_UINT8, CVC_COM_RX_LIGHT_STATUS, &sig_rx_light_status_headlighton, CVC_SIG_LIGHT_STATUS_HEADLIGHT_ON },
-    { 153u,    1u,     1u, COM_UINT8, CVC_COM_RX_LIGHT_STATUS, &sig_rx_light_status_taillighton, CVC_SIG_LIGHT_STATUS_TAIL_LIGHT_ON },
-    { 154u,    2u,     1u, COM_UINT8, CVC_COM_RX_LIGHT_STATUS, &sig_rx_light_status_foglighton, CVC_SIG_LIGHT_STATUS_FOG_LIGHT_ON },
-    { 155u,    3u,     1u, COM_UINT8, CVC_COM_RX_LIGHT_STATUS, &sig_rx_light_status_brakelighton, CVC_SIG_LIGHT_STATUS_BRAKE_LIGHT_ON },
-    { 156u,    4u,     2u, COM_UINT8, CVC_COM_RX_LIGHT_STATUS, &sig_rx_light_status_headlightlevel, CVC_SIG_LIGHT_STATUS_HEADLIGHT_LEVEL },
-    { 157u,    0u,     1u, COM_UINT8, CVC_COM_RX_INDICATOR_STATE, &sig_rx_indicator_state_lefton, CVC_SIG_INDICATOR_STATE_LEFT_ON },
-    { 158u,    1u,     1u, COM_UINT8, CVC_COM_RX_INDICATOR_STATE, &sig_rx_indicator_state_righton, CVC_SIG_INDICATOR_STATE_RIGHT_ON },
-    { 159u,    2u,     1u, COM_UINT8, CVC_COM_RX_INDICATOR_STATE, &sig_rx_indicator_state_hazardactive, CVC_SIG_INDICATOR_STATE_HAZARD_ACTIVE },
-    { 160u,    3u,     1u, COM_UINT8, CVC_COM_RX_INDICATOR_STATE, &sig_rx_indicator_state_blinkphasehigh, CVC_SIG_INDICATOR_STATE_BLINK_PHASE_HIGH },
-    { 161u,    0u,     1u, COM_UINT8, CVC_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_frontleftlock, CVC_SIG_DOOR_LOCK_STATUS_FRONT_LEFT_LOCK },
-    { 162u,    1u,     1u, COM_UINT8, CVC_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_frontrightlock, CVC_SIG_DOOR_LOCK_STATUS_FRONT_RIGHT_LOCK },
-    { 163u,    2u,     1u, COM_UINT8, CVC_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_rearleftlock, CVC_SIG_DOOR_LOCK_STATUS_REAR_LEFT_LOCK },
-    { 164u,    3u,     1u, COM_UINT8, CVC_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_rearrightlock, CVC_SIG_DOOR_LOCK_STATUS_REAR_RIGHT_LOCK },
-    { 165u,    4u,     1u, COM_UINT8, CVC_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_centrallock, CVC_SIG_DOOR_LOCK_STATUS_CENTRAL_LOCK },
-    { 166u,    0u,    64u, COM_UINT32, CVC_COM_RX_UDS_RESP_TCU, &sig_rx_uds_resp_tcu_uds_data, CVC_SIG_UDS_RESP_TCU_UDS_DATA },
-    { 167u,    0u,    64u, COM_UINT32, CVC_COM_RX_UDS_FUNC_REQUEST, &sig_rx_uds_func_request_uds_data, CVC_SIG_UDS_FUNC_REQUEST_UDS_DATA },
-    { 168u,    0u,    64u, COM_UINT32, CVC_COM_RX_UDS_PHYS_REQ_CVC, &sig_rx_uds_phys_req_cvc_uds_data, CVC_SIG_UDS_PHYS_REQ_CVC_UDS_DATA },
-    { 169u,    0u,    64u, COM_UINT32, CVC_COM_RX_UDS_PHYS_REQ_FZC, &sig_rx_uds_phys_req_fzc_uds_data, CVC_SIG_UDS_PHYS_REQ_FZC_UDS_DATA },
-    { 170u,    0u,    64u, COM_UINT32, CVC_COM_RX_UDS_PHYS_REQ_RZC, &sig_rx_uds_phys_req_rzc_uds_data, CVC_SIG_UDS_PHYS_REQ_RZC_UDS_DATA },
-    { 171u,    0u,    64u, COM_UINT32, CVC_COM_RX_UDS_PHYS_REQ_TCU, &sig_rx_uds_phys_req_tcu_uds_data, CVC_SIG_UDS_PHYS_REQ_TCU_UDS_DATA },
-    { 172u,    0u,    64u, COM_UINT32, CVC_COM_RX_UDS_RESP_FZC, &sig_rx_uds_resp_fzc_uds_data, CVC_SIG_UDS_RESP_FZC_UDS_DATA },
-    { 173u,    0u,    64u, COM_UINT32, CVC_COM_RX_UDS_RESP_RZC, &sig_rx_uds_resp_rzc_uds_data, CVC_SIG_UDS_RESP_RZC_UDS_DATA },
+    { 58u,    0u,     4u, COM_UINT8, CVC_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_e2e_dataid, CVC_SIG_FZC_HEARTBEAT_E_2_E_DATA_ID, COM_NO_UPDATE_BIT },
+    { 59u,    4u,     4u, COM_UINT8, CVC_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_e2e_alivecounter, CVC_SIG_FZC_HEARTBEAT_E_2_E_ALIVE_COUNTER, COM_NO_UPDATE_BIT },
+    { 60u,    8u,     8u, COM_UINT8, CVC_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_e2e_crc8, CVC_SIG_FZC_HEARTBEAT_E_2_E_CRC_8, COM_NO_UPDATE_BIT },
+    { 61u,   16u,     8u, COM_UINT8, CVC_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_ecu_id, CVC_SIG_FZC_HEARTBEAT_ECU_ID, COM_NO_UPDATE_BIT },
+    { 62u,   24u,     4u, COM_UINT8, CVC_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_operatingmode, CVC_SIG_FZC_HEARTBEAT_OPERATING_MODE, COM_NO_UPDATE_BIT },
+    { 63u,   28u,     4u, COM_UINT8, CVC_COM_RX_FZC_HEARTBEAT, &sig_rx_fzc_heartbeat_faultstatus, CVC_SIG_FZC_HEARTBEAT_FAULT_STATUS, COM_NO_UPDATE_BIT },
+    { 64u,    0u,     4u, COM_UINT8, CVC_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_e2e_dataid, CVC_SIG_RZC_HEARTBEAT_E_2_E_DATA_ID, COM_NO_UPDATE_BIT },
+    { 65u,    4u,     4u, COM_UINT8, CVC_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_e2e_alivecounter, CVC_SIG_RZC_HEARTBEAT_E_2_E_ALIVE_COUNTER, COM_NO_UPDATE_BIT },
+    { 66u,    8u,     8u, COM_UINT8, CVC_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_e2e_crc8, CVC_SIG_RZC_HEARTBEAT_E_2_E_CRC_8, COM_NO_UPDATE_BIT },
+    { 67u,   16u,     8u, COM_UINT8, CVC_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_ecu_id, CVC_SIG_RZC_HEARTBEAT_ECU_ID, COM_NO_UPDATE_BIT },
+    { 68u,   24u,     4u, COM_UINT8, CVC_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_operatingmode, CVC_SIG_RZC_HEARTBEAT_OPERATING_MODE, COM_NO_UPDATE_BIT },
+    { 69u,   28u,     4u, COM_UINT8, CVC_COM_RX_RZC_HEARTBEAT, &sig_rx_rzc_heartbeat_faultstatus, CVC_SIG_RZC_HEARTBEAT_FAULT_STATUS, COM_NO_UPDATE_BIT },
+    { 70u,    0u,     8u, COM_UINT8, CVC_COM_RX_SC_STATUS, &sig_rx_sc_status_alivecounter, CVC_SIG_SC_STATUS_ALIVE_COUNTER, COM_NO_UPDATE_BIT },
+    { 71u,    8u,     8u, COM_UINT8, CVC_COM_RX_SC_STATUS, &sig_rx_sc_status_crc8, CVC_SIG_SC_STATUS_CRC_8, COM_NO_UPDATE_BIT },
+    { 72u,   16u,     4u, COM_UINT8, CVC_COM_RX_SC_STATUS, &sig_rx_sc_status_mode, CVC_SIG_SC_STATUS_MODE, COM_NO_UPDATE_BIT },
+    { 73u,   20u,     4u, COM_UINT8, CVC_COM_RX_SC_STATUS, &sig_rx_sc_status_faultflags, CVC_SIG_SC_STATUS_FAULT_FLAGS, COM_NO_UPDATE_BIT },
+    { 74u,   24u,     3u, COM_UINT8, CVC_COM_RX_SC_STATUS, &sig_rx_sc_status_ecu_health, CVC_SIG_SC_STATUS_ECU_HEALTH, COM_NO_UPDATE_BIT },
+    { 75u,   27u,     4u, COM_UINT8, CVC_COM_RX_SC_STATUS, &sig_rx_sc_status_faultreason, CVC_SIG_SC_STATUS_FAULT_REASON, COM_NO_UPDATE_BIT },
+    { 76u,   31u,     1u, COM_UINT8, CVC_COM_RX_SC_STATUS, &sig_rx_sc_status_relayenergized, CVC_SIG_SC_STATUS_RELAY_ENERGIZED, COM_NO_UPDATE_BIT },
+    { 77u,    0u,     4u, COM_UINT8, CVC_COM_RX_ICU_HEARTBEAT, &sig_rx_icu_heartbeat_e2e_dataid, CVC_SIG_ICU_HEARTBEAT_E_2_E_DATA_ID, COM_NO_UPDATE_BIT },
+    { 78u,    4u,     4u, COM_UINT8, CVC_COM_RX_ICU_HEARTBEAT, &sig_rx_icu_heartbeat_e2e_alivecounter, CVC_SIG_ICU_HEARTBEAT_E_2_E_ALIVE_COUNTER, COM_NO_UPDATE_BIT },
+    { 79u,    8u,     8u, COM_UINT8, CVC_COM_RX_ICU_HEARTBEAT, &sig_rx_icu_heartbeat_e2e_crc8, CVC_SIG_ICU_HEARTBEAT_E_2_E_CRC_8, COM_NO_UPDATE_BIT },
+    { 80u,   16u,     8u, COM_UINT8, CVC_COM_RX_ICU_HEARTBEAT, &sig_rx_icu_heartbeat_alivecounter, CVC_SIG_ICU_HEARTBEAT_ALIVE_COUNTER, COM_NO_UPDATE_BIT },
+    { 81u,   24u,     8u, COM_UINT8, CVC_COM_RX_ICU_HEARTBEAT, &sig_rx_icu_heartbeat_ecu_id, CVC_SIG_ICU_HEARTBEAT_ECU_ID, COM_NO_UPDATE_BIT },
+    { 82u,    0u,     4u, COM_UINT8, CVC_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_e2e_dataid, CVC_SIG_TCU_HEARTBEAT_E_2_E_DATA_ID, COM_NO_UPDATE_BIT },
+    { 83u,    4u,     4u, COM_UINT8, CVC_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_e2e_alivecounter, CVC_SIG_TCU_HEARTBEAT_E_2_E_ALIVE_COUNTER, COM_NO_UPDATE_BIT },
+    { 84u,    8u,     8u, COM_UINT8, CVC_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_e2e_crc8, CVC_SIG_TCU_HEARTBEAT_E_2_E_CRC_8, COM_NO_UPDATE_BIT },
+    { 85u,   16u,     8u, COM_UINT8, CVC_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_alivecounter, CVC_SIG_TCU_HEARTBEAT_ALIVE_COUNTER, COM_NO_UPDATE_BIT },
+    { 86u,   24u,     8u, COM_UINT8, CVC_COM_RX_TCU_HEARTBEAT, &sig_rx_tcu_heartbeat_ecu_id, CVC_SIG_TCU_HEARTBEAT_ECU_ID, COM_NO_UPDATE_BIT },
+    { 87u,    0u,     4u, COM_UINT8, CVC_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_e2e_dataid, CVC_SIG_BCM_HEARTBEAT_E_2_E_DATA_ID, COM_NO_UPDATE_BIT },
+    { 88u,    4u,     4u, COM_UINT8, CVC_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_e2e_alivecounter, CVC_SIG_BCM_HEARTBEAT_E_2_E_ALIVE_COUNTER, COM_NO_UPDATE_BIT },
+    { 89u,    8u,     8u, COM_UINT8, CVC_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_e2e_crc8, CVC_SIG_BCM_HEARTBEAT_E_2_E_CRC_8, COM_NO_UPDATE_BIT },
+    { 90u,   16u,     8u, COM_UINT8, CVC_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_alivecounter, CVC_SIG_BCM_HEARTBEAT_ALIVE_COUNTER, COM_NO_UPDATE_BIT },
+    { 91u,   24u,     8u, COM_UINT8, CVC_COM_RX_BCM_HEARTBEAT, &sig_rx_bcm_heartbeat_ecu_id, CVC_SIG_BCM_HEARTBEAT_ECU_ID, COM_NO_UPDATE_BIT },
+    { 92u,    0u,     4u, COM_UINT8, CVC_COM_RX_STEERING_STATUS, &sig_rx_steering_status_e2e_dataid, CVC_SIG_STEERING_STATUS_E_2_E_DATA_ID, COM_NO_UPDATE_BIT },
+    { 93u,    4u,     4u, COM_UINT8, CVC_COM_RX_STEERING_STATUS, &sig_rx_steering_status_e2e_alivecounter, CVC_SIG_STEERING_STATUS_E_2_E_ALIVE_COUNTER, COM_NO_UPDATE_BIT },
+    { 94u,    8u,     8u, COM_UINT8, CVC_COM_RX_STEERING_STATUS, &sig_rx_steering_status_e2e_crc8, CVC_SIG_STEERING_STATUS_E_2_E_CRC_8, COM_NO_UPDATE_BIT },
+    { 95u,   16u,    16u, COM_UINT16, CVC_COM_RX_STEERING_STATUS, &sig_rx_steering_status_actualangle, CVC_SIG_STEERING_STATUS_ACTUAL_ANGLE, COM_NO_UPDATE_BIT },
+    { 96u,   32u,    16u, COM_UINT16, CVC_COM_RX_STEERING_STATUS, &sig_rx_steering_status_commandedangle, CVC_SIG_STEERING_STATUS_COMMANDED_ANGLE, COM_NO_UPDATE_BIT },
+    { 97u,   48u,     4u, COM_UINT8, CVC_COM_RX_STEERING_STATUS, &sig_rx_steering_status_steerfaultstatus, CVC_SIG_STEERING_STATUS_STEER_FAULT_STATUS, COM_NO_UPDATE_BIT },
+    { 98u,   52u,     4u, COM_UINT8, CVC_COM_RX_STEERING_STATUS, &sig_rx_steering_status_steermode, CVC_SIG_STEERING_STATUS_STEER_MODE, COM_NO_UPDATE_BIT },
+    { 99u,   56u,     8u, COM_UINT8, CVC_COM_RX_STEERING_STATUS, &sig_rx_steering_status_servocurrent_ma, CVC_SIG_STEERING_STATUS_SERVO_CURRENT_M_A, COM_NO_UPDATE_BIT },
+    { 100u,    0u,     4u, COM_UINT8, CVC_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_e2e_dataid, CVC_SIG_BRAKE_STATUS_E_2_E_DATA_ID, COM_NO_UPDATE_BIT },
+    { 101u,    4u,     4u, COM_UINT8, CVC_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_e2e_alivecounter, CVC_SIG_BRAKE_STATUS_E_2_E_ALIVE_COUNTER, COM_NO_UPDATE_BIT },
+    { 102u,    8u,     8u, COM_UINT8, CVC_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_e2e_crc8, CVC_SIG_BRAKE_STATUS_E_2_E_CRC_8, COM_NO_UPDATE_BIT },
+    { 103u,   16u,     8u, COM_UINT8, CVC_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_brakeposition, CVC_SIG_BRAKE_STATUS_BRAKE_POSITION, COM_NO_UPDATE_BIT },
+    { 104u,   24u,     8u, COM_UINT8, CVC_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_brakecommandecho, CVC_SIG_BRAKE_STATUS_BRAKE_COMMAND_ECHO, COM_NO_UPDATE_BIT },
+    { 105u,   32u,    16u, COM_UINT16, CVC_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_servocurrent_ma, CVC_SIG_BRAKE_STATUS_SERVO_CURRENT_M_A, COM_NO_UPDATE_BIT },
+    { 106u,   48u,     4u, COM_UINT8, CVC_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_brakefaultstatus, CVC_SIG_BRAKE_STATUS_BRAKE_FAULT_STATUS, COM_NO_UPDATE_BIT },
+    { 107u,   52u,     4u, COM_UINT8, CVC_COM_RX_BRAKE_STATUS, &sig_rx_brake_status_brakemode, CVC_SIG_BRAKE_STATUS_BRAKE_MODE, COM_NO_UPDATE_BIT },
+    { 108u,    0u,     4u, COM_UINT8, CVC_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_e2e_dataid, CVC_SIG_BRAKE_FAULT_E_2_E_DATA_ID, COM_NO_UPDATE_BIT },
+    { 109u,    4u,     4u, COM_UINT8, CVC_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_e2e_alivecounter, CVC_SIG_BRAKE_FAULT_E_2_E_ALIVE_COUNTER, COM_NO_UPDATE_BIT },
+    { 110u,    8u,     8u, COM_UINT8, CVC_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_e2e_crc8, CVC_SIG_BRAKE_FAULT_E_2_E_CRC_8, COM_NO_UPDATE_BIT },
+    { 111u,   16u,     4u, COM_UINT8, CVC_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_faulttype, CVC_SIG_BRAKE_FAULT_FAULT_TYPE, COM_NO_UPDATE_BIT },
+    { 112u,   20u,     8u, COM_UINT8, CVC_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_commandedbrake, CVC_SIG_BRAKE_FAULT_COMMANDED_BRAKE, COM_NO_UPDATE_BIT },
+    { 113u,   28u,     4u, COM_UINT8, CVC_COM_RX_BRAKE_FAULT, &sig_rx_brake_fault_measuredbrake, CVC_SIG_BRAKE_FAULT_MEASURED_BRAKE, COM_NO_UPDATE_BIT },
+    { 114u,    0u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_e2e_dataid, CVC_SIG_MOTOR_CUTOFF_REQ_E_2_E_DATA_ID, COM_NO_UPDATE_BIT },
+    { 115u,    4u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_e2e_alivecounter, CVC_SIG_MOTOR_CUTOFF_REQ_E_2_E_ALIVE_COUNTER, COM_NO_UPDATE_BIT },
+    { 116u,    8u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_e2e_crc8, CVC_SIG_MOTOR_CUTOFF_REQ_E_2_E_CRC_8, COM_NO_UPDATE_BIT },
+    { 117u,   16u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_requesttype, CVC_SIG_MOTOR_CUTOFF_REQ_REQUEST_TYPE, COM_NO_UPDATE_BIT },
+    { 118u,   20u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_CUTOFF_REQ, &sig_rx_motor_cutoff_req_reason, CVC_SIG_MOTOR_CUTOFF_REQ_REASON, COM_NO_UPDATE_BIT },
+    { 119u,    0u,     4u, COM_UINT8, CVC_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_e2e_dataid, CVC_SIG_LIDAR_DISTANCE_E_2_E_DATA_ID, COM_NO_UPDATE_BIT },
+    { 120u,    4u,     4u, COM_UINT8, CVC_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_e2e_alivecounter, CVC_SIG_LIDAR_DISTANCE_E_2_E_ALIVE_COUNTER, COM_NO_UPDATE_BIT },
+    { 121u,    8u,     8u, COM_UINT8, CVC_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_e2e_crc8, CVC_SIG_LIDAR_DISTANCE_E_2_E_CRC_8, COM_NO_UPDATE_BIT },
+    { 122u,   16u,    16u, COM_UINT16, CVC_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_range_cm, CVC_SIG_LIDAR_DISTANCE_RANGE_CM, COM_NO_UPDATE_BIT },
+    { 123u,   32u,    16u, COM_UINT16, CVC_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_signalstrength, CVC_SIG_LIDAR_DISTANCE_SIGNAL_STRENGTH, COM_NO_UPDATE_BIT },
+    { 124u,   48u,     4u, COM_UINT8, CVC_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_obstaclezone, CVC_SIG_LIDAR_DISTANCE_OBSTACLE_ZONE, COM_NO_UPDATE_BIT },
+    { 125u,   52u,     4u, COM_UINT8, CVC_COM_RX_LIDAR_DISTANCE, &sig_rx_lidar_distance_sensorstatus, CVC_SIG_LIDAR_DISTANCE_SENSOR_STATUS, COM_NO_UPDATE_BIT },
+    { 126u,    0u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_e2e_dataid, CVC_SIG_MOTOR_STATUS_E_2_E_DATA_ID, COM_NO_UPDATE_BIT },
+    { 127u,    4u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_e2e_alivecounter, CVC_SIG_MOTOR_STATUS_E_2_E_ALIVE_COUNTER, COM_NO_UPDATE_BIT },
+    { 128u,    8u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_e2e_crc8, CVC_SIG_MOTOR_STATUS_E_2_E_CRC_8, COM_NO_UPDATE_BIT },
+    { 129u,   16u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_torqueecho, CVC_SIG_MOTOR_STATUS_TORQUE_ECHO, COM_NO_UPDATE_BIT },
+    { 130u,   24u,    16u, COM_UINT16, CVC_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_motorspeed_rpm, CVC_SIG_MOTOR_STATUS_MOTOR_SPEED_RPM, COM_NO_UPDATE_BIT },
+    { 131u,   40u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_motordirection, CVC_SIG_MOTOR_STATUS_MOTOR_DIRECTION, COM_NO_UPDATE_BIT },
+    { 132u,   48u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_motorenable, CVC_SIG_MOTOR_STATUS_MOTOR_ENABLE, COM_NO_UPDATE_BIT },
+    { 133u,   56u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_STATUS, &sig_rx_motor_status_motorfaultstatus, CVC_SIG_MOTOR_STATUS_MOTOR_FAULT_STATUS, COM_NO_UPDATE_BIT },
+    { 134u,    0u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_e2e_dataid, CVC_SIG_MOTOR_CURRENT_E_2_E_DATA_ID, COM_NO_UPDATE_BIT },
+    { 135u,    4u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_e2e_alivecounter, CVC_SIG_MOTOR_CURRENT_E_2_E_ALIVE_COUNTER, COM_NO_UPDATE_BIT },
+    { 136u,    8u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_e2e_crc8, CVC_SIG_MOTOR_CURRENT_E_2_E_CRC_8, COM_NO_UPDATE_BIT },
+    { 137u,   16u,    16u, COM_UINT16, CVC_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_phase_ma, CVC_SIG_MOTOR_CURRENT_PHASE_M_A, COM_NO_UPDATE_BIT },
+    { 138u,   32u,     1u, COM_UINT8, CVC_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_dirisreverse, CVC_SIG_MOTOR_CURRENT_DIR_IS_REVERSE, COM_NO_UPDATE_BIT },
+    { 139u,   33u,     1u, COM_UINT8, CVC_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_motorenable, CVC_SIG_MOTOR_CURRENT_MOTOR_ENABLE, COM_NO_UPDATE_BIT },
+    { 140u,   34u,     1u, COM_UINT8, CVC_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_overcurrentflag, CVC_SIG_MOTOR_CURRENT_OVERCURRENT_FLAG, COM_NO_UPDATE_BIT },
+    { 141u,   35u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_CURRENT, &sig_rx_motor_current_torqueecho, CVC_SIG_MOTOR_CURRENT_TORQUE_ECHO, COM_NO_UPDATE_BIT },
+    { 142u,    0u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_e2e_dataid, CVC_SIG_MOTOR_TEMPERATURE_E_2_E_DATA_ID, COM_NO_UPDATE_BIT },
+    { 143u,    4u,     4u, COM_UINT8, CVC_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_e2e_alivecounter, CVC_SIG_MOTOR_TEMPERATURE_E_2_E_ALIVE_COUNTER, COM_NO_UPDATE_BIT },
+    { 144u,    8u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_e2e_crc8, CVC_SIG_MOTOR_TEMPERATURE_E_2_E_CRC_8, COM_NO_UPDATE_BIT },
+    { 145u,   16u,    16u, COM_UINT16, CVC_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_windingtemp1_c, CVC_SIG_MOTOR_TEMPERATURE_WINDING_TEMP_1_C, COM_NO_UPDATE_BIT },
+    { 146u,   32u,    16u, COM_UINT16, CVC_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_windingtemp2_c, CVC_SIG_MOTOR_TEMPERATURE_WINDING_TEMP_2_C, COM_NO_UPDATE_BIT },
+    { 147u,   48u,     8u, COM_UINT8, CVC_COM_RX_MOTOR_TEMPERATURE, &sig_rx_motor_temperature_deratingpercent, CVC_SIG_MOTOR_TEMPERATURE_DERATING_PERCENT, COM_NO_UPDATE_BIT },
+    { 148u,    0u,     4u, COM_UINT8, CVC_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_e2e_dataid, CVC_SIG_BATTERY_STATUS_E_2_E_DATA_ID, COM_NO_UPDATE_BIT },
+    { 149u,    4u,     4u, COM_UINT8, CVC_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_e2e_alivecounter, CVC_SIG_BATTERY_STATUS_E_2_E_ALIVE_COUNTER, COM_NO_UPDATE_BIT },
+    { 150u,    8u,     8u, COM_UINT8, CVC_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_e2e_crc8, CVC_SIG_BATTERY_STATUS_E_2_E_CRC_8, COM_NO_UPDATE_BIT },
+    { 151u,   16u,    16u, COM_UINT16, CVC_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_batteryvoltage_mv, CVC_SIG_BATTERY_STATUS_BATTERY_VOLTAGE_M_V, COM_NO_UPDATE_BIT },
+    { 152u,   32u,     8u, COM_UINT8, CVC_COM_RX_BATTERY_STATUS, &sig_rx_battery_status_level, CVC_SIG_BATTERY_STATUS_LEVEL, COM_NO_UPDATE_BIT },
+    { 153u,    0u,     1u, COM_UINT8, CVC_COM_RX_LIGHT_STATUS, &sig_rx_light_status_headlighton, CVC_SIG_LIGHT_STATUS_HEADLIGHT_ON, COM_NO_UPDATE_BIT },
+    { 154u,    1u,     1u, COM_UINT8, CVC_COM_RX_LIGHT_STATUS, &sig_rx_light_status_taillighton, CVC_SIG_LIGHT_STATUS_TAIL_LIGHT_ON, COM_NO_UPDATE_BIT },
+    { 155u,    2u,     1u, COM_UINT8, CVC_COM_RX_LIGHT_STATUS, &sig_rx_light_status_foglighton, CVC_SIG_LIGHT_STATUS_FOG_LIGHT_ON, COM_NO_UPDATE_BIT },
+    { 156u,    3u,     1u, COM_UINT8, CVC_COM_RX_LIGHT_STATUS, &sig_rx_light_status_brakelighton, CVC_SIG_LIGHT_STATUS_BRAKE_LIGHT_ON, COM_NO_UPDATE_BIT },
+    { 157u,    4u,     2u, COM_UINT8, CVC_COM_RX_LIGHT_STATUS, &sig_rx_light_status_headlightlevel, CVC_SIG_LIGHT_STATUS_HEADLIGHT_LEVEL, COM_NO_UPDATE_BIT },
+    { 158u,    0u,     1u, COM_UINT8, CVC_COM_RX_INDICATOR_STATE, &sig_rx_indicator_state_lefton, CVC_SIG_INDICATOR_STATE_LEFT_ON, COM_NO_UPDATE_BIT },
+    { 159u,    1u,     1u, COM_UINT8, CVC_COM_RX_INDICATOR_STATE, &sig_rx_indicator_state_righton, CVC_SIG_INDICATOR_STATE_RIGHT_ON, COM_NO_UPDATE_BIT },
+    { 160u,    2u,     1u, COM_UINT8, CVC_COM_RX_INDICATOR_STATE, &sig_rx_indicator_state_hazardactive, CVC_SIG_INDICATOR_STATE_HAZARD_ACTIVE, COM_NO_UPDATE_BIT },
+    { 161u,    3u,     1u, COM_UINT8, CVC_COM_RX_INDICATOR_STATE, &sig_rx_indicator_state_blinkphasehigh, CVC_SIG_INDICATOR_STATE_BLINK_PHASE_HIGH, COM_NO_UPDATE_BIT },
+    { 162u,    0u,     1u, COM_UINT8, CVC_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_frontleftlock, CVC_SIG_DOOR_LOCK_STATUS_FRONT_LEFT_LOCK, COM_NO_UPDATE_BIT },
+    { 163u,    1u,     1u, COM_UINT8, CVC_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_frontrightlock, CVC_SIG_DOOR_LOCK_STATUS_FRONT_RIGHT_LOCK, COM_NO_UPDATE_BIT },
+    { 164u,    2u,     1u, COM_UINT8, CVC_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_rearleftlock, CVC_SIG_DOOR_LOCK_STATUS_REAR_LEFT_LOCK, COM_NO_UPDATE_BIT },
+    { 165u,    3u,     1u, COM_UINT8, CVC_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_rearrightlock, CVC_SIG_DOOR_LOCK_STATUS_REAR_RIGHT_LOCK, COM_NO_UPDATE_BIT },
+    { 166u,    4u,     1u, COM_UINT8, CVC_COM_RX_DOOR_LOCK_STATUS, &sig_rx_door_lock_status_centrallock, CVC_SIG_DOOR_LOCK_STATUS_CENTRAL_LOCK, COM_NO_UPDATE_BIT },
+    { 167u,    0u,    64u, COM_UINT32, CVC_COM_RX_XCP_REQ_CVC, &sig_rx_xcp_req_cvc_data, CVC_SIG_XCP_REQ_CVC_DATA, COM_NO_UPDATE_BIT },
+    { 168u,    0u,    64u, COM_UINT32, CVC_COM_RX_XCP_REQ_FZC, &sig_rx_xcp_req_fzc_data, CVC_SIG_XCP_REQ_FZC_DATA, COM_NO_UPDATE_BIT },
+    { 169u,    0u,    64u, COM_UINT32, CVC_COM_RX_XCP_RESP_FZC, &sig_rx_xcp_resp_fzc_data, CVC_SIG_XCP_RESP_FZC_DATA, COM_NO_UPDATE_BIT },
+    { 170u,    0u,    64u, COM_UINT32, CVC_COM_RX_XCP_REQ_RZC, &sig_rx_xcp_req_rzc_data, CVC_SIG_XCP_REQ_RZC_DATA, COM_NO_UPDATE_BIT },
+    { 171u,    0u,    64u, COM_UINT32, CVC_COM_RX_XCP_RESP_RZC, &sig_rx_xcp_resp_rzc_data, CVC_SIG_XCP_RESP_RZC_DATA, COM_NO_UPDATE_BIT },
+    { 172u,    0u,    64u, COM_UINT32, CVC_COM_RX_XCP_REQ_SC, &sig_rx_xcp_req_sc_data, CVC_SIG_XCP_REQ_SC_DATA, COM_NO_UPDATE_BIT },
+    { 173u,    0u,    64u, COM_UINT32, CVC_COM_RX_XCP_RESP_SC, &sig_rx_xcp_resp_sc_data, CVC_SIG_XCP_RESP_SC_DATA, COM_NO_UPDATE_BIT },
+    { 174u,    0u,    64u, COM_UINT32, CVC_COM_RX_UDS_RESP_TCU, &sig_rx_uds_resp_tcu_uds_data, CVC_SIG_UDS_RESP_TCU_UDS_DATA, COM_NO_UPDATE_BIT },
+    { 175u,    0u,    64u, COM_UINT32, CVC_COM_RX_UDS_FUNC_REQUEST, &sig_rx_uds_func_request_uds_data, CVC_SIG_UDS_FUNC_REQUEST_UDS_DATA, COM_NO_UPDATE_BIT },
+    { 176u,    0u,    64u, COM_UINT32, CVC_COM_RX_UDS_PHYS_REQ_CVC, &sig_rx_uds_phys_req_cvc_uds_data, CVC_SIG_UDS_PHYS_REQ_CVC_UDS_DATA, COM_NO_UPDATE_BIT },
+    { 177u,    0u,    64u, COM_UINT32, CVC_COM_RX_UDS_PHYS_REQ_FZC, &sig_rx_uds_phys_req_fzc_uds_data, CVC_SIG_UDS_PHYS_REQ_FZC_UDS_DATA, COM_NO_UPDATE_BIT },
+    { 178u,    0u,    64u, COM_UINT32, CVC_COM_RX_UDS_PHYS_REQ_RZC, &sig_rx_uds_phys_req_rzc_uds_data, CVC_SIG_UDS_PHYS_REQ_RZC_UDS_DATA, COM_NO_UPDATE_BIT },
+    { 179u,    0u,    64u, COM_UINT32, CVC_COM_RX_UDS_PHYS_REQ_TCU, &sig_rx_uds_phys_req_tcu_uds_data, CVC_SIG_UDS_PHYS_REQ_TCU_UDS_DATA, COM_NO_UPDATE_BIT },
+    { 180u,    0u,    64u, COM_UINT32, CVC_COM_RX_UDS_RESP_FZC, &sig_rx_uds_resp_fzc_uds_data, CVC_SIG_UDS_RESP_FZC_UDS_DATA, COM_NO_UPDATE_BIT },
+    { 181u,    0u,    64u, COM_UINT32, CVC_COM_RX_UDS_RESP_RZC, &sig_rx_uds_resp_rzc_uds_data, CVC_SIG_UDS_RESP_RZC_UDS_DATA, COM_NO_UPDATE_BIT },
 };
 
 #define CVC_COM_SIGNAL_COUNT  (sizeof(cvc_signal_config) / sizeof(cvc_signal_config[0]))
@@ -388,18 +404,19 @@ static const Com_SignalConfigType cvc_signal_config[] = {
  * ================================================================== */
 
 static const Com_TxPduConfigType cvc_tx_pdu_config[] = {
-    /* pduId,                      dlc, cycleMs */
-    { CVC_COM_TX_ESTOP_BROADCAST,     4u,    10u },   /* CAN 0x001 */
-    { CVC_COM_TX_CVC_HEARTBEAT,     4u,    50u },   /* CAN 0x010 */
-    { CVC_COM_TX_VEHICLE_STATE,     6u,    10u },   /* CAN 0x100 */
-    { CVC_COM_TX_TORQUE_REQUEST,     8u,    10u },   /* CAN 0x101 */
-    { CVC_COM_TX_STEER_COMMAND,     8u,    10u },   /* CAN 0x102 */
-    { CVC_COM_TX_BRAKE_COMMAND,     8u,    10u },   /* CAN 0x103 */
-    { CVC_COM_TX_BODY_CONTROL_CMD,     4u,   100u },   /* CAN 0x350 */
-    { CVC_COM_TX_DTC_BROADCAST,     8u,     0u },   /* CAN 0x500 */
-    { CVC_COM_TX_FZC_VIRTUAL_SENSORS,     8u,    10u },   /* CAN 0x600 */
-    { CVC_COM_TX_RZC_VIRTUAL_SENSORS,     8u,    10u },   /* CAN 0x601 */
-    { CVC_COM_TX_UDS_RESP_CVC,     8u,     0u },   /* CAN 0x7E8 */
+    /* pduId,                      dlc, cycleMs, txMode,              e2eProt, dataId, cntBit, crcBit */
+    { CVC_COM_TX_ESTOP_BROADCAST,     4u,    10u, COM_TX_MODE_PERIODIC, TRUE ,  1u,  4u,  8u },   /* CAN 0x001 @satisfies SG-008 */
+    { CVC_COM_TX_CVC_HEARTBEAT,     4u,    50u, COM_TX_MODE_PERIODIC, TRUE ,  2u,  4u,  8u },   /* CAN 0x010 @satisfies SG-008 */
+    { CVC_COM_TX_VEHICLE_STATE,     6u,    10u, COM_TX_MODE_PERIODIC, TRUE ,  5u,  4u,  8u },   /* CAN 0x100 @satisfies SG-001,SG-008 */
+    { CVC_COM_TX_TORQUE_REQUEST,     8u,    10u, COM_TX_MODE_PERIODIC, TRUE ,  6u,  4u,  8u },   /* CAN 0x101 @satisfies SG-001 */
+    { CVC_COM_TX_STEER_COMMAND,     8u,    10u, COM_TX_MODE_PERIODIC, TRUE ,  7u,  4u,  8u },   /* CAN 0x102 @satisfies SG-003 */
+    { CVC_COM_TX_BRAKE_COMMAND,     8u,    10u, COM_TX_MODE_PERIODIC, TRUE ,  8u,  4u,  8u },   /* CAN 0x103 @satisfies SG-004 */
+    { CVC_COM_TX_BODY_CONTROL_CMD,     4u,   100u, COM_TX_MODE_PERIODIC, FALSE,  0u,  0u,  8u },   /* CAN 0x350 */
+    { CVC_COM_TX_DTC_BROADCAST,     8u,     0u, COM_TX_MODE_DIRECT  , FALSE,  0u,  0u,  8u },   /* CAN 0x500 */
+    { CVC_COM_TX_XCP_RESP_CVC,     8u,     0u, COM_TX_MODE_DIRECT  , FALSE,  0u,  0u,  8u },   /* CAN 0x551 */
+    { CVC_COM_TX_FZC_VIRTUAL_SENSORS,     8u,    10u, COM_TX_MODE_PERIODIC, FALSE,  0u,  0u,  8u },   /* CAN 0x600 */
+    { CVC_COM_TX_RZC_VIRTUAL_SENSORS,     8u,    10u, COM_TX_MODE_PERIODIC, FALSE,  0u,  0u,  8u },   /* CAN 0x601 */
+    { CVC_COM_TX_UDS_RESP_CVC,     8u,     0u, COM_TX_MODE_DIRECT  , FALSE,  0u,  0u,  8u },   /* CAN 0x7E8 */
 };
 
 #define CVC_COM_TX_PDU_COUNT  (sizeof(cvc_tx_pdu_config) / sizeof(cvc_tx_pdu_config[0]))
@@ -409,33 +426,40 @@ static const Com_TxPduConfigType cvc_tx_pdu_config[] = {
  * ================================================================== */
 
 static const Com_RxPduConfigType cvc_rx_pdu_config[] = {
-    /* pduId,                     dlc, timeoutMs */
-    { CVC_COM_RX_FZC_HEARTBEAT,     4u,     0u },   /* CAN 0x011 */
-    { CVC_COM_RX_RZC_HEARTBEAT,     4u,     0u },   /* CAN 0x012 */
-    { CVC_COM_RX_SC_STATUS,     4u,     0u },   /* CAN 0x013 */
-    { CVC_COM_RX_ICU_HEARTBEAT,     4u,     0u },   /* CAN 0x014 */
-    { CVC_COM_RX_TCU_HEARTBEAT,     4u,     0u },   /* CAN 0x015 */
-    { CVC_COM_RX_BCM_HEARTBEAT,     4u,     0u },   /* CAN 0x016 */
-    { CVC_COM_RX_STEERING_STATUS,     8u,     0u },   /* CAN 0x200 */
-    { CVC_COM_RX_BRAKE_STATUS,     8u,     0u },   /* CAN 0x201 */
-    { CVC_COM_RX_BRAKE_FAULT,     4u,     0u },   /* CAN 0x210 */
-    { CVC_COM_RX_MOTOR_CUTOFF_REQ,     4u,     0u },   /* CAN 0x211 */
-    { CVC_COM_RX_LIDAR_DISTANCE,     8u,     0u },   /* CAN 0x220 */
-    { CVC_COM_RX_MOTOR_STATUS,     8u,     0u },   /* CAN 0x300 */
-    { CVC_COM_RX_MOTOR_CURRENT,     8u,     0u },   /* CAN 0x301 */
-    { CVC_COM_RX_MOTOR_TEMPERATURE,     8u,     0u },   /* CAN 0x302 */
-    { CVC_COM_RX_BATTERY_STATUS,     6u,     0u },   /* CAN 0x303 */
-    { CVC_COM_RX_LIGHT_STATUS,     4u,     0u },   /* CAN 0x400 */
-    { CVC_COM_RX_INDICATOR_STATE,     4u,     0u },   /* CAN 0x401 */
-    { CVC_COM_RX_DOOR_LOCK_STATUS,     2u,     0u },   /* CAN 0x402 */
-    { CVC_COM_RX_UDS_RESP_TCU,     8u,     0u },   /* CAN 0x644 */
-    { CVC_COM_RX_UDS_FUNC_REQUEST,     8u,     0u },   /* CAN 0x7DF */
-    { CVC_COM_RX_UDS_PHYS_REQ_CVC,     8u,     0u },   /* CAN 0x7E0 */
-    { CVC_COM_RX_UDS_PHYS_REQ_FZC,     8u,     0u },   /* CAN 0x7E1 */
-    { CVC_COM_RX_UDS_PHYS_REQ_RZC,     8u,     0u },   /* CAN 0x7E2 */
-    { CVC_COM_RX_UDS_PHYS_REQ_TCU,     8u,     0u },   /* CAN 0x7E3 */
-    { CVC_COM_RX_UDS_RESP_FZC,     8u,     0u },   /* CAN 0x7E9 */
-    { CVC_COM_RX_UDS_RESP_RZC,     8u,     0u },   /* CAN 0x7EA */
+    /* pduId,                     dlc, timeoutMs, e2eProt, dataId, maxDelta, demEvt, smValid, smInvalid */
+    { CVC_COM_RX_FZC_HEARTBEAT,     4u,     0u, TRUE ,  3u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x011 @satisfies SG-008 */
+    { CVC_COM_RX_RZC_HEARTBEAT,     4u,     0u, TRUE ,  4u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x012 @satisfies SG-008 */
+    { CVC_COM_RX_SC_STATUS,     4u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x013 @satisfies SG-008 */
+    { CVC_COM_RX_ICU_HEARTBEAT,     4u,     0u, TRUE ,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x014 */
+    { CVC_COM_RX_TCU_HEARTBEAT,     4u,     0u, TRUE ,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x015 */
+    { CVC_COM_RX_BCM_HEARTBEAT,     4u,     0u, TRUE ,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x016 */
+    { CVC_COM_RX_STEERING_STATUS,     8u,     0u, TRUE ,  9u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x200 @satisfies SG-003 */
+    { CVC_COM_RX_BRAKE_STATUS,     8u,     0u, TRUE , 10u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x201 @satisfies SG-004 */
+    { CVC_COM_RX_BRAKE_FAULT,     4u,     0u, TRUE , 11u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x210 @satisfies SG-004,SG-008 */
+    { CVC_COM_RX_MOTOR_CUTOFF_REQ,     4u,     0u, TRUE , 12u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x211 @satisfies SG-008 */
+    { CVC_COM_RX_LIDAR_DISTANCE,     8u,     0u, TRUE , 13u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x220 @satisfies SG-007 */
+    { CVC_COM_RX_MOTOR_STATUS,     8u,     0u, TRUE , 14u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x300 @satisfies SG-002,SG-006 */
+    { CVC_COM_RX_MOTOR_CURRENT,     8u,     0u, TRUE , 15u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x301 @satisfies SG-006 */
+    { CVC_COM_RX_MOTOR_TEMPERATURE,     8u,     0u, TRUE ,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x302 @satisfies SG-006 */
+    { CVC_COM_RX_BATTERY_STATUS,     6u,     0u, TRUE ,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x303 */
+    { CVC_COM_RX_LIGHT_STATUS,     4u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x400 */
+    { CVC_COM_RX_INDICATOR_STATE,     4u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x401 */
+    { CVC_COM_RX_DOOR_LOCK_STATUS,     2u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x402 */
+    { CVC_COM_RX_XCP_REQ_CVC,     8u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x550 */
+    { CVC_COM_RX_XCP_REQ_FZC,     8u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x552 */
+    { CVC_COM_RX_XCP_RESP_FZC,     8u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x553 */
+    { CVC_COM_RX_XCP_REQ_RZC,     8u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x554 */
+    { CVC_COM_RX_XCP_RESP_RZC,     8u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x555 */
+    { CVC_COM_RX_XCP_REQ_SC,     8u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x556 */
+    { CVC_COM_RX_XCP_RESP_SC,     8u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x557 */
+    { CVC_COM_RX_UDS_RESP_TCU,     8u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x644 */
+    { CVC_COM_RX_UDS_FUNC_REQUEST,     8u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x7DF */
+    { CVC_COM_RX_UDS_PHYS_REQ_CVC,     8u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x7E0 */
+    { CVC_COM_RX_UDS_PHYS_REQ_FZC,     8u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x7E1 */
+    { CVC_COM_RX_UDS_PHYS_REQ_RZC,     8u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x7E2 */
+    { CVC_COM_RX_UDS_PHYS_REQ_TCU,     8u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x7E3 */
+    { CVC_COM_RX_UDS_RESP_FZC,     8u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x7E9 */
+    { CVC_COM_RX_UDS_RESP_RZC,     8u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x7EA */
 };
 
 #define CVC_COM_RX_PDU_COUNT  (sizeof(cvc_rx_pdu_config) / sizeof(cvc_rx_pdu_config[0]))

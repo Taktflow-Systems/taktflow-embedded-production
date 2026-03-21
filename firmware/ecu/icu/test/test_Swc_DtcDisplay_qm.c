@@ -3,7 +3,7 @@
  * @brief   Unit tests for Swc_DtcDisplay — DTC list management for ICU
  * @date    2026-02-23
  *
- * @verifies SWR-ICU-008
+ * @verifies SSR-ICU-001, SWR-ICU-008
  *
  * Tests DTC display initialization, adding DTCs from broadcast, circular
  * buffer overflow (oldest replaced), active/pending status flags, and

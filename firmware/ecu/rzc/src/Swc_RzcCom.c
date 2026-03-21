@@ -237,28 +237,12 @@ static uint8 RzcCom_GetRxDataId(uint8 pduId)
  */
 Std_ReturnType Rzc_E2eRxCheck(uint8 pduId, const uint8* data, uint8 length)
 {
-    E2E_CheckStatusType e2eResult;
-
-    switch (pduId)
-    {
-        case RZC_COM_RX_ESTOP:
-        case RZC_COM_RX_VEHICLE_TORQUE:
-            e2eResult = E2E_Check(
-                &RzcCom_RxE2eConfig[pduId],
-                &RzcCom_RxE2eState[pduId],
-                data, (uint16)length);
-            if (e2eResult == E2E_STATUS_ERROR)
-            {
-                RzcCom_RxFailCount[pduId]++;
-                return E_NOT_OK;
-            }
-            /* OK, REPEATED, WRONG_SEQ — all acceptable, clear fail count */
-            RzcCom_RxFailCount[pduId] = 0u;
-            return E_OK;
-
-        default:
-            return E_OK;  /* No E2E for this PDU */
-    }
+    /* E2E check is now performed by Com_RxIndication (Phase 2).
+     * This function is retained for API compatibility only. */
+    (void)pduId;
+    (void)data;
+    (void)length;
+    return E_OK;
 }
 
 /* ==================================================================
@@ -521,12 +505,18 @@ void Swc_RzcCom_TransmitSchedule(void)
         uint32 motor_dir;
         uint32 motor_enable;
         uint32 motor_fault;
-        uint8  pdu[8];
-        uint8  i;
-        PduInfoType pdu_info;
-
-        pdu_info.SduDataPtr = pdu;
-        pdu_info.SduLength  = 8u;
+        /* --- Heartbeat: update Com signals (50ms cycle enforced by Com config) --- */
+        {
+            uint32 hb_vs = 0u;
+            uint32 hb_fm = 0u;
+            uint8 ecu_id = RZC_ECU_ID;
+            uint8 state_fault;
+            (void)Rte_Read(RZC_SIG_VEHICLE_STATE, &hb_vs);
+            (void)Rte_Read(RZC_SIG_FAULT_MASK, &hb_fm);
+            state_fault = (uint8)(((hb_fm & 0x0Fu) << 4u) | (hb_vs & 0x0Fu));
+            (void)Com_SendSignal(RZC_COM_SIG_RZC_HEARTBEAT_ECU_ID, &ecu_id);
+            (void)Com_SendSignal(RZC_COM_SIG_RZC_HEARTBEAT_FAULT_STATUS, &state_fault);
+        }
 
         /* --- 0x300 Motor Status: every cycle (10ms) --- */
         torque_echo  = 0u;
@@ -540,15 +530,18 @@ void Swc_RzcCom_TransmitSchedule(void)
         (void)Rte_Read(RZC_SIG_MOTOR_ENABLE, &motor_enable);
         (void)Rte_Read(RZC_SIG_MOTOR_FAULT, &motor_fault);
 
-        for (i = 0u; i < 8u; i++) { pdu[i] = 0u; }
-        pdu[2] = (uint8)torque_echo;
-        pdu[3] = (uint8)(speed_rpm & 0xFFu);
-        pdu[4] = (uint8)((speed_rpm >> 8u) & 0xFFu);
-        pdu[5] = (uint8)motor_dir;
-        pdu[6] = (uint8)motor_enable;
-        pdu[7] = (uint8)motor_fault;
-        (void)E2E_Protect(&rzc_e2e_motor_status_cfg, &rzc_e2e_motor_status_state, pdu, 8u);
-        (void)PduR_Transmit(RZC_COM_TX_MOTOR_STATUS, &pdu_info);
+        {
+            uint8  te8  = (uint8)torque_echo;
+            uint16 sp16 = (uint16)speed_rpm;
+            uint8  dir8 = (uint8)motor_dir;
+            uint8  en8  = (uint8)motor_enable;
+            uint8  fl8  = (uint8)motor_fault;
+            (void)Com_SendSignal(RZC_COM_SIG_MOTOR_STATUS_TORQUE_ECHO, &te8);
+            (void)Com_SendSignal(RZC_COM_SIG_MOTOR_STATUS_MOTOR_SPEED_RPM, &sp16);
+            (void)Com_SendSignal(RZC_COM_SIG_MOTOR_STATUS_MOTOR_DIRECTION, &dir8);
+            (void)Com_SendSignal(RZC_COM_SIG_MOTOR_STATUS_MOTOR_ENABLE, &en8);
+            (void)Com_SendSignal(RZC_COM_SIG_MOTOR_STATUS_MOTOR_FAULT_STATUS, &fl8);
+        }
 
         /* --- 0x301 Motor Current: every cycle (10ms) ---
          * DBC layout (little-endian bit numbering):
@@ -572,16 +565,16 @@ void Swc_RzcCom_TransmitSchedule(void)
             dir_bit   = (motor_dir == 2u) ? 1u : 0u;
             torque_val = (uint8)(torque_echo & 0xFFu);
 
-            for (i = 0u; i < 8u; i++) { pdu[i] = 0u; }
-            pdu[2] = (uint8)(current_ma & 0xFFu);
-            pdu[3] = (uint8)((current_ma >> 8u) & 0xFFu);
-            pdu[4] = dir_bit
-                   | (uint8)((motor_enable != 0u) ? 2u : 0u)
-                   | (uint8)((overcurrent != 0u) ? 4u : 0u)
-                   | (uint8)((torque_val & 0x1Fu) << 3u);
-            pdu[5] = (uint8)((torque_val >> 5u) & 0x07u);
-            (void)E2E_Protect(&rzc_e2e_motor_current_cfg, &rzc_e2e_motor_current_state, pdu, 8u);
-            (void)PduR_Transmit(RZC_COM_TX_MOTOR_CURRENT, &pdu_info);
+            {
+                uint16 cur16 = (uint16)current_ma;
+                uint8  oc8   = (overcurrent != 0u) ? 1u : 0u;
+                uint8  en8   = (motor_enable != 0u) ? 1u : 0u;
+                (void)Com_SendSignal(RZC_COM_SIG_MOTOR_CURRENT_PHASE_M_A, &cur16);
+                (void)Com_SendSignal(RZC_COM_SIG_MOTOR_CURRENT_DIR_IS_REVERSE, &dir_bit);
+                (void)Com_SendSignal(RZC_COM_SIG_MOTOR_CURRENT_MOTOR_ENABLE, &en8);
+                (void)Com_SendSignal(RZC_COM_SIG_MOTOR_CURRENT_OVERCURRENT_FLAG, &oc8);
+                (void)Com_SendSignal(RZC_COM_SIG_MOTOR_CURRENT_TORQUE_ECHO, &torque_val);
+            }
         }
 
         /* --- 0x302 Motor Temp: every 10 cycles (100ms) ---
@@ -595,14 +588,14 @@ void Swc_RzcCom_TransmitSchedule(void)
             (void)Rte_Read(RZC_SIG_TEMP2_DC, &temp2_ddc);
             (void)Rte_Read(RZC_SIG_DERATING_PCT, &derating_pct);
 
-            for (i = 0u; i < 8u; i++) { pdu[i] = 0u; }
-            pdu[2] = (uint8)(temp1_ddc & 0xFFu);
-            pdu[3] = (uint8)((temp1_ddc >> 8u) & 0xFFu);
-            pdu[4] = (uint8)(temp2_ddc & 0xFFu);
-            pdu[5] = (uint8)((temp2_ddc >> 8u) & 0xFFu);
-            pdu[6] = (uint8)derating_pct;
-            (void)E2E_Protect(&rzc_e2e_motor_temp_cfg, &rzc_e2e_motor_temp_state, pdu, 8u);
-            (void)PduR_Transmit(RZC_COM_TX_MOTOR_TEMP, &pdu_info);
+            {
+                uint16 t1_16 = (uint16)temp1_ddc;
+                uint16 t2_16 = (uint16)temp2_ddc;
+                uint8  dr8   = (uint8)derating_pct;
+                (void)Com_SendSignal(RZC_COM_SIG_MOTOR_TEMPERATURE_WINDING_TEMP_1_C, &t1_16);
+                (void)Com_SendSignal(RZC_COM_SIG_MOTOR_TEMPERATURE_WINDING_TEMP_2_C, &t2_16);
+                (void)Com_SendSignal(RZC_COM_SIG_MOTOR_TEMPERATURE_DERATING_PERCENT, &dr8);
+            }
         }
 
         /* --- 0x303 Battery Status: every 20 cycles (200ms) ---
@@ -616,13 +609,12 @@ void Swc_RzcCom_TransmitSchedule(void)
             (void)Rte_Read(RZC_SIG_BATTERY_STATUS, &battery_status);
             (void)Rte_Read(RZC_SIG_BATTERY_SOC, &battery_soc);
 
-            for (i = 0u; i < 8u; i++) { pdu[i] = 0u; }
-            pdu[2] = (uint8)(battery_mv & 0xFFu);
-            pdu[3] = (uint8)((battery_mv >> 8u) & 0xFFu);
-            pdu[4] = (uint8)battery_status;
-            pdu[5] = (uint8)battery_soc;
-            (void)E2E_Protect(&rzc_e2e_battery_cfg, &rzc_e2e_battery_state, pdu, 8u);
-            (void)PduR_Transmit(RZC_COM_TX_BATTERY_STATUS, &pdu_info);
+            {
+                uint16 mv16    = (uint16)battery_mv;
+                uint8  stat8   = (uint8)battery_status;
+                (void)Com_SendSignal(RZC_COM_SIG_BATTERY_STATUS_BATTERY_VOLTAGE_M_V, &mv16);
+                (void)Com_SendSignal(RZC_COM_SIG_BATTERY_STATUS_LEVEL, &stat8);
+            }
         }
     }
 

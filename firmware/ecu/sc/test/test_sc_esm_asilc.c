@@ -3,7 +3,7 @@
  * @brief   Unit tests for sc_esm — ESM lockstep error handler
  * @date    2026-02-23
  *
- * @verifies SWR-SC-014, SWR-SC-015
+ * @verifies SSR-SC-014, SSR-SC-015, SWR-SC-014, SWR-SC-015
  *
  * Tests ESM initialization, error flag detection, ISR relay de-energize,
  * system LED activation, and error latch behavior.

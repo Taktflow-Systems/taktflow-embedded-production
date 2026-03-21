@@ -25,6 +25,7 @@ static const CanIf_TxPduConfigType fzc_tx_pdu_config[] = {
     { 0x211u,  FZC_COM_TX_MOTOR_CUTOFF_REQ,  4u, 0u },
     { 0x220u,  FZC_COM_TX_LIDAR_DISTANCE,  8u, 0u },
     { 0x500u,  FZC_COM_TX_DTC_BROADCAST,  8u, 0u },
+    { 0x553u,  FZC_COM_TX_XCP_RESP_FZC,  8u, 0u },
     { 0x7E9u,  FZC_COM_TX_UDS_RESP_FZC,  8u, 0u },
 };
 
@@ -57,6 +58,13 @@ static const CanIf_RxPduConfigType fzc_rx_pdu_config[] = {
     { 0x401u,  FZC_COM_RX_INDICATOR_STATE,  4u, FALSE },
     { 0x402u,  FZC_COM_RX_DOOR_LOCK_STATUS,  2u, FALSE },
     { 0x500u,  FZC_COM_RX_DTC_BROADCAST,  8u, FALSE },
+    { 0x550u,  FZC_COM_RX_XCP_REQ_CVC,  8u, FALSE },
+    { 0x551u,  FZC_COM_RX_XCP_RESP_CVC,  8u, FALSE },
+    { 0x552u,  FZC_COM_RX_XCP_REQ_FZC,  8u, FALSE },
+    { 0x554u,  FZC_COM_RX_XCP_REQ_RZC,  8u, FALSE },
+    { 0x555u,  FZC_COM_RX_XCP_RESP_RZC,  8u, FALSE },
+    { 0x556u,  FZC_COM_RX_XCP_REQ_SC,  8u, FALSE },
+    { 0x557u,  FZC_COM_RX_XCP_RESP_SC,  8u, FALSE },
     { 0x600u,  FZC_COM_RX_FZC_VIRTUAL_SENSORS,  8u, FALSE },
     { 0x601u,  FZC_COM_RX_RZC_VIRTUAL_SENSORS,  8u, FALSE },
     { 0x644u,  FZC_COM_RX_UDS_RESP_TCU,  8u, FALSE },

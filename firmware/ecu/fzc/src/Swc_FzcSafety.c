@@ -134,6 +134,14 @@ void Swc_FzcSafety_MainFunction(void)
         fault_mask |= FZC_FAULT_LIDAR;
     }
 
+    /* Check CAN RX signal quality — stale commands from CVC = comm fault */
+    if (Com_GetRxPduQuality(FZC_COM_RX_STEER_COMMAND) == COM_SIGNAL_QUALITY_TIMED_OUT) {
+        fault_mask |= FZC_FAULT_CAN_BUS_OFF;
+    }
+    if (Com_GetRxPduQuality(FZC_COM_RX_BRAKE_COMMAND) == COM_SIGNAL_QUALITY_TIMED_OUT) {
+        fault_mask |= FZC_FAULT_CAN_BUS_OFF;
+    }
+
     /* Self-test fault only if self-test has actually completed */
     if ((Safety_SelfTestDone == TRUE) &&
         (self_test_result == FZC_SELF_TEST_FAIL)) {
@@ -165,25 +173,19 @@ void Swc_FzcSafety_MainFunction(void)
      * ---------------------------------------------------------- */
     if ((steer_fault != 0u) || (brake_fault != 0u)) {
         if (Safety_GraceCounter == 0u) {
-            uint32 cutoff_val = 1u;
             (void)Rte_Write(FZC_SIG_MOTOR_CUTOFF, 1u);
-            (void)Com_SendSignal(FZC_COM_SIG_TX_MOTOR_CUTOFF, &cutoff_val);
             FSAFE_DIAG("CUTOFF=1 sf=%u bf=%u lf=%u mask=0x%02X",
                        (unsigned)steer_fault, (unsigned)brake_fault,
                        (unsigned)lidar_fault, (unsigned)fault_mask);
         } else {
-            uint32 cutoff_val = 0u;
             (void)Rte_Write(FZC_SIG_MOTOR_CUTOFF, 0u);
-            (void)Com_SendSignal(FZC_COM_SIG_TX_MOTOR_CUTOFF, &cutoff_val);
             FSAFE_DIAG("GRACE=%u sf=%u bf=%u lf=%u (cutoff suppressed)",
                        (unsigned)Safety_GraceCounter,
                        (unsigned)steer_fault, (unsigned)brake_fault,
                        (unsigned)lidar_fault);
         }
     } else {
-        uint32 cutoff_val = 0u;
         (void)Rte_Write(FZC_SIG_MOTOR_CUTOFF, 0u);
-        (void)Com_SendSignal(FZC_COM_SIG_TX_MOTOR_CUTOFF, &cutoff_val);
     }
 
     /* ----------------------------------------------------------

@@ -3,7 +3,7 @@
  * @brief   Unit tests for Runtime Environment module
  * @date    2026-02-21
  *
- * @verifies SWR-BSW-026, SWR-BSW-027
+ * @verifies SWR-BSW-014, SWR-BSW-026, SWR-BSW-027
  *
  * Tests signal read/write (port-based communication), runnable
  * scheduling, WdgM checkpoint integration, and defensive checks.

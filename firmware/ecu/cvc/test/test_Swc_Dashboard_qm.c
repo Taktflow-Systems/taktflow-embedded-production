@@ -3,7 +3,7 @@
  * @brief   Unit tests for Swc_Dashboard — OLED dashboard display SWC
  * @date    2026-02-21
  *
- * @verifies SWR-CVC-027, SWR-CVC-028
+ * @verifies SSR-ICU-001, SSR-ICU-002, SSR-ICU-007, SSR-ICU-008, SSR-ICU-009, SSR-ICU-010, SWR-CVC-027, SWR-CVC-028, SWR-ICU-001, SWR-ICU-002
  *
  * Tests dashboard initialization, vehicle state rendering, speed rendering,
  * refresh rate gating, I2C fault handling, and fault resilience.

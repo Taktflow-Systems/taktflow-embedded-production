@@ -3,7 +3,7 @@
  * @brief   Unit tests for sc_can — DCAN1 listen-only driver
  * @date    2026-02-23
  *
- * @verifies SWR-SC-001, SWR-SC-002, SWR-SC-023
+ * @verifies SSR-SC-001, SSR-SC-002, SWR-SC-001, SWR-SC-002, SWR-SC-023
  *
  * Tests DCAN1 initialization (silent mode), mailbox polling, E2E
  * validation integration, bus silence detection, and error monitoring.

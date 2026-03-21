@@ -217,6 +217,14 @@ static const Rte_SignalConfigType icu_signal_config[ICU_SIG_COUNT] = {
     { ICU_SIG_VEHICLE_STATE_MODE, 0u },   /* 187: Vehicle_State_Mode */
     { ICU_SIG_VEHICLE_STATE_SPEED_LIMIT, 0u },   /* 188: Vehicle_State_SpeedLimit */
     { ICU_SIG_VEHICLE_STATE_TORQUE_LIMIT, 0u },   /* 189: Vehicle_State_TorqueLimit */
+    { ICU_SIG_XCP_REQ_CVC_DATA, 0u },   /* 190: XCP_Req_CVC_Data */
+    { ICU_SIG_XCP_REQ_FZC_DATA, 0u },   /* 191: XCP_Req_FZC_Data */
+    { ICU_SIG_XCP_REQ_RZC_DATA, 0u },   /* 192: XCP_Req_RZC_Data */
+    { ICU_SIG_XCP_REQ_SC_DATA, 0u },   /* 193: XCP_Req_SC_Data */
+    { ICU_SIG_XCP_RESP_CVC_DATA, 0u },   /* 194: XCP_Resp_CVC_Data */
+    { ICU_SIG_XCP_RESP_FZC_DATA, 0u },   /* 195: XCP_Resp_FZC_Data */
+    { ICU_SIG_XCP_RESP_RZC_DATA, 0u },   /* 196: XCP_Resp_RZC_Data */
+    { ICU_SIG_XCP_RESP_SC_DATA, 0u },   /* 197: XCP_Resp_SC_Data */
 };
 
 /* ==================================================================

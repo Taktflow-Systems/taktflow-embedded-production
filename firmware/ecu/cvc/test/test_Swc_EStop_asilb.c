@@ -3,7 +3,7 @@
  * @brief   Unit tests for Emergency Stop detection SWC
  * @date    2026-02-21
  *
- * @verifies SWR-CVC-018, SWR-CVC-019, SWR-CVC-020
+ * @verifies SSR-CVC-029, SSR-CVC-030, SSR-CVC-031, SSR-CVC-032, SSR-CVC-033, SSR-CVC-034, SSR-CVC-035, SWR-CVC-018, SWR-CVC-019, SWR-CVC-020, SWR-CVC-029, SWR-CVC-030
  *
  * Tests E-stop detection, debounce, latch behaviour, CAN broadcast,
  * DTC reporting, and fail-safe on read failure.

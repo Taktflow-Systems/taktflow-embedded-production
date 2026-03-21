@@ -3,7 +3,7 @@
  * @brief   Unit tests for Watchdog Manager
  * @date    2026-02-21
  *
- * @verifies SWR-BSW-019, SWR-BSW-020, SWR-BSW-021
+ * @verifies SWR-BSW-019, SWR-BSW-020, SWR-BSW-021, SWR-BSW-022
  *
  * Tests alive supervision, checkpoint counting, global status,
  * watchdog feed gating logic, and alive counter range checking

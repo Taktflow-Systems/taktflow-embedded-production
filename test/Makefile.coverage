@@ -1,0 +1,94 @@
+# =============================================================================
+# Coverage Makefile — gcov + lcov for ISO 26262 Part 6 Table 9 compliance
+#
+# Usage:
+#   make -f test/Makefile.coverage coverage    # Build + run + report
+#   make -f test/Makefile.coverage clean        # Clean coverage artifacts
+#
+# Requirements:
+#   - gcc (with gcov support)
+#   - lcov (for HTML reports)
+#   - genhtml (part of lcov package)
+#
+# Output:
+#   test/coverage/report/index.html  — HTML coverage report
+#   test/coverage/coverage.info      — lcov coverage data
+# =============================================================================
+
+CC       = gcc
+CFLAGS   = -DPLATFORM_POSIX -DUNIT_TEST --coverage -g -O0 -Wall -Wextra
+LDFLAGS  = --coverage
+
+# BSW include paths
+INCLUDES = \
+  -Ifirmware/bsw/include \
+  -Ifirmware/bsw/services/Com/include \
+  -Ifirmware/bsw/services/E2E/include \
+  -Ifirmware/bsw/services/Dem/include \
+  -Ifirmware/bsw/services/Det/include \
+  -Ifirmware/bsw/services/SchM/include \
+  -Ifirmware/bsw/services/WdgM/include \
+  -Ifirmware/bsw/services/BswM/include \
+  -Ifirmware/bsw/services/NvM/include \
+  -Ifirmware/bsw/services/Xcp/include \
+  -Ifirmware/bsw/rte/include \
+  -Ifirmware/bsw/ecual/PduR/include \
+  -Ifirmware/bsw/ecual/CanIf/include \
+  -Ifirmware/bsw/ecual/IoHwAb/include \
+  -Ifirmware/bsw/mcal/Can/include \
+  -Ifirmware/bsw/mcal/Adc/include \
+  -Ifirmware/bsw/mcal/Pwm/include \
+  -Ifirmware/bsw/mcal/Dio/include \
+  -Ifirmware/bsw/mcal/Gpt/include \
+  -Ifirmware/bsw/mcal/Spi/include \
+  -Ifirmware/bsw/mcal/Uart/include \
+  -Ifirmware/bsw/os/include \
+  -Ifirmware/platform/posix/include \
+  -Itest/framework/unity
+
+# Source under test
+SRC_COM  = firmware/bsw/services/Com/src/Com.c
+SRC_E2E  = firmware/bsw/services/E2E/src/E2E.c
+SRC_XCP  = firmware/bsw/services/Xcp/src/Xcp.c
+
+# Test sources
+TEST_COM = test/unit/bsw/test_Com_asild.c
+
+# Unity test framework
+UNITY    = test/framework/unity/unity.c
+
+# Stub sources (minimal stubs for linker)
+STUBS    = test/unit/bsw/stubs/stubs_bsw.c
+
+# Output directories
+BUILD_DIR = test/coverage/build
+REPORT_DIR = test/coverage/report
+
+.PHONY: coverage clean
+
+coverage: $(BUILD_DIR)/test_Com_asild
+	@echo "=== Running Com unit tests with coverage ==="
+	$(BUILD_DIR)/test_Com_asild
+	@echo ""
+	@echo "=== Generating coverage report ==="
+	@mkdir -p $(REPORT_DIR)
+	lcov --capture --directory $(BUILD_DIR) --output-file test/coverage/coverage.info --rc lcov_branch_coverage=1 2>/dev/null || echo "lcov not available — using gcov directly"
+	@if command -v lcov >/dev/null 2>&1; then \
+		lcov --remove test/coverage/coverage.info '*/test/*' '*/unity/*' '*/stubs/*' --output-file test/coverage/coverage_filtered.info --rc lcov_branch_coverage=1; \
+		genhtml test/coverage/coverage_filtered.info --output-directory $(REPORT_DIR) --branch-coverage; \
+		echo ""; \
+		echo "=== Coverage Report ==="; \
+		lcov --summary test/coverage/coverage_filtered.info --rc lcov_branch_coverage=1; \
+		echo ""; \
+		echo "HTML report: $(REPORT_DIR)/index.html"; \
+	else \
+		echo "lcov not installed — showing gcov summary:"; \
+		gcov -b $(BUILD_DIR)/*.gcda 2>/dev/null | grep -A2 "File.*Com.c\|File.*E2E.c"; \
+	fi
+
+$(BUILD_DIR)/test_Com_asild: $(TEST_COM) $(SRC_COM) $(SRC_E2E) $(UNITY)
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS)
+
+clean:
+	rm -rf test/coverage/

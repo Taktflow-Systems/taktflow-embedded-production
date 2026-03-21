@@ -21,7 +21,8 @@
 typedef enum {
     PDUR_DEST_COM   = 0u,
     PDUR_DEST_DCM   = 1u,
-    PDUR_DEST_CANTP = 2u    /**< Route through ISO-TP transport layer */
+    PDUR_DEST_CANTP = 2u,   /**< Route through ISO-TP transport layer */
+    PDUR_DEST_XCP   = 3u    /**< Route to XCP slave (measurement/calibration) */
 } PduR_DestType;
 
 /** Single routing table entry */
@@ -37,10 +38,11 @@ typedef struct {
     uint8                         routingCount;
 } PduR_ConfigType;
 
-/* ---- Upper-layer callbacks (provided by Com, Dcm, CanTp) ---- */
+/* ---- Upper-layer callbacks (provided by Com, Dcm, CanTp, Xcp) ---- */
 extern void Com_RxIndication(PduIdType RxPduId, const PduInfoType* PduInfoPtr);
 extern void Dcm_RxIndication(PduIdType RxPduId, const PduInfoType* PduInfoPtr);
 extern void CanTp_RxIndication(PduIdType RxPduId, const PduInfoType* PduInfoPtr);
+extern void Xcp_RxIndication(PduIdType RxPduId, const PduInfoType* PduInfoPtr);
 
 /* ---- Lower-layer interface (provided by CanIf) ---- */
 extern Std_ReturnType CanIf_Transmit(PduIdType TxPduId, const PduInfoType* PduInfoPtr);

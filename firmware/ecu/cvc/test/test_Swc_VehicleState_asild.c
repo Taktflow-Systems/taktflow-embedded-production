@@ -3,7 +3,7 @@
  * @brief   Unit tests for Vehicle State Machine SWC
  * @date    2026-02-21
  *
- * @verifies SWR-CVC-009, SWR-CVC-010, SWR-CVC-011, SWR-CVC-012, SWR-CVC-013
+ * @verifies SSR-CVC-010, SSR-CVC-011, SSR-CVC-012, SSR-CVC-013, SSR-CVC-018, SSR-CVC-020, SSR-CVC-021, SSR-CVC-022, SSR-CVC-023, SSR-CVC-024, SSR-CVC-025, SSR-CVC-026, SSR-CVC-027, SSR-CVC-028, SWR-CVC-009, SWR-CVC-010, SWR-CVC-011, SWR-CVC-012, SWR-CVC-013
  *
  * Tests state machine transitions (INIT -> RUN -> DEGRADED -> LIMP ->
  * SAFE_STOP -> SHUTDOWN), fault signal monitoring, BswM mode requests,

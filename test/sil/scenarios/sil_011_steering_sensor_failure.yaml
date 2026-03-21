@@ -3,6 +3,7 @@
 # @brief   SIL scenario: Complete steering sensor failure -> SAFE_STOP
 # @aspice  SWE.5 — Software Component Verification & Integration
 # @iso     ISO 26262 Part 6, Section 10 — Software Integration & Testing
+# @verifies  SG-003, TSR-024, SSR-FZC-015
 # @date    2026-02-24
 #
 # Validates the escalation path from steering fault to full SAFE_STOP.

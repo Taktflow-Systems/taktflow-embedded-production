@@ -3,7 +3,7 @@
  * @brief   Unit tests for PDU Router module
  * @date    2026-02-21
  *
- * @verifies SWR-BSW-013
+ * @verifies SWR-BSW-013, TSR-022, TSR-023
  *
  * Tests PDU routing between CanIf and upper layers (Com, Dcm).
  * Both lower and upper layer calls are mocked.

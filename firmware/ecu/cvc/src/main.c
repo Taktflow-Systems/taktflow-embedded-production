@@ -30,6 +30,10 @@
 #include "BswM.h"
 #include "Dcm.h"
 #include "CanTp.h"
+#include "CanSM.h"
+#include "FiM.h"
+#include "Xcp.h"
+#include "SchM_Timing.h"
 #include "Rte.h"
 #include "Spi.h"
 #include "Adc.h"
@@ -217,6 +221,35 @@ static const IoHwAb_ConfigType iohwab_config = {
     .EStopDioChannel      = 5u,
 };
 
+/** CanSM configuration — bus-off recovery L1 (fast) + L2 (slow) */
+static const CanSM_ConfigType cansm_config = {
+    .L1_RecoveryTimeMs = 10u,    /* L1: retry every 10ms */
+    .L1_MaxAttempts    = 5u,     /* L1: up to 5 fast retries */
+    .L2_RecoveryTimeMs = 1000u,  /* L2: retry every 1s */
+    .L2_MaxAttempts    = 10u,    /* L2: up to 10 slow retries */
+};
+
+/** FiM configuration — function inhibition rules
+ *  FID 0 = Brake control, FID 1 = Motor control, FID 2 = Steering */
+static const FiM_InhibitionConfigType cvc_fim_inhibitions[] = {
+    /* FID,  DemEventId, DemStatusMask (0x01=TestFailed) */
+    { 0u,   3u,         0x01u },  /* Brake fault (DEM event 3) → inhibit brake FID */
+    { 1u,   4u,         0x01u },  /* Motor fault (DEM event 4) → inhibit motor FID */
+    { 2u,   5u,         0x01u },  /* Steer fault (DEM event 5) → inhibit steering FID */
+};
+
+static const FiM_ConfigType cvc_fim_config = {
+    .inhibitions     = cvc_fim_inhibitions,
+    .inhibitionCount = (uint8)(sizeof(cvc_fim_inhibitions) / sizeof(cvc_fim_inhibitions[0])),
+    .functionCount   = 3u,
+};
+
+/** XCP configuration — CAN ID pair for measurement/calibration */
+static const Xcp_ConfigType cvc_xcp_config = {
+    .RxPduId = CVC_COM_RX_XCP_REQ_CVC,  /* CAN 0x550 */
+    .TxPduId = CVC_COM_TX_XCP_RESP_CVC,  /* CAN 0x551 */
+};
+
 /** Pedal SWC configuration */
 static const Swc_Pedal_ConfigType pedal_config = {
     .plausThreshold   = CVC_PEDAL_PLAUS_THRESHOLD,
@@ -365,6 +398,10 @@ int main(void)
     Dem_Init(NULL_PTR);
     Dem_SetEcuId(0x10u);                    /* CVC ECU ID for DTC broadcasts */
     Dem_SetBroadcastPduId(CVC_COM_TX_DTC);  /* CanIf TX for CAN 0x500 */
+    CanSM_Init(&cansm_config);
+    FiM_Init(&cvc_fim_config);
+    Xcp_Init(&cvc_xcp_config);
+    SchM_TimingInit();
     WdgM_Init(&wdgm_config);
     BswM_Init(&bswm_config);
     Dcm_Init(&cvc_dcm_config);
@@ -435,6 +472,7 @@ int main(void)
             CanTp_MainFunction();
             Dcm_MainFunction();
             BswM_MainFunction();
+            CanSM_MainFunction();
             Swc_CvcCom_BridgeRxToRte();
             Swc_CvcCom_TransmitSchedule(tick_us / 1000u);
         }
@@ -445,6 +483,7 @@ int main(void)
             last_100ms_us = tick_us;
             WdgM_MainFunction();
             Dem_MainFunction();
+            FiM_MainFunction();
         }
 
         /* 5s debug task: platform-specific status print (UART on STM32, no-op on POSIX) */

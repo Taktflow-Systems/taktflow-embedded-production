@@ -3,7 +3,7 @@
  * @brief   Unit tests for UDS Server SWC -- diagnostics service dispatch
  * @date    2026-02-23
  *
- * @verifies SWR-TCU-002, SWR-TCU-003, SWR-TCU-004, SWR-TCU-005,
+ * @verifies , SSR-TCU-001, SSR-TCU-002, SSR-TCU-014, SWR-TCU-002, SWR-TCU-003, SWR-TCU-004, SWR-TCU-005
  *           SWR-TCU-006, SWR-TCU-007, SWR-TCU-011, SWR-TCU-012, SWR-TCU-013
  *
  * Tests UDS session management, ReadDataByIdentifier, WriteDataByIdentifier,

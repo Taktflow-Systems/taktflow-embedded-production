@@ -3,7 +3,7 @@
  * @brief   Unit tests for SC main loop structure and initialization sequence
  * @date    2026-02-24
  *
- * @verifies SWR-SC-025, SWR-SC-026
+ * @verifies SSR-SC-002, SSR-SC-003, SSR-SC-004, SSR-SC-005, SWR-SC-025, SWR-SC-026
  *
  * Tests 10ms cooperative main loop with 8 functions executed in order
  * (SWR-SC-025), WCET <2ms constraint, overrun suppresses watchdog,

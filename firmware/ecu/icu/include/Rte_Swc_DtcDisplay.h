@@ -38,14 +38,14 @@ static inline Rte_StatusType Rte_Read_Motor_Status_MotorFaultStatus(uint8_t *dat
 }
 
 /**
- * @brief  Read DTC_Broadcast_FreezeFrame0 (uint8_t)
+ * @brief  Read DTC_Broadcast_Status (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_DTC_Broadcast_FreezeFrame0(uint8_t *data)
+static inline Rte_StatusType Rte_Read_DTC_Broadcast_Status(uint8_t *data)
 {
     uint32_t tmp;
-    Rte_StatusType status = Rte_Read(ICU_SIG_DTC_BROADCAST_FREEZE_FRAME_0, &tmp);
+    Rte_StatusType status = Rte_Read(ICU_SIG_DTC_BROADCAST_STATUS, &tmp);
     if (status == RTE_E_OK)
     {
         *data = (uint8_t)tmp;
@@ -54,46 +54,14 @@ static inline Rte_StatusType Rte_Read_DTC_Broadcast_FreezeFrame0(uint8_t *data)
 }
 
 /**
- * @brief  Read FZC_Heartbeat_FaultStatus (uint8_t)
+ * @brief  Read SC_Status_FaultReason (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_FZC_Heartbeat_FaultStatus(uint8_t *data)
+static inline Rte_StatusType Rte_Read_SC_Status_FaultReason(uint8_t *data)
 {
     uint32_t tmp;
-    Rte_StatusType status = Rte_Read(ICU_SIG_FZC_HEARTBEAT_FAULT_STATUS, &tmp);
-    if (status == RTE_E_OK)
-    {
-        *data = (uint8_t)tmp;
-    }
-    return status;
-}
-
-/**
- * @brief  Read Vehicle_State_FaultMask (uint16_t)
- * @param  data  Pointer to receive the signal value
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Read_Vehicle_State_FaultMask(uint16_t *data)
-{
-    uint32_t tmp;
-    Rte_StatusType status = Rte_Read(ICU_SIG_VEHICLE_STATE_FAULT_MASK, &tmp);
-    if (status == RTE_E_OK)
-    {
-        *data = (uint16_t)tmp;
-    }
-    return status;
-}
-
-/**
- * @brief  Read RZC_Heartbeat_FaultStatus (uint8_t)
- * @param  data  Pointer to receive the signal value
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Read_RZC_Heartbeat_FaultStatus(uint8_t *data)
-{
-    uint32_t tmp;
-    Rte_StatusType status = Rte_Read(ICU_SIG_RZC_HEARTBEAT_FAULT_STATUS, &tmp);
+    Rte_StatusType status = Rte_Read(ICU_SIG_SC_STATUS_FAULT_REASON, &tmp);
     if (status == RTE_E_OK)
     {
         *data = (uint8_t)tmp;
@@ -134,6 +102,54 @@ static inline Rte_StatusType Rte_Read_CVC_Heartbeat_FaultStatus(uint8_t *data)
 }
 
 /**
+ * @brief  Read DTC_Broadcast_ECU_Source (uint8_t)
+ * @param  data  Pointer to receive the signal value
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Read_DTC_Broadcast_ECU_Source(uint8_t *data)
+{
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(ICU_SIG_DTC_BROADCAST_ECU_SOURCE, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint8_t)tmp;
+    }
+    return status;
+}
+
+/**
+ * @brief  Read FZC_Heartbeat_FaultStatus (uint8_t)
+ * @param  data  Pointer to receive the signal value
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Read_FZC_Heartbeat_FaultStatus(uint8_t *data)
+{
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(ICU_SIG_FZC_HEARTBEAT_FAULT_STATUS, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint8_t)tmp;
+    }
+    return status;
+}
+
+/**
+ * @brief  Read Vehicle_State_FaultMask (uint16_t)
+ * @param  data  Pointer to receive the signal value
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Read_Vehicle_State_FaultMask(uint16_t *data)
+{
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(ICU_SIG_VEHICLE_STATE_FAULT_MASK, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint16_t)tmp;
+    }
+    return status;
+}
+
+/**
  * @brief  Read DTC_Broadcast_OccurrenceCount (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
@@ -150,14 +166,14 @@ static inline Rte_StatusType Rte_Read_DTC_Broadcast_OccurrenceCount(uint8_t *dat
 }
 
 /**
- * @brief  Read Brake_Status_BrakeFaultStatus (uint8_t)
+ * @brief  Read SC_Status_FaultFlags (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_Brake_Status_BrakeFaultStatus(uint8_t *data)
+static inline Rte_StatusType Rte_Read_SC_Status_FaultFlags(uint8_t *data)
 {
     uint32_t tmp;
-    Rte_StatusType status = Rte_Read(ICU_SIG_BRAKE_STATUS_BRAKE_FAULT_STATUS, &tmp);
+    Rte_StatusType status = Rte_Read(ICU_SIG_SC_STATUS_FAULT_FLAGS, &tmp);
     if (status == RTE_E_OK)
     {
         *data = (uint8_t)tmp;
@@ -166,14 +182,14 @@ static inline Rte_StatusType Rte_Read_Brake_Status_BrakeFaultStatus(uint8_t *dat
 }
 
 /**
- * @brief  Read DTC_Broadcast_ECU_Source (uint8_t)
+ * @brief  Read DTC_Broadcast_FreezeFrame0 (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_DTC_Broadcast_ECU_Source(uint8_t *data)
+static inline Rte_StatusType Rte_Read_DTC_Broadcast_FreezeFrame0(uint8_t *data)
 {
     uint32_t tmp;
-    Rte_StatusType status = Rte_Read(ICU_SIG_DTC_BROADCAST_ECU_SOURCE, &tmp);
+    Rte_StatusType status = Rte_Read(ICU_SIG_DTC_BROADCAST_FREEZE_FRAME_0, &tmp);
     if (status == RTE_E_OK)
     {
         *data = (uint8_t)tmp;
@@ -198,22 +214,6 @@ static inline Rte_StatusType Rte_Read_DTC_Broadcast_Number(uint16_t *data)
 }
 
 /**
- * @brief  Read DTC_Broadcast_Status (uint8_t)
- * @param  data  Pointer to receive the signal value
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Read_DTC_Broadcast_Status(uint8_t *data)
-{
-    uint32_t tmp;
-    Rte_StatusType status = Rte_Read(ICU_SIG_DTC_BROADCAST_STATUS, &tmp);
-    if (status == RTE_E_OK)
-    {
-        *data = (uint8_t)tmp;
-    }
-    return status;
-}
-
-/**
  * @brief  Read DTC_Broadcast_FreezeFrame1 (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
@@ -230,14 +230,14 @@ static inline Rte_StatusType Rte_Read_DTC_Broadcast_FreezeFrame1(uint8_t *data)
 }
 
 /**
- * @brief  Read SC_Status_FaultReason (uint8_t)
+ * @brief  Read Brake_Status_BrakeFaultStatus (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_SC_Status_FaultReason(uint8_t *data)
+static inline Rte_StatusType Rte_Read_Brake_Status_BrakeFaultStatus(uint8_t *data)
 {
     uint32_t tmp;
-    Rte_StatusType status = Rte_Read(ICU_SIG_SC_STATUS_FAULT_REASON, &tmp);
+    Rte_StatusType status = Rte_Read(ICU_SIG_BRAKE_STATUS_BRAKE_FAULT_STATUS, &tmp);
     if (status == RTE_E_OK)
     {
         *data = (uint8_t)tmp;
@@ -246,14 +246,14 @@ static inline Rte_StatusType Rte_Read_SC_Status_FaultReason(uint8_t *data)
 }
 
 /**
- * @brief  Read SC_Status_FaultFlags (uint8_t)
+ * @brief  Read RZC_Heartbeat_FaultStatus (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_SC_Status_FaultFlags(uint8_t *data)
+static inline Rte_StatusType Rte_Read_RZC_Heartbeat_FaultStatus(uint8_t *data)
 {
     uint32_t tmp;
-    Rte_StatusType status = Rte_Read(ICU_SIG_SC_STATUS_FAULT_FLAGS, &tmp);
+    Rte_StatusType status = Rte_Read(ICU_SIG_RZC_HEARTBEAT_FAULT_STATUS, &tmp);
     if (status == RTE_E_OK)
     {
         *data = (uint8_t)tmp;

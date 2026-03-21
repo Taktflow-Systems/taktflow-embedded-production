@@ -40,7 +40,10 @@ class ArxmlReader:
         self._dbc_tx_map: dict[str, str] = {}           # message_name → sender_ecu (uppercase)
         self._dbc_rx_map: dict[str, list[str]] = {}     # message_name → list of receiver ECUs
         self._dbc_e2e_map: dict[str, int] = {}          # message_name → E2E data ID (from DBC attr)
+        self._dbc_e2e_max_delta: dict[str, int] = {}  # message_name → E2E MaxDeltaCounter
         self._dbc_cycle_map: dict[str, int] = {}       # message_name → GenMsgCycleTime (ms)
+        self._dbc_satisfies_map: dict[str, str] = {}   # message_name → Satisfies string
+        self._dbc_asil_map: dict[str, str] = {}        # message_name → ASIL level
         self._additional_tx_ecus: dict[str, list[str]] = {}  # message_name → extra TX ECUs
 
     def read(self) -> ProjectModel:
@@ -105,6 +108,9 @@ class ArxmlReader:
                     if define_name not in ecu.e2e_data_ids:
                         ecu.e2e_data_ids[define_name] = pdu.e2e_data_id
 
+        # Apply traceability (Satisfies, ASIL) from DBC to all PDUs
+        self._apply_dbc_traceability(ecus)
+
         # Build project model
         total_signals = 0
         total_pdus = 0
@@ -168,6 +174,15 @@ class ArxmlReader:
             except (AttributeError, TypeError, ValueError):
                 pass
 
+            # Extract E2E_MaxDeltaCounter attribute (default 2 if not present)
+            try:
+                maxd_attr = msg.dbc.attributes.get("E2E_MaxDeltaCounter")
+                if maxd_attr is not None:
+                    maxd_val = int(maxd_attr.value if hasattr(maxd_attr, 'value') else maxd_attr)
+                    self._dbc_e2e_max_delta[msg.name] = maxd_val
+            except (AttributeError, TypeError, ValueError):
+                pass
+
             # Extract GenMsgCycleTime attribute (TX cycle period in ms)
             try:
                 cycle_attr = msg.dbc.attributes.get("GenMsgCycleTime")
@@ -178,8 +193,29 @@ class ArxmlReader:
             except (AttributeError, TypeError, ValueError):
                 pass
 
+            # Extract Satisfies attribute (requirement traceability)
+            try:
+                sat_attr = msg.dbc.attributes.get("Satisfies")
+                if sat_attr is not None:
+                    sat_val = str(sat_attr.value if hasattr(sat_attr, 'value') else sat_attr)
+                    if sat_val:
+                        self._dbc_satisfies_map[msg.name] = sat_val
+            except (AttributeError, TypeError, ValueError):
+                pass
+
+            # Extract ASIL attribute
+            try:
+                asil_attr = msg.dbc.attributes.get("ASIL")
+                if asil_attr is not None:
+                    asil_val = str(asil_attr.value if hasattr(asil_attr, 'value') else asil_attr)
+                    if asil_val:
+                        self._dbc_asil_map[msg.name] = asil_val
+            except (AttributeError, TypeError, ValueError):
+                pass
+
         e2e_count = len(self._dbc_e2e_map)
-        _info(f"  DBC routing: {len(db.messages)} messages, {len(db.nodes)} nodes, {e2e_count} E2E data IDs")
+        sat_count = len(self._dbc_satisfies_map)
+        _info(f"  DBC routing: {len(db.messages)} messages, {len(db.nodes)} nodes, {e2e_count} E2E data IDs, {sat_count} Satisfies")
 
         # Load message_routing overrides from sidecar (multi-sender messages)
         if self.config.sidecar_path and os.path.exists(self.config.sidecar_path):
@@ -369,6 +405,8 @@ class ArxmlReader:
                 e2e_data_id=e2e_data_id,
                 e2e_counter_bit=e2e_counter_bit,
                 e2e_crc_bit=e2e_crc_bit,
+                satisfies=self._dbc_satisfies_map.get(pdu_name, ""),
+                asil=self._dbc_asil_map.get(pdu_name, "QM"),
             )
             all_pdus[path] = pdu
 
@@ -882,6 +920,7 @@ class ArxmlReader:
                 if pdu.name in e2e_map:
                     pdu.e2e_data_id = e2e_map[pdu.name]
                     pdu.e2e_protected = True
+                    pdu.e2e_max_delta = e2e_max_delta.get(pdu.name, 2)
                     applied += 1
 
         _info(f"  E2E source: ARXML END-TO-END-PROTECTION-SET ({count} protections, {applied} PDUs matched)")
@@ -897,11 +936,25 @@ class ArxmlReader:
             for pdu in ecu.tx_pdus + ecu.rx_pdus:
                 if pdu.name in self._dbc_e2e_map:
                     pdu.e2e_data_id = self._dbc_e2e_map[pdu.name]
+                    pdu.e2e_max_delta = self._dbc_e2e_max_delta.get(pdu.name, 2)
                 elif pdu.e2e_protected and pdu.e2e_data_id is None:
                     self._warn(
                         f"E2E PDU '{pdu.name}' has no E2E_DataID in DBC — "
                         f"add BA_ \"E2E_DataID\" BO_ {pdu.can_id} <id>;"
                     )
+
+    def _apply_dbc_traceability(self, ecus: dict[str, Ecu]):
+        """Apply Satisfies and ASIL from DBC attributes to PDU objects."""
+        applied = 0
+        for ecu in ecus.values():
+            for pdu in ecu.tx_pdus + ecu.rx_pdus:
+                if pdu.name in self._dbc_satisfies_map:
+                    pdu.satisfies = self._dbc_satisfies_map[pdu.name]
+                    applied += 1
+                if pdu.name in self._dbc_asil_map:
+                    pdu.asil = self._dbc_asil_map[pdu.name]
+        if applied > 0:
+            _info(f"  Traceability: {applied} PDUs linked to requirements")
 
     # ------------------------------------------------------------------
     # Port type resolution

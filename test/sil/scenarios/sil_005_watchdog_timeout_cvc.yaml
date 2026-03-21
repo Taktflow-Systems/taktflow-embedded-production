@@ -3,6 +3,7 @@
 # @brief   SIL scenario: CVC watchdog timeout — safety controller takeover
 # @aspice  SWE.5 — Software Component Verification & Integration
 # @iso     ISO 26262 Part 6, Section 10 — Software Integration & Testing
+# @verifies  SG-008, TSR-048, SSR-SC-001
 # @date    2026-02-24
 #
 # Simulates a CVC (Central Vehicle Computer) failure by stopping its Docker

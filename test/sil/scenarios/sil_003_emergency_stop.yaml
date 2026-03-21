@@ -3,6 +3,7 @@
 # @brief   SIL-003: Emergency Stop — ASIL D full safety chain validation
 # @aspice  SWE.5 — Software Component Verification & Integration
 # @iso     ISO 26262 Part 6, Section 10 — Software Integration & Testing
+# @verifies  SG-008, TSR-046, SSR-CVC-029
 # @date    2026-03-19
 #
 # TRACEABILITY:

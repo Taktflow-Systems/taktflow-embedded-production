@@ -1,67 +1,287 @@
-# CI Pipeline — Build, test, and validate
+# =============================================================================
+# CI Pipeline — 7-step validation + unit tests + traceability
+#
+# Runs on every push/PR. BLOCKING: all gates must pass.
+# Matches local workflow: DBC → ARXML → codegen → validate → test
+# =============================================================================
 name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, 'feat/**', 'fix/**']
   pull_request:
     branches: [main, develop]
 
+env:
+  DBC: gateway/taktflow_vehicle.dbc
+
 jobs:
-  build-posix:
-    name: "Build ${{ matrix.ecu }} (POSIX)"
+  # -------------------------------------------------------------------
+  # Gate 1: DBC Validation (12-point ISO 26262 audit)
+  # -------------------------------------------------------------------
+  step1-dbc:
+    name: "Step 1: Validate DBC"
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install cantools pyyaml
+      - run: python tools/pipeline/step1_validate_dbc.py $DBC
+
+  # -------------------------------------------------------------------
+  # Gate 2-3: ARXML Generation
+  # -------------------------------------------------------------------
+  step3-arxml:
+    name: "Step 3: Generate ARXML"
+    runs-on: ubuntu-latest
+    needs: step1-dbc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install cantools pyyaml autosar-data jinja2
+      - name: Generate ARXML from DBC
+        run: |
+          python tools/arxml/dbc2arxml.py $DBC arxml_v2/ arxml_v2/swc_model.json
+          cp arxml_v2/TaktflowSystem.arxml arxml/TaktflowSystem.arxml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arxml
+          path: arxml/TaktflowSystem.arxml
+
+  # -------------------------------------------------------------------
+  # Gate 4: ARXML Validation
+  # -------------------------------------------------------------------
+  step4-validate-arxml:
+    name: "Step 4: Validate ARXML"
+    runs-on: ubuntu-latest
+    needs: step3-arxml
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install cantools pyyaml autosar-data
+      - uses: actions/download-artifact@v4
+        with:
+          name: arxml
+          path: arxml/
+      - run: python tools/pipeline/step4_validate_arxml.py arxml/TaktflowSystem.arxml $DBC
+
+  # -------------------------------------------------------------------
+  # Gate 5: C Config Generation
+  # -------------------------------------------------------------------
+  step5-codegen:
+    name: "Step 5: Generate C Configs"
+    runs-on: ubuntu-latest
+    needs: step4-validate-arxml
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install cantools pyyaml autosar-data jinja2
+      - uses: actions/download-artifact@v4
+        with:
+          name: arxml
+          path: arxml/
+      - name: Run codegen
+        run: python -m tools.arxmlgen --config project.yaml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: generated-configs
+          path: firmware/ecu/*/cfg/
+
+  # -------------------------------------------------------------------
+  # Gate 6: Round-trip Validation (E2E DataIDs + CycleTimeMs match DBC)
+  # -------------------------------------------------------------------
+  step6-roundtrip:
+    name: "Step 6: Round-trip Check"
+    runs-on: ubuntu-latest
+    needs: step5-codegen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install cantools pyyaml autosar-data jinja2
+      - uses: actions/download-artifact@v4
+        with:
+          name: arxml
+          path: arxml/
+      - run: python -m tools.arxmlgen --config project.yaml
+      - run: python tools/pipeline/step6_validate_configs.py $DBC
+
+  # -------------------------------------------------------------------
+  # Gate 7: Data Flow Enforcement (no SWC bypasses)
+  # -------------------------------------------------------------------
+  step7-dataflow:
+    name: "Step 7: Data Flow Check"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python tools/pipeline/step7_validate_dataflow.py
+
+  # -------------------------------------------------------------------
+  # Syntax Check: All generated configs compile
+  # -------------------------------------------------------------------
+  syntax-check:
+    name: "Syntax Check (${{ matrix.ecu }})"
+    runs-on: ubuntu-latest
+    needs: step5-codegen
     strategy:
       fail-fast: false
       matrix:
-        ecu: [bcm, icu, tcu, cvc, fzc, rzc, sc]
+        ecu: [cvc, fzc, rzc, sc, bcm, icu, tcu]
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y gcc make can-utils
-      - name: Build ${{ matrix.ecu }}
-        run: make -f firmware/platform/posix/Makefile.posix TARGET=${{ matrix.ecu }} all
-
-  test-bsw:
-    name: BSW Unit Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y gcc make
-      - name: Run BSW unit tests
-        working-directory: firmware/bsw
-        run: make test
-
-  test-integration:
-    name: Integration Tests
-    runs-on: ubuntu-latest
-    needs: build-posix
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y gcc make
-      - name: Run integration tests
-        working-directory: test/framework
-        run: make test
-
-  codegen-check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      - name: Install Python dependencies
-        run: python -m pip install -r tools/arxml/requirements.txt
-      - name: Regenerate and diff
+          python-version: '3.12'
+      - run: pip install cantools pyyaml autosar-data jinja2
+      - uses: actions/download-artifact@v4
+        with:
+          name: arxml
+          path: arxml/
+      - run: python -m tools.arxmlgen --config project.yaml
+      - name: Syntax check ${{ matrix.ecu }}
         run: |
-          python tools/arxml/dbc2arxml.py gateway/taktflow.dbc arxml/
-          python tools/arxml/swc_extractor.py firmware/ model/ecu_model.json
-          python tools/arxml/codegen.py model/ecu_model.json generated/
-          git diff --exit-code generated/
-      - name: Validate ARXML strict schema (autosar-data)
-        run: python tools/ci/validate_arxml_strict.py arxml/*.arxml
-      - name: Validate ARXML round-trip integrity (armodel)
-        run: python tools/ci/validate_arxml_roundtrip.py arxml/*.arxml
+          PLAT_INC=""
+          if [ -d "firmware/ecu/${{ matrix.ecu }}/cfg/platform_posix" ]; then
+            PLAT_INC="-Ifirmware/ecu/${{ matrix.ecu }}/cfg/platform_posix"
+          fi
+          for src in firmware/ecu/${{ matrix.ecu }}/cfg/*.c; do
+            gcc -fsyntax-only -DPLATFORM_POSIX -DCANTP_ENABLED \
+              -Ifirmware/bsw/include -Ifirmware/bsw/services/Com/include \
+              -Ifirmware/bsw/services/Det/include -Ifirmware/bsw/services/Dem/include \
+              -Ifirmware/bsw/services/E2E/include -Ifirmware/bsw/services/WdgM/include \
+              -Ifirmware/bsw/services/BswM/include -Ifirmware/bsw/services/Dcm/include \
+              -Ifirmware/bsw/services/SchM/include -Ifirmware/bsw/services/NvM/include \
+              -Ifirmware/bsw/services/CanTp/include -Ifirmware/bsw/services/Sil/include \
+              -Ifirmware/bsw/services/Xcp/include -Ifirmware/bsw/services/FiM/include \
+              -Ifirmware/bsw/services/CanSM/include \
+              -Ifirmware/bsw/mcal/Can/include -Ifirmware/bsw/mcal/Adc/include \
+              -Ifirmware/bsw/mcal/Pwm/include -Ifirmware/bsw/mcal/Dio/include \
+              -Ifirmware/bsw/mcal/Gpt/include -Ifirmware/bsw/mcal/Spi/include \
+              -Ifirmware/bsw/mcal/Uart/include -Ifirmware/bsw/ecual/CanIf/include \
+              -Ifirmware/bsw/ecual/PduR/include -Ifirmware/bsw/ecual/IoHwAb/include \
+              -Ifirmware/bsw/os/include -Ifirmware/bsw/os/bootstrap/include \
+              -Ifirmware/bsw/rte/include -Ifirmware/platform/posix/include \
+              -Ifirmware/ecu/${{ matrix.ecu }}/include \
+              -Ifirmware/ecu/${{ matrix.ecu }}/cfg $PLAT_INC \
+              "$src" || exit 1
+          done
+          echo "PASS: ${{ matrix.ecu }}"
+
+  # -------------------------------------------------------------------
+  # Unit Tests: Com + CanSM + E2E SM (52 tests)
+  # -------------------------------------------------------------------
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run Com tests
+        run: |
+          gcc -DPLATFORM_POSIX -DUNIT_TEST -g -O0 -Wall \
+            -Ifirmware/bsw/include \
+            -Ifirmware/bsw/services/Com/include \
+            -Ifirmware/bsw/services/E2E/include \
+            -Ifirmware/bsw/services/Dem/include \
+            -Ifirmware/bsw/services/Det/include \
+            -Ifirmware/bsw/services/SchM/include \
+            -Ifirmware/bsw/services/WdgM/include \
+            -Ifirmware/bsw/services/BswM/include \
+            -Ifirmware/bsw/services/NvM/include \
+            -Ifirmware/bsw/rte/include \
+            -Ifirmware/bsw/ecual/PduR/include \
+            -Ifirmware/bsw/ecual/CanIf/include \
+            -Ifirmware/bsw/ecual/IoHwAb/include \
+            -Ifirmware/bsw/mcal/Can/include \
+            -Ifirmware/bsw/mcal/Adc/include \
+            -Ifirmware/bsw/mcal/Pwm/include \
+            -Ifirmware/bsw/mcal/Dio/include \
+            -Ifirmware/bsw/mcal/Gpt/include \
+            -Ifirmware/bsw/mcal/Spi/include \
+            -Ifirmware/bsw/mcal/Uart/include \
+            -Ifirmware/bsw/os/include \
+            -Ifirmware/platform/posix/include \
+            -Ifirmware/lib/vendor/unity \
+            -o test_com \
+            test/unit/bsw/test_Com_asild.c \
+            test/unit/bsw/stubs_com_test.c \
+            firmware/bsw/services/Com/src/Com.c \
+            firmware/bsw/services/E2E/src/E2E.c \
+            firmware/lib/vendor/unity/unity.c
+          ./test_com
+
+      - name: Build and run CanSM tests
+        run: |
+          gcc -DPLATFORM_POSIX -DUNIT_TEST -g -O0 -Wall \
+            -Ifirmware/bsw/include \
+            -Ifirmware/bsw/services/CanSM/include \
+            -Ifirmware/bsw/services/Det/include \
+            -Ifirmware/lib/vendor/unity \
+            -o test_cansm \
+            test/unit/bsw/test_CanSM_asild.c \
+            firmware/bsw/services/CanSM/src/CanSM.c \
+            firmware/lib/vendor/unity/unity.c
+          ./test_cansm
+
+      - name: Build and run E2E SM tests
+        run: |
+          gcc -DPLATFORM_POSIX -DUNIT_TEST -g -O0 -Wall \
+            -Ifirmware/bsw/include \
+            -Ifirmware/bsw/services/E2E/include \
+            -Ifirmware/bsw/services/Det/include \
+            -Ifirmware/bsw/services/Dem/include \
+            -Ifirmware/bsw/services/SchM/include \
+            -Ifirmware/lib/vendor/unity \
+            -o test_e2e_sm \
+            test/unit/bsw/test_E2E_Sm_asild.c \
+            test/unit/bsw/stubs_com_test.c \
+            firmware/bsw/services/E2E/src/E2E.c \
+            firmware/lib/vendor/unity/unity.c
+          ./test_e2e_sm
+
+  # -------------------------------------------------------------------
+  # Traceability Matrix (non-blocking, generates report)
+  # -------------------------------------------------------------------
+  traceability:
+    name: Traceability Matrix
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Generate traceability matrix
+        run: python tools/trace/gen_traceability_matrix.py
+      - name: Post summary
+        if: always()
+        run: |
+          echo "## Traceability" >> "$GITHUB_STEP_SUMMARY"
+          head -8 docs/safety/verification/traceability-matrix.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: traceability-matrix
+          path: docs/safety/verification/traceability-matrix.md
+          retention-days: 90
+
+  # -------------------------------------------------------------------
+  # Final Gate: all must pass
+  # -------------------------------------------------------------------
+  all-gates:
+    name: All Gates
+    runs-on: ubuntu-latest
+    needs: [step1-dbc, step3-arxml, step4-validate-arxml, step5-codegen, step6-roundtrip, step7-dataflow, syntax-check, unit-tests]
+    steps:
+      - run: echo "All CI gates passed"

@@ -3,7 +3,7 @@
  * @brief   Unit tests for Swc_CvcCom — E2E protect/check, RX routing, TX scheduling
  * @date    2026-02-24
  *
- * @verifies SWR-CVC-014, SWR-CVC-015, SWR-CVC-016, SWR-CVC-017
+ * @verifies SSR-CVC-014, SSR-CVC-015, SSR-CVC-016, SWR-CVC-014, SWR-CVC-015, SWR-CVC-016, SWR-CVC-017
  *
  * Tests: E2E protect CRC correctness, alive counter increment, E2E check
  * valid message, CRC mismatch rejection, 3-failure safe default, receive

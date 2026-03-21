@@ -22,16 +22,6 @@
  * ==================================================================== */
 
 /**
- * @brief  Write Motor_Cutoff_Req_E2E_DataID (uint8_t)
- * @param  value  Signal value to transmit
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Write_Motor_Cutoff_Req_E2E_DataID(uint8_t value)
-{
-    return Rte_Write(FZC_SIG_MOTOR_CUTOFF_REQ_E_2_E_DATA_ID, (uint32_t)value);
-}
-
-/**
  * @brief  Write Motor_Cutoff_Req_RequestType (uint8_t)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
@@ -49,6 +39,16 @@ static inline Rte_StatusType Rte_Write_Motor_Cutoff_Req_RequestType(uint8_t valu
 static inline Rte_StatusType Rte_Write_Motor_Cutoff_Req_E2E_AliveCounter(uint8_t value)
 {
     return Rte_Write(FZC_SIG_MOTOR_CUTOFF_REQ_E_2_E_ALIVE_COUNTER, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Motor_Cutoff_Req_E2E_DataID (uint8_t)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Motor_Cutoff_Req_E2E_DataID(uint8_t value)
+{
+    return Rte_Write(FZC_SIG_MOTOR_CUTOFF_REQ_E_2_E_DATA_ID, (uint32_t)value);
 }
 
 /**

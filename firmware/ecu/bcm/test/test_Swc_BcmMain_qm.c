@@ -3,7 +3,7 @@
  * @brief   Unit tests for BCM main loop — 10ms cycle, process, transmit
  * @date    2026-02-24
  *
- * @verifies SWR-BCM-012
+ * @verifies SSR-BCM-010, SSR-BCM-011, SSR-BCM-012, SWR-BCM-010, SWR-BCM-011, SWR-BCM-012
  *
  * Tests 10ms main loop processing, transmit every 10th cycle (100ms),
  * and cycle overrun warning logging.

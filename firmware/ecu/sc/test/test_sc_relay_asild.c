@@ -3,7 +3,7 @@
  * @brief   Unit tests for sc_relay — kill relay GPIO control
  * @date    2026-02-23
  *
- * @verifies SWR-SC-010, SWR-SC-011, SWR-SC-012
+ * @verifies SSR-SC-010, SSR-SC-011, SSR-SC-012, SWR-SC-010, SWR-SC-011, SWR-SC-012
  *
  * Tests relay initialization (LOW), energize/de-energize, kill latch,
  * readback verification, and all de-energize trigger conditions.

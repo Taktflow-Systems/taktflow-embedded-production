@@ -3,7 +3,7 @@
  * @brief   Unit tests for sc_plausibility — torque-vs-current cross check
  * @date    2026-02-23
  *
- * @verifies SWR-SC-007, SWR-SC-008, SWR-SC-009, SWR-SC-024
+ * @verifies SSR-SC-007, SSR-SC-008, SSR-SC-009, SWR-SC-007, SWR-SC-008, SWR-SC-009, SWR-SC-024
  *
  * Tests torque-to-current lookup, plausibility comparison with debounce,
  * fault latching, system LED, and backup cutoff logic.

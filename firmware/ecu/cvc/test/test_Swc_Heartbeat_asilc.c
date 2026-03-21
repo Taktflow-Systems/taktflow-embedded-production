@@ -3,7 +3,7 @@
  * @brief   Unit tests for Heartbeat TX/RX monitoring SWC
  * @date    2026-02-21
  *
- * @verifies SWR-CVC-021, SWR-CVC-022
+ * @verifies SSR-CVC-017, SSR-FZC-018, SSR-RZC-010, SWR-CVC-017, SWR-CVC-021, SWR-CVC-022, SWR-FZC-018, SWR-RZC-010
  *
  * Tests heartbeat transmission timing, alive counter wrap, RX indication,
  * timeout detection, DTC reporting, recovery, and RTE write.

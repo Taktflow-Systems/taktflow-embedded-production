@@ -3,6 +3,7 @@
 # @brief   SIL scenario: Motor overcurrent — mechanical jam simulation
 # @aspice  SWE.5 — Software Component Verification & Integration
 # @iso     ISO 26262 Part 6, Section 10 — Software Integration & Testing
+# @verifies  SG-001, TSR-023, SSR-RZC-001, SSR-RZC-003
 # @date    2026-02-24
 #
 # Validates the overcurrent protection chain.  The overcurrent scenario

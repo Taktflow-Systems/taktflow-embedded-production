@@ -3,7 +3,7 @@
  * @brief   Unit tests for I/O Hardware Abstraction module
  * @date    2026-02-21
  *
- * @verifies SWR-BSW-014
+ * @verifies SWR-BSW-007, SWR-BSW-008, SWR-BSW-014
  *
  * Tests sensor read functions (pedal, steering, motor current, motor temp,
  * battery voltage, e-stop) and actuator write functions (motor PWM,

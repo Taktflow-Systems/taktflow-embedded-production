@@ -3,7 +3,7 @@
  * @brief   Unit tests for Indicators SWC — turn signals and hazard lights
  * @date    2026-02-23
  *
- * @verifies SWR-BCM-006, SWR-BCM-007, SWR-BCM-008
+ * @verifies SSR-BCM-006, SSR-BCM-007, SSR-BCM-008, SWR-BCM-006, SWR-BCM-007, SWR-BCM-008
  *
  * Tests indicator initialization (all off), left/right turn signal activation,
  * flash toggle at ~1.5Hz (33 ticks on, 33 ticks off at 10ms), hazard override

@@ -3,6 +3,7 @@
 # @brief   SIL scenario: FZC container loss — heartbeat timeout detection
 # @aspice  SWE.5 — Software Component Verification & Integration
 # @iso     ISO 26262 Part 6, Section 10 — Software Integration & Testing
+# @verifies  SG-003, SG-004, SSR-BSW-026, SSR-CVC-016, TSR-022
 # @date    2026-02-24
 #
 # Simulates a CAN bus-off condition on the Front Zone Controller by stopping

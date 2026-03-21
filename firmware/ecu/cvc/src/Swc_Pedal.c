@@ -477,13 +477,7 @@ void Swc_Pedal_MainFunction(void)
     (void)Rte_Write(CVC_SIG_PEDAL_FAULT, (uint32)Pedal_Fault);
     (void)Rte_Write(CVC_SIG_TORQUE_REQUEST, (uint32)torque);
 
-    /* ----------------------------------------------------------
-     * Step 10b: Publish torque to Com -> CAN 0x101
-     * ---------------------------------------------------------- */
-    {
-        uint16 tx_torque = (uint16)torque;
-        (void)Com_SendSignal(CVC_COM_SIG_TORQUE_REQUEST_COMMAND_PCT, &tx_torque);
-    }
+    /* Torque TX: Rte_Write above → Swc_CvcCom reads + sends via Com */
 
     /* ----------------------------------------------------------
      * Step 11: Report DTCs via Dem

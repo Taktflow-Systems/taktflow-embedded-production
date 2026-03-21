@@ -3,7 +3,7 @@
  * @brief   Unit tests for CAN MCAL driver
  * @date    2026-02-21
  *
- * @verifies SWR-BSW-001, SWR-BSW-002, SWR-BSW-003, SWR-BSW-004, SWR-BSW-005
+ * @verifies SWR-BSW-001, SWR-BSW-002, SWR-BSW-003, SWR-BSW-004, SWR-BSW-005, SWR-BSW-009, SWR-BSW-010
  *
  * Tests CAN driver state machine, transmit, receive processing,
  * bus-off recovery, and error handling. Hardware is mocked via

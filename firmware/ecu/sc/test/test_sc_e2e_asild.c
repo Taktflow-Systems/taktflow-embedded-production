@@ -3,7 +3,7 @@
  * @brief   Unit tests for sc_e2e — E2E CRC-8 validation for Safety Controller
  * @date    2026-02-23
  *
- * @verifies SWR-SC-003
+ * @verifies SSR-SC-003, SWR-SC-003
  *
  * Tests CRC-8 computation, alive counter validation, consecutive failure
  * tracking, and full E2E check pipeline with valid/corrupt/sequence data.

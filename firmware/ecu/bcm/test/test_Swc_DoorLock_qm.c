@@ -3,7 +3,7 @@
  * @brief   Unit tests for DoorLock SWC — manual and auto lock/unlock
  * @date    2026-02-23
  *
- * @verifies SWR-BCM-009
+ * @verifies SSR-BCM-009, SWR-BCM-009
  *
  * Tests door lock initialization (unlocked), manual lock command,
  * auto-lock above 10 speed threshold, auto-unlock when transitioning

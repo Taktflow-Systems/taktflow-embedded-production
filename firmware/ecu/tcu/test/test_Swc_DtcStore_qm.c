@@ -3,7 +3,7 @@
  * @brief   Unit tests for DTC Store SWC -- in-memory DTC management
  * @date    2026-02-23
  *
- * @verifies SWR-TCU-008, SWR-TCU-009
+ * @verifies SSR-TCU-002, SWR-TCU-008, SWR-TCU-009
  *
  * Tests DTC storage initialization, add/update, maximum capacity, freeze-frame
  * capture, aging counter, clear-all, and auto-capture from DTC broadcast.

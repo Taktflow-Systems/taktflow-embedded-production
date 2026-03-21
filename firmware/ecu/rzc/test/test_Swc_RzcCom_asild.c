@@ -3,7 +3,7 @@
  * @brief   Unit tests for Swc_RzcCom -- E2E protection, CAN RX/TX tables
  * @date    2026-02-24
  *
- * @verifies SWR-RZC-019, SWR-RZC-020, SWR-RZC-026, SWR-RZC-027
+ * @verifies SSR-RZC-008, SSR-RZC-009, SWR-RZC-008, SWR-RZC-009, SWR-RZC-019, SWR-RZC-020, SWR-RZC-026, SWR-RZC-027
  *
  * Tests E2E CRC-8 protection and alive counters (TX and RX),
  * 3-failure safe default for torque command, E-stop message

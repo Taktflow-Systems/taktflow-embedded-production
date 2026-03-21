@@ -189,13 +189,21 @@
 #define RZC_SIG_VEHICLE_STATE_MODE   187u
 #define RZC_SIG_VEHICLE_STATE_SPEED_LIMIT   188u
 #define RZC_SIG_VEHICLE_STATE_TORQUE_LIMIT   189u
+#define RZC_SIG_XCP_REQ_CVC_DATA   190u
+#define RZC_SIG_XCP_REQ_FZC_DATA   191u
+#define RZC_SIG_XCP_REQ_RZC_DATA   192u
+#define RZC_SIG_XCP_REQ_SC_DATA   193u
+#define RZC_SIG_XCP_RESP_CVC_DATA   194u
+#define RZC_SIG_XCP_RESP_FZC_DATA   195u
+#define RZC_SIG_XCP_RESP_RZC_DATA   196u
+#define RZC_SIG_XCP_RESP_SC_DATA   197u
 
 /* ECU-internal RTE signals (SWC-to-SWC, not on CAN) */
-#define RZC_SIG_ENCODER_SPEED   190u
-#define RZC_SIG_ENCODER_DIR   191u
-#define RZC_SIG_ENCODER_STALL   192u
-#define RZC_SIG_TEMP_FAULT   193u
-#define RZC_SIG_COUNT   194u
+#define RZC_SIG_ENCODER_SPEED   198u
+#define RZC_SIG_ENCODER_DIR   199u
+#define RZC_SIG_ENCODER_STALL   200u
+#define RZC_SIG_TEMP_FAULT   201u
+#define RZC_SIG_COUNT   202u
 
 
 /* ====================================================================
@@ -208,7 +216,8 @@
 #define RZC_COM_TX_MOTOR_TEMPERATURE     3u   /* CAN 0x302 */
 #define RZC_COM_TX_BATTERY_STATUS     4u   /* CAN 0x303 */
 #define RZC_COM_TX_DTC_BROADCAST     5u   /* CAN 0x500 */
-#define RZC_COM_TX_UDS_RESP_RZC     6u   /* CAN 0x7EA */
+#define RZC_COM_TX_XCP_RESP_RZC     6u   /* CAN 0x555 */
+#define RZC_COM_TX_UDS_RESP_RZC     7u   /* CAN 0x7EA */
 
 /* ====================================================================
  * Com RX PDU IDs
@@ -235,16 +244,23 @@
 #define RZC_COM_RX_INDICATOR_STATE    18u   /* CAN 0x401 */
 #define RZC_COM_RX_DOOR_LOCK_STATUS    19u   /* CAN 0x402 */
 #define RZC_COM_RX_DTC_BROADCAST    20u   /* CAN 0x500 */
-#define RZC_COM_RX_FZC_VIRTUAL_SENSORS    21u   /* CAN 0x600 */
-#define RZC_COM_RX_RZC_VIRTUAL_SENSORS    22u   /* CAN 0x601 */
-#define RZC_COM_RX_UDS_RESP_TCU    23u   /* CAN 0x644 */
-#define RZC_COM_RX_UDS_FUNC_REQUEST    24u   /* CAN 0x7DF */
-#define RZC_COM_RX_UDS_PHYS_REQ_CVC    25u   /* CAN 0x7E0 */
-#define RZC_COM_RX_UDS_PHYS_REQ_FZC    26u   /* CAN 0x7E1 */
-#define RZC_COM_RX_UDS_PHYS_REQ_RZC    27u   /* CAN 0x7E2 */
-#define RZC_COM_RX_UDS_PHYS_REQ_TCU    28u   /* CAN 0x7E3 */
-#define RZC_COM_RX_UDS_RESP_CVC    29u   /* CAN 0x7E8 */
-#define RZC_COM_RX_UDS_RESP_FZC    30u   /* CAN 0x7E9 */
+#define RZC_COM_RX_XCP_REQ_CVC    21u   /* CAN 0x550 */
+#define RZC_COM_RX_XCP_RESP_CVC    22u   /* CAN 0x551 */
+#define RZC_COM_RX_XCP_REQ_FZC    23u   /* CAN 0x552 */
+#define RZC_COM_RX_XCP_RESP_FZC    24u   /* CAN 0x553 */
+#define RZC_COM_RX_XCP_REQ_RZC    25u   /* CAN 0x554 */
+#define RZC_COM_RX_XCP_REQ_SC    26u   /* CAN 0x556 */
+#define RZC_COM_RX_XCP_RESP_SC    27u   /* CAN 0x557 */
+#define RZC_COM_RX_FZC_VIRTUAL_SENSORS    28u   /* CAN 0x600 */
+#define RZC_COM_RX_RZC_VIRTUAL_SENSORS    29u   /* CAN 0x601 */
+#define RZC_COM_RX_UDS_RESP_TCU    30u   /* CAN 0x644 */
+#define RZC_COM_RX_UDS_FUNC_REQUEST    31u   /* CAN 0x7DF */
+#define RZC_COM_RX_UDS_PHYS_REQ_CVC    32u   /* CAN 0x7E0 */
+#define RZC_COM_RX_UDS_PHYS_REQ_FZC    33u   /* CAN 0x7E1 */
+#define RZC_COM_RX_UDS_PHYS_REQ_RZC    34u   /* CAN 0x7E2 */
+#define RZC_COM_RX_UDS_PHYS_REQ_TCU    35u   /* CAN 0x7E3 */
+#define RZC_COM_RX_UDS_RESP_CVC    36u   /* CAN 0x7E8 */
+#define RZC_COM_RX_UDS_RESP_FZC    37u   /* CAN 0x7E9 */
 
 /* ====================================================================
  * Com Signal IDs (index into Com signal config table)
@@ -290,148 +306,156 @@
 #define RZC_COM_SIG_DTC_BROADCAST_OCCURRENCE_COUNT    36u   /* TX DTC_Broadcast */
 #define RZC_COM_SIG_DTC_BROADCAST_FREEZE_FRAME_0    37u   /* TX DTC_Broadcast */
 #define RZC_COM_SIG_DTC_BROADCAST_FREEZE_FRAME_1    38u   /* TX DTC_Broadcast */
-#define RZC_COM_SIG_UDS_RESP_RZC_UDS_DATA    39u   /* TX UDS_Resp_RZC */
-#define RZC_COM_SIG_ESTOP_BROADCAST_E_2_E_DATA_ID    40u   /* RX EStop_Broadcast */
-#define RZC_COM_SIG_ESTOP_BROADCAST_E_2_E_ALIVE_COUNTER    41u   /* RX EStop_Broadcast */
-#define RZC_COM_SIG_ESTOP_BROADCAST_E_2_E_CRC_8    42u   /* RX EStop_Broadcast */
-#define RZC_COM_SIG_ESTOP_BROADCAST_ACTIVE    43u   /* RX EStop_Broadcast */
-#define RZC_COM_SIG_ESTOP_BROADCAST_SOURCE    44u   /* RX EStop_Broadcast */
-#define RZC_COM_SIG_CVC_HEARTBEAT_E_2_E_DATA_ID    45u   /* RX CVC_Heartbeat */
-#define RZC_COM_SIG_CVC_HEARTBEAT_E_2_E_ALIVE_COUNTER    46u   /* RX CVC_Heartbeat */
-#define RZC_COM_SIG_CVC_HEARTBEAT_E_2_E_CRC_8    47u   /* RX CVC_Heartbeat */
-#define RZC_COM_SIG_CVC_HEARTBEAT_ECU_ID    48u   /* RX CVC_Heartbeat */
-#define RZC_COM_SIG_CVC_HEARTBEAT_OPERATING_MODE    49u   /* RX CVC_Heartbeat */
-#define RZC_COM_SIG_CVC_HEARTBEAT_FAULT_STATUS    50u   /* RX CVC_Heartbeat */
-#define RZC_COM_SIG_FZC_HEARTBEAT_E_2_E_DATA_ID    51u   /* RX FZC_Heartbeat */
-#define RZC_COM_SIG_FZC_HEARTBEAT_E_2_E_ALIVE_COUNTER    52u   /* RX FZC_Heartbeat */
-#define RZC_COM_SIG_FZC_HEARTBEAT_E_2_E_CRC_8    53u   /* RX FZC_Heartbeat */
-#define RZC_COM_SIG_FZC_HEARTBEAT_ECU_ID    54u   /* RX FZC_Heartbeat */
-#define RZC_COM_SIG_FZC_HEARTBEAT_OPERATING_MODE    55u   /* RX FZC_Heartbeat */
-#define RZC_COM_SIG_FZC_HEARTBEAT_FAULT_STATUS    56u   /* RX FZC_Heartbeat */
-#define RZC_COM_SIG_SC_STATUS_ALIVE_COUNTER    57u   /* RX SC_Status */
-#define RZC_COM_SIG_SC_STATUS_CRC_8    58u   /* RX SC_Status */
-#define RZC_COM_SIG_SC_STATUS_MODE    59u   /* RX SC_Status */
-#define RZC_COM_SIG_SC_STATUS_FAULT_FLAGS    60u   /* RX SC_Status */
-#define RZC_COM_SIG_SC_STATUS_ECU_HEALTH    61u   /* RX SC_Status */
-#define RZC_COM_SIG_SC_STATUS_FAULT_REASON    62u   /* RX SC_Status */
-#define RZC_COM_SIG_SC_STATUS_RELAY_ENERGIZED    63u   /* RX SC_Status */
-#define RZC_COM_SIG_ICU_HEARTBEAT_E_2_E_DATA_ID    64u   /* RX ICU_Heartbeat */
-#define RZC_COM_SIG_ICU_HEARTBEAT_E_2_E_ALIVE_COUNTER    65u   /* RX ICU_Heartbeat */
-#define RZC_COM_SIG_ICU_HEARTBEAT_E_2_E_CRC_8    66u   /* RX ICU_Heartbeat */
-#define RZC_COM_SIG_ICU_HEARTBEAT_ALIVE_COUNTER    67u   /* RX ICU_Heartbeat */
-#define RZC_COM_SIG_ICU_HEARTBEAT_ECU_ID    68u   /* RX ICU_Heartbeat */
-#define RZC_COM_SIG_TCU_HEARTBEAT_E_2_E_DATA_ID    69u   /* RX TCU_Heartbeat */
-#define RZC_COM_SIG_TCU_HEARTBEAT_E_2_E_ALIVE_COUNTER    70u   /* RX TCU_Heartbeat */
-#define RZC_COM_SIG_TCU_HEARTBEAT_E_2_E_CRC_8    71u   /* RX TCU_Heartbeat */
-#define RZC_COM_SIG_TCU_HEARTBEAT_ALIVE_COUNTER    72u   /* RX TCU_Heartbeat */
-#define RZC_COM_SIG_TCU_HEARTBEAT_ECU_ID    73u   /* RX TCU_Heartbeat */
-#define RZC_COM_SIG_BCM_HEARTBEAT_E_2_E_DATA_ID    74u   /* RX BCM_Heartbeat */
-#define RZC_COM_SIG_BCM_HEARTBEAT_E_2_E_ALIVE_COUNTER    75u   /* RX BCM_Heartbeat */
-#define RZC_COM_SIG_BCM_HEARTBEAT_E_2_E_CRC_8    76u   /* RX BCM_Heartbeat */
-#define RZC_COM_SIG_BCM_HEARTBEAT_ALIVE_COUNTER    77u   /* RX BCM_Heartbeat */
-#define RZC_COM_SIG_BCM_HEARTBEAT_ECU_ID    78u   /* RX BCM_Heartbeat */
-#define RZC_COM_SIG_VEHICLE_STATE_E_2_E_DATA_ID    79u   /* RX Vehicle_State */
-#define RZC_COM_SIG_VEHICLE_STATE_E_2_E_ALIVE_COUNTER    80u   /* RX Vehicle_State */
-#define RZC_COM_SIG_VEHICLE_STATE_E_2_E_CRC_8    81u   /* RX Vehicle_State */
-#define RZC_COM_SIG_VEHICLE_STATE_MODE    82u   /* RX Vehicle_State */
-#define RZC_COM_SIG_VEHICLE_STATE_FAULT_MASK    83u   /* RX Vehicle_State */
-#define RZC_COM_SIG_VEHICLE_STATE_TORQUE_LIMIT    84u   /* RX Vehicle_State */
-#define RZC_COM_SIG_VEHICLE_STATE_SPEED_LIMIT    85u   /* RX Vehicle_State */
-#define RZC_COM_SIG_TORQUE_REQUEST_E_2_E_DATA_ID    86u   /* RX Torque_Request */
-#define RZC_COM_SIG_TORQUE_REQUEST_E_2_E_ALIVE_COUNTER    87u   /* RX Torque_Request */
-#define RZC_COM_SIG_TORQUE_REQUEST_E_2_E_CRC_8    88u   /* RX Torque_Request */
-#define RZC_COM_SIG_TORQUE_REQUEST_COMMAND_PCT    89u   /* RX Torque_Request */
-#define RZC_COM_SIG_TORQUE_REQUEST_DIRECTION    90u   /* RX Torque_Request */
-#define RZC_COM_SIG_TORQUE_REQUEST_PEDAL_POSITION_1    91u   /* RX Torque_Request */
-#define RZC_COM_SIG_TORQUE_REQUEST_PEDAL_POSITION_2    92u   /* RX Torque_Request */
-#define RZC_COM_SIG_TORQUE_REQUEST_PEDAL_FAULT    93u   /* RX Torque_Request */
-#define RZC_COM_SIG_STEER_COMMAND_E_2_E_DATA_ID    94u   /* RX Steer_Command */
-#define RZC_COM_SIG_STEER_COMMAND_E_2_E_ALIVE_COUNTER    95u   /* RX Steer_Command */
-#define RZC_COM_SIG_STEER_COMMAND_E_2_E_CRC_8    96u   /* RX Steer_Command */
-#define RZC_COM_SIG_STEER_COMMAND_STEER_ANGLE_CMD    97u   /* RX Steer_Command */
-#define RZC_COM_SIG_STEER_COMMAND_STEER_RATE_LIMIT    98u   /* RX Steer_Command */
-#define RZC_COM_SIG_STEER_COMMAND_VEHICLE_STATE    99u   /* RX Steer_Command */
-#define RZC_COM_SIG_BRAKE_COMMAND_E_2_E_DATA_ID   100u   /* RX Brake_Command */
-#define RZC_COM_SIG_BRAKE_COMMAND_E_2_E_ALIVE_COUNTER   101u   /* RX Brake_Command */
-#define RZC_COM_SIG_BRAKE_COMMAND_E_2_E_CRC_8   102u   /* RX Brake_Command */
-#define RZC_COM_SIG_BRAKE_COMMAND_BRAKE_FORCE_CMD   103u   /* RX Brake_Command */
-#define RZC_COM_SIG_BRAKE_COMMAND_BRAKE_MODE   104u   /* RX Brake_Command */
-#define RZC_COM_SIG_BRAKE_COMMAND_VEHICLE_STATE   105u   /* RX Brake_Command */
-#define RZC_COM_SIG_STEERING_STATUS_E_2_E_DATA_ID   106u   /* RX Steering_Status */
-#define RZC_COM_SIG_STEERING_STATUS_E_2_E_ALIVE_COUNTER   107u   /* RX Steering_Status */
-#define RZC_COM_SIG_STEERING_STATUS_E_2_E_CRC_8   108u   /* RX Steering_Status */
-#define RZC_COM_SIG_STEERING_STATUS_ACTUAL_ANGLE   109u   /* RX Steering_Status */
-#define RZC_COM_SIG_STEERING_STATUS_COMMANDED_ANGLE   110u   /* RX Steering_Status */
-#define RZC_COM_SIG_STEERING_STATUS_STEER_FAULT_STATUS   111u   /* RX Steering_Status */
-#define RZC_COM_SIG_STEERING_STATUS_STEER_MODE   112u   /* RX Steering_Status */
-#define RZC_COM_SIG_STEERING_STATUS_SERVO_CURRENT_M_A   113u   /* RX Steering_Status */
-#define RZC_COM_SIG_BRAKE_STATUS_E_2_E_DATA_ID   114u   /* RX Brake_Status */
-#define RZC_COM_SIG_BRAKE_STATUS_E_2_E_ALIVE_COUNTER   115u   /* RX Brake_Status */
-#define RZC_COM_SIG_BRAKE_STATUS_E_2_E_CRC_8   116u   /* RX Brake_Status */
-#define RZC_COM_SIG_BRAKE_STATUS_BRAKE_POSITION   117u   /* RX Brake_Status */
-#define RZC_COM_SIG_BRAKE_STATUS_BRAKE_COMMAND_ECHO   118u   /* RX Brake_Status */
-#define RZC_COM_SIG_BRAKE_STATUS_SERVO_CURRENT_M_A   119u   /* RX Brake_Status */
-#define RZC_COM_SIG_BRAKE_STATUS_BRAKE_FAULT_STATUS   120u   /* RX Brake_Status */
-#define RZC_COM_SIG_BRAKE_STATUS_BRAKE_MODE   121u   /* RX Brake_Status */
-#define RZC_COM_SIG_BRAKE_FAULT_E_2_E_DATA_ID   122u   /* RX Brake_Fault */
-#define RZC_COM_SIG_BRAKE_FAULT_E_2_E_ALIVE_COUNTER   123u   /* RX Brake_Fault */
-#define RZC_COM_SIG_BRAKE_FAULT_E_2_E_CRC_8   124u   /* RX Brake_Fault */
-#define RZC_COM_SIG_BRAKE_FAULT_FAULT_TYPE   125u   /* RX Brake_Fault */
-#define RZC_COM_SIG_BRAKE_FAULT_COMMANDED_BRAKE   126u   /* RX Brake_Fault */
-#define RZC_COM_SIG_BRAKE_FAULT_MEASURED_BRAKE   127u   /* RX Brake_Fault */
-#define RZC_COM_SIG_MOTOR_CUTOFF_REQ_E_2_E_DATA_ID   128u   /* RX Motor_Cutoff_Req */
-#define RZC_COM_SIG_MOTOR_CUTOFF_REQ_E_2_E_ALIVE_COUNTER   129u   /* RX Motor_Cutoff_Req */
-#define RZC_COM_SIG_MOTOR_CUTOFF_REQ_E_2_E_CRC_8   130u   /* RX Motor_Cutoff_Req */
-#define RZC_COM_SIG_MOTOR_CUTOFF_REQ_REQUEST_TYPE   131u   /* RX Motor_Cutoff_Req */
-#define RZC_COM_SIG_MOTOR_CUTOFF_REQ_REASON   132u   /* RX Motor_Cutoff_Req */
-#define RZC_COM_SIG_LIDAR_DISTANCE_E_2_E_DATA_ID   133u   /* RX Lidar_Distance */
-#define RZC_COM_SIG_LIDAR_DISTANCE_E_2_E_ALIVE_COUNTER   134u   /* RX Lidar_Distance */
-#define RZC_COM_SIG_LIDAR_DISTANCE_E_2_E_CRC_8   135u   /* RX Lidar_Distance */
-#define RZC_COM_SIG_LIDAR_DISTANCE_RANGE_CM   136u   /* RX Lidar_Distance */
-#define RZC_COM_SIG_LIDAR_DISTANCE_SIGNAL_STRENGTH   137u   /* RX Lidar_Distance */
-#define RZC_COM_SIG_LIDAR_DISTANCE_OBSTACLE_ZONE   138u   /* RX Lidar_Distance */
-#define RZC_COM_SIG_LIDAR_DISTANCE_SENSOR_STATUS   139u   /* RX Lidar_Distance */
-#define RZC_COM_SIG_BODY_CONTROL_CMD_HEADLIGHT_CMD   140u   /* RX Body_Control_Cmd */
-#define RZC_COM_SIG_BODY_CONTROL_CMD_TAIL_LIGHT_ON   141u   /* RX Body_Control_Cmd */
-#define RZC_COM_SIG_BODY_CONTROL_CMD_HAZARD_ACTIVE   142u   /* RX Body_Control_Cmd */
-#define RZC_COM_SIG_BODY_CONTROL_CMD_TURN_SIGNAL_CMD   143u   /* RX Body_Control_Cmd */
-#define RZC_COM_SIG_BODY_CONTROL_CMD_DOOR_LOCK_CMD   144u   /* RX Body_Control_Cmd */
-#define RZC_COM_SIG_LIGHT_STATUS_HEADLIGHT_ON   145u   /* RX Light_Status */
-#define RZC_COM_SIG_LIGHT_STATUS_TAIL_LIGHT_ON   146u   /* RX Light_Status */
-#define RZC_COM_SIG_LIGHT_STATUS_FOG_LIGHT_ON   147u   /* RX Light_Status */
-#define RZC_COM_SIG_LIGHT_STATUS_BRAKE_LIGHT_ON   148u   /* RX Light_Status */
-#define RZC_COM_SIG_LIGHT_STATUS_HEADLIGHT_LEVEL   149u   /* RX Light_Status */
-#define RZC_COM_SIG_INDICATOR_STATE_LEFT_ON   150u   /* RX Indicator_State */
-#define RZC_COM_SIG_INDICATOR_STATE_RIGHT_ON   151u   /* RX Indicator_State */
-#define RZC_COM_SIG_INDICATOR_STATE_HAZARD_ACTIVE   152u   /* RX Indicator_State */
-#define RZC_COM_SIG_INDICATOR_STATE_BLINK_PHASE_HIGH   153u   /* RX Indicator_State */
-#define RZC_COM_SIG_DOOR_LOCK_STATUS_FRONT_LEFT_LOCK   154u   /* RX Door_Lock_Status */
-#define RZC_COM_SIG_DOOR_LOCK_STATUS_FRONT_RIGHT_LOCK   155u   /* RX Door_Lock_Status */
-#define RZC_COM_SIG_DOOR_LOCK_STATUS_REAR_LEFT_LOCK   156u   /* RX Door_Lock_Status */
-#define RZC_COM_SIG_DOOR_LOCK_STATUS_REAR_RIGHT_LOCK   157u   /* RX Door_Lock_Status */
-#define RZC_COM_SIG_DOOR_LOCK_STATUS_CENTRAL_LOCK   158u   /* RX Door_Lock_Status */
-/* RZC_COM_SIG_DTC_BROADCAST_NUMBER =  159u   RX DTC_Broadcast (dup, ID only) */
-/* RZC_COM_SIG_DTC_BROADCAST_STATUS =  160u   RX DTC_Broadcast (dup, ID only) */
-/* RZC_COM_SIG_DTC_BROADCAST_ECU_SOURCE =  161u   RX DTC_Broadcast (dup, ID only) */
-/* RZC_COM_SIG_DTC_BROADCAST_OCCURRENCE_COUNT =  162u   RX DTC_Broadcast (dup, ID only) */
-/* RZC_COM_SIG_DTC_BROADCAST_FREEZE_FRAME_0 =  163u   RX DTC_Broadcast (dup, ID only) */
-/* RZC_COM_SIG_DTC_BROADCAST_FREEZE_FRAME_1 =  164u   RX DTC_Broadcast (dup, ID only) */
-#define RZC_COM_SIG_FZC_VIRTUAL_SENSORS_STEER_ANGLE_RAW   165u   /* RX FZC_Virtual_Sensors */
-#define RZC_COM_SIG_FZC_VIRTUAL_SENSORS_BRAKE_POS_ADC   166u   /* RX FZC_Virtual_Sensors */
-#define RZC_COM_SIG_FZC_VIRTUAL_SENSORS_BRAKE_CURRENT_M_A   167u   /* RX FZC_Virtual_Sensors */
-#define RZC_COM_SIG_RZC_VIRTUAL_SENSORS_MOTOR_CURRENT_M_A   168u   /* RX RZC_Virtual_Sensors */
-#define RZC_COM_SIG_RZC_VIRTUAL_SENSORS_MOTOR_TEMP_D_C   169u   /* RX RZC_Virtual_Sensors */
-#define RZC_COM_SIG_RZC_VIRTUAL_SENSORS_BATT_VOLTAGE_M_V   170u   /* RX RZC_Virtual_Sensors */
-#define RZC_COM_SIG_RZC_VIRTUAL_SENSORS_MOTOR_SPEED_RPM   171u   /* RX RZC_Virtual_Sensors */
-#define RZC_COM_SIG_UDS_RESP_TCU_UDS_DATA   172u   /* RX UDS_Resp_TCU */
-#define RZC_COM_SIG_UDS_FUNC_REQUEST_UDS_DATA   173u   /* RX UDS_Func_Request */
-#define RZC_COM_SIG_UDS_PHYS_REQ_CVC_UDS_DATA   174u   /* RX UDS_Phys_Req_CVC */
-#define RZC_COM_SIG_UDS_PHYS_REQ_FZC_UDS_DATA   175u   /* RX UDS_Phys_Req_FZC */
-#define RZC_COM_SIG_UDS_PHYS_REQ_RZC_UDS_DATA   176u   /* RX UDS_Phys_Req_RZC */
-#define RZC_COM_SIG_UDS_PHYS_REQ_TCU_UDS_DATA   177u   /* RX UDS_Phys_Req_TCU */
-#define RZC_COM_SIG_UDS_RESP_CVC_UDS_DATA   178u   /* RX UDS_Resp_CVC */
-#define RZC_COM_SIG_UDS_RESP_FZC_UDS_DATA   179u   /* RX UDS_Resp_FZC */
-#define RZC_COM_SIG_COUNT   180u
+#define RZC_COM_SIG_XCP_RESP_RZC_DATA    39u   /* TX XCP_Resp_RZC */
+#define RZC_COM_SIG_UDS_RESP_RZC_UDS_DATA    40u   /* TX UDS_Resp_RZC */
+#define RZC_COM_SIG_ESTOP_BROADCAST_E_2_E_DATA_ID    41u   /* RX EStop_Broadcast */
+#define RZC_COM_SIG_ESTOP_BROADCAST_E_2_E_ALIVE_COUNTER    42u   /* RX EStop_Broadcast */
+#define RZC_COM_SIG_ESTOP_BROADCAST_E_2_E_CRC_8    43u   /* RX EStop_Broadcast */
+#define RZC_COM_SIG_ESTOP_BROADCAST_ACTIVE    44u   /* RX EStop_Broadcast */
+#define RZC_COM_SIG_ESTOP_BROADCAST_SOURCE    45u   /* RX EStop_Broadcast */
+#define RZC_COM_SIG_CVC_HEARTBEAT_E_2_E_DATA_ID    46u   /* RX CVC_Heartbeat */
+#define RZC_COM_SIG_CVC_HEARTBEAT_E_2_E_ALIVE_COUNTER    47u   /* RX CVC_Heartbeat */
+#define RZC_COM_SIG_CVC_HEARTBEAT_E_2_E_CRC_8    48u   /* RX CVC_Heartbeat */
+#define RZC_COM_SIG_CVC_HEARTBEAT_ECU_ID    49u   /* RX CVC_Heartbeat */
+#define RZC_COM_SIG_CVC_HEARTBEAT_OPERATING_MODE    50u   /* RX CVC_Heartbeat */
+#define RZC_COM_SIG_CVC_HEARTBEAT_FAULT_STATUS    51u   /* RX CVC_Heartbeat */
+#define RZC_COM_SIG_FZC_HEARTBEAT_E_2_E_DATA_ID    52u   /* RX FZC_Heartbeat */
+#define RZC_COM_SIG_FZC_HEARTBEAT_E_2_E_ALIVE_COUNTER    53u   /* RX FZC_Heartbeat */
+#define RZC_COM_SIG_FZC_HEARTBEAT_E_2_E_CRC_8    54u   /* RX FZC_Heartbeat */
+#define RZC_COM_SIG_FZC_HEARTBEAT_ECU_ID    55u   /* RX FZC_Heartbeat */
+#define RZC_COM_SIG_FZC_HEARTBEAT_OPERATING_MODE    56u   /* RX FZC_Heartbeat */
+#define RZC_COM_SIG_FZC_HEARTBEAT_FAULT_STATUS    57u   /* RX FZC_Heartbeat */
+#define RZC_COM_SIG_SC_STATUS_ALIVE_COUNTER    58u   /* RX SC_Status */
+#define RZC_COM_SIG_SC_STATUS_CRC_8    59u   /* RX SC_Status */
+#define RZC_COM_SIG_SC_STATUS_MODE    60u   /* RX SC_Status */
+#define RZC_COM_SIG_SC_STATUS_FAULT_FLAGS    61u   /* RX SC_Status */
+#define RZC_COM_SIG_SC_STATUS_ECU_HEALTH    62u   /* RX SC_Status */
+#define RZC_COM_SIG_SC_STATUS_FAULT_REASON    63u   /* RX SC_Status */
+#define RZC_COM_SIG_SC_STATUS_RELAY_ENERGIZED    64u   /* RX SC_Status */
+#define RZC_COM_SIG_ICU_HEARTBEAT_E_2_E_DATA_ID    65u   /* RX ICU_Heartbeat */
+#define RZC_COM_SIG_ICU_HEARTBEAT_E_2_E_ALIVE_COUNTER    66u   /* RX ICU_Heartbeat */
+#define RZC_COM_SIG_ICU_HEARTBEAT_E_2_E_CRC_8    67u   /* RX ICU_Heartbeat */
+#define RZC_COM_SIG_ICU_HEARTBEAT_ALIVE_COUNTER    68u   /* RX ICU_Heartbeat */
+#define RZC_COM_SIG_ICU_HEARTBEAT_ECU_ID    69u   /* RX ICU_Heartbeat */
+#define RZC_COM_SIG_TCU_HEARTBEAT_E_2_E_DATA_ID    70u   /* RX TCU_Heartbeat */
+#define RZC_COM_SIG_TCU_HEARTBEAT_E_2_E_ALIVE_COUNTER    71u   /* RX TCU_Heartbeat */
+#define RZC_COM_SIG_TCU_HEARTBEAT_E_2_E_CRC_8    72u   /* RX TCU_Heartbeat */
+#define RZC_COM_SIG_TCU_HEARTBEAT_ALIVE_COUNTER    73u   /* RX TCU_Heartbeat */
+#define RZC_COM_SIG_TCU_HEARTBEAT_ECU_ID    74u   /* RX TCU_Heartbeat */
+#define RZC_COM_SIG_BCM_HEARTBEAT_E_2_E_DATA_ID    75u   /* RX BCM_Heartbeat */
+#define RZC_COM_SIG_BCM_HEARTBEAT_E_2_E_ALIVE_COUNTER    76u   /* RX BCM_Heartbeat */
+#define RZC_COM_SIG_BCM_HEARTBEAT_E_2_E_CRC_8    77u   /* RX BCM_Heartbeat */
+#define RZC_COM_SIG_BCM_HEARTBEAT_ALIVE_COUNTER    78u   /* RX BCM_Heartbeat */
+#define RZC_COM_SIG_BCM_HEARTBEAT_ECU_ID    79u   /* RX BCM_Heartbeat */
+#define RZC_COM_SIG_VEHICLE_STATE_E_2_E_DATA_ID    80u   /* RX Vehicle_State */
+#define RZC_COM_SIG_VEHICLE_STATE_E_2_E_ALIVE_COUNTER    81u   /* RX Vehicle_State */
+#define RZC_COM_SIG_VEHICLE_STATE_E_2_E_CRC_8    82u   /* RX Vehicle_State */
+#define RZC_COM_SIG_VEHICLE_STATE_MODE    83u   /* RX Vehicle_State */
+#define RZC_COM_SIG_VEHICLE_STATE_FAULT_MASK    84u   /* RX Vehicle_State */
+#define RZC_COM_SIG_VEHICLE_STATE_TORQUE_LIMIT    85u   /* RX Vehicle_State */
+#define RZC_COM_SIG_VEHICLE_STATE_SPEED_LIMIT    86u   /* RX Vehicle_State */
+#define RZC_COM_SIG_TORQUE_REQUEST_E_2_E_DATA_ID    87u   /* RX Torque_Request */
+#define RZC_COM_SIG_TORQUE_REQUEST_E_2_E_ALIVE_COUNTER    88u   /* RX Torque_Request */
+#define RZC_COM_SIG_TORQUE_REQUEST_E_2_E_CRC_8    89u   /* RX Torque_Request */
+#define RZC_COM_SIG_TORQUE_REQUEST_COMMAND_PCT    90u   /* RX Torque_Request */
+#define RZC_COM_SIG_TORQUE_REQUEST_DIRECTION    91u   /* RX Torque_Request */
+#define RZC_COM_SIG_TORQUE_REQUEST_PEDAL_POSITION_1    92u   /* RX Torque_Request */
+#define RZC_COM_SIG_TORQUE_REQUEST_PEDAL_POSITION_2    93u   /* RX Torque_Request */
+#define RZC_COM_SIG_TORQUE_REQUEST_PEDAL_FAULT    94u   /* RX Torque_Request */
+#define RZC_COM_SIG_STEER_COMMAND_E_2_E_DATA_ID    95u   /* RX Steer_Command */
+#define RZC_COM_SIG_STEER_COMMAND_E_2_E_ALIVE_COUNTER    96u   /* RX Steer_Command */
+#define RZC_COM_SIG_STEER_COMMAND_E_2_E_CRC_8    97u   /* RX Steer_Command */
+#define RZC_COM_SIG_STEER_COMMAND_STEER_ANGLE_CMD    98u   /* RX Steer_Command */
+#define RZC_COM_SIG_STEER_COMMAND_STEER_RATE_LIMIT    99u   /* RX Steer_Command */
+#define RZC_COM_SIG_STEER_COMMAND_VEHICLE_STATE   100u   /* RX Steer_Command */
+#define RZC_COM_SIG_BRAKE_COMMAND_E_2_E_DATA_ID   101u   /* RX Brake_Command */
+#define RZC_COM_SIG_BRAKE_COMMAND_E_2_E_ALIVE_COUNTER   102u   /* RX Brake_Command */
+#define RZC_COM_SIG_BRAKE_COMMAND_E_2_E_CRC_8   103u   /* RX Brake_Command */
+#define RZC_COM_SIG_BRAKE_COMMAND_BRAKE_FORCE_CMD   104u   /* RX Brake_Command */
+#define RZC_COM_SIG_BRAKE_COMMAND_BRAKE_MODE   105u   /* RX Brake_Command */
+#define RZC_COM_SIG_BRAKE_COMMAND_VEHICLE_STATE   106u   /* RX Brake_Command */
+#define RZC_COM_SIG_STEERING_STATUS_E_2_E_DATA_ID   107u   /* RX Steering_Status */
+#define RZC_COM_SIG_STEERING_STATUS_E_2_E_ALIVE_COUNTER   108u   /* RX Steering_Status */
+#define RZC_COM_SIG_STEERING_STATUS_E_2_E_CRC_8   109u   /* RX Steering_Status */
+#define RZC_COM_SIG_STEERING_STATUS_ACTUAL_ANGLE   110u   /* RX Steering_Status */
+#define RZC_COM_SIG_STEERING_STATUS_COMMANDED_ANGLE   111u   /* RX Steering_Status */
+#define RZC_COM_SIG_STEERING_STATUS_STEER_FAULT_STATUS   112u   /* RX Steering_Status */
+#define RZC_COM_SIG_STEERING_STATUS_STEER_MODE   113u   /* RX Steering_Status */
+#define RZC_COM_SIG_STEERING_STATUS_SERVO_CURRENT_M_A   114u   /* RX Steering_Status */
+#define RZC_COM_SIG_BRAKE_STATUS_E_2_E_DATA_ID   115u   /* RX Brake_Status */
+#define RZC_COM_SIG_BRAKE_STATUS_E_2_E_ALIVE_COUNTER   116u   /* RX Brake_Status */
+#define RZC_COM_SIG_BRAKE_STATUS_E_2_E_CRC_8   117u   /* RX Brake_Status */
+#define RZC_COM_SIG_BRAKE_STATUS_BRAKE_POSITION   118u   /* RX Brake_Status */
+#define RZC_COM_SIG_BRAKE_STATUS_BRAKE_COMMAND_ECHO   119u   /* RX Brake_Status */
+#define RZC_COM_SIG_BRAKE_STATUS_SERVO_CURRENT_M_A   120u   /* RX Brake_Status */
+#define RZC_COM_SIG_BRAKE_STATUS_BRAKE_FAULT_STATUS   121u   /* RX Brake_Status */
+#define RZC_COM_SIG_BRAKE_STATUS_BRAKE_MODE   122u   /* RX Brake_Status */
+#define RZC_COM_SIG_BRAKE_FAULT_E_2_E_DATA_ID   123u   /* RX Brake_Fault */
+#define RZC_COM_SIG_BRAKE_FAULT_E_2_E_ALIVE_COUNTER   124u   /* RX Brake_Fault */
+#define RZC_COM_SIG_BRAKE_FAULT_E_2_E_CRC_8   125u   /* RX Brake_Fault */
+#define RZC_COM_SIG_BRAKE_FAULT_FAULT_TYPE   126u   /* RX Brake_Fault */
+#define RZC_COM_SIG_BRAKE_FAULT_COMMANDED_BRAKE   127u   /* RX Brake_Fault */
+#define RZC_COM_SIG_BRAKE_FAULT_MEASURED_BRAKE   128u   /* RX Brake_Fault */
+#define RZC_COM_SIG_MOTOR_CUTOFF_REQ_E_2_E_DATA_ID   129u   /* RX Motor_Cutoff_Req */
+#define RZC_COM_SIG_MOTOR_CUTOFF_REQ_E_2_E_ALIVE_COUNTER   130u   /* RX Motor_Cutoff_Req */
+#define RZC_COM_SIG_MOTOR_CUTOFF_REQ_E_2_E_CRC_8   131u   /* RX Motor_Cutoff_Req */
+#define RZC_COM_SIG_MOTOR_CUTOFF_REQ_REQUEST_TYPE   132u   /* RX Motor_Cutoff_Req */
+#define RZC_COM_SIG_MOTOR_CUTOFF_REQ_REASON   133u   /* RX Motor_Cutoff_Req */
+#define RZC_COM_SIG_LIDAR_DISTANCE_E_2_E_DATA_ID   134u   /* RX Lidar_Distance */
+#define RZC_COM_SIG_LIDAR_DISTANCE_E_2_E_ALIVE_COUNTER   135u   /* RX Lidar_Distance */
+#define RZC_COM_SIG_LIDAR_DISTANCE_E_2_E_CRC_8   136u   /* RX Lidar_Distance */
+#define RZC_COM_SIG_LIDAR_DISTANCE_RANGE_CM   137u   /* RX Lidar_Distance */
+#define RZC_COM_SIG_LIDAR_DISTANCE_SIGNAL_STRENGTH   138u   /* RX Lidar_Distance */
+#define RZC_COM_SIG_LIDAR_DISTANCE_OBSTACLE_ZONE   139u   /* RX Lidar_Distance */
+#define RZC_COM_SIG_LIDAR_DISTANCE_SENSOR_STATUS   140u   /* RX Lidar_Distance */
+#define RZC_COM_SIG_BODY_CONTROL_CMD_HEADLIGHT_CMD   141u   /* RX Body_Control_Cmd */
+#define RZC_COM_SIG_BODY_CONTROL_CMD_TAIL_LIGHT_ON   142u   /* RX Body_Control_Cmd */
+#define RZC_COM_SIG_BODY_CONTROL_CMD_HAZARD_ACTIVE   143u   /* RX Body_Control_Cmd */
+#define RZC_COM_SIG_BODY_CONTROL_CMD_TURN_SIGNAL_CMD   144u   /* RX Body_Control_Cmd */
+#define RZC_COM_SIG_BODY_CONTROL_CMD_DOOR_LOCK_CMD   145u   /* RX Body_Control_Cmd */
+#define RZC_COM_SIG_LIGHT_STATUS_HEADLIGHT_ON   146u   /* RX Light_Status */
+#define RZC_COM_SIG_LIGHT_STATUS_TAIL_LIGHT_ON   147u   /* RX Light_Status */
+#define RZC_COM_SIG_LIGHT_STATUS_FOG_LIGHT_ON   148u   /* RX Light_Status */
+#define RZC_COM_SIG_LIGHT_STATUS_BRAKE_LIGHT_ON   149u   /* RX Light_Status */
+#define RZC_COM_SIG_LIGHT_STATUS_HEADLIGHT_LEVEL   150u   /* RX Light_Status */
+#define RZC_COM_SIG_INDICATOR_STATE_LEFT_ON   151u   /* RX Indicator_State */
+#define RZC_COM_SIG_INDICATOR_STATE_RIGHT_ON   152u   /* RX Indicator_State */
+#define RZC_COM_SIG_INDICATOR_STATE_HAZARD_ACTIVE   153u   /* RX Indicator_State */
+#define RZC_COM_SIG_INDICATOR_STATE_BLINK_PHASE_HIGH   154u   /* RX Indicator_State */
+#define RZC_COM_SIG_DOOR_LOCK_STATUS_FRONT_LEFT_LOCK   155u   /* RX Door_Lock_Status */
+#define RZC_COM_SIG_DOOR_LOCK_STATUS_FRONT_RIGHT_LOCK   156u   /* RX Door_Lock_Status */
+#define RZC_COM_SIG_DOOR_LOCK_STATUS_REAR_LEFT_LOCK   157u   /* RX Door_Lock_Status */
+#define RZC_COM_SIG_DOOR_LOCK_STATUS_REAR_RIGHT_LOCK   158u   /* RX Door_Lock_Status */
+#define RZC_COM_SIG_DOOR_LOCK_STATUS_CENTRAL_LOCK   159u   /* RX Door_Lock_Status */
+/* RZC_COM_SIG_DTC_BROADCAST_NUMBER =  160u   RX DTC_Broadcast (dup, ID only) */
+/* RZC_COM_SIG_DTC_BROADCAST_STATUS =  161u   RX DTC_Broadcast (dup, ID only) */
+/* RZC_COM_SIG_DTC_BROADCAST_ECU_SOURCE =  162u   RX DTC_Broadcast (dup, ID only) */
+/* RZC_COM_SIG_DTC_BROADCAST_OCCURRENCE_COUNT =  163u   RX DTC_Broadcast (dup, ID only) */
+/* RZC_COM_SIG_DTC_BROADCAST_FREEZE_FRAME_0 =  164u   RX DTC_Broadcast (dup, ID only) */
+/* RZC_COM_SIG_DTC_BROADCAST_FREEZE_FRAME_1 =  165u   RX DTC_Broadcast (dup, ID only) */
+#define RZC_COM_SIG_XCP_REQ_CVC_DATA   166u   /* RX XCP_Req_CVC */
+#define RZC_COM_SIG_XCP_RESP_CVC_DATA   167u   /* RX XCP_Resp_CVC */
+#define RZC_COM_SIG_XCP_REQ_FZC_DATA   168u   /* RX XCP_Req_FZC */
+#define RZC_COM_SIG_XCP_RESP_FZC_DATA   169u   /* RX XCP_Resp_FZC */
+#define RZC_COM_SIG_XCP_REQ_RZC_DATA   170u   /* RX XCP_Req_RZC */
+#define RZC_COM_SIG_XCP_REQ_SC_DATA   171u   /* RX XCP_Req_SC */
+#define RZC_COM_SIG_XCP_RESP_SC_DATA   172u   /* RX XCP_Resp_SC */
+#define RZC_COM_SIG_FZC_VIRTUAL_SENSORS_STEER_ANGLE_RAW   173u   /* RX FZC_Virtual_Sensors */
+#define RZC_COM_SIG_FZC_VIRTUAL_SENSORS_BRAKE_POS_ADC   174u   /* RX FZC_Virtual_Sensors */
+#define RZC_COM_SIG_FZC_VIRTUAL_SENSORS_BRAKE_CURRENT_M_A   175u   /* RX FZC_Virtual_Sensors */
+#define RZC_COM_SIG_RZC_VIRTUAL_SENSORS_MOTOR_CURRENT_M_A   176u   /* RX RZC_Virtual_Sensors */
+#define RZC_COM_SIG_RZC_VIRTUAL_SENSORS_MOTOR_TEMP_D_C   177u   /* RX RZC_Virtual_Sensors */
+#define RZC_COM_SIG_RZC_VIRTUAL_SENSORS_BATT_VOLTAGE_M_V   178u   /* RX RZC_Virtual_Sensors */
+#define RZC_COM_SIG_RZC_VIRTUAL_SENSORS_MOTOR_SPEED_RPM   179u   /* RX RZC_Virtual_Sensors */
+#define RZC_COM_SIG_UDS_RESP_TCU_UDS_DATA   180u   /* RX UDS_Resp_TCU */
+#define RZC_COM_SIG_UDS_FUNC_REQUEST_UDS_DATA   181u   /* RX UDS_Func_Request */
+#define RZC_COM_SIG_UDS_PHYS_REQ_CVC_UDS_DATA   182u   /* RX UDS_Phys_Req_CVC */
+#define RZC_COM_SIG_UDS_PHYS_REQ_FZC_UDS_DATA   183u   /* RX UDS_Phys_Req_FZC */
+#define RZC_COM_SIG_UDS_PHYS_REQ_RZC_UDS_DATA   184u   /* RX UDS_Phys_Req_RZC */
+#define RZC_COM_SIG_UDS_PHYS_REQ_TCU_UDS_DATA   185u   /* RX UDS_Phys_Req_TCU */
+#define RZC_COM_SIG_UDS_RESP_CVC_UDS_DATA   186u   /* RX UDS_Resp_CVC */
+#define RZC_COM_SIG_UDS_RESP_FZC_UDS_DATA   187u   /* RX UDS_Resp_FZC */
+#define RZC_COM_SIG_COUNT   188u
 
 /* ====================================================================
  * RTE Signal Aliases (application-level → generated signal IDs)

@@ -46,6 +46,9 @@ class Pdu:
     e2e_data_id: int | None = None
     e2e_counter_bit: int | None = None
     e2e_crc_bit: int | None = None
+    e2e_max_delta: int = 2
+    satisfies: str = ""    # Requirement traceability (e.g., "TSR-022 FSR-001")
+    asil: str = "QM"       # ASIL classification
 
 
 @dataclass

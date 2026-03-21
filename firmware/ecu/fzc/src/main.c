@@ -44,6 +44,10 @@
 #include "IoHwAb.h"
 #include "Spi.h"
 #include "Uart.h"
+#include "CanSM.h"
+#include "FiM.h"
+#include "Xcp.h"
+#include "SchM_Timing.h"
 
 /* ==================================================================
  * SWC Headers
@@ -410,11 +414,12 @@ void Timer_10ms_Callback(ULONG arg)
     (void)arg;
     Dcm_MainFunction();
     BswM_MainFunction();
+    CanSM_MainFunction();
     Uart_MainFunction();
 }
 
 /**
- * @brief  100ms periodic timer callback — WdgM, Dem
+ * @brief  100ms periodic timer callback — WdgM, Dem, FiM
  * @param  arg  unused
  *
  * @note   Executes in timer service thread context.
@@ -475,6 +480,18 @@ int main(void)
     Dem_Init(NULL_PTR);
     Dem_SetEcuId(FZC_ECU_ID);                              /* 0x02 — FZC ECU ID */
     Dem_SetBroadcastPduId(FZC_COM_TX_DTC_BROADCAST);       /* CanIf TX for 0x500 */
+
+    /* New BSW modules (Phase 4) */
+    {
+        static const CanSM_ConfigType fzc_cansm_cfg = { 10u, 5u, 1000u, 10u };
+        static const Xcp_ConfigType fzc_xcp_cfg = {
+            .RxPduId = FZC_COM_RX_XCP_REQ_FZC,
+            .TxPduId = FZC_COM_TX_XCP_RESP_FZC,
+        };
+        CanSM_Init(&fzc_cansm_cfg);
+        Xcp_Init(&fzc_xcp_cfg);
+        SchM_TimingInit();
+    }
 
     /* Remap DTC codes from CVC-centric defaults to FZC-specific codes */
     Dem_SetDtcCode(FZC_DTC_STEER_PLAUSIBILITY, 0x00D001u); /* Steering plausibility */
@@ -566,6 +583,7 @@ int main(void)
             last_10ms_us = tick_us;
             Dcm_MainFunction();
             BswM_MainFunction();
+            CanSM_MainFunction();
             Uart_MainFunction();
         }
 

@@ -3,7 +3,7 @@
  * @brief   Unit tests for Swc_FzcCom — CAN E2E protection, message RX/TX
  * @date    2026-02-24
  *
- * @verifies SWR-FZC-019, SWR-FZC-020, SWR-FZC-026, SWR-FZC-027
+ * @verifies SSR-FZC-018, SSR-FZC-019, SSR-FZC-020, SWR-FZC-018, SWR-FZC-019, SWR-FZC-020, SWR-FZC-026, SWR-FZC-027
  *
  * Tests E2E protection (CRC-8 0x1D + alive counter + Data ID) on TX,
  * E2E verification on RX with safe defaults (brake 100%, steering center),

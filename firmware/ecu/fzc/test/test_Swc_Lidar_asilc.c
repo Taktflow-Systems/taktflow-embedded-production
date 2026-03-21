@@ -3,7 +3,7 @@
  * @brief   Unit tests for Swc_Lidar — TFMini-S lidar obstacle detection SWC
  * @date    2026-02-23
  *
- * @verifies SWR-FZC-013, SWR-FZC-014, SWR-FZC-015, SWR-FZC-016
+ * @verifies SSR-FZC-010, SSR-FZC-011, SSR-FZC-029, SSR-FZC-030, SSR-FZC-031, SSR-FZC-032, SWR-FZC-010, SWR-FZC-011, SWR-FZC-013, SWR-FZC-014, SWR-FZC-015, SWR-FZC-016
  *
  * Tests lidar initialization, frame parsing, checksum validation,
  * graduated response zones, stuck detection, timeout, signal strength

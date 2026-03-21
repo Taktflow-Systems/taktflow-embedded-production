@@ -3,7 +3,7 @@
  * @brief   Unit tests for PWM MCAL driver
  * @date    2026-02-21
  *
- * @verifies SWR-BSW-008
+ * @verifies SWR-BSW-003, SWR-BSW-008
  *
  * Tests PWM driver initialization, duty cycle setting, idle output,
  * and defensive error handling. Hardware is mocked via Pwm_Hw_*

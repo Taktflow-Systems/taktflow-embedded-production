@@ -20,6 +20,7 @@ static const CanIf_TxPduConfigType sc_tx_pdu_config[] = {
     /* canId,       upperPduId,                                      dlc, hth */
     { 0x013u,  SC_COM_TX_SC_STATUS,  4u, 0u },
     { 0x500u,  SC_COM_TX_DTC_BROADCAST,  8u, 0u },
+    { 0x557u,  SC_COM_TX_XCP_RESP_SC,  8u, 0u },
 };
 
 #define SC_CANIF_TX_PDU_COUNT  (sizeof(sc_tx_pdu_config) / sizeof(sc_tx_pdu_config[0]))
@@ -56,6 +57,13 @@ static const CanIf_RxPduConfigType sc_rx_pdu_config[] = {
     { 0x401u,  SC_COM_RX_INDICATOR_STATE,  4u, FALSE },
     { 0x402u,  SC_COM_RX_DOOR_LOCK_STATUS,  2u, FALSE },
     { 0x500u,  SC_COM_RX_DTC_BROADCAST,  8u, FALSE },
+    { 0x550u,  SC_COM_RX_XCP_REQ_CVC,  8u, FALSE },
+    { 0x551u,  SC_COM_RX_XCP_RESP_CVC,  8u, FALSE },
+    { 0x552u,  SC_COM_RX_XCP_REQ_FZC,  8u, FALSE },
+    { 0x553u,  SC_COM_RX_XCP_RESP_FZC,  8u, FALSE },
+    { 0x554u,  SC_COM_RX_XCP_REQ_RZC,  8u, FALSE },
+    { 0x555u,  SC_COM_RX_XCP_RESP_RZC,  8u, FALSE },
+    { 0x556u,  SC_COM_RX_XCP_REQ_SC,  8u, FALSE },
     { 0x600u,  SC_COM_RX_FZC_VIRTUAL_SENSORS,  8u, FALSE },
     { 0x601u,  SC_COM_RX_RZC_VIRTUAL_SENSORS,  8u, FALSE },
     { 0x644u,  SC_COM_RX_UDS_RESP_TCU,  8u, FALSE },

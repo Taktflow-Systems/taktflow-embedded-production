@@ -3,7 +3,7 @@
  * @brief   Unit tests for sc_heartbeat — per-ECU heartbeat monitoring
  * @date    2026-02-23
  *
- * @verifies SWR-SC-004, SWR-SC-005, SWR-SC-006
+ * @verifies SSR-SC-004, SSR-SC-005, SSR-SC-006, SWR-SC-004, SWR-SC-005, SWR-SC-006
  *
  * Tests 3-ECU independent timeout counters, 100ms timeout detection,
  * 30ms confirmation window, heartbeat resume during confirmation,

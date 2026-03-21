@@ -3,7 +3,7 @@
  * @brief   Unit tests for Swc_FzcSafety — safety monitor and watchdog SWC
  * @date    2026-02-23
  *
- * @verifies SWR-FZC-023, SWR-FZC-025
+ * @verifies SSR-FZC-015, SSR-FZC-016, SSR-FZC-019, SWR-FZC-015, SWR-FZC-016, SWR-FZC-019, SWR-FZC-023, SWR-FZC-025
  *
  * Tests safety initialization, watchdog feed toggling in normal and fault
  * conditions, fault aggregation into a unified mask, DTC reporting on

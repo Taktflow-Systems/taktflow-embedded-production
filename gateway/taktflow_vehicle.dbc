@@ -254,6 +254,30 @@ BO_ 2025 UDS_Resp_FZC: 8 FZC
 BO_ 2026 UDS_Resp_RZC: 8 RZC
  SG_ UDS_Resp_RZC_UDS_Data : 0|64@1+ (1,0) [0|0] "" Diag
 
+BO_ 1360 XCP_Req_CVC: 8 Diag
+ SG_ XCP_Req_CVC_Data : 0|64@1+ (1,0) [0|0] "" CVC
+
+BO_ 1361 XCP_Resp_CVC: 8 CVC
+ SG_ XCP_Resp_CVC_Data : 0|64@1+ (1,0) [0|0] "" Diag
+
+BO_ 1362 XCP_Req_FZC: 8 Diag
+ SG_ XCP_Req_FZC_Data : 0|64@1+ (1,0) [0|0] "" FZC
+
+BO_ 1363 XCP_Resp_FZC: 8 FZC
+ SG_ XCP_Resp_FZC_Data : 0|64@1+ (1,0) [0|0] "" Diag
+
+BO_ 1364 XCP_Req_RZC: 8 Diag
+ SG_ XCP_Req_RZC_Data : 0|64@1+ (1,0) [0|0] "" RZC
+
+BO_ 1365 XCP_Resp_RZC: 8 RZC
+ SG_ XCP_Resp_RZC_Data : 0|64@1+ (1,0) [0|0] "" Diag
+
+BO_ 1366 XCP_Req_SC: 8 Diag
+ SG_ XCP_Req_SC_Data : 0|64@1+ (1,0) [0|0] "" SC
+
+BO_ 1367 XCP_Resp_SC: 8 SC
+ SG_ XCP_Resp_SC_Data : 0|64@1+ (1,0) [0|0] "" Diag
+
 
 CM_ BU_ CVC "Central Vehicle Computer. STM32F446RE. ASIL D. Master coordinator.";
 CM_ BU_ FZC "Front Zone Controller. STM32F446RE. ASIL D. Steering, braking, lidar.";
@@ -301,6 +325,14 @@ CM_ BO_ 2019 "UDS physical request to TCU. ISO 14229.";
 CM_ BO_ 2024 "UDS response from CVC. ISO 14229.";
 CM_ BO_ 2025 "UDS response from FZC. ISO 14229.";
 CM_ BO_ 2026 "UDS response from RZC. ISO 14229.";
+CM_ BO_ 1360 "XCP request to CVC. ASAM MCD-1 XCP on CAN. Measurement and calibration.";
+CM_ BO_ 1361 "XCP response from CVC.";
+CM_ BO_ 1362 "XCP request to FZC.";
+CM_ BO_ 1363 "XCP response from FZC.";
+CM_ BO_ 1364 "XCP request to RZC.";
+CM_ BO_ 1365 "XCP response from RZC.";
+CM_ BO_ 1366 "XCP request to SC.";
+CM_ BO_ 1367 "XCP response from SC.";
 
 CM_ SG_ 1 EStop_Broadcast_Active "1=E-Stop active (latched until power-cycle). 0=inactive.";
 CM_ SG_ 1 EStop_Broadcast_Source "Source that triggered E-Stop. 0=button, 1=CAN, 2=SC_relay.";

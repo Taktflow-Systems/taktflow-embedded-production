@@ -24,6 +24,7 @@ static const CanIf_TxPduConfigType rzc_tx_pdu_config[] = {
     { 0x302u,  RZC_COM_TX_MOTOR_TEMPERATURE,  8u, 0u },
     { 0x303u,  RZC_COM_TX_BATTERY_STATUS,  6u, 0u },
     { 0x500u,  RZC_COM_TX_DTC_BROADCAST,  8u, 0u },
+    { 0x555u,  RZC_COM_TX_XCP_RESP_RZC,  8u, 0u },
     { 0x7EAu,  RZC_COM_TX_UDS_RESP_RZC,  8u, 0u },
 };
 
@@ -57,6 +58,13 @@ static const CanIf_RxPduConfigType rzc_rx_pdu_config[] = {
     { 0x401u,  RZC_COM_RX_INDICATOR_STATE,  4u, FALSE },
     { 0x402u,  RZC_COM_RX_DOOR_LOCK_STATUS,  2u, FALSE },
     { 0x500u,  RZC_COM_RX_DTC_BROADCAST,  8u, FALSE },
+    { 0x550u,  RZC_COM_RX_XCP_REQ_CVC,  8u, FALSE },
+    { 0x551u,  RZC_COM_RX_XCP_RESP_CVC,  8u, FALSE },
+    { 0x552u,  RZC_COM_RX_XCP_REQ_FZC,  8u, FALSE },
+    { 0x553u,  RZC_COM_RX_XCP_RESP_FZC,  8u, FALSE },
+    { 0x554u,  RZC_COM_RX_XCP_REQ_RZC,  8u, FALSE },
+    { 0x556u,  RZC_COM_RX_XCP_REQ_SC,  8u, FALSE },
+    { 0x557u,  RZC_COM_RX_XCP_RESP_SC,  8u, FALSE },
     { 0x600u,  RZC_COM_RX_FZC_VIRTUAL_SENSORS,  8u, FALSE },
     { 0x601u,  RZC_COM_RX_RZC_VIRTUAL_SENSORS,  8u, FALSE },
     { 0x644u,  RZC_COM_RX_UDS_RESP_TCU,  8u, FALSE },

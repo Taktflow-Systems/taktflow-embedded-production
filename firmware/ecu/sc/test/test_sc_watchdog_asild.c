@@ -3,7 +3,7 @@
  * @brief   Unit tests for sc_watchdog — external watchdog feed control
  * @date    2026-02-23
  *
- * @verifies SWR-SC-022
+ * @verifies SSR-SC-017, SWR-SC-022
  *
  * Tests WDI toggle when all conditions met, no toggle when conditions fail,
  * and toggle pattern correctness.

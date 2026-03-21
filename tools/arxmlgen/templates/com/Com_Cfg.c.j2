@@ -27,11 +27,11 @@ static {{ sig | c_type }}  sig_rx_{{ sig.name | lower }};
 
 static const Com_SignalConfigType {{ ecu.name }}_signal_config[] = {
     /* TX signals — no RTE binding (TX uses Rte_Read → Com_SendSignal path) */
-    /* id, bitPos, bitSize, type,       pduId,                      shadowBuf,       rteSignalId */
+    /* id, bitPos, bitSize, type,       pduId,                      shadowBuf,       rteSignalId,  updateBit */
 {% set ns = namespace(com_id=0) %}
 {% for pdu in ecu.tx_pdus %}
 {% for sig in pdu.signals %}
-    { {{ "%2d"|format(ns.com_id) }}u, {{ "%4d"|format(sig.bit_position) }}u, {{ "%5d"|format(sig.bit_size) }}u, {{ sig | com_type }}, {{ ecu.prefix }}_COM_TX_{{ pdu.name | upper_snake }}, &sig_tx_{{ sig.name | lower }}, COM_RTE_SIGNAL_NONE },
+    { {{ "%2d"|format(ns.com_id) }}u, {{ "%4d"|format(sig.bit_position) }}u, {{ "%5d"|format(sig.bit_size) }}u, {{ sig | com_type }}, {{ ecu.prefix }}_COM_TX_{{ pdu.name | upper_snake }}, &sig_tx_{{ sig.name | lower }}, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
 {% set ns.com_id = ns.com_id + 1 %}
 {% endfor %}
 {% endfor %}
@@ -39,7 +39,7 @@ static const Com_SignalConfigType {{ ecu.name }}_signal_config[] = {
     /* RX signals — auto-push to RTE on reception */
 {% for pdu in ecu.rx_pdus %}
 {% for sig in pdu.signals %}
-    { {{ "%2d"|format(ns.com_id) }}u, {{ "%4d"|format(sig.bit_position) }}u, {{ "%5d"|format(sig.bit_size) }}u, {{ sig | com_type }}, {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }}, &sig_rx_{{ sig.name | lower }}, {{ ecu.prefix }}_SIG_{{ sig.name | upper_snake }} },
+    { {{ "%2d"|format(ns.com_id) }}u, {{ "%4d"|format(sig.bit_position) }}u, {{ "%5d"|format(sig.bit_size) }}u, {{ sig | com_type }}, {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }}, &sig_rx_{{ sig.name | lower }}, {{ ecu.prefix }}_SIG_{{ sig.name | upper_snake }}, COM_NO_UPDATE_BIT },
 {% set ns.com_id = ns.com_id + 1 %}
 {% endfor %}
 {% endfor %}
@@ -54,9 +54,9 @@ static const Com_SignalConfigType {{ ecu.name }}_signal_config[] = {
  * ================================================================== */
 
 static const Com_TxPduConfigType {{ ecu.name }}_tx_pdu_config[] = {
-    /* pduId,                      dlc, cycleMs */
+    /* pduId,                      dlc, cycleMs, txMode,              e2eProt, dataId, cntBit, crcBit */
 {% for pdu in ecu.tx_pdus %}
-    { {{ ecu.prefix }}_COM_TX_{{ pdu.name | upper_snake }}, {{ "%5d"|format(pdu.dlc) }}u, {{ "%5d"|format(pdu.cycle_ms) }}u },   /* CAN {{ pdu.can_id | hex3 }} */
+    { {{ ecu.prefix }}_COM_TX_{{ pdu.name | upper_snake }}, {{ "%5d"|format(pdu.dlc) }}u, {{ "%5d"|format(pdu.cycle_ms) }}u, {{ "COM_TX_MODE_DIRECT  " if pdu.cycle_ms == 0 else "COM_TX_MODE_PERIODIC" }}, {{ "TRUE " if pdu.e2e_protected else "FALSE" }}, {{ "%2d"|format(pdu.e2e_data_id if pdu.e2e_data_id is not none else 0) }}u, {{ "%2d"|format(pdu.e2e_counter_bit if pdu.e2e_counter_bit is not none else 0) }}u, {{ "%2d"|format(pdu.e2e_crc_bit if pdu.e2e_crc_bit is not none else 8) }}u },   /* CAN {{ pdu.can_id | hex3 }}{{ " @satisfies " + pdu.satisfies if pdu.satisfies else "" }} */
 {% endfor %}
 };
 
@@ -67,9 +67,9 @@ static const Com_TxPduConfigType {{ ecu.name }}_tx_pdu_config[] = {
  * ================================================================== */
 
 static const Com_RxPduConfigType {{ ecu.name }}_rx_pdu_config[] = {
-    /* pduId,                     dlc, timeoutMs */
+    /* pduId,                     dlc, timeoutMs, e2eProt, dataId, maxDelta, demEvt, smValid, smInvalid */
 {% for pdu in ecu.rx_pdus %}
-    { {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }}, {{ "%5d"|format(pdu.dlc) }}u, {{ "%5d"|format(pdu.timeout_ms) }}u },   /* CAN {{ pdu.can_id | hex3 }} */
+    { {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }}, {{ "%5d"|format(pdu.dlc) }}u, {{ "%5d"|format(pdu.timeout_ms) }}u, {{ "TRUE " if pdu.e2e_protected else "FALSE" }}, {{ "%2d"|format(pdu.e2e_data_id if pdu.e2e_data_id is not none else 0) }}u, {{ "%2d"|format(pdu.e2e_max_delta) }}u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN {{ pdu.can_id | hex3 }}{{ " @satisfies " + pdu.satisfies if pdu.satisfies else "" }} */
 {% endfor %}
 };
 

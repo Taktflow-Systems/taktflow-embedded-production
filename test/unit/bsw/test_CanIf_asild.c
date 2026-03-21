@@ -3,7 +3,7 @@
  * @brief   Unit tests for CAN Interface (CanIf) module
  * @date    2026-02-21
  *
- * @verifies SWR-BSW-011, SWR-BSW-012
+ * @verifies SWR-BSW-011, SWR-BSW-012, TSR-022
  *
  * Tests PDU routing (CAN ID <-> PduId mapping), transmit path,
  * receive indication, and controller mode management.

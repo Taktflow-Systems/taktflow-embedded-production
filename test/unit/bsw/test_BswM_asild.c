@@ -3,7 +3,7 @@
  * @brief   Unit tests for BSW Mode Manager
  * @date    2026-02-21
  *
- * @verifies SWR-BSW-022
+ * @verifies SWR-BSW-022, SWR-BSW-028
  *
  * Tests ECU mode transitions (STARTUP -> RUN -> DEGRADED -> SAFE_STOP ->
  * SHUTDOWN), rule-based mode actions via config callbacks, and

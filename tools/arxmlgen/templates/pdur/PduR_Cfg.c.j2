@@ -9,7 +9,9 @@
 static const PduR_RoutingTableType {{ ecu.name }}_pdur_routing[] = {
     /* RxPduId (CanIf),                            Destination,       UpperPduId (Com) */
 {% for pdu in ecu.rx_pdus %}
-{% if pdu.name == ecu.uds_rx_pdu_name | default('') %}
+{% if pdu.name.startswith('XCP_Req') %}
+    { {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }},  PDUR_DEST_XCP,  {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }} },   /* {{ pdu.can_id | hex3 }} {{ pdu.name }} → XCP */
+{% elif pdu.name == ecu.uds_rx_pdu_name | default('') %}
     { {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }},  PDUR_DEST_CANTP,  {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }} },   /* {{ pdu.can_id | hex3 }} {{ pdu.name }} → CanTp (UDS) */
 {% else %}
     { {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }},  PDUR_DEST_COM,  {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }} },   /* {{ pdu.can_id | hex3 }} {{ pdu.name }} */

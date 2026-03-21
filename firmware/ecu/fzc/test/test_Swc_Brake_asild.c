@@ -3,7 +3,7 @@
  * @brief   Unit tests for Swc_Brake — ASIL D brake servo control SWC
  * @date    2026-02-23
  *
- * @verifies SWR-FZC-009, SWR-FZC-010, SWR-FZC-011, SWR-FZC-012
+ * @verifies SSR-FZC-005, SSR-FZC-006, SSR-FZC-007, SSR-FZC-021, SSR-FZC-022, SSR-FZC-023, SSR-FZC-024, SSR-FZC-025, SSR-FZC-026, SSR-FZC-027, SWR-FZC-005, SWR-FZC-006, SWR-FZC-007, SWR-FZC-009, SWR-FZC-010, SWR-FZC-011, SWR-FZC-012
  *
  * Tests brake initialization, normal PWM output, feedback verification
  * with debounce, command timeout with auto-brake latch, e-stop immediate

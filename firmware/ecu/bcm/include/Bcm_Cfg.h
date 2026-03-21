@@ -189,7 +189,15 @@
 #define BCM_SIG_VEHICLE_STATE_MODE   187u
 #define BCM_SIG_VEHICLE_STATE_SPEED_LIMIT   188u
 #define BCM_SIG_VEHICLE_STATE_TORQUE_LIMIT   189u
-#define BCM_SIG_COUNT   190u
+#define BCM_SIG_XCP_REQ_CVC_DATA   190u
+#define BCM_SIG_XCP_REQ_FZC_DATA   191u
+#define BCM_SIG_XCP_REQ_RZC_DATA   192u
+#define BCM_SIG_XCP_REQ_SC_DATA   193u
+#define BCM_SIG_XCP_RESP_CVC_DATA   194u
+#define BCM_SIG_XCP_RESP_FZC_DATA   195u
+#define BCM_SIG_XCP_RESP_RZC_DATA   196u
+#define BCM_SIG_XCP_RESP_SC_DATA   197u
+#define BCM_SIG_COUNT   198u
 
 
 /* ====================================================================
@@ -228,17 +236,25 @@
 #define BCM_COM_RX_BATTERY_STATUS    19u   /* CAN 0x303 */
 #define BCM_COM_RX_BODY_CONTROL_CMD    20u   /* CAN 0x350 */
 #define BCM_COM_RX_DTC_BROADCAST    21u   /* CAN 0x500 */
-#define BCM_COM_RX_FZC_VIRTUAL_SENSORS    22u   /* CAN 0x600 */
-#define BCM_COM_RX_RZC_VIRTUAL_SENSORS    23u   /* CAN 0x601 */
-#define BCM_COM_RX_UDS_RESP_TCU    24u   /* CAN 0x644 */
-#define BCM_COM_RX_UDS_FUNC_REQUEST    25u   /* CAN 0x7DF */
-#define BCM_COM_RX_UDS_PHYS_REQ_CVC    26u   /* CAN 0x7E0 */
-#define BCM_COM_RX_UDS_PHYS_REQ_FZC    27u   /* CAN 0x7E1 */
-#define BCM_COM_RX_UDS_PHYS_REQ_RZC    28u   /* CAN 0x7E2 */
-#define BCM_COM_RX_UDS_PHYS_REQ_TCU    29u   /* CAN 0x7E3 */
-#define BCM_COM_RX_UDS_RESP_CVC    30u   /* CAN 0x7E8 */
-#define BCM_COM_RX_UDS_RESP_FZC    31u   /* CAN 0x7E9 */
-#define BCM_COM_RX_UDS_RESP_RZC    32u   /* CAN 0x7EA */
+#define BCM_COM_RX_XCP_REQ_CVC    22u   /* CAN 0x550 */
+#define BCM_COM_RX_XCP_RESP_CVC    23u   /* CAN 0x551 */
+#define BCM_COM_RX_XCP_REQ_FZC    24u   /* CAN 0x552 */
+#define BCM_COM_RX_XCP_RESP_FZC    25u   /* CAN 0x553 */
+#define BCM_COM_RX_XCP_REQ_RZC    26u   /* CAN 0x554 */
+#define BCM_COM_RX_XCP_RESP_RZC    27u   /* CAN 0x555 */
+#define BCM_COM_RX_XCP_REQ_SC    28u   /* CAN 0x556 */
+#define BCM_COM_RX_XCP_RESP_SC    29u   /* CAN 0x557 */
+#define BCM_COM_RX_FZC_VIRTUAL_SENSORS    30u   /* CAN 0x600 */
+#define BCM_COM_RX_RZC_VIRTUAL_SENSORS    31u   /* CAN 0x601 */
+#define BCM_COM_RX_UDS_RESP_TCU    32u   /* CAN 0x644 */
+#define BCM_COM_RX_UDS_FUNC_REQUEST    33u   /* CAN 0x7DF */
+#define BCM_COM_RX_UDS_PHYS_REQ_CVC    34u   /* CAN 0x7E0 */
+#define BCM_COM_RX_UDS_PHYS_REQ_FZC    35u   /* CAN 0x7E1 */
+#define BCM_COM_RX_UDS_PHYS_REQ_RZC    36u   /* CAN 0x7E2 */
+#define BCM_COM_RX_UDS_PHYS_REQ_TCU    37u   /* CAN 0x7E3 */
+#define BCM_COM_RX_UDS_RESP_CVC    38u   /* CAN 0x7E8 */
+#define BCM_COM_RX_UDS_RESP_FZC    39u   /* CAN 0x7E9 */
+#define BCM_COM_RX_UDS_RESP_RZC    40u   /* CAN 0x7EA */
 
 /* ====================================================================
  * Com Signal IDs (index into Com signal config table)
@@ -409,23 +425,31 @@
 /* BCM_COM_SIG_DTC_BROADCAST_OCCURRENCE_COUNT =  161u   RX DTC_Broadcast (dup, ID only) */
 /* BCM_COM_SIG_DTC_BROADCAST_FREEZE_FRAME_0 =  162u   RX DTC_Broadcast (dup, ID only) */
 /* BCM_COM_SIG_DTC_BROADCAST_FREEZE_FRAME_1 =  163u   RX DTC_Broadcast (dup, ID only) */
-#define BCM_COM_SIG_FZC_VIRTUAL_SENSORS_STEER_ANGLE_RAW   164u   /* RX FZC_Virtual_Sensors */
-#define BCM_COM_SIG_FZC_VIRTUAL_SENSORS_BRAKE_POS_ADC   165u   /* RX FZC_Virtual_Sensors */
-#define BCM_COM_SIG_FZC_VIRTUAL_SENSORS_BRAKE_CURRENT_M_A   166u   /* RX FZC_Virtual_Sensors */
-#define BCM_COM_SIG_RZC_VIRTUAL_SENSORS_MOTOR_CURRENT_M_A   167u   /* RX RZC_Virtual_Sensors */
-#define BCM_COM_SIG_RZC_VIRTUAL_SENSORS_MOTOR_TEMP_D_C   168u   /* RX RZC_Virtual_Sensors */
-#define BCM_COM_SIG_RZC_VIRTUAL_SENSORS_BATT_VOLTAGE_M_V   169u   /* RX RZC_Virtual_Sensors */
-#define BCM_COM_SIG_RZC_VIRTUAL_SENSORS_MOTOR_SPEED_RPM   170u   /* RX RZC_Virtual_Sensors */
-#define BCM_COM_SIG_UDS_RESP_TCU_UDS_DATA   171u   /* RX UDS_Resp_TCU */
-#define BCM_COM_SIG_UDS_FUNC_REQUEST_UDS_DATA   172u   /* RX UDS_Func_Request */
-#define BCM_COM_SIG_UDS_PHYS_REQ_CVC_UDS_DATA   173u   /* RX UDS_Phys_Req_CVC */
-#define BCM_COM_SIG_UDS_PHYS_REQ_FZC_UDS_DATA   174u   /* RX UDS_Phys_Req_FZC */
-#define BCM_COM_SIG_UDS_PHYS_REQ_RZC_UDS_DATA   175u   /* RX UDS_Phys_Req_RZC */
-#define BCM_COM_SIG_UDS_PHYS_REQ_TCU_UDS_DATA   176u   /* RX UDS_Phys_Req_TCU */
-#define BCM_COM_SIG_UDS_RESP_CVC_UDS_DATA   177u   /* RX UDS_Resp_CVC */
-#define BCM_COM_SIG_UDS_RESP_FZC_UDS_DATA   178u   /* RX UDS_Resp_FZC */
-#define BCM_COM_SIG_UDS_RESP_RZC_UDS_DATA   179u   /* RX UDS_Resp_RZC */
-#define BCM_COM_SIG_COUNT   180u
+#define BCM_COM_SIG_XCP_REQ_CVC_DATA   164u   /* RX XCP_Req_CVC */
+#define BCM_COM_SIG_XCP_RESP_CVC_DATA   165u   /* RX XCP_Resp_CVC */
+#define BCM_COM_SIG_XCP_REQ_FZC_DATA   166u   /* RX XCP_Req_FZC */
+#define BCM_COM_SIG_XCP_RESP_FZC_DATA   167u   /* RX XCP_Resp_FZC */
+#define BCM_COM_SIG_XCP_REQ_RZC_DATA   168u   /* RX XCP_Req_RZC */
+#define BCM_COM_SIG_XCP_RESP_RZC_DATA   169u   /* RX XCP_Resp_RZC */
+#define BCM_COM_SIG_XCP_REQ_SC_DATA   170u   /* RX XCP_Req_SC */
+#define BCM_COM_SIG_XCP_RESP_SC_DATA   171u   /* RX XCP_Resp_SC */
+#define BCM_COM_SIG_FZC_VIRTUAL_SENSORS_STEER_ANGLE_RAW   172u   /* RX FZC_Virtual_Sensors */
+#define BCM_COM_SIG_FZC_VIRTUAL_SENSORS_BRAKE_POS_ADC   173u   /* RX FZC_Virtual_Sensors */
+#define BCM_COM_SIG_FZC_VIRTUAL_SENSORS_BRAKE_CURRENT_M_A   174u   /* RX FZC_Virtual_Sensors */
+#define BCM_COM_SIG_RZC_VIRTUAL_SENSORS_MOTOR_CURRENT_M_A   175u   /* RX RZC_Virtual_Sensors */
+#define BCM_COM_SIG_RZC_VIRTUAL_SENSORS_MOTOR_TEMP_D_C   176u   /* RX RZC_Virtual_Sensors */
+#define BCM_COM_SIG_RZC_VIRTUAL_SENSORS_BATT_VOLTAGE_M_V   177u   /* RX RZC_Virtual_Sensors */
+#define BCM_COM_SIG_RZC_VIRTUAL_SENSORS_MOTOR_SPEED_RPM   178u   /* RX RZC_Virtual_Sensors */
+#define BCM_COM_SIG_UDS_RESP_TCU_UDS_DATA   179u   /* RX UDS_Resp_TCU */
+#define BCM_COM_SIG_UDS_FUNC_REQUEST_UDS_DATA   180u   /* RX UDS_Func_Request */
+#define BCM_COM_SIG_UDS_PHYS_REQ_CVC_UDS_DATA   181u   /* RX UDS_Phys_Req_CVC */
+#define BCM_COM_SIG_UDS_PHYS_REQ_FZC_UDS_DATA   182u   /* RX UDS_Phys_Req_FZC */
+#define BCM_COM_SIG_UDS_PHYS_REQ_RZC_UDS_DATA   183u   /* RX UDS_Phys_Req_RZC */
+#define BCM_COM_SIG_UDS_PHYS_REQ_TCU_UDS_DATA   184u   /* RX UDS_Phys_Req_TCU */
+#define BCM_COM_SIG_UDS_RESP_CVC_UDS_DATA   185u   /* RX UDS_Resp_CVC */
+#define BCM_COM_SIG_UDS_RESP_FZC_UDS_DATA   186u   /* RX UDS_Resp_FZC */
+#define BCM_COM_SIG_UDS_RESP_RZC_UDS_DATA   187u   /* RX UDS_Resp_RZC */
+#define BCM_COM_SIG_COUNT   188u
 
 /* ====================================================================
  * E2E Data IDs

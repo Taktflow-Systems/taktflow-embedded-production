@@ -22,16 +22,6 @@
  * ==================================================================== */
 
 /**
- * @brief  Write Torque_Request_PedalFault (boolean)
- * @param  value  Signal value to transmit
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Write_Torque_Request_PedalFault(boolean value)
-{
-    return Rte_Write(CVC_SIG_TORQUE_REQUEST_PEDAL_FAULT, (uint32_t)value);
-}
-
-/**
  * @brief  Write Torque_Request_PedalPosition2 (uint16_t)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
@@ -39,6 +29,16 @@ static inline Rte_StatusType Rte_Write_Torque_Request_PedalFault(boolean value)
 static inline Rte_StatusType Rte_Write_Torque_Request_PedalPosition2(uint16_t value)
 {
     return Rte_Write(CVC_SIG_TORQUE_REQUEST_PEDAL_POSITION_2, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Torque_Request_PedalFault (boolean)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Torque_Request_PedalFault(boolean value)
+{
+    return Rte_Write(CVC_SIG_TORQUE_REQUEST_PEDAL_FAULT, (uint32_t)value);
 }
 
 /**

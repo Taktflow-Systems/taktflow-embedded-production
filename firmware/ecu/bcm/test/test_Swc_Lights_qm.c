@@ -3,7 +3,7 @@
  * @brief   Unit tests for Lights SWC — headlamp and tail light control
  * @date    2026-02-23
  *
- * @verifies SWR-BCM-003, SWR-BCM-004, SWR-BCM-005
+ * @verifies SSR-BCM-003, SSR-BCM-004, SSR-BCM-005, SWR-BCM-003, SWR-BCM-004, SWR-BCM-005
  *
  * Tests light initialization (all off), automatic headlamp activation based on
  * vehicle speed and driving state, manual override, tail light following

@@ -44,6 +44,9 @@
 #include "Dcm.h"
 #include "Rte.h"
 #include "IoHwAb.h"
+#include "CanSM.h"
+#include "Xcp.h"
+#include "SchM_Timing.h"
 
 /* ==================================================================
  * SWC Headers
@@ -370,6 +373,18 @@ int main(void)
     Dem_SetEcuId(RZC_ECU_ID);                              /* 0x03 — RZC ECU ID */
     Dem_SetBroadcastPduId(RZC_COM_TX_DTC_BROADCAST);       /* CanIf TX for 0x500 */
 
+    /* New BSW modules (Phase 4) */
+    {
+        static const CanSM_ConfigType rzc_cansm_cfg = { 10u, 5u, 1000u, 10u };
+        static const Xcp_ConfigType rzc_xcp_cfg = {
+            .RxPduId = RZC_COM_RX_XCP_REQ_RZC,
+            .TxPduId = RZC_COM_TX_XCP_RESP_RZC,
+        };
+        CanSM_Init(&rzc_cansm_cfg);
+        Xcp_Init(&rzc_xcp_cfg);
+        SchM_TimingInit();
+    }
+
     /* Remap DTC codes from CVC-centric defaults to RZC-specific codes */
     Dem_SetDtcCode(RZC_DTC_OVERCURRENT,    0x00E301u);     /* SG-001 overcurrent */
     Dem_SetDtcCode(RZC_DTC_OVERTEMP,       0x00E302u);     /* Motor overtemp */
@@ -450,6 +465,7 @@ int main(void)
             last_10ms_us = tick_us;
             Dcm_MainFunction();
             BswM_MainFunction();
+            CanSM_MainFunction();
         }
 
         /* 100ms tasks: WdgM, Dem (DTC broadcast) */
