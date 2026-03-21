@@ -12,37 +12,36 @@
  *          Note: CVC_EVT_SELF_TEST_PASS in INIT is deferred (guarded by
  *          heartbeat check in MainFunction). OnEvent sets a pending flag
  *          and returns without changing state. This is tested explicitly.
+ *
+ *          Build pattern: include-the-source. Real AUTOSAR headers are
+ *          included first for types/enums, then stubs are defined with
+ *          matching signatures, then the .c source is included (header
+ *          include guards prevent double-inclusion).
  */
+
+/* ==================================================================
+ * 1. Include real AUTOSAR headers — get all types, enums, declarations.
+ *    Order matters: Platform_Types -> Std_Types -> ComStack_Types ->
+ *    module headers.  Include guards prevent double-inclusion when
+ *    Swc_VehicleState.c re-includes them.
+ * ================================================================== */
+
 #include "unity.h"
+#include "Std_Types.h"
+#include "ComStack_Types.h"
+#include "Dem.h"
+#include "BswM.h"
+#include "Com.h"
+#include "Rte.h"
 
 /* ==================================================================
- * Local type definitions (mirror AUTOSAR / Platform_Types)
+ * 2. Pre-define CVC application constants that Swc_VehicleState.c needs.
+ *    These are normally in Cvc_App.h but the .c file includes Cvc_Cfg.h
+ *    (which uses #ifndef guards), so we define them here before the
+ *    source is included.
  * ================================================================== */
 
-typedef unsigned char  uint8;
-typedef unsigned short uint16;
-typedef unsigned int   uint32;
-typedef uint8 Std_ReturnType;
-
-#define E_OK        0u
-#define E_NOT_OK    1u
-#define TRUE        1u
-#define FALSE       0u
-#define NULL_PTR    ((void*)0)
-
-/* ==================================================================
- * Vehicle State / Event definitions (from Cvc_Cfg.h / Cvc_App.h)
- * ================================================================== */
-
-#define CVC_STATE_INIT          0u
-#define CVC_STATE_RUN           1u
-#define CVC_STATE_DEGRADED      2u
-#define CVC_STATE_LIMP          3u
-#define CVC_STATE_SAFE_STOP     4u
-#define CVC_STATE_SHUTDOWN      5u
-#define CVC_STATE_COUNT         6u
-#define CVC_STATE_INVALID       0xFFu
-
+/* Vehicle state events (from Cvc_App.h) */
 #define CVC_EVT_SELF_TEST_PASS      0u
 #define CVC_EVT_SELF_TEST_FAIL      1u
 #define CVC_EVT_PEDAL_FAULT_SINGLE  2u
@@ -61,8 +60,9 @@ typedef uint8 Std_ReturnType;
 #define CVC_EVT_BATTERY_CRIT       15u
 #define CVC_EVT_CREEP_FAULT        16u
 #define CVC_EVT_COUNT              17u
+#define CVC_STATE_INVALID          0xFFu
 
-/* Fault latching */
+/* Fault latching (from Cvc_App.h) */
 #define CVC_LATCH_IDX_ESTOP             0u
 #define CVC_LATCH_IDX_SC_KILL           1u
 #define CVC_LATCH_IDX_MOTOR_CUTOFF      2u
@@ -74,90 +74,56 @@ typedef uint8 Std_ReturnType;
 #define CVC_LATCH_IDX_CREEP             8u
 #define CVC_LATCH_COUNT                 9u
 
-/* Comm status */
-#define CVC_COMM_OK         0u
-#define CVC_COMM_TIMEOUT    1u
-
-/* INIT hold */
-#define CVC_INIT_HOLD_CYCLES      500u
-#ifndef CVC_POST_INIT_GRACE_CYCLES
-  #define CVC_POST_INIT_GRACE_CYCLES  300u
-#endif
-
-/* Safe-stop / unlatch */
+/* Safe-stop / unlatch (from Cvc_App.h) */
 #define CVC_SAFE_STOP_RECOVERY_CYCLES   200u
 #define CVC_FAULT_UNLATCH_CYCLES        300u
 
-/* Pedal */
+/* Pedal fault enum (from Cvc_App.h) */
 #define CVC_PEDAL_NO_FAULT      0u
 #define CVC_PEDAL_PLAUSIBILITY  1u
 #define CVC_PEDAL_STUCK         2u
 
-/* DTC */
-#define CVC_DTC_MOTOR_CUTOFF_RX     9u
-#define CVC_DTC_BRAKE_FAULT_RX     10u
-#define CVC_DTC_STEERING_FAULT_RX  11u
-#define CVC_DTC_BATT_UNDERVOLT     13u
-#define CVC_DTC_CREEP_FAULT        18u
-#define CVC_DTC_SAFE_STOP_ENTRY    23u
-#define DEM_EVENT_STATUS_FAILED     1u
+/* DTC IDs — will be re-defined by Cvc_App.h via Cvc_Cfg.h.
+ * Only pre-define IDs that Cvc_App.h does NOT define. The rest
+ * come from the generated header chain. */
 
-/* ECU */
+/* ECU (from Cvc_App.h) */
 #define CVC_ECU_ID_CVC  0x01u
 
-/* BswM modes */
-#define BSWM_STARTUP    0u
-#define BSWM_RUN        1u
-#define BSWM_DEGRADED   2u
-#define BSWM_SAFE_STOP  3u
-#define BSWM_SHUTDOWN   4u
+/* Post-init grace (platform-neutral default for unit tests) */
+#ifndef CVC_POST_INIT_GRACE_CYCLES
+  #define CVC_POST_INIT_GRACE_CYCLES  300u
+#endif
 
-/* Creep guard */
+/* Creep guard (from Cvc_App.h) */
 #define CVC_CREEP_SPEED_THRESH     50u
 #define CVC_CREEP_TORQUE_THRESH    50u
 #define CVC_CREEP_DEBOUNCE_TICKS   20u
 
-/* Com signal IDs (mocked, not used directly in OnEvent) */
-#define CVC_COM_SIG_BRAKE_FAULT_FAULT_TYPE           103u
-#define CVC_COM_SIG_MOTOR_CUTOFF_REQ_REQUEST_TYPE    109u
-#define CVC_COM_SIG_MOTOR_STATUS_MOTOR_FAULT_STATUS  125u
-
-/* Signal IDs (mocked) */
-#define CVC_SIG_PEDAL_FAULT       19u
-#define CVC_SIG_VEHICLE_STATE     20u
-#define CVC_SIG_TORQUE_REQUEST    21u
-#define CVC_SIG_ESTOP_ACTIVE      22u
-#define CVC_SIG_FZC_COMM_STATUS   23u
-#define CVC_SIG_RZC_COMM_STATUS   24u
-#define CVC_SIG_MOTOR_SPEED       25u
-#define CVC_SIG_MOTOR_CUTOFF      28u
-#define CVC_SIG_STEERING_FAULT    29u
-#define CVC_SIG_BRAKE_FAULT       30u
-#define CVC_SIG_SC_RELAY_KILL     31u
-#define CVC_SIG_BATTERY_STATUS    32u
-#define CVC_SIG_MOTOR_FAULT_RZC   33u
-#define CVC_SIG_PEDAL_POSITION    18u
-
 /* ==================================================================
- * Mock: RTE
+ * 3. Stub function implementations — signatures MUST match headers.
+ *    Defined before #include of .c so they satisfy the linker; header
+ *    include guards prevent the .c from re-declaring them.
  * ================================================================== */
+
+/* ---- Mock: RTE ---- */
 
 static uint32 mock_rte_signals[48];
 static Std_ReturnType mock_rte_read_return;
 static Std_ReturnType mock_rte_write_return;
 
-static uint16 mock_rte_write_last_id;
+static Rte_SignalIdType mock_rte_write_last_id;
 static uint32 mock_rte_write_last_value;
 static uint8  mock_rte_write_call_count;
 
-Std_ReturnType Rte_Read(uint16 SignalId, uint32* DataPtr)
+Std_ReturnType Rte_Read(Rte_SignalIdType SignalId, uint32* DataPtr)
 {
     if ((DataPtr == NULL_PTR) || (SignalId >= 48u)) { return E_NOT_OK; }
     *DataPtr = mock_rte_signals[SignalId];
     return mock_rte_read_return;
 }
 
-Std_ReturnType Rte_Write(uint16 SignalId, uint32 Data)
+Std_ReturnType Rte_Write(Rte_SignalIdType SignalId, uint32 Data)
 {
     if (SignalId >= 48u) { return E_NOT_OK; }
     mock_rte_write_last_id    = SignalId;
@@ -166,56 +132,69 @@ Std_ReturnType Rte_Write(uint16 SignalId, uint32 Data)
     return mock_rte_write_return;
 }
 
-/* ==================================================================
- * Mock: BswM
- * ================================================================== */
+/* ---- Mock: BswM ---- */
 
 static uint8  mock_bswm_mode;
 static uint8  mock_bswm_call_count;
 
-void BswM_RequestMode(uint8 mode)
+Std_ReturnType BswM_RequestMode(BswM_RequesterIdType RequesterId,
+                                 BswM_ModeType RequestedMode)
 {
-    mock_bswm_mode = mode;
+    (void)RequesterId;
+    mock_bswm_mode = (uint8)RequestedMode;
     mock_bswm_call_count++;
+    return E_OK;
 }
 
-/* ==================================================================
- * Mock: Dem
- * ================================================================== */
+/* ---- Mock: Dem ---- */
 
-static uint16 mock_dem_last_dtc;
-static uint8  mock_dem_last_status;
-static uint8  mock_dem_call_count;
+static Dem_EventIdType mock_dem_last_dtc;
+static uint8           mock_dem_last_status;
+static uint8           mock_dem_call_count;
 
-void Dem_ReportErrorStatus(uint16 EventId, uint8 EventStatus)
+void Dem_ReportErrorStatus(Dem_EventIdType EventId,
+                            Dem_EventStatusType EventStatus)
 {
     mock_dem_last_dtc    = EventId;
-    mock_dem_last_status = EventStatus;
+    mock_dem_last_status = (uint8)EventStatus;
     mock_dem_call_count++;
 }
 
-/* ==================================================================
- * Mock: Com
- * ================================================================== */
+/* ---- Mock: Com ---- */
 
 static uint32 mock_com_signals[256];
 
-Std_ReturnType Com_ReceiveSignal(uint16 SignalId, uint32* DataPtr)
+Std_ReturnType Com_ReceiveSignal(Com_SignalIdType SignalId, void* SignalDataPtr)
 {
+    uint32* DataPtr = (uint32*)SignalDataPtr;
     if ((DataPtr == NULL_PTR) || (SignalId >= 256u)) { return E_NOT_OK; }
     *DataPtr = mock_com_signals[SignalId];
     return E_OK;
 }
 
-Std_ReturnType Com_SendSignal(uint16 SignalId, const uint32* DataPtr)
+Std_ReturnType Com_SendSignal(Com_SignalIdType SignalId,
+                               const void* SignalDataPtr)
 {
     (void)SignalId;
-    (void)DataPtr;
+    (void)SignalDataPtr;
     return E_OK;
 }
 
 /* ==================================================================
- * Include the source under test
+ * 4. Stubs for other functions declared in headers but not needed.
+ *    Prevents linker errors from Rte.h pulling in WdgM / IoHwAb.
+ * ================================================================== */
+
+/* WdgM stub — Rte.h includes WdgM.h which declares this */
+Std_ReturnType WdgM_CheckpointReached(WdgM_SupervisedEntityIdType SEId)
+{ (void)SEId; return E_OK; }
+
+/* Heartbeat stub — Swc_VehicleState.c calls this on CAN_RESTORED */
+void Swc_Heartbeat_ResetCommStatus(void) {}
+
+/* ==================================================================
+ * 5. Include the source under test.
+ *    All headers it #includes are already satisfied by include guards.
  * ================================================================== */
 
 #include "../../../firmware/ecu/cvc/src/Swc_VehicleState.c"
