@@ -38,6 +38,7 @@ class MotorModel:
         self._hw_disabled = False    # firmware overcurrent/overtemp disable
         self._overcurrent_latch = False  # injected overcurrent persists
         self._injected_current_ma = 0.0
+        self._temp_override = None       # MQTT inject_temp override (holds temp)
         self._last_time = time.monotonic()
 
     def update(self, duty_pct: float, direction: int, dt: float = None,
@@ -90,10 +91,13 @@ class MotorModel:
             self.current_ma = 0.0
 
         # Thermal model — use zero current for heating when HW disabled
-        thermal_current = 0.0 if self._hw_disabled else self.current_ma
-        heat_input = (thermal_current / 1000.0) ** 2 * self.R_THERMAL
-        heat_loss = (self.temp_c - self.T_AMBIENT) / self.R_COOL
-        self.temp_c += (heat_input - heat_loss) * dt  # real-time thermal (overtemp scenario uses direct MQTT injection)
+        if self._temp_override is not None:
+            self.temp_c = self._temp_override  # MQTT injection holds temp
+        else:
+            thermal_current = 0.0 if self._hw_disabled else self.current_ma
+            heat_input = (thermal_current / 1000.0) ** 2 * self.R_THERMAL
+            heat_loss = (self.temp_c - self.T_AMBIENT) / self.R_COOL
+            self.temp_c += (heat_input - heat_loss) * dt
 
         # Fault detection — threshold above rated max (25A) but below
         # injected fault level (28A) so natural operation never triggers
@@ -136,6 +140,7 @@ class MotorModel:
         self._hw_disabled = False
         self._overcurrent_latch = False
         self._injected_current_ma = 0.0
+        self._temp_override = None
 
     def reset_state(self):
         """Full physics reset — return to power-on defaults."""

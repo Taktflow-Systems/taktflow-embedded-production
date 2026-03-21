@@ -175,9 +175,11 @@ def main():
     else:
         check(6, "0x500 present", False, "No DTC on bus")
 
-    # Cleanup: stop sustained injection, restore normal temp
+    # Cleanup: stop sustained injection, clear temp override
     _inject_stop.set()
     t.join(timeout=2)
+    mqtt_pub.single(MQTT_TOPIC, json.dumps({"type": "clear_temp_override"}),
+                    hostname=MQTT_HOST, port=1883)
     inject_temp(25.0)
 
     bus.shutdown()

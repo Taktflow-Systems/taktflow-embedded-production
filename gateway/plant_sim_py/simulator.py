@@ -169,7 +169,11 @@ class PlantSimulator:
         elif cmd_type == "inject_temp":
             temp_c = float(cmd.get("temp_c", 95.0))
             self.motor.temp_c = temp_c
-            log.info("Injected motor temperature: %.1f°C", temp_c)
+            self.motor._temp_override = temp_c  # Hold temp against physics
+            log.info("Injected motor temperature: %.1f°C (override held)", temp_c)
+        elif cmd_type == "clear_temp_override":
+            self.motor._temp_override = None
+            log.info("Cleared motor temperature override")
         elif cmd_type == "steer_fault":
             self.steering.fault = True
             log.info("Injected steering fault")

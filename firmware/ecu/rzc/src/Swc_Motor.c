@@ -501,11 +501,17 @@ void Swc_Motor_MainFunction(void)
 #ifdef SIL_DIAG
         {
             static uint32 prev_oc = 0xFFu;
+            static uint32 prev_tf = 0xFFu;
             if (overcurrent_flag != prev_oc) {
                 fprintf(stderr, "[MOTOR] oc=%u fault=%u sig=%u\n",
                         (unsigned)overcurrent_flag, Motor_Fault,
                         (unsigned)RZC_SIG_OVERCURRENT);
                 prev_oc = overcurrent_flag;
+            }
+            if (temp_fault_flag != prev_tf) {
+                fprintf(stderr, "[MOTOR] temp_fault=%u fault=%u\n",
+                        (unsigned)temp_fault_flag, Motor_Fault);
+                prev_tf = temp_fault_flag;
             }
         }
 #endif
