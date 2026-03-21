@@ -1282,17 +1282,17 @@ void test_estop_immediate_no_debounce(void)
  * ================================================================== */
 
 /** @verifies SWR-CVC-013 — SC relay kill signal triggers SAFE_STOP from RUN */
-void test_SC_kill_signal_triggers_safe_stop(void)
+void test_SC_kill_signal_triggers_shutdown(void)
 {
     /* Get to RUN */
     get_to_run();
     TEST_ASSERT_EQUAL_UINT8(CVC_STATE_RUN, Swc_VehicleState_GetState());
 
-    /* SC relay kill: 0=killed (de-energized), triggers SAFE_STOP */
+    /* SC relay kill: 0=killed (de-energized), triggers SHUTDOWN (TSR-035) */
     mock_rte_signals[CVC_SIG_SC_RELAY_KILL] = 0u;
     Swc_VehicleState_MainFunction();
 
-    TEST_ASSERT_EQUAL_UINT8(CVC_STATE_SAFE_STOP, Swc_VehicleState_GetState());
+    TEST_ASSERT_EQUAL_UINT8(CVC_STATE_SHUTDOWN, Swc_VehicleState_GetState());
 }
 
 /** @verifies SWR-CVC-013 — SC relay kill ignored during INIT (boot transient) */
@@ -1486,7 +1486,7 @@ int main(void)
     RUN_TEST(test_SC_KILL_from_LIMP);
 
     /* SWR-CVC-013: SC relay kill via MainFunction signal path */
-    RUN_TEST(test_SC_kill_signal_triggers_safe_stop);
+    RUN_TEST(test_SC_kill_signal_triggers_shutdown);
     RUN_TEST(test_SC_kill_signal_zero_stays_run);
     RUN_TEST(test_SC_kill_signal_ignored_in_INIT);
 
