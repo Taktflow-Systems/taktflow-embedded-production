@@ -304,6 +304,100 @@ jobs:
             firmware/lib/vendor/unity/unity.c
           ./test_vsm
 
+      - name: Build and run CanSM Full tests (32)
+        run: |
+          gcc -DPLATFORM_POSIX -DUNIT_TEST -g -O0 -std=c99 -Wno-unused-function -Wno-unused-variable \
+            -Ifirmware/bsw/include -Ifirmware/bsw/services/CanSM/include -Ifirmware/bsw/services/Det/include \
+            -Ifirmware/lib/vendor/unity \
+            -o test_cansm_full \
+            test/unit/bsw/test_CanSM_full_generated.c \
+            firmware/bsw/services/CanSM/src/CanSM.c \
+            firmware/lib/vendor/unity/unity.c
+          ./test_cansm_full
+
+      - name: Build and run E2E SM Full tests (41)
+        run: |
+          gcc -DPLATFORM_POSIX -DUNIT_TEST -g -O0 -std=c99 -Wno-unused-function -Wno-unused-variable \
+            -Ifirmware/bsw/include -Ifirmware/bsw/services/E2E/include -Ifirmware/bsw/services/Det/include \
+            -Ifirmware/lib/vendor/unity \
+            -o test_e2e_sm_full \
+            test/unit/bsw/test_E2E_SM_full_generated.c \
+            firmware/bsw/services/E2E/src/E2E_Sm.c \
+            firmware/lib/vendor/unity/unity.c
+          ./test_e2e_sm_full
+
+      - name: Build and run E2E Negative tests (45)
+        run: |
+          gcc -DPLATFORM_POSIX -DUNIT_TEST -g -O0 -std=c99 -Wno-unused-function -Wno-unused-variable \
+            -Ifirmware/bsw/include -Ifirmware/bsw/services/E2E/include -Ifirmware/bsw/services/Det/include \
+            -Ifirmware/bsw/services/Dem/include -Ifirmware/bsw/services/SchM/include \
+            -Ifirmware/lib/vendor/unity \
+            -o test_e2e_neg \
+            test/unit/bsw/test_E2E_negative_generated.c \
+            firmware/bsw/services/E2E/src/E2E.c \
+            firmware/bsw/services/E2E/src/E2E_Sm.c \
+            firmware/bsw/services/Det/src/Det.c \
+            firmware/lib/vendor/unity/unity.c
+          ./test_e2e_neg
+
+      - name: Build and run Dem tests (22)
+        run: |
+          INC="-Ifirmware/bsw/include -Ifirmware/bsw/services/Dem/include -Ifirmware/bsw/services/Det/include -Ifirmware/bsw/services/NvM/include -Ifirmware/bsw/services/SchM/include -Ifirmware/bsw/ecual/PduR/include -Ifirmware/lib/vendor/unity"
+          gcc -DPLATFORM_POSIX -DUNIT_TEST -g -O0 -std=c99 -Wno-unused-function -Wno-unused-variable \
+            $INC -o test_dem \
+            test/unit/bsw/test_Dem_generated.c \
+            firmware/bsw/services/Dem/src/Dem.c \
+            firmware/bsw/services/Det/src/Det.c \
+            firmware/bsw/services/SchM/src/SchM.c \
+            firmware/lib/vendor/unity/unity.c
+          ./test_dem
+
+      - name: Build and run Det tests (14)
+        run: |
+          gcc -DPLATFORM_POSIX -DUNIT_TEST -g -O0 -std=c99 -Wno-unused-function -Wno-unused-variable \
+            -Ifirmware/bsw/include -Ifirmware/bsw/services/Det/include -Ifirmware/lib/vendor/unity \
+            -o test_det \
+            test/unit/bsw/test_Det_generated.c \
+            firmware/bsw/services/Det/src/Det.c \
+            firmware/lib/vendor/unity/unity.c
+          ./test_det
+
+      - name: Build and run WdgM tests (19)
+        run: |
+          INC="-Ifirmware/bsw/include -Ifirmware/bsw/services/WdgM/include -Ifirmware/bsw/services/Det/include -Ifirmware/bsw/services/Dem/include -Ifirmware/bsw/services/SchM/include -Ifirmware/bsw/ecual/IoHwAb/include -Ifirmware/bsw/mcal/Dio/include -Ifirmware/lib/vendor/unity"
+          gcc -DPLATFORM_POSIX -DUNIT_TEST -g -O0 -std=c99 -Wno-unused-function -Wno-unused-variable \
+            $INC -o test_wdgm \
+            test/unit/bsw/test_WdgM_generated.c \
+            firmware/bsw/services/WdgM/src/WdgM.c \
+            firmware/bsw/services/Det/src/Det.c \
+            firmware/bsw/services/SchM/src/SchM.c \
+            firmware/lib/vendor/unity/unity.c
+          ./test_wdgm
+
+      - name: Build and run FiM tests (13)
+        run: |
+          INC="-Ifirmware/bsw/include -Ifirmware/bsw/services/FiM/include -Ifirmware/bsw/services/Det/include -Ifirmware/bsw/services/Dem/include -Ifirmware/bsw/services/SchM/include -Ifirmware/lib/vendor/unity"
+          gcc -DPLATFORM_POSIX -DUNIT_TEST -g -O0 -std=c99 -Wno-unused-function -Wno-unused-variable \
+            $INC -o test_fim \
+            test/unit/bsw/test_FiM_generated.c \
+            firmware/bsw/services/FiM/src/FiM.c \
+            firmware/bsw/services/Det/src/Det.c \
+            firmware/bsw/services/SchM/src/SchM.c \
+            firmware/lib/vendor/unity/unity.c
+          ./test_fim
+
+      - name: Build and run Rte tests (18)
+        run: |
+          INC="-Ifirmware/bsw/include -Ifirmware/bsw/rte/include -Ifirmware/bsw/services/Det/include -Ifirmware/bsw/services/WdgM/include -Ifirmware/bsw/services/Dem/include -Ifirmware/bsw/services/SchM/include -Ifirmware/bsw/ecual/IoHwAb/include -Ifirmware/bsw/mcal/Dio/include -Ifirmware/lib/vendor/unity"
+          gcc -DPLATFORM_POSIX -DUNIT_TEST -g -O0 -std=c99 -Wno-unused-function -Wno-unused-variable \
+            $INC -o test_rte \
+            test/unit/bsw/test_Rte_generated.c \
+            firmware/bsw/rte/src/Rte.c \
+            firmware/bsw/services/Det/src/Det.c \
+            firmware/bsw/services/SchM/src/SchM.c \
+            firmware/lib/vendor/unity/unity.c
+          ./test_rte
+
   # -------------------------------------------------------------------
   # Traceability Matrix (non-blocking, generates report)
   # -------------------------------------------------------------------
