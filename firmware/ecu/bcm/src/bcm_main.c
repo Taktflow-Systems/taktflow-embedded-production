@@ -243,9 +243,9 @@ int main(void)
         /* Bridge again after RTE: push SWC outputs to Com */
         Bcm_ComBridge_10ms();
 
-        /* Heartbeat every 500ms (50 × 10ms ticks) */
+        /* Heartbeat every 500ms — threshold derived from tick period */
         hb_tick++;
-        if (hb_tick >= 50u) {
+        if (hb_tick >= (500u / BCM_RTE_PERIOD_MS)) {
             hb_tick = 0u;
             Bcm_Heartbeat_500ms();
         }

@@ -405,7 +405,7 @@ static const Com_SignalConfigType cvc_signal_config[] = {
 
 static const Com_TxPduConfigType cvc_tx_pdu_config[] = {
     /* pduId,                      dlc, cycleMs, txMode,              e2eProt, dataId, cntBit, crcBit */
-    { CVC_COM_TX_ESTOP_BROADCAST,     4u,    10u, COM_TX_MODE_PERIODIC, TRUE ,  1u,  4u,  8u },   /* CAN 0x001 @satisfies SG-008 */
+    { CVC_COM_TX_ESTOP_BROADCAST,     4u,     5u, COM_TX_MODE_PERIODIC, TRUE ,  1u,  4u,  8u },   /* CAN 0x001 @satisfies SG-008 */
     { CVC_COM_TX_CVC_HEARTBEAT,     4u,    50u, COM_TX_MODE_PERIODIC, TRUE ,  2u,  4u,  8u },   /* CAN 0x010 @satisfies SG-008 */
     { CVC_COM_TX_VEHICLE_STATE,     6u,    10u, COM_TX_MODE_PERIODIC, TRUE ,  5u,  4u,  8u },   /* CAN 0x100 @satisfies SG-001,SG-008 */
     { CVC_COM_TX_TORQUE_REQUEST,     8u,    10u, COM_TX_MODE_PERIODIC, TRUE ,  6u,  4u,  8u },   /* CAN 0x101 @satisfies SG-001 */

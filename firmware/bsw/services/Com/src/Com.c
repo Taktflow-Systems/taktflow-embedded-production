@@ -90,7 +90,7 @@ static Com_SignalQualityType com_rx_pdu_quality[COM_MAX_PDUS];
 volatile uint32 g_dbg_com_e2e_rx_fail[COM_MAX_PDUS];
 
 /* RX deadline monitoring period: 10ms per cycle (matches RTE scheduler) */
-#define COM_RX_CYCLE_MS   10u
+/* COM_RX_CYCLE_MS removed — uses com_main_period_ms (per-ECU from config) */
 
 /* ---- Private Helpers ---- */
 
@@ -687,7 +687,7 @@ void Com_MainFunction_Rx(void)
             com_rx_timeout_cnt[pdu_id]++;
         }
 
-        if ((com_rx_timeout_cnt[pdu_id] * COM_RX_CYCLE_MS) >= timeout) {
+        if ((com_rx_timeout_cnt[pdu_id] * com_main_period_ms) >= timeout) {
             /* Timeout: zero-fill shadow buffers for all signals on this PDU */
             for (j = 0u; j < com_config->signalCount; j++) {
                 const Com_SignalConfigType* sig = &com_config->signalConfig[j];

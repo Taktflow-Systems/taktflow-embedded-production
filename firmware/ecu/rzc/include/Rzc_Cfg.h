@@ -614,7 +614,7 @@
  * ==================================================================== */
 
 #ifndef RZC_RTE_PERIOD_MS
-  #define RZC_RTE_PERIOD_MS    50u
+  #define RZC_RTE_PERIOD_MS    10u
 #endif
 #ifndef RZC_COMM_TIMEOUT
   #define RZC_COMM_TIMEOUT   100u

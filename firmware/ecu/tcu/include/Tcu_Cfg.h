@@ -545,7 +545,7 @@
  * ==================================================================== */
 
 #ifndef TCU_RTE_PERIOD_MS
-  #define TCU_RTE_PERIOD_MS    10u
+  #define TCU_RTE_PERIOD_MS    50u
 #endif
 #ifndef TCU_COMM_TIMEOUT
   #define TCU_COMM_TIMEOUT   200u

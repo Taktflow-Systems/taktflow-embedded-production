@@ -176,9 +176,9 @@ int main(void)
         /* Periodic SWC functions */
         Swc_DtcStore_10ms();
 
-        /* TCU heartbeat every 500ms (50 ticks) */
+        /* TCU heartbeat every 500ms — threshold derived from tick period */
         hb_tick++;
-        if (hb_tick >= 50u) {
+        if (hb_tick >= (500u / TCU_RTE_PERIOD_MS)) {
             hb_tick = 0u;
             Tcu_Heartbeat_500ms();
         }
