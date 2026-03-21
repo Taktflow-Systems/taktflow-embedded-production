@@ -105,10 +105,10 @@ def decode_e2e_header(data):
 
 
 def decode_msg(can_id, data):
-    """Decode a CAN frame using cantools DBC, skipping E2E bytes."""
+    """Decode a CAN frame using cantools DBC, returning raw numeric values."""
     msg = db.get_message_by_frame_id(can_id)
     try:
-        return msg.decode(bytes(data))
+        return msg.decode(bytes(data), decode_choices=False)
     except Exception:
         return {}
 
