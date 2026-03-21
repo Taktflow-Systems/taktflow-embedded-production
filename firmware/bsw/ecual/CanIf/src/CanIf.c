@@ -86,6 +86,12 @@ void CanIf_RxIndication(Can_IdType CanId, const uint8* SduPtr, uint8 Dlc)
     }
 
     /* Look up CAN ID in RX routing table */
+#ifdef SIL_DIAG
+    if (CanId == 0x550u) {
+        fprintf(stderr, "[CANIF] RX CAN 0x%03X dlc=%u rxCount=%u\n",
+                (unsigned)CanId, (unsigned)Dlc, (unsigned)canif_config->rxPduCount);
+    }
+#endif
     for (i = 0u; i < canif_config->rxPduCount; i++) {
         if (canif_config->rxPduConfig[i].CanId == CanId) {
             /* Optional E2E RX check — drop frame if callback returns E_NOT_OK */

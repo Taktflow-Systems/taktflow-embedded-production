@@ -14,6 +14,9 @@
  */
 #include "Can.h"
 #include "SchM.h"
+#ifdef SIL_DIAG
+#include <stdio.h>
+#endif
 #include "Det.h"
 
 /* ---- Internal State ---- */
@@ -171,6 +174,12 @@ void Can_MainFunction_Read(void)
         g_can_rx_last_id = (uint32)rx_id;
         if (rx_id == (Can_IdType)0x012u) { g_can_rx_012_count++; }
         if (rx_id == (Can_IdType)0x011u) { g_can_rx_011_count++; }
+#ifdef SIL_DIAG
+        if (rx_id == (Can_IdType)0x550u) {
+            extern void Det_ReportRuntimeError(uint16, uint8, uint8, uint8);
+            fprintf(stderr, "[CAN] RX 0x%03X dlc=%u\n", (unsigned)rx_id, (unsigned)rx_dlc);
+        }
+#endif
         CanIf_RxIndication(rx_id, rx_data, rx_dlc);
         msg_count++;
     }
