@@ -110,8 +110,8 @@ Unit tests use stubs. `PduR_Transmit` is a mock that captures data — it doesn'
 | 2. E2E SM unit | **DONE** | 12/12 | test_E2E_SM_asild.c |
 | 2b. CanSM unit | **DONE** | 10/10 | test_CanSM_asild.c |
 | 3. BSW integration | **DONE** | 6/6 PASS | test/integration/bsw/test_bsw_dataflow.c |
-| 4. Single ECU | **PENDING** | 0/6 planned | — |
-| 5. Two ECUs | **PENDING** | 0/6 planned | — |
+| 4. Single ECU (CVC) | **DONE** | 6/6 PASS | test/integration/layer4/test_cvc_single_ecu.py |
+| 5. Two ECUs (CVC+FZC) | **DONE** | 6/6 PASS | test/integration/layer5/test_cvc_fzc_dual.py |
 | 6. Full system | **PENDING** | 0/16 planned | — |
 
 ## HITL Review Required
