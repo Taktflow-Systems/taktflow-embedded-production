@@ -425,7 +425,7 @@ BA_DEF_DEF_ "E2E_MaxDeltaCounter" 0;
 BA_DEF_DEF_ "E2E_Profile" "P01";
 BA_DEF_DEF_ "Satisfies" "";
 
-BA_ "GenMsgCycleTime" BO_ 1 5;
+BA_ "GenMsgCycleTime" BO_ 1 10;
 BA_ "GenMsgCycleTime" BO_ 16 50;
 BA_ "GenMsgCycleTime" BO_ 17 50;
 BA_ "GenMsgCycleTime" BO_ 18 50;
