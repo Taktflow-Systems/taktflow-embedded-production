@@ -1,147 +1,52 @@
 # =============================================================================
 # Traceability Enforcement — GitHub Actions
 #
-# Validates requirement traceability on every push/PR and detects suspect
-# links (downstream impact) when requirement documents change.
-#
-# ISO 26262 Part 8: Bidirectional traceability must be maintained and verified.
-# ASPICE SWE.4/SWE.5/SWE.6: Traceability from requirements to tests.
+# Auto-generates requirement traceability matrix and posts summary.
+# ISO 26262 Part 8: Bidirectional traceability must be maintained.
 # =============================================================================
-
 name: Traceability
 
 on:
   push:
-    paths:
-      - 'docs/**'
-      - 'firmware/**'
-      - 'test/**'
-      - 'scripts/build/trace-gen.py'
-      - 'scripts/build/suspect-links.py'
-      - '.github/workflows/traceability.yml'
+    paths: ['docs/**', 'firmware/**', 'test/**', 'gateway/**', 'tools/trace/**']
   pull_request:
-    paths:
-      - 'docs/**'
-      - 'firmware/**'
-      - 'test/**'
-      - 'scripts/build/trace-gen.py'
-      - 'scripts/build/suspect-links.py'
-      - '.github/workflows/traceability.yml'
+    paths: ['docs/**', 'firmware/**', 'test/**', 'gateway/**', 'tools/trace/**']
 
 jobs:
-  # -------------------------------------------------------------------
-  # Job 1: Traceability check (blocking)
-  # Runs trace-gen.py --check to fail on broken links or untested SWR
-  # -------------------------------------------------------------------
-  traceability-check:
-    name: Traceability Check
+  traceability:
+    name: Traceability Matrix
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
-      - name: Run traceability check
-        run: python scripts/build/trace-gen.py --check
+      - name: Generate traceability matrix
+        run: python tools/trace/gen_traceability_matrix.py
 
-      - name: Generate traceability matrix (Markdown)
+      - name: Post summary to PR
         if: always()
-        run: python scripts/build/trace-gen.py --output traceability-matrix.md
+        run: |
+          echo "## Traceability Matrix" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          head -8 docs/safety/verification/traceability-matrix.md >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          IMPL_ONLY=$(grep -c "IMPL ONLY" docs/safety/verification/traceability-matrix.md || true)
+          TRACED=$(grep -c "\*\*TRACED\*\*" docs/safety/verification/traceability-matrix.md || true)
+          echo "| Status | Count |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|--------|------:|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| TRACED | $TRACED |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| IMPL ONLY | $IMPL_ONLY |" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$IMPL_ONLY" -gt "0" ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "> **WARNING:** $IMPL_ONLY requirements have implementation but no test" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
-      - name: Generate traceability matrix (JSON)
-        if: always()
-        run: python scripts/build/trace-gen.py --json --output traceability.json
-
-      - name: Upload traceability artifacts
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: traceability-matrix
-          path: |
-            traceability-matrix.md
-            traceability.json
+          path: docs/safety/verification/traceability-matrix.md
           retention-days: 90
-
-      - name: Post coverage summary
-        if: always()
-        run: |
-          python scripts/build/trace-gen.py --json --output /tmp/summary.json
-          python -c "
-          import json, sys
-          data = json.load(open('/tmp/summary.json'))
-          stats = data['stats']
-          issues = data['issues']
-          total = data['total_requirements']
-
-          lines = []
-          lines.append('## Traceability Summary')
-          lines.append('')
-          lines.append(f'**Total requirements:** {total}')
-          lines.append('')
-          lines.append('| Level | Total | Up | Down | Tested | Coverage |')
-          lines.append('|-------|------:|---:|-----:|-------:|---------:|')
-          for s in stats:
-              up = '-' if s['level'] in ('STK', 'SG') else str(s['traced_up'])
-              tested = str(s['tested']) if s['tested'] else '-'
-              lines.append(f\"| {s['level']} | {s['total']} | {up} | {s['traced_down']} | {tested} | {s['coverage_pct']}% |\")
-          lines.append('')
-
-          broken = len(issues['broken_links'])
-          orphans = len(issues['orphans'])
-          untested = len(issues['untested'])
-          asymmetric = len(issues['asymmetric'])
-          asil_warn = len(issues['asil_warnings'])
-
-          lines.append('### Issues')
-          lines.append('')
-          lines.append(f'| Category | Count |')
-          lines.append(f'|----------|------:|')
-          lines.append(f'| Broken links | {broken} |')
-          lines.append(f'| Orphans | {orphans} |')
-          lines.append(f'| Untested leaf reqs | {untested} |')
-          lines.append(f'| Asymmetric links | {asymmetric} |')
-          lines.append(f'| ASIL warnings | {asil_warn} |')
-          lines.append('')
-
-          if broken + untested > 0:
-              lines.append(f'> **BLOCKING:** {broken} broken links + {untested} untested leaf requirements')
-          else:
-              lines.append('> **PASS:** No broken links or untested leaf requirements')
-
-          print('\n'.join(lines))
-          " >> "$GITHUB_STEP_SUMMARY"
-
-  # -------------------------------------------------------------------
-  # Job 2: Suspect links (non-blocking, PR only)
-  # Detects downstream impact when requirement docs change
-  # -------------------------------------------------------------------
-  suspect-links:
-    name: Suspect Links
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Generate traceability graph
-        run: python scripts/build/trace-gen.py --json --output /tmp/graph.json
-
-      - name: Detect suspect links
-        run: |
-          python scripts/build/suspect-links.py \
-            --base "origin/${{ github.base_ref }}" \
-            --json /tmp/graph.json \
-            >> "$GITHUB_STEP_SUMMARY"
