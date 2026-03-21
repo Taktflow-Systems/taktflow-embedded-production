@@ -17,6 +17,9 @@
  */
 #include "Xcp.h"
 #include "Det.h"
+#ifdef SIL_DIAG
+#include <stdio.h>
+#endif
 
 /* ---- External: CAN transmit (provided by CanIf or PduR) ---- */
 extern Std_ReturnType PduR_Transmit(PduIdType TxPduId, const PduInfoType* PduInfoPtr);
@@ -312,10 +315,18 @@ void Xcp_RxIndication(PduIdType RxPduId, const PduInfoType* PduInfoPtr)
     }
 
     if (RxPduId != xcp_config->RxPduId) {
+#ifdef SIL_DIAG
+        fprintf(stderr, "[XCP] RxPduId=%u rejected (expected %u)\n",
+                (unsigned)RxPduId, (unsigned)xcp_config->RxPduId);
+#endif
         return;
     }
 
     g_dbg_xcp_rx_count++;
+#ifdef SIL_DIAG
+    fprintf(stderr, "[XCP] RX cmd=0x%02X len=%u\n",
+            PduInfoPtr->SduDataPtr[0], PduInfoPtr->SduLength);
+#endif
 
     cmd = PduInfoPtr->SduDataPtr[0];
 
