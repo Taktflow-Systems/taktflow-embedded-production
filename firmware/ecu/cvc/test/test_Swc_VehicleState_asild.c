@@ -618,10 +618,10 @@ void test_Any_to_SAFE_STOP_on_SC_kill(void)
     /* From RUN */
     get_to_run();
 
-    /* SC kill */
+    /* SC kill → SHUTDOWN (external override, bypasses SAFE_STOP per TSR-035) */
     Swc_VehicleState_OnEvent(CVC_EVT_SC_KILL);
 
-    TEST_ASSERT_EQUAL_UINT8(CVC_STATE_SAFE_STOP, Swc_VehicleState_GetState());
+    TEST_ASSERT_EQUAL_UINT8(CVC_STATE_SHUTDOWN, Swc_VehicleState_GetState());
 }
 
 /* ==================================================================
@@ -819,7 +819,7 @@ void test_SC_KILL_from_DEGRADED(void)
     TEST_ASSERT_EQUAL_UINT8(CVC_STATE_DEGRADED, Swc_VehicleState_GetState());
 
     Swc_VehicleState_OnEvent(CVC_EVT_SC_KILL);
-    TEST_ASSERT_EQUAL_UINT8(CVC_STATE_SAFE_STOP, Swc_VehicleState_GetState());
+    TEST_ASSERT_EQUAL_UINT8(CVC_STATE_SHUTDOWN, Swc_VehicleState_GetState());
 }
 
 /** @verifies SWR-CVC-009
@@ -833,7 +833,7 @@ void test_SC_KILL_from_LIMP(void)
     TEST_ASSERT_EQUAL_UINT8(CVC_STATE_LIMP, Swc_VehicleState_GetState());
 
     Swc_VehicleState_OnEvent(CVC_EVT_SC_KILL);
-    TEST_ASSERT_EQUAL_UINT8(CVC_STATE_SAFE_STOP, Swc_VehicleState_GetState());
+    TEST_ASSERT_EQUAL_UINT8(CVC_STATE_SHUTDOWN, Swc_VehicleState_GetState());
 }
 
 /* ------------------------------------------------------------------

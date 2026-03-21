@@ -86,7 +86,7 @@ static const uint8 transition_table[CVC_STATE_COUNT][CVC_EVT_COUNT] = {
         CVC_STATE_INVALID,     /* EVT_CAN_TIMEOUT_SINGLE -> (invalid)    */
         CVC_STATE_INVALID,     /* EVT_CAN_TIMEOUT_DUAL   -> (invalid)    */
         CVC_STATE_INVALID,     /* EVT_ESTOP              -> (invalid)    */
-        CVC_STATE_SAFE_STOP,   /* EVT_SC_KILL            -> SAFE_STOP    */
+        CVC_STATE_SHUTDOWN,    /* EVT_SC_KILL            -> SHUTDOWN (external override, TSR-035) */
         CVC_STATE_INVALID,     /* EVT_FAULT_CLEARED      -> (invalid)    */
         CVC_STATE_INVALID,     /* EVT_CAN_RESTORED       -> (invalid)    */
         CVC_STATE_INVALID,     /* EVT_VEHICLE_STOPPED    -> (invalid)    */
@@ -106,13 +106,13 @@ static const uint8 transition_table[CVC_STATE_COUNT][CVC_EVT_COUNT] = {
         CVC_STATE_SAFE_STOP,   /* EVT_CAN_TIMEOUT_SINGLE -> SAFE_STOP (HARA: no backup zone) */
         CVC_STATE_SAFE_STOP,   /* EVT_CAN_TIMEOUT_DUAL   -> SAFE_STOP    */
         CVC_STATE_SAFE_STOP,   /* EVT_ESTOP              -> SAFE_STOP    */
-        CVC_STATE_SAFE_STOP,   /* EVT_SC_KILL            -> SAFE_STOP    */
+        CVC_STATE_SHUTDOWN,    /* EVT_SC_KILL            -> SHUTDOWN (external override, TSR-035) */
         CVC_STATE_INVALID,     /* EVT_FAULT_CLEARED      -> (invalid)    */
         CVC_STATE_INVALID,     /* EVT_CAN_RESTORED       -> (invalid)    */
         CVC_STATE_INVALID,     /* EVT_VEHICLE_STOPPED    -> (invalid)    */
-        CVC_STATE_SAFE_STOP,   /* EVT_MOTOR_CUTOFF       -> SAFE_STOP (HARA: no backup) */
-        CVC_STATE_SAFE_STOP,   /* EVT_BRAKE_FAULT        -> SAFE_STOP    */
-        CVC_STATE_SAFE_STOP,   /* EVT_STEERING_FAULT     -> SAFE_STOP (HARA: no backup) */
+        CVC_STATE_DEGRADED,    /* EVT_MOTOR_CUTOFF       -> DEGRADED (fail-silent, ASIL B) */
+        CVC_STATE_SAFE_STOP,   /* EVT_BRAKE_FAULT        -> SAFE_STOP (ASIL D)   */
+        CVC_STATE_SAFE_STOP,   /* EVT_STEERING_FAULT     -> SAFE_STOP (ASIL D)   */
         CVC_STATE_DEGRADED,    /* EVT_BATTERY_WARN       -> DEGRADED (graceful degradation) */
         CVC_STATE_LIMP,        /* EVT_BATTERY_CRIT       -> LIMP (reduced torque + speed limit) */
         CVC_STATE_SAFE_STOP    /* EVT_CREEP_FAULT        -> SAFE_STOP    */
@@ -126,7 +126,7 @@ static const uint8 transition_table[CVC_STATE_COUNT][CVC_EVT_COUNT] = {
         CVC_STATE_SAFE_STOP,   /* EVT_CAN_TIMEOUT_SINGLE -> SAFE_STOP (HARA: no backup zone) */
         CVC_STATE_SAFE_STOP,   /* EVT_CAN_TIMEOUT_DUAL   -> SAFE_STOP    */
         CVC_STATE_SAFE_STOP,   /* EVT_ESTOP              -> SAFE_STOP    */
-        CVC_STATE_SAFE_STOP,   /* EVT_SC_KILL            -> SAFE_STOP    */
+        CVC_STATE_SHUTDOWN,    /* EVT_SC_KILL            -> SHUTDOWN (external override, TSR-035) */
         CVC_STATE_RUN,         /* EVT_FAULT_CLEARED      -> RUN          */
         CVC_STATE_INVALID,     /* EVT_CAN_RESTORED       -> (invalid)    */
         CVC_STATE_INVALID,     /* EVT_VEHICLE_STOPPED    -> (invalid)    */
@@ -146,7 +146,7 @@ static const uint8 transition_table[CVC_STATE_COUNT][CVC_EVT_COUNT] = {
         CVC_STATE_INVALID,     /* EVT_CAN_TIMEOUT_SINGLE -> (invalid)    */
         CVC_STATE_SAFE_STOP,   /* EVT_CAN_TIMEOUT_DUAL   -> SAFE_STOP    */
         CVC_STATE_SAFE_STOP,   /* EVT_ESTOP              -> SAFE_STOP    */
-        CVC_STATE_SAFE_STOP,   /* EVT_SC_KILL            -> SAFE_STOP    */
+        CVC_STATE_SHUTDOWN,    /* EVT_SC_KILL            -> SHUTDOWN (external override, TSR-035) */
         CVC_STATE_RUN,         /* EVT_FAULT_CLEARED      -> RUN          */
         CVC_STATE_DEGRADED,    /* EVT_CAN_RESTORED       -> DEGRADED     */
         CVC_STATE_INVALID,     /* EVT_VEHICLE_STOPPED    -> (invalid)    */
@@ -166,7 +166,7 @@ static const uint8 transition_table[CVC_STATE_COUNT][CVC_EVT_COUNT] = {
         CVC_STATE_INVALID,     /* EVT_CAN_TIMEOUT_SINGLE -> (invalid)    */
         CVC_STATE_INVALID,     /* EVT_CAN_TIMEOUT_DUAL   -> (invalid)    */
         CVC_STATE_INVALID,     /* EVT_ESTOP              -> (invalid)    */
-        CVC_STATE_INVALID,     /* EVT_SC_KILL            -> (invalid)    */
+        CVC_STATE_SHUTDOWN,    /* EVT_SC_KILL            -> SHUTDOWN (external override, TSR-035) */
         CVC_STATE_INVALID,     /* EVT_FAULT_CLEARED      -> (invalid)    */
         CVC_STATE_INVALID,     /* EVT_CAN_RESTORED       -> (invalid)    */
         CVC_STATE_SHUTDOWN,    /* EVT_VEHICLE_STOPPED    -> SHUTDOWN     */
