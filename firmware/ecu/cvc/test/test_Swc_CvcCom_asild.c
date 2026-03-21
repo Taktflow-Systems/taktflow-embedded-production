@@ -71,6 +71,10 @@ typedef uint8           Std_ReturnType;
 #define CVC_COM_SIG_MOTOR_STATUS_MOTOR_FAULT_STATUS          125u
 #define CVC_COM_SIG_BATTERY_STATUS_LEVEL                     144u
 
+/* ECU constants (mirrors Cvc_App.h) */
+#define CVC_ECU_ID_CVC                 0x01u
+#define CVC_SAFE_BRAKE_CMD             100u
+
 /* Vehicle state constants (mirrors Cvc_Cfg.h) */
 #define CVC_STATE_INIT        0u
 #define CVC_STATE_RUN         1u
