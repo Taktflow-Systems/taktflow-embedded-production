@@ -35,15 +35,17 @@ Std_ReturnType CanIf_Transmit(uint8 TxPduId, const void* PduInfoPtr)
     return E_OK;
 }
 
-/* PduR stub */
+/* PduR stub (weak: test files can override with capturing versions) */
 #include "ComStack_Types.h"
+__attribute__((weak))
 Std_ReturnType PduR_Transmit(PduIdType TxPduId, const PduInfoType* PduInfoPtr)
 {
     (void)TxPduId; (void)PduInfoPtr;
     return E_OK;
 }
 
-/* Dem stub */
+/* Dem stub (weak) */
+__attribute__((weak))
 void Dem_ReportErrorStatus(uint8 EventId, uint8 EventStatus)
 {
     (void)EventId; (void)EventStatus;
