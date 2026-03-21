@@ -488,4 +488,5 @@ const Com_ConfigType rzc_com_config = {
     .txPduCount   = (uint8)RZC_COM_TX_PDU_COUNT,
     .rxPduConfig  = rzc_rx_pdu_config,
     .rxPduCount   = (uint8)RZC_COM_RX_PDU_COUNT,
+    .mainFunctionPeriodMs = 50u,
 };

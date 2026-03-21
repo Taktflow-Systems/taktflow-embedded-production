@@ -475,4 +475,5 @@ const Com_ConfigType cvc_com_config = {
     .txPduCount   = (uint8)CVC_COM_TX_PDU_COUNT,
     .rxPduConfig  = cvc_rx_pdu_config,
     .rxPduCount   = (uint8)CVC_COM_RX_PDU_COUNT,
+    .mainFunctionPeriodMs = 10u,
 };

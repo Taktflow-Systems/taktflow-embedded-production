@@ -49,13 +49,9 @@ volatile uint32 com_tx_send_count[COM_MAX_PDUS];
 volatile uint32 g_dbg_com_tx_skip[COM_MAX_PDUS];
 volatile uint32 g_dbg_com_tx_calls = 0u;
 
-/** Com_MainFunction_Tx call period in ms — must match BSW timer config */
-#define COM_TX_MAIN_PERIOD_MS  10u
-
-/* Compile-time check: COM_TX_MAIN_PERIOD_MS must match scheduler period */
-#if defined(BSW_SCHEDULER_PERIOD_MS) && (COM_TX_MAIN_PERIOD_MS != BSW_SCHEDULER_PERIOD_MS)
-#error "COM_TX_MAIN_PERIOD_MS must match BSW_SCHEDULER_PERIOD_MS"
-#endif
+/** Com_MainFunction_Tx call period — runtime from config, fallback 10ms */
+#define COM_TX_MAIN_PERIOD_MS_DEFAULT  10u
+static uint8 com_main_period_ms = COM_TX_MAIN_PERIOD_MS_DEFAULT;
 
 /* TX confirmation monitoring: cycles since last successful TX per PDU */
 static uint16 com_tx_confirm_cnt[COM_MAX_PDUS];
@@ -67,8 +63,8 @@ static uint16 com_startup_delay_cnt;
 #ifndef COM_STARTUP_DELAY_MS
 #define COM_STARTUP_DELAY_MS  50u  /**< Default 50ms; override per ECU for staggering */
 #endif
-#define COM_STARTUP_DELAY_CYCLES \
-    ((COM_STARTUP_DELAY_MS + COM_TX_MAIN_PERIOD_MS - 1u) / COM_TX_MAIN_PERIOD_MS)
+/* Startup delay computed at init time from runtime period */
+static uint16 com_startup_delay_cycles;
 
 /* TX previous PDU snapshot for change detection */
 static uint8 com_tx_prev_buf[COM_MAX_PDUS][COM_PDU_SIZE];
@@ -118,6 +114,13 @@ void Com_Init(const Com_ConfigType* ConfigPtr)
     }
 
     com_config = ConfigPtr;
+
+    /* Set MainFunction call period from config (0 = use default 10ms) */
+    com_main_period_ms = (ConfigPtr->mainFunctionPeriodMs != 0u)
+                       ? ConfigPtr->mainFunctionPeriodMs
+                       : COM_TX_MAIN_PERIOD_MS_DEFAULT;
+    com_startup_delay_cycles = (COM_STARTUP_DELAY_MS + com_main_period_ms - 1u)
+                             / com_main_period_ms;
 
     /* Clear PDU buffers and E2E state */
     for (i = 0u; i < COM_MAX_PDUS; i++) {
@@ -536,7 +539,7 @@ void Com_MainFunction_Tx(void)
     }
 
     /* Startup delay: suppress all TX until delay expired */
-    if (com_startup_delay_cnt < COM_STARTUP_DELAY_CYCLES) {
+    if (com_startup_delay_cnt < com_startup_delay_cycles) {
         com_startup_delay_cnt++;
         SchM_TimingStop(TIMING_ID_COM_MAIN_TX);
         return;
@@ -559,7 +562,7 @@ void Com_MainFunction_Tx(void)
         }
 
         /* Increment cycle counter */
-        com_tx_cycle_cnt[pdu_id] += COM_TX_MAIN_PERIOD_MS;
+        com_tx_cycle_cnt[pdu_id] += com_main_period_ms;
 
         SchM_Enter_Com_COM_EXCLUSIVE_AREA_0();
 
@@ -640,7 +643,7 @@ void Com_MainFunction_Tx(void)
             } else {
                 /* PduR_Transmit returned E_NOT_OK — could be FIFO full (transient)
                  * or driver stuck (persistent). Only flag as stuck after sustained failure. */
-                com_tx_confirm_cnt[pdu_id] += COM_TX_MAIN_PERIOD_MS;
+                com_tx_confirm_cnt[pdu_id] += com_main_period_ms;
                 if (com_tx_confirm_cnt[pdu_id] >= COM_TX_CONFIRM_TIMEOUT_MS) {
                     g_dbg_com_tx_stuck[pdu_id]++;
                     com_tx_confirm_cnt[pdu_id] = 0u;  /* Reset to prevent counter overflow */

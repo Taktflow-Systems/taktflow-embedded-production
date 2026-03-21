@@ -749,6 +749,14 @@ class ArxmlReader:
             if "uds_tx_pdu_name" in ecu_data:
                 ecu.uds_tx_pdu_name = ecu_data["uds_tx_pdu_name"]
 
+            # RTE/Com MainFunction period (from *_RTE_PERIOD_MS in thresholds or constants)
+            for section in ("thresholds", "constants"):
+                data = ecu_data.get(section, {})
+                rte_key = f"{ecu.prefix}_RTE_PERIOD_MS"
+                if rte_key in data:
+                    ecu.rte_period_ms = int(data[rte_key])
+                    break
+
             # E2E data IDs — store named constants in ECU dict
             if "e2e_data_ids" in ecu_data:
                 ecu.e2e_data_ids.update(ecu_data["e2e_data_ids"])

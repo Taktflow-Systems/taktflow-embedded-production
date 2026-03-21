@@ -488,4 +488,5 @@ const Com_ConfigType bcm_com_config = {
     .txPduCount   = (uint8)BCM_COM_TX_PDU_COUNT,
     .rxPduConfig  = bcm_rx_pdu_config,
     .rxPduCount   = (uint8)BCM_COM_RX_PDU_COUNT,
+    .mainFunctionPeriodMs = 50u,
 };

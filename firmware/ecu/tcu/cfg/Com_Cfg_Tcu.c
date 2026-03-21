@@ -488,4 +488,5 @@ const Com_ConfigType tcu_com_config = {
     .txPduCount   = (uint8)TCU_COM_TX_PDU_COUNT,
     .rxPduConfig  = tcu_rx_pdu_config,
     .rxPduCount   = (uint8)TCU_COM_RX_PDU_COUNT,
+    .mainFunctionPeriodMs = 10u,
 };

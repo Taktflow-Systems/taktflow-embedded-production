@@ -86,4 +86,5 @@ const Com_ConfigType {{ ecu.name }}_com_config = {
     .txPduCount   = (uint8){{ ecu.prefix }}_COM_TX_PDU_COUNT,
     .rxPduConfig  = {{ ecu.name }}_rx_pdu_config,
     .rxPduCount   = (uint8){{ ecu.prefix }}_COM_RX_PDU_COUNT,
+    .mainFunctionPeriodMs = {{ ecu.rte_period_ms | default(10) }}u,
 };

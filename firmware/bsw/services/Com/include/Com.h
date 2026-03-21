@@ -108,6 +108,7 @@ typedef struct {
     uint8                        txPduCount;
     const Com_RxPduConfigType*   rxPduConfig;
     uint8                        rxPduCount;
+    uint8                        mainFunctionPeriodMs;  /**< How often Com_MainFunction_Tx is called (ms). 0=use default 10ms. */
 } Com_ConfigType;
 
 /* ---- External dependencies ---- */

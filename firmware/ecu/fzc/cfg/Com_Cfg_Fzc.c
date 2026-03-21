@@ -488,4 +488,5 @@ const Com_ConfigType fzc_com_config = {
     .txPduCount   = (uint8)FZC_COM_TX_PDU_COUNT,
     .rxPduConfig  = fzc_rx_pdu_config,
     .rxPduCount   = (uint8)FZC_COM_RX_PDU_COUNT,
+    .mainFunctionPeriodMs = 10u,
 };

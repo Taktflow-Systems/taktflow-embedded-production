@@ -488,4 +488,5 @@ const Com_ConfigType icu_com_config = {
     .txPduCount   = (uint8)ICU_COM_TX_PDU_COUNT,
     .rxPduConfig  = icu_rx_pdu_config,
     .rxPduCount   = (uint8)ICU_COM_RX_PDU_COUNT,
+    .mainFunctionPeriodMs = 50u,
 };
