@@ -130,7 +130,11 @@ Layer 3: Socket RX              3/3   ✅
 Layer 4: CVC full              30/30  ✅ ALL PASS
 Layer 5: CVC+FZC basic         34/34  ✅ ALL PASS
 Layer 5b: CVC+FZC comprehensive 71/71 ✅ ALL PASS
-Layer 6: Full 7-ECU SIL        not started
+Layer 6a: RZC single ECU        5/5 TX correct ✅
+Layer 6b: CVC+FZC+RZC 3-ECU    20 CAN IDs correct ✅
+Layer 6c-f: BCM+ICU+TCU+SC     all build clean ✅
+Layer 6g: Full 7-ECU vcan       27 CAN IDs, 1265 frames/s ✅
+Layer 6h: Docker SIL            next session
 ```
 
 ## Test Suite — 1,021 Tests (CI GREEN)
