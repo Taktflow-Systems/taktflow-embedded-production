@@ -336,7 +336,6 @@ jobs:
             test/unit/bsw/test_E2E_negative_generated.c \
             firmware/bsw/services/E2E/src/E2E.c \
             firmware/bsw/services/E2E/src/E2E_Sm.c \
-            firmware/bsw/services/Det/src/Det.c \
             firmware/lib/vendor/unity/unity.c
           ./test_e2e_neg
 
