@@ -59,16 +59,7 @@ static uint8   Hb_Initialized;
 static uint8   Hb_CycleCounter;
 static uint8   Hb_AliveCounter;
 
-/** @brief E2E configuration for heartbeat TX protection
- *  @safety_req SWR-RZC-021 */
-static const E2E_ConfigType hb_e2e_config = {
-    RZC_E2E_HEARTBEAT_DATA_ID,   /* DataId = 0x04 per spec */
-    15u,                          /* MaxDeltaCounter */
-    8u                            /* DataLength */
-};
-
-/** @brief E2E state for heartbeat TX alive counter tracking */
-static E2E_StateType hb_e2e_state;
+/* E2E protection moved to Com_MainFunction_Tx (Phase 2) */
 
 /* ==================================================================
  * API: Swc_Heartbeat_Init
@@ -78,7 +69,6 @@ void Swc_Heartbeat_Init(void)
 {
     Hb_CycleCounter = 0u;
     Hb_AliveCounter = 0u;
-    hb_e2e_state.Counter = 0u;
     Hb_Initialized  = TRUE;
 }
 
@@ -90,8 +80,6 @@ void Swc_Heartbeat_MainFunction(void)
 {
     uint32 vehicle_state;
     uint32 fault_mask;
-    uint8  tx_data[8];
-    uint8  i;
 
     if (Hb_Initialized != TRUE) {
         return;
@@ -120,12 +108,7 @@ void Swc_Heartbeat_MainFunction(void)
         return;
     }
 
-    /* Build heartbeat payload */
-    for (i = 0u; i < 8u; i++) {
-        tx_data[i] = 0u;
-    }
-
-    /* Heartbeat state written to RTE — Swc_RzcCom bridge reads + sends via Com */
+    /* Heartbeat TX handled by Swc_RzcCom bridge via Com_SendSignal */
 
     /* Write alive counter to RTE for diagnostics */
     (void)Rte_Write(RZC_SIG_HEARTBEAT_ALIVE, (uint32)Hb_AliveCounter);

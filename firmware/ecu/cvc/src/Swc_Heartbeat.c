@@ -144,7 +144,6 @@ void Swc_Heartbeat_MainFunction(void)
     tx_timer++;
 
     if (tx_timer >= HB_TX_CYCLES) {
-        uint8  pdu[HB_PDU_LENGTH] = {0u};
         uint32 vehicle_state = 0u;
 
         /* Read current vehicle state from RTE */
