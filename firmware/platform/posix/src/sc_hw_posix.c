@@ -27,8 +27,10 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
+#ifndef PLATFORM_QNX
 #include <linux/can.h>
 #include <linux/can/raw.h>
+#endif
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
