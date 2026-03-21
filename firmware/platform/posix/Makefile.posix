@@ -115,6 +115,7 @@ BSW_SRCS = \
     $(BSW)/services/SchM/src/SchM.c \
     $(BSW)/services/CanTp/src/CanTp.c \
     $(BSW)/services/CanSM/src/CanSM.c \
+    $(BSW)/services/FiM/src/FiM.c \
     $(BSW)/services/Xcp/src/Xcp.c \
     $(BSW)/services/SchM/src/SchM_Timing.c \
     $(BSW)/rte/src/Rte.c \
