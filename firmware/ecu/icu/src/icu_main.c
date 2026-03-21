@@ -55,7 +55,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#ifndef PLATFORM_QNX
 #include <ncurses.h>
+#endif
 
 #endif /* PLATFORM_POSIX_TEST */
 

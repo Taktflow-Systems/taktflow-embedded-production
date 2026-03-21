@@ -35,8 +35,10 @@
  * so that #include directives come before any function definitions. */
 #ifndef BCM_CAN_USE_MOCK
 #include <sys/socket.h>
+#ifndef PLATFORM_QNX
 #include <linux/can.h>
 #include <linux/can/raw.h>
+#endif
 #include <net/if.h>
 #include <string.h>
 #include <unistd.h>
