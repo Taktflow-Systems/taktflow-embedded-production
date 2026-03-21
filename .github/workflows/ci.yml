@@ -244,7 +244,7 @@ jobs:
             -Ifirmware/bsw/services/SchM/include \
             -Ifirmware/lib/vendor/unity \
             -o test_e2e_sm \
-            test/unit/bsw/test_E2E_SM_asild.c \
+            test/unit/bsw/test_E2E_Sm_asild.c \
             test/unit/bsw/stubs_com_test.c \
             firmware/bsw/services/E2E/src/E2E.c \
             firmware/lib/vendor/unity/unity.c
