@@ -522,8 +522,16 @@ void Com_MainFunction_Tx(void)
         if (cycle_ms == 0u) {
             /* Event-triggered (CycleTimeMs=0): send when pending */
             should_send = com_tx_pending[pdu_id];
+        } else if (tx_mode == COM_TX_MODE_PERIODIC) {
+            /* PERIODIC: send when cycle time elapsed — no pending required.
+             * AUTOSAR: PERIODIC PDUs transmit on timer unconditionally. */
+            if (com_tx_cycle_cnt[pdu_id] >= cycle_ms)
+            {
+                should_send = TRUE;
+                com_tx_cycle_cnt[pdu_id] = 0u;
+            }
         } else {
-            /* Cyclic: send when cycle time elapsed AND data pending */
+            /* MIXED: send when cycle time elapsed AND data pending */
             if ((com_tx_cycle_cnt[pdu_id] >= cycle_ms) &&
                 (com_tx_pending[pdu_id] == TRUE))
             {

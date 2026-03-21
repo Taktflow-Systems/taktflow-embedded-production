@@ -335,16 +335,33 @@ void Swc_CvcCom_TransmitSchedule(uint32 currentTimeMs)
         (void)Com_SendSignal(CVC_COM_SIG_BRAKE_COMMAND_BRAKE_FORCE_CMD, &tx_brake);
     }
 
-    /* Bridge E-Stop broadcast — read from RTE, send via Com */
+    /* Bridge E-Stop broadcast — always update signals (PERIODIC PDU).
+     * Com_MainFunction_Tx sends 0x001 on timer regardless of pending. */
     {
         uint32 estop_val = 0u;
+        uint8  estop_active;
+        uint8  estop_source = 1u;  /* CVC = source 1 */
         (void)Rte_Read(CVC_SIG_ESTOP_ACTIVE, &estop_val);
-        if (estop_val != 0u) {
-            uint8 estop_active = 1u;
-            uint8 estop_source = 1u;  /* CVC = source 1 */
-            (void)Com_SendSignal(CVC_COM_SIG_ESTOP_BROADCAST_ACTIVE, &estop_active);
-            (void)Com_SendSignal(CVC_COM_SIG_ESTOP_BROADCAST_SOURCE, &estop_source);
-        }
+        estop_active = (estop_val != 0u) ? 1u : 0u;
+        (void)Com_SendSignal(CVC_COM_SIG_ESTOP_BROADCAST_ACTIVE, &estop_active);
+        (void)Com_SendSignal(CVC_COM_SIG_ESTOP_BROADCAST_SOURCE, &estop_source);
+    }
+
+    /* Bridge Body_Control_Cmd (0x350, PERIODIC 100ms, QM)
+     * Signals populated from RTE body control state.
+     * Com_MainFunction_Tx handles timing — just keep signals fresh. */
+    {
+        uint8 headlight  = 0u;
+        uint8 taillight  = 0u;
+        uint8 hazard     = 0u;
+        uint8 turn_sig   = 0u;
+        uint8 door_lock  = 0u;
+        /* TODO:POST-BETA — read actual body control state from RTE */
+        (void)Com_SendSignal(CVC_COM_SIG_BODY_CONTROL_CMD_HEADLIGHT_CMD, &headlight);
+        (void)Com_SendSignal(CVC_COM_SIG_BODY_CONTROL_CMD_TAIL_LIGHT_ON, &taillight);
+        (void)Com_SendSignal(CVC_COM_SIG_BODY_CONTROL_CMD_HAZARD_ACTIVE, &hazard);
+        (void)Com_SendSignal(CVC_COM_SIG_BODY_CONTROL_CMD_TURN_SIGNAL_CMD, &turn_sig);
+        (void)Com_SendSignal(CVC_COM_SIG_BODY_CONTROL_CMD_DOOR_LOCK_CMD, &door_lock);
     }
 
     /* Bridge Torque Request — read from RTE, send via Com */
