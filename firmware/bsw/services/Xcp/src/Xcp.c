@@ -184,6 +184,8 @@ static void xcp_cmd_get_comm_mode_info(void)
  */
 static void xcp_cmd_get_seed(const uint8* data, uint8 length)
 {
+    (void)data;  /* Seed generation doesn't use request payload */
+
     if (length < 3u) {
         xcp_send_error(XCP_ERR_CMD_SYNTAX);
         return;
