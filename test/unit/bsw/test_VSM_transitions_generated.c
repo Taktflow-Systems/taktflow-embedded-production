@@ -218,7 +218,7 @@ Std_ReturnType Com_SendSignal(uint16 SignalId, const uint32* DataPtr)
  * Include the source under test
  * ================================================================== */
 
-#include "Swc_VehicleState.c"
+#include "../../../firmware/ecu/cvc/src/Swc_VehicleState.c"
 
 /* ==================================================================
  * Test helpers
