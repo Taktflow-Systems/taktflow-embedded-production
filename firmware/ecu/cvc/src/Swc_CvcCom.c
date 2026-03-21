@@ -141,10 +141,11 @@ Std_ReturnType Swc_CvcCom_E2eProtect(uint8 txIndex, uint8* payload,
         return E_NOT_OK;
     }
 
-    return E2E_Protect(&CvcCom_TxE2eConfig[txIndex],
-                        &CvcCom_TxE2eState[txIndex],
-                        payload,
-                        (uint16)length);
+    /* E2E protection is now performed by Com_MainFunction_Tx (Phase 2).
+     * This function is retained for API compatibility only. */
+    (void)payload;
+    (void)length;
+    return E_OK;
 }
 
 /* ==================================================================
@@ -174,29 +175,12 @@ Std_ReturnType Swc_CvcCom_E2eCheck(uint8 rxIndex, const uint8* payload,
         return E_NOT_OK;
     }
 
-    e2eResult = E2E_Check(&CvcCom_RxE2eConfig[rxIndex],
-                           &CvcCom_RxE2eState[rxIndex],
-                           payload,
-                           (uint16)length);
-
-    if (e2eResult == E2E_STATUS_OK)
-    {
-        /* Valid message — reset failure counter */
-        CvcCom_RxStatus[rxIndex].failCount     = 0u;
-        CvcCom_RxStatus[rxIndex].useSafeDefault = FALSE;
-        return E_OK;
-    }
-
-    /* E2E check failed — increment failure counter */
-    CvcCom_RxStatus[rxIndex].failCount++;
-
-    if (CvcCom_RxStatus[rxIndex].failCount >= CVCCOM_E2E_FAIL_THRESHOLD)
-    {
-        /* 3 consecutive failures — use safe default values */
-        CvcCom_RxStatus[rxIndex].useSafeDefault = TRUE;
-    }
-
-    return E_NOT_OK;
+    /* E2E check is now performed by Com_RxIndication (Phase 2).
+     * This function is retained for API compatibility only. */
+    (void)payload;
+    (void)length;
+    (void)e2eResult;
+    return E_OK;
 }
 
 /* ==================================================================
@@ -265,6 +249,17 @@ void Swc_CvcCom_TransmitSchedule(uint32 currentTimeMs)
         }
     }
 
+    /* ---- TX: Heartbeat signals → Com (50ms cycle enforced by Com config) ---- */
+    {
+        uint32 hb_vs = 0u;
+        uint8 ecu_id = CVC_ECU_ID_CVC;
+        uint8 mode;
+        (void)Rte_Read(CVC_SIG_VEHICLE_STATE, &hb_vs);
+        mode = (uint8)(hb_vs & 0x0Fu);
+        (void)Com_SendSignal(CVC_COM_SIG_CVC_HEARTBEAT_ECU_ID, &ecu_id);
+        (void)Com_SendSignal(CVC_COM_SIG_CVC_HEARTBEAT_OPERATING_MODE, &mode);
+    }
+
     /* ---- TX: 0x100 Vehicle State (E2E protected, cyclic) ---- */
     {
         uint8  txBuf[8];
@@ -310,11 +305,14 @@ void Swc_CvcCom_TransmitSchedule(uint32 currentTimeMs)
         /* Write FaultMask to RTE for other consumers */
         (void)Rte_Write(CVC_SIG_FAULT_MASK, (uint32)faultMask);
 
-        /* E2E protect: CRC-8 + alive counter (TX index 2 = 0x100) */
-        (void)Swc_CvcCom_E2eProtect(2u, txBuf, 8u);
-
-        /* Transmit via PduR -> CanIf -> CAN 0x100 */
-        (void)PduR_Transmit(CVC_COM_TX_VEHICLE_STATE, &pdu_info);
+        /* Pack Vehicle_State signals via Com (E2E applied by Com_MainFunction_Tx) */
+        {
+            uint8 vs_mode = Swc_VehicleState_GetState();
+            uint8 tl8     = txBuf[4];
+            (void)Com_SendSignal(CVC_COM_SIG_VEHICLE_STATE_MODE, &vs_mode);
+            (void)Com_SendSignal(CVC_COM_SIG_VEHICLE_STATE_FAULT_MASK, &faultMask);
+            (void)Com_SendSignal(CVC_COM_SIG_VEHICLE_STATE_TORQUE_LIMIT, &tl8);
+        }
     }
 
     /* Publish steering and brake commands.
@@ -339,6 +337,27 @@ void Swc_CvcCom_TransmitSchedule(uint32 currentTimeMs)
         }
         (void)Com_SendSignal(CVC_COM_SIG_STEER_COMMAND_STEER_ANGLE_CMD, &tx_steer);
         (void)Com_SendSignal(CVC_COM_SIG_BRAKE_COMMAND_BRAKE_FORCE_CMD, &tx_brake);
+    }
+
+    /* Bridge E-Stop broadcast — read from RTE, send via Com */
+    {
+        uint32 estop_val = 0u;
+        (void)Rte_Read(CVC_SIG_ESTOP_ACTIVE, &estop_val);
+        if (estop_val != 0u) {
+            uint8 estop_active = 1u;
+            uint8 estop_source = 1u;  /* CVC = source 1 */
+            (void)Com_SendSignal(CVC_COM_SIG_ESTOP_BROADCAST_ACTIVE, &estop_active);
+            (void)Com_SendSignal(CVC_COM_SIG_ESTOP_BROADCAST_SOURCE, &estop_source);
+        }
+    }
+
+    /* Bridge Torque Request — read from RTE, send via Com */
+    {
+        uint32 torque_val = 0u;
+        uint16 tx_torque;
+        (void)Rte_Read(CVC_SIG_TORQUE_REQUEST, &torque_val);
+        tx_torque = (uint16)torque_val;
+        (void)Com_SendSignal(CVC_COM_SIG_TORQUE_REQUEST_COMMAND_PCT, &tx_torque);
     }
 }
 

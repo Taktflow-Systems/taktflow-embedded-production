@@ -58,6 +58,30 @@ typedef struct {
     uint8       Counter;          /**< Current alive counter value       */
 } E2E_StateType;
 
+/* ---- E2E Supervision State Machine (AUTOSAR-aligned) ---- */
+
+/** Supervision states */
+typedef enum {
+    E2E_SM_VALID   = 0u,  /**< Enough consecutive OK checks — data trustworthy  */
+    E2E_SM_NODATA  = 1u,  /**< No data received yet (initial state)             */
+    E2E_SM_INIT    = 2u,  /**< First data received, building confidence          */
+    E2E_SM_INVALID = 3u   /**< Too many consecutive errors — data not trustworthy */
+} E2E_SMStateType;
+
+/** Supervision configuration (per-PDU, const) */
+typedef struct {
+    uint8   WindowSizeValid;    /**< Consecutive OK needed to enter VALID (typ 3-5) */
+    uint8   WindowSizeInvalid;  /**< Consecutive ERR needed to enter INVALID (typ 2-3) */
+    uint8   WindowSizeInit;     /**< OK count needed to leave INIT (typ 1-2)  */
+} E2E_SMConfigType;
+
+/** Supervision runtime state (per-PDU) */
+typedef struct {
+    E2E_SMStateType State;      /**< Current supervision state              */
+    uint8           OkCount;    /**< Consecutive OK results                 */
+    uint8           ErrCount;   /**< Consecutive error results              */
+} E2E_SMType;
+
 /* ---- API Functions ---- */
 
 /**
@@ -111,5 +135,27 @@ E2E_CheckStatusType E2E_Check(const E2E_ConfigType* Config,
  * @return Computed CRC-8 value (XOR'd with 0xFF)
  */
 uint8 E2E_CalcCRC8(const uint8* DataPtr, uint16 Length, uint8 StartValue);
+
+/**
+ * @brief  Initialize E2E supervision state machine
+ * @param  SM  Pointer to supervision runtime state
+ */
+void E2E_SMInit(E2E_SMType* SM);
+
+/**
+ * @brief  Update supervision state machine with a new E2E_Check result
+ *
+ * Evaluates the check result against consecutive OK/error windows.
+ * Transitions: NODATA→INIT (on first data), INIT→VALID (enough OK),
+ * VALID→INVALID (enough errors), INVALID→VALID (enough OK).
+ *
+ * @param  SMConfig  Pointer to supervision configuration (window sizes)
+ * @param  SM        Pointer to supervision runtime state
+ * @param  CheckStatus  Result from E2E_Check (OK/REPEATED/WRONG_SEQ/ERROR)
+ * @return Current supervision state after update
+ */
+E2E_SMStateType E2E_SMCheck(const E2E_SMConfigType* SMConfig,
+                            E2E_SMType* SM,
+                            E2E_CheckStatusType CheckStatus);
 
 #endif /* E2E_H */

@@ -107,12 +107,9 @@ void Swc_EStop_MainFunction(void)
         }
     }
 
-    /* --- 3. Cyclic broadcast while latched ------------------------ */
+    /* --- 3. Cyclic broadcast while latched — via RTE → Swc_CvcCom bridge */
     if (active == TRUE) {
-        uint8 estop_active = TRUE;
-        uint8 estop_source = 1u;  /* CVC = source 1 */
-        (void)Com_SendSignal(CVC_COM_SIG_ESTOP_BROADCAST_ACTIVE, &estop_active);
-        (void)Com_SendSignal(CVC_COM_SIG_ESTOP_BROADCAST_SOURCE, &estop_source);
+        (void)Rte_Write(CVC_SIG_ESTOP_ACTIVE, 1u);
     }
 }
 

@@ -383,13 +383,12 @@ void Swc_Brake_MainFunction(void)
 
     /* ----------------------------------------------------------
      * Step 8: Motor cutoff CAN sequence
-     *         Send Com_SendSignal for motor cutoff PDU, repeated
-     *         N times (one per 10ms cycle).
+     *         Write motor cutoff to RTE, repeated N times (one per
+     *         10ms cycle). Swc_FzcCom reads RTE and sends via Com.
      * ---------------------------------------------------------- */
     if (Brake_CutoffSending == TRUE) {
         if (Brake_CutoffCounter < Brake_CfgPtr->cutoffRepeatCount) {
-            cutoff_data = 1u;
-            (void)Com_SendSignal(FZC_COM_SIG_TX_MOTOR_CUTOFF, &cutoff_data);
+            (void)Rte_Write(FZC_SIG_MOTOR_CUTOFF, 1u);
             Brake_CutoffCounter++;
         } else {
             Brake_CutoffSending = FALSE;

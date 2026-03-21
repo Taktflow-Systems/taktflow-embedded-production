@@ -10,6 +10,7 @@
  * @copyright Taktflow Systems 2026
  */
 #include "CanIf.h"
+#include "CanSM.h"
 #include "Det.h"
 
 /* ---- Internal State ---- */
@@ -112,6 +113,6 @@ void CanIf_RxIndication(Can_IdType CanId, const uint8* SduPtr, uint8 Dlc)
 void CanIf_ControllerBusOff(uint8 controllerId)
 {
     (void)controllerId;
-    /* Bus-off notification from CAN driver — log only, no recovery action
-     * in the interface layer. BswM handles mode transitions. */
+    /* Forward to CanSM for L1/L2 bus-off recovery */
+    CanSM_ControllerBusOff();
 }

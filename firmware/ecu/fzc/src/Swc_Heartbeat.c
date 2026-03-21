@@ -124,19 +124,7 @@ void Swc_Heartbeat_MainFunction(void)
         tx_data[i] = 0u;
     }
 
-    /* Bytes 0-1 reserved for E2E_Protect (counter+dataid, CRC) */
-    tx_data[HB_BYTE_ECU_ID]      = FZC_ECU_ID;
-    tx_data[HB_BYTE_STATE_FAULT] = (uint8)(((fault_mask & 0x0Fu) << 4u)
-                                         | (vehicle_state & 0x0Fu));
-
-    /* E2E protect then send via PduR → CanIf → CAN 0x011 */
-    (void)E2E_Protect(&hb_e2e_config, &hb_e2e_state, tx_data, 8u);
-    {
-        PduInfoType pdu_info;
-        pdu_info.SduDataPtr = tx_data;
-        pdu_info.SduLength  = 8u;
-        (void)PduR_Transmit(FZC_COM_TX_HEARTBEAT, &pdu_info);
-    }
+    /* Heartbeat state written to RTE — Swc_FzcCom bridge reads + sends via Com */
 
     /* Write alive counter to RTE for diagnostics */
     (void)Rte_Write(FZC_SIG_HEARTBEAT_ALIVE, (uint32)Hb_AliveCounter);
