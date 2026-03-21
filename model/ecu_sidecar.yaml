@@ -306,7 +306,7 @@ ecus:
       RZC_STATE_COUNT: 6
 
     thresholds:
-      RZC_RTE_PERIOD_MS: 50
+      RZC_RTE_PERIOD_MS: 10  # ASIL B — motor overcurrent needs <10ms detection
       RZC_COMM_TIMEOUT: 100
       RZC_MOTOR_OVERCURRENT_LIMIT: 4000
       RZC_MOTOR_OVERSPEED_LIMIT: 6000
@@ -476,5 +476,5 @@ ecus:
       TCU_SIG_DTC_BROADCAST:      DTC_Broadcast_Number
 
     thresholds:
-      TCU_RTE_PERIOD_MS: 10
+      TCU_RTE_PERIOD_MS: 50  # QM — diagnostics only, no real-time requirement
       TCU_COMM_TIMEOUT: 200
