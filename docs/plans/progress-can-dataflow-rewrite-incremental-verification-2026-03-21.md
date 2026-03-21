@@ -128,23 +128,53 @@ Layer 2: E2E SM + CanSM        22/22  ✅
 Layer 3: BSW integration        6/6   ✅
 Layer 3: Socket RX              3/3   ✅
 Layer 4: CVC full              30/30  ✅ ALL PASS
-Layer 5: CVC+FZC full          34/34  ✅ ALL PASS
+Layer 5: CVC+FZC basic         34/34  ✅ ALL PASS
+Layer 5b: CVC+FZC comprehensive 71/71 ✅ ALL PASS
 Layer 6: Full 7-ECU SIL        not started
 ```
+
+## Test Suite — 1,021 Tests (CI GREEN)
+
+| Suite | Tests | Status |
+|-------|-------|--------|
+| Com signals (generated) | 273 | PASS |
+| VSM transitions (generated) | 107 | PASS |
+| E2E messages (generated) | 100 | PASS |
+| Com negative (generated) | 52 | PASS |
+| E2E negative (generated) | 45 | PASS |
+| E2E SM full (generated) | 41 | PASS |
+| XCP security (generated) | 33 | PASS (2 ignored 64-bit) |
+| CanSM full (generated) | 32 | PASS |
+| Dem (generated) | 22 | PASS |
+| WdgM (generated) | 19 | PASS |
+| Rte (generated) | 18 | PASS |
+| Det (generated) | 14 | PASS |
+| FiM (generated) | 13 | PASS |
+| Com existing | 30 | PASS |
+| CanSM existing | 10 | PASS |
+| E2E SM existing | 12 | PASS |
+| Layer 4 integration | 30 | PASS |
+| Layer 5 integration | 34 | PASS |
+| Layer 5b comprehensive | 71 | PASS |
+| **TOTAL** | **1,021** | **CI GREEN** |
 
 ## Pipeline Status
 
 | Gate | Status |
 |------|--------|
 | Step 1: DBC (12-point) | 12/12 PASS |
+| Step 3: ARXML generation | PASS |
+| Step 4: ARXML validation | PASS |
+| Step 5: Codegen (93 files) | PASS |
 | Step 6: Round-trip | 3/3 PASS |
 | Step 7: Data flow | 0 errors, 0 warnings |
 | Syntax check (7 ECUs) | PASS |
-| Unit tests (52) | 52/52 PASS |
-| CI (GitHub Actions) | All gates PASS |
+| Unit tests (821) | 821/821 PASS |
+| Integration tests (135) | 135/135 PASS |
 | Traceability | 306/353 (86%) |
+| CI (GitHub Actions) | **ALL GATES PASS** |
 
-## Bugs Found and Fixed (11)
+## Bugs Found and Fixed (20)
 
 | # | Bug | Found By | Root Cause |
 |---|-----|----------|-----------|
@@ -154,21 +184,41 @@ Layer 6: Full 7-ECU SIL        not started
 | 4 | VSM SC_KILL → SAFE_STOP | HARA audit | Should be SHUTDOWN (ISO 26262) |
 | 5 | VSM MOTOR_CUTOFF → SAFE_STOP | HARA research | Should be DEGRADED (fail-silent) |
 | 6 | vcan loopback starvation | Layer 3 socket test | RECV_OWN_MSGS ignored by vcan |
-| 7 | PduR hand-written config | Layer 4 debug | 13 entries shadowed 33 generated |
-| 8 | CanIf hand-written config | Layer 4 debug | Same pattern as PduR |
+| 7 | PduR hand-written config CVC | Layer 4 debug | 13 entries shadowed 33 generated |
+| 8 | CanIf hand-written config CVC | Layer 4 debug | Same pattern as PduR |
 | 9 | Dead E2E code in heartbeats | Layer 4 build | -Werror caught unused vars |
 | 10 | Dead cutoff_data in Swc_Brake | Layer 4 build | -Werror |
 | 11 | 19 zombie CVC processes | Layer 4 timing test | Test scripts didn't cleanup |
 | 12 | PERIODIC TX required pending | Layer 4 timing | Body_Control/E-Stop never sent |
 | 13 | Docker SIL on vcan0 | Layer 4 phantom | Old containers injected frames |
 | 14 | E2E test exact counter | CI | PERIODIC fires multiple times |
+| 15 | Sub-byte signal packing | Layer 5b | <8-bit writes full byte, corrupts neighbor |
+| 16 | Multi-byte signal packing | Layer 5b | 12-bit FaultMask overwrites 4-bit Mode |
+| 17 | FZC PduR hand-written | Layer 5b XCP test | No XCP routing, same as CVC bug |
+| 18 | FaultMask uint8→uint16 | Layer 5b | 12-bit signal read as uint16 from uint8 ptr |
+| 19 | XCP no authentication | 10-auditor review | Any CAN device could write memory |
+| 20 | XCP null address crash | 10-auditor review | SIGSEGV on SHORT_UPLOAD to addr 0 |
 
-## What's Left
+## Audit Fixes Applied
 
-1. **Layer 6** — Docker SIL with all 7 ECUs
-2. **RZC POSIX build** — needs same extern config + hw_posix
-3. **16 pre-existing VSM test failures** — stale mock signal IDs
-4. **Physical bench flash** — CVC + FZC + RZC on STM32
+| Finding | Severity | Status |
+|---------|----------|--------|
+| XCP Seed & Key | CRITICAL | FIXED |
+| XCP null address | CRITICAL | FIXED |
+| Com COM_UINT32 dead path | MAJOR | FIXED |
+| Com 16-bit bounds check | MAJOR | FIXED |
+| Com SchM_TimingStop leak | MAJOR | FIXED |
+| SWC layering (PduR.h/E2E.h) | MAJOR | FIXED |
+| Dead code in Swc_CvcCom | MAJOR | FIXED (191 lines removed) |
+| VSM GetRxStatus linker | MAJOR | FIXED |
+
+## What's Next — Layer 6
+
+1. **Build remaining 5 ECUs** (RZC, SC, BCM, ICU, TCU) for POSIX
+2. **Fix RZC main.c** — same extern config pattern as CVC/FZC
+3. **Docker SIL** — all 7 ECUs + plant-sim + CAN gateway
+4. **SIL scenario tests** — 16 scenarios from test/sil/scenarios/
+5. **Physical bench flash** — CVC + FZC + RZC on STM32
 
 ## Key Rule
 
