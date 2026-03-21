@@ -235,6 +235,7 @@ void Swc_TempMonitor_MainFunction(void)
     /* 7. If derating = 0%: report overtemp DTC                     */
     /* ------------------------------------------------------------ */
     if (TM_DeratingPct == RZC_TEMP_DERATE_0_PCT) {
+        TM_TempFault = TRUE;
         Dem_ReportErrorStatus((uint8)RZC_DTC_OVERTEMP,
                               DEM_EVENT_STATUS_FAILED);
     }
