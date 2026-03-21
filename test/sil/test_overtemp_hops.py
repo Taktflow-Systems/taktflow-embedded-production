@@ -17,7 +17,7 @@ import can
 import cantools
 import paho.mqtt.publish as mqtt_pub
 
-DBC_PATH = "gateway/taktflow.dbc"
+DBC_PATH = "gateway/taktflow_vehicle.dbc"
 MQTT_HOST = "localhost"
 MQTT_TOPIC = "taktflow/command/plant_inject"
 FAULT_API = "http://localhost:8091"
@@ -44,7 +44,7 @@ def can_recv_decoded(db, bus, target_id, timeout=3.0):
     msg = can_recv(bus, target_id, timeout)
     if msg is None:
         return None
-    return db.decode_message(target_id, msg.data)
+    return db.decode_message(target_id, msg.data, decode_choices=False)
 
 
 def inject_temp(temp_c, sustained_sec=0):
@@ -104,7 +104,9 @@ def main():
 
     # Hop 2: MQTT injection changes temp on 0x601
     print("Hop 2: MQTT inject 110°C → 0x601 (sustained 3s)")
+    bus.shutdown()
     inject_temp(110.0, sustained_sec=3)
+    bus = can.interface.Bus(channel="vcan0", interface="socketcan")
     decoded = can_recv_decoded(db, bus, CAN_VSENSOR_RZC, timeout=3)
     if decoded:
         temp_dc = decoded.get("RZC_Virtual_Sensors_MotorTemp_dC", 0)

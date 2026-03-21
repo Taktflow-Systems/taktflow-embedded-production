@@ -49,7 +49,7 @@ def _read_vehicle_state(timeout=TIMEOUT):
             can_id = struct.unpack("<I", data[:4])[0] & 0x1FFFFFFF
             if can_id == 0x100:
                 s.close()
-                decoded = _DB.decode_message(can_id, data[8:16])
+                decoded = _DB.decode_message(can_id, data[8:16], decode_choices=False)
                 return int(decoded.get("Vehicle_State_Mode", 0))
         except socket.timeout:
             pass
@@ -73,7 +73,7 @@ def _check_dtc(expected_dtc, timeout=5.0):
             data = s.recv(16)
             can_id = struct.unpack("<I", data[:4])[0] & 0x1FFFFFFF
             if can_id == 0x500:
-                decoded = _DB.decode_message(can_id, data[8:16])
+                decoded = _DB.decode_message(can_id, data[8:16], decode_choices=False)
                 dtc = int(decoded.get("DTC_Broadcast_Number", 0))
                 if dtc == expected_dtc:
                     s.close()

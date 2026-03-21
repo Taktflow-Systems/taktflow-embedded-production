@@ -205,17 +205,7 @@ class PlantSimulator:
                     self.sc_relay_killed = False
                     self.vehicle_state = VS_INIT
                     self._startup_ticks = 0
-                elif not self.estop_active and not was_active:
-                    # Reset command (E-Stop clear when not active) — clear all faults
-                    log.info("Reset received — clearing all faults, state -> INIT")
-                    self.motor.reset_faults()
-                    self.steering.clear_fault()
-                    self.brake.clear_fault()
-                    self.battery.clear_override()
-                    self._active_dtcs.clear()
-                    self.sc_relay_killed = False
-                    self.vehicle_state = VS_INIT
-                    self._startup_ticks = 0
+                # No action when estop stays inactive — normal heartbeat
 
         elif arb_id == RX_SC_RELAY_STATUS:
             if len(data) >= 4:
