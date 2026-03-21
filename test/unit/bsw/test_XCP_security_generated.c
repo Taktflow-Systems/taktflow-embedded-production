@@ -274,7 +274,7 @@ void test_GetSeed_Returns4ByteSeed(void)
     uint32 seed = xcp_get_seed();
     TEST_ASSERT_EQUAL_HEX8(XCP_RES_OK, stub_tx_buf[0]);
     TEST_ASSERT_EQUAL_UINT8(4u, stub_tx_buf[1]);  /* seed length */
-    TEST_ASSERT_NOT_EQUAL(0u, seed);  /* Seed should be non-zero */
+    TEST_ASSERT_TRUE(seed != 0u);  /* Seed should be non-zero */
 }
 
 void test_GetSeed_WhenAlreadyUnlocked_ReturnsSeedLen0(void)
@@ -381,7 +381,7 @@ void test_Unlock_LockoutResetByReconnect(void)
     reset_stubs();
     uint32 seed = xcp_get_seed();
     TEST_ASSERT_EQUAL_HEX8(XCP_RES_OK, stub_tx_buf[0]);
-    TEST_ASSERT_NOT_EQUAL(0u, seed);
+    TEST_ASSERT_TRUE(seed != 0u);
 
     /* And authenticate successfully */
     uint32 key = compute_key(seed);
