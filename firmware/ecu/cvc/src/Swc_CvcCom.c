@@ -265,7 +265,7 @@ void Swc_CvcCom_TransmitSchedule(uint32 currentTimeMs)
         uint8  txBuf[8];
         uint8  j;
         uint32 faultSig;
-        uint8  faultMask = 0u;
+        uint16 faultMask = 0u;  /* 12-bit signal → must be uint16 for Com_SendSignal */
 
         for (j = 0u; j < 8u; j++) { txBuf[j] = 0u; }
 
