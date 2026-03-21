@@ -116,8 +116,6 @@ void Swc_Heartbeat_Init(void)
     fzc_last_alive  = 0u;   /* Match Com shadow buffer init (0) — no false positive */
     rzc_last_alive  = 0u;   /* Real detection starts when alive counter changes     */
 
-    hb_e2e_state.Counter = 0u;
-
     E2E_Sm_Init(&fzc_sm_state);
     E2E_Sm_Init(&rzc_sm_state);
 
