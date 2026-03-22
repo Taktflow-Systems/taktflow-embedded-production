@@ -136,6 +136,13 @@ Std_ReturnType IoHwAb_ReadMotorCurrent(uint16* Current_mA);
 Std_ReturnType IoHwAb_ReadMotorTemp(uint16* Temp_dC);
 
 /**
+ * @brief  Read motor temperature 2 via ADC (second NTC winding sensor)
+ * @param  Temp_dC   Output: temperature in deci-degrees Celsius
+ * @return E_OK on success, E_NOT_OK on null pointer / ADC failure
+ */
+Std_ReturnType IoHwAb_ReadMotorTemp2(uint16* Temp_dC);
+
+/**
  * @brief  Read battery voltage via ADC (voltage divider)
  * @param  Voltage_mV  Output: battery voltage in millivolts
  * @return E_OK on success, E_NOT_OK on null pointer / ADC failure

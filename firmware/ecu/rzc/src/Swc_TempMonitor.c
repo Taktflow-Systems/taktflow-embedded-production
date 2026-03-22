@@ -70,6 +70,12 @@ static uint8   TM_PrevDeratingPct;
 /** Temperature sensor fault flag */
 static uint8   TM_TempFault;
 
+/** Second winding temperature in deci-degrees Celsius */
+static sint16  TM_CurrentTemp2_dC;
+
+/** NTC plausibility fault flag (|temp1 - temp2| > threshold) */
+static uint8   TM_SensorPlausFault;
+
 
 /* ==================================================================
  * Private: Compute raw derating from temperature (no hysteresis)
@@ -155,9 +161,11 @@ static uint8 TM_ApplyHysteresis(uint8 raw_derating, uint8 cur_derating,
 void Swc_TempMonitor_Init(void)
 {
     TM_CurrentTemp_dC  = 0;
+    TM_CurrentTemp2_dC = 0;
     TM_DeratingPct     = RZC_TEMP_DERATE_100_PCT;
     TM_PrevDeratingPct = RZC_TEMP_DERATE_100_PCT;
     TM_TempFault       = FALSE;
+    TM_SensorPlausFault = FALSE;
     TM_Initialized     = TRUE;
 }
 
@@ -213,6 +221,39 @@ void Swc_TempMonitor_MainFunction(void)
     }
 
     /* ------------------------------------------------------------ */
+    /* 3b. Read second NTC and cross-check plausibility              */
+    /*     |temp1 - temp2| > 300 dC (30 degC) → sensor fault         */
+    /*     Eliminates single-NTC SPOF (GAP-OT-001).                  */
+    /* ------------------------------------------------------------ */
+    {
+        uint16 raw_temp2 = 0U;
+        Std_ReturnType io2_result;
+
+        io2_result = IoHwAb_ReadMotorTemp2(&raw_temp2);
+        if (io2_result == E_OK) {
+            sint16 temp2_dC = (sint16)raw_temp2;
+            sint16 delta;
+
+            TM_CurrentTemp2_dC = temp2_dC;
+
+            /* Compute absolute difference */
+            delta = temp_dC - temp2_dC;
+            if (delta < 0) {
+                delta = -delta;
+            }
+
+            if (delta > (sint16)RZC_TEMP_PLAUS_DELTA_DDC) {
+                TM_SensorPlausFault = TRUE;
+                /* Use the HIGHER reading for safety (fail-hot) */
+                if (temp2_dC > temp_dC) {
+                    temp_dC = temp2_dC;
+                }
+            }
+        }
+        /* If temp2 read fails, continue with temp1 only (degraded) */
+    }
+
+    /* ------------------------------------------------------------ */
     /* 4. Store current temperature                                  */
     /* ------------------------------------------------------------ */
     TM_CurrentTemp_dC = temp_dC;
@@ -244,6 +285,7 @@ void Swc_TempMonitor_MainFunction(void)
     /* 8. Write to RTE                                               */
     /* ------------------------------------------------------------ */
     (void)Rte_Write(RZC_SIG_TEMP1_DC,      (uint32)TM_CurrentTemp_dC);
+    (void)Rte_Write(RZC_SIG_TEMP2_DC,      (uint32)TM_CurrentTemp2_dC);
     (void)Rte_Write(RZC_SIG_DERATING_PCT,  (uint32)TM_DeratingPct);
     (void)Rte_Write(RZC_SIG_TEMP_FAULT,    (uint32)TM_TempFault);
 

@@ -26,10 +26,11 @@
 #define IOHWAB_SENSOR_PEDAL_1          1u  /**< Pedal angle sensor 1 (red.) */
 #define IOHWAB_SENSOR_STEERING         2u  /**< Steering angle sensor       */
 #define IOHWAB_SENSOR_MOTOR_CURRENT    3u  /**< Motor current (ACS723)      */
-#define IOHWAB_SENSOR_MOTOR_TEMP       4u  /**< Motor temperature (NTC)     */
+#define IOHWAB_SENSOR_MOTOR_TEMP       4u  /**< Motor temperature NTC1      */
 #define IOHWAB_SENSOR_BATTERY_VOLTAGE  5u  /**< Battery voltage (divider)   */
 #define IOHWAB_SENSOR_BRAKE_POSITION   6u  /**< Brake position (pot)        */
-#define IOHWAB_SENSOR_COUNT            7u  /**< Total sensor channels       */
+#define IOHWAB_SENSOR_MOTOR_TEMP2      7u  /**< Motor temperature NTC2      */
+#define IOHWAB_SENSOR_COUNT            8u  /**< Total sensor channels       */
 
 /* ---- Digital Pin IDs for injection ---- */
 

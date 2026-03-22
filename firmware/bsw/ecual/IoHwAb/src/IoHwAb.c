@@ -226,6 +226,15 @@ Std_ReturnType IoHwAb_ReadMotorTemp(uint16* Temp_dC)
     return E_OK;
 }
 
+Std_ReturnType IoHwAb_ReadMotorTemp2(uint16* Temp_dC)
+{
+    /* Second NTC on a separate ADC channel.  On STM32 this would be a
+     * different ADC group.  For now, re-read the same ADC group as temp1.
+     * On real hardware, wire NTC2 to a dedicated ADC channel and update
+     * iohwab_config->MotorTemp2AdcGroup. */
+    return IoHwAb_ReadMotorTemp(Temp_dC);
+}
+
 Std_ReturnType IoHwAb_ReadBatteryVoltage(uint16* Voltage_mV)
 {
     uint16 raw_adc;

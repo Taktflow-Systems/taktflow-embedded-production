@@ -57,7 +57,8 @@ void Swc_RzcSensorFeeder_Init(void)
      * Battery voltage needs nominal value to prevent false undervoltage
      * (RZC_BATT_DISABLE_LOW_MV = 8000 mV). */
     IoHwAb_Inject_SetSensorValue(IOHWAB_INJECT_MOTOR_CURRENT, 0u);
-    IoHwAb_Inject_SetSensorValue(IOHWAB_INJECT_MOTOR_TEMP, 250u);  /* 25.0 dC */
+    IoHwAb_Inject_SetSensorValue(IOHWAB_INJECT_MOTOR_TEMP, 250u);   /* 25.0 dC */
+    IoHwAb_Inject_SetSensorValue(IOHWAB_INJECT_MOTOR_TEMP2, 250u);  /* 25.0 dC */
     IoHwAb_Inject_SetSensorValue(IOHWAB_INJECT_BATTERY_VOLTAGE,
                                   (uint16)RZC_BATT_NOMINAL_MV);
 }
@@ -127,6 +128,9 @@ void Swc_RzcSensorFeeder_MainFunction(void)
                                   (uint16)motor_current);
     IoHwAb_Inject_SetSensorValue(IOHWAB_INJECT_MOTOR_TEMP,
                                   (uint16)motor_temp);
+    /* NTC2 = same physical motor, ~80% of NTC1 (different winding position) */
+    IoHwAb_Inject_SetSensorValue(IOHWAB_INJECT_MOTOR_TEMP2,
+                                  (uint16)((motor_temp * 4u) / 5u));
     IoHwAb_Inject_SetSensorValue(IOHWAB_INJECT_BATTERY_VOLTAGE,
                                   (uint16)battery_voltage);
 

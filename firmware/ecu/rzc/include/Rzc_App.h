@@ -140,6 +140,11 @@
 #define RZC_TEMP_MIN_DDC           (-300)  /* -30.0C */
 #define RZC_TEMP_MAX_DDC           1500    /* 150.0C */
 
+/** NTC cross-check plausibility threshold (deci-degrees C).
+ *  |NTC1 - NTC2| > 30.0 degC → sensor plausibility fault.
+ *  @safety_req SWR-RZC-009 (dual-sensor cross-check, GAP-OT-001 mitigation) */
+#define RZC_TEMP_PLAUS_DELTA_DDC   300     /* 30.0C */
+
 /* ====================================================================
  * Encoder Constants (ASIL C — Quadrature Encoder TIM4)
  * ==================================================================== */

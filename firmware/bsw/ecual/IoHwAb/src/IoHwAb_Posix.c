@@ -169,6 +169,22 @@ Std_ReturnType IoHwAb_ReadMotorTemp(uint16* Temp_dC)
     return E_OK;
 }
 
+Std_ReturnType IoHwAb_ReadMotorTemp2(uint16* Temp_dC)
+{
+    if ((iohwab_initialized == FALSE) || (iohwab_config == NULL_PTR)) {
+        Det_ReportError(DET_MODULE_IOHWAB, 0u, IOHWAB_API_READ_SENSOR, DET_E_UNINIT);
+        return E_NOT_OK;
+    }
+
+    if (Temp_dC == NULL_PTR) {
+        Det_ReportError(DET_MODULE_IOHWAB, 0u, IOHWAB_API_READ_SENSOR, DET_E_PARAM_POINTER);
+        return E_NOT_OK;
+    }
+
+    *Temp_dC = iohwab_sensor_values[IOHWAB_SENSOR_MOTOR_TEMP2];
+    return E_OK;
+}
+
 Std_ReturnType IoHwAb_ReadBatteryVoltage(uint16* Voltage_mV)
 {
     if ((iohwab_initialized == FALSE) || (iohwab_config == NULL_PTR)) {
