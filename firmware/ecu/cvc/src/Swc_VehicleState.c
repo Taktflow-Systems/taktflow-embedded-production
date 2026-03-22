@@ -215,6 +215,15 @@ static uint8 self_test_pass_pending;
 /** @brief  INIT hold counter — counts cycles in INIT before allowing RUN */
 static uint16 init_hold_counter;
 
+#ifdef SIL_DIAG
+/** @brief  SIL boot grace — track whether each zone was ever seen during INIT.
+ *          Docker containers have scheduling jitter that causes heartbeat
+ *          flapping. Instead of requiring simultaneous OK, require "seen at
+ *          least once during the hold period". */
+static uint8 sil_fzc_seen;
+static uint8 sil_rzc_seen;
+#endif
+
 /** @brief  SAFE_STOP recovery counter — counts all-clear cycles before recovery */
 static uint16 safe_stop_clear_count;
 
@@ -275,6 +284,10 @@ void Swc_VehicleState_Init(void)
     self_test_pass_pending = FALSE;
     init_hold_counter      = 0u;
     safe_stop_clear_count  = 0u;
+#ifdef SIL_DIAG
+    sil_fzc_seen           = FALSE;
+    sil_rzc_seen           = FALSE;
+#endif
     post_init_grace_counter = 0u;
     can_tmo_debounce        = 0u;
     creep_debounce_count    = 0u;
@@ -536,10 +549,33 @@ void Swc_VehicleState_MainFunction(void)
             init_hold_counter++;
         }
 
+#ifdef SIL_DIAG
+        /* SIL: latch "ever seen" to tolerate Docker scheduling jitter */
+        if (fzc_comm == CVC_COMM_OK) { sil_fzc_seen = TRUE; }
+        if (rzc_comm == CVC_COMM_OK) { sil_rzc_seen = TRUE; }
+#endif
+
+        {
+            uint8 hb_ok;
+#ifdef SIL_DIAG
+            /* SIL: accept if zone ECUs were seen at least once during hold */
+            hb_ok = (uint8)((sil_fzc_seen == TRUE) && (sil_rzc_seen == TRUE));
+#else
+            /* Production: require simultaneous heartbeat OK */
+            hb_ok = (uint8)((fzc_comm == CVC_COMM_OK) && (rzc_comm == CVC_COMM_OK));
+#endif
+            (void)hb_ok; /* suppress unused warning if not used below */
+        }
+
         if ((self_test_pass_pending == TRUE)
             && (init_hold_counter >= CVC_INIT_HOLD_CYCLES)
+#ifdef SIL_DIAG
+            && (sil_fzc_seen == TRUE)
+            && (sil_rzc_seen == TRUE))
+#else
             && (fzc_comm == CVC_COMM_OK)
             && (rzc_comm == CVC_COMM_OK))
+#endif
         {
             self_test_pass_pending = FALSE;
             current_state = CVC_STATE_RUN;

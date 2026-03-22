@@ -100,6 +100,29 @@ def main():
     print("=== Motor Overtemperature Hop Test ===")
     print()
 
+    # Precondition: Wait for CVC to reach RUN state (Vehicle_State_Mode == 1)
+    print("Precondition: Waiting for CVC RUN state (up to 30s)...")
+    run_seen = False
+    deadline = time.time() + 30
+    while time.time() < deadline:
+        msg = can_recv(bus, CAN_VEHICLE_STATE, timeout=2)
+        if msg:
+            decoded_vs = db.decode_message(CAN_VEHICLE_STATE, msg.data, decode_choices=False)
+            mode = decoded_vs.get("Vehicle_State_Mode", 0)
+            if mode == 1:  # RUN
+                run_seen = True
+                print(f"  [OK] CVC in RUN state")
+                break
+            else:
+                state_names = {0: "INIT", 1: "RUN", 2: "DEGRADED", 3: "LIMP", 4: "SAFE_STOP", 5: "SHUTDOWN"}
+                print(f"  ... CVC state={state_names.get(mode, mode)}, waiting...")
+    if not run_seen:
+        print("  [FAIL] CVC never reached RUN — cannot test fault injection")
+        print("         Check: all ECUs running? SC relay asserted?")
+        bus.shutdown()
+        sys.exit(1)
+    print()
+
     # Hop 1: Plant-sim sends motor temp on 0x601
     print("Hop 1: Plant-sim → CAN 0x601 (virtual sensor)")
     decoded = can_recv_decoded(db, bus, CAN_VSENSOR_RZC, timeout=3)
