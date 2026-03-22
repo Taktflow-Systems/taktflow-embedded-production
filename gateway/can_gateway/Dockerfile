@@ -6,9 +6,10 @@ COPY gateway/can_gateway/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY gateway/taktflow.dbc /app/taktflow.dbc
+COPY gateway/taktflow_vehicle.dbc /app/taktflow_vehicle.dbc
 COPY gateway/can_gateway/ /app/can_gateway/
 
-ENV DBC_PATH=/app/taktflow.dbc
+ENV DBC_PATH=/app/taktflow_vehicle.dbc
 ENV CAN_CHANNEL=vcan0
 ENV MQTT_HOST=localhost
 ENV MQTT_PORT=1883

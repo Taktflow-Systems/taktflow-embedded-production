@@ -44,10 +44,10 @@ DTC_SCORE_THRESHOLD = 0.7
 DTC_CODE = "0xE601"
 
 # MQTT topics — subscriptions
-TOPIC_CURRENT = "taktflow/can/Motor_Current/Current_mA"
-TOPIC_TEMP = "taktflow/can/Motor_Temperature/WindingTemp1_C"
-TOPIC_RPM = "taktflow/can/Motor_Status/MotorSpeed_RPM"
-TOPIC_VOLTAGE = "taktflow/can/Battery_Status/BatteryVoltage_mV"
+TOPIC_CURRENT = "taktflow/can/Motor_Current/Motor_Current_Phase_mA"
+TOPIC_TEMP = "taktflow/can/Motor_Temperature/Motor_Temperature_WindingTemp1_C"
+TOPIC_RPM = "taktflow/can/Motor_Status/Motor_Status_MotorSpeed_RPM"
+TOPIC_VOLTAGE = "taktflow/can/Battery_Status/Battery_Status_BatteryVoltage_mV"
 
 # MQTT topics — publications
 TOPIC_SCORE = "taktflow/anomaly/score"
