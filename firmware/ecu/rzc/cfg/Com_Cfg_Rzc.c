@@ -442,8 +442,8 @@ static const Com_RxPduConfigType rzc_rx_pdu_config[] = {
     { RZC_COM_RX_ICU_HEARTBEAT,     4u,     0u, TRUE ,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x014 */
     { RZC_COM_RX_TCU_HEARTBEAT,     4u,     0u, TRUE ,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x015 */
     { RZC_COM_RX_BCM_HEARTBEAT,     4u,     0u, TRUE ,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x016 */
-    { RZC_COM_RX_VEHICLE_STATE,     6u,     0u, TRUE ,  5u,  1u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x100 @satisfies SG-001,SG-008 */
-    { RZC_COM_RX_TORQUE_REQUEST,     8u,     0u, TRUE ,  6u,  1u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x101 @satisfies SG-001 */
+    { RZC_COM_RX_VEHICLE_STATE,     6u,     0u, TRUE ,  5u,  1u, RZC_DTC_CAN_BUS_OFF, 0u, 0u },   /* CAN 0x100 @satisfies SG-001,SG-008 — E2E fail → DTC */
+    { RZC_COM_RX_TORQUE_REQUEST,     8u,     0u, TRUE ,  6u,  1u, RZC_DTC_CAN_BUS_OFF, 0u, 0u },   /* CAN 0x101 @satisfies SG-001 — E2E fail → DTC */
     { RZC_COM_RX_STEER_COMMAND,     8u,     0u, TRUE ,  7u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x102 @satisfies SG-003 */
     { RZC_COM_RX_BRAKE_COMMAND,     8u,     0u, TRUE ,  8u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x103 @satisfies SG-004 */
     { RZC_COM_RX_STEERING_STATUS,     8u,     0u, TRUE ,  9u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x200 @satisfies SG-003 */
