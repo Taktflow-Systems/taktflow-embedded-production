@@ -50,8 +50,11 @@ static uint32 dem_dtc_codes[DEM_MAX_EVENTS] = {
     0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u  /* 18-31: reserved */
 };
 
-/* Track which DTCs have been broadcast (avoid re-broadcasting same DTC) */
-static uint8 dem_broadcast_sent[DEM_MAX_EVENTS];
+/* Track which DTCs have been broadcast — stores the occurrenceCounter at
+ * last broadcast.  Re-broadcasts when a new occurrence is detected.
+ * Prevents re-sending the same DTC, but allows new fault instances
+ * (e.g. NvM-restored DTCs at boot vs. runtime faults) to broadcast. */
+static uint32 dem_broadcast_occ[DEM_MAX_EVENTS];
 
 /* ---- Internal State ---- */
 
@@ -80,7 +83,7 @@ void Dem_Init(const void* ConfigPtr)
         dem_events[i].debounceCounter   = 0;
         dem_events[i].statusByte        = 0u;
         dem_events[i].occurrenceCounter = 0u;
-        dem_broadcast_sent[i]           = 0u;
+        dem_broadcast_occ[i]            = 0u;
     }
     dem_ecu_id = 0u;
     dem_broadcast_pdu_id = 0xFFFFu;  /* Unconfigured sentinel */
@@ -213,7 +216,7 @@ Std_ReturnType Dem_ClearAllDTCs(void)
         dem_events[i].debounceCounter   = 0;
         dem_events[i].statusByte        = 0u;
         dem_events[i].occurrenceCounter = 0u;
-        dem_broadcast_sent[i]           = 0u;
+        dem_broadcast_occ[i]            = 0u;
     }
     SchM_Exit_Dem_DEM_EXCLUSIVE_AREA_0();
 
@@ -272,7 +275,7 @@ void Dem_MainFunction(void)
 
         /* Only broadcast newly confirmed DTCs that haven't been sent yet */
         if (((dem_events[i].statusByte & DEM_STATUS_CONFIRMED_DTC) != 0u) &&
-            (dem_broadcast_sent[i] == 0u))
+            (dem_events[i].occurrenceCounter != dem_broadcast_occ[i]))
         {
             dtc_code = dem_dtc_codes[i];
 
@@ -292,10 +295,10 @@ void Dem_MainFunction(void)
              * Pack lower 16 bits in LE: byte0=low, byte1=high. */
             {
                 uint16 dtc_16 = (uint16)(dtc_code & 0xFFFFu);
-                pdu_data[0] = (uint8)(dtc_16 & 0xFFu);          /* DTC low byte (LE) */
-                pdu_data[1] = (uint8)((dtc_16 >> 8u) & 0xFFu);  /* DTC high byte (LE) */
+                pdu_data[0] = (uint8)((dtc_16 >> 8u) & 0xFFu);  /* DTC high byte */
+                pdu_data[1] = (uint8)(dtc_16 & 0xFFu);           /* DTC low byte */
             }
-            pdu_data[2] = 0x00u;                                    /* Reserved (was DTC byte 2) */
+            pdu_data[2] = 0x00u;                                    /* Reserved */
             pdu_data[3] = dem_events[i].statusByte;              /* Status */
             pdu_data[4] = dem_ecu_id;                               /* ECU source */
             pdu_data[5] = (uint8)(dem_events[i].occurrenceCounter & 0xFFu);
@@ -303,7 +306,7 @@ void Dem_MainFunction(void)
             pdu_data[7] = 0x00u;
 
             /* Mark as broadcast — don't re-send until cleared */
-            dem_broadcast_sent[i] = 1u;
+            dem_broadcast_occ[i] = dem_events[i].occurrenceCounter;
 
             SchM_Exit_Dem_DEM_EXCLUSIVE_AREA_0();
 
