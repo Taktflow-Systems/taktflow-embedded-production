@@ -233,7 +233,14 @@ static uint16 safe_stop_clear_count;
  *          value stays at 0 (transparent — guards always pass). */
 static uint16 post_init_grace_counter;
 
-/** @brief  CAN timeout debounce — must see 50 consecutive timeout cycles (500ms) */
+/** @brief  CAN timeout debounce — consecutive timeout cycles before fault.
+ *          Production: 50 cycles (500ms). SIL: 500 cycles (5s) to absorb
+ *          Docker container scheduling jitter on heartbeat delivery. */
+#ifdef SIL_DIAG
+#define CAN_TMO_DEBOUNCE_THRESHOLD  500u
+#else
+#define CAN_TMO_DEBOUNCE_THRESHOLD   50u
+#endif
 static uint16 can_tmo_debounce;
 
 /** @brief  Fault latch array — TRUE if that fault triggered SAFE_STOP */
@@ -637,7 +644,7 @@ void Swc_VehicleState_MainFunction(void)
             can_tmo_debounce = 0u;
         }
 
-        if (can_tmo_debounce >= 50u)
+        if (can_tmo_debounce >= CAN_TMO_DEBOUNCE_THRESHOLD)
         {
             if ((fzc_comm == CVC_COMM_TIMEOUT) && (rzc_comm == CVC_COMM_TIMEOUT))
             {

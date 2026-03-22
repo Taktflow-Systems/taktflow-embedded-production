@@ -150,30 +150,89 @@ def mqtt_reset():
 # Preconditions
 # ---------------------------------------------------------------------------
 
-def wait_cvc_run(db, bus, timeout=30.0):
-    """Wait for CVC to reach RUN state. Returns True on success."""
-    print("Precondition: Waiting for CVC RUN state...")
-    val, elapsed = poll_signal(
-        db, bus, CAN_VEHICLE_STATE, "Vehicle_State_Mode",
-        lambda v: int(v) == 1, timeout=timeout,
-    )
-    if elapsed is not None:
-        print(f"  [OK] CVC in RUN ({elapsed:.0f}ms)")
-        return True
-    state = STATE_NAMES.get(int(val), val) if val is not None else "NO_SIGNAL"
-    print(f"  [FAIL] CVC state={state} after {timeout}s")
-    return False
+def wait_cvc_run(db, bus, timeout=30.0, stable_sec=12.0):
+    """Reset faults, wait for CVC RUN, verify stable past grace period.
 
-
-def reset_and_wait_run(db, bus, timeout=30.0):
-    """Reset all faults and wait for CVC to return to RUN."""
+    CVC_POST_INIT_GRACE_CYCLES = 1000 (10s on POSIX). Fault confirmations
+    are suppressed during grace. stable_sec must exceed grace to catch
+    stale faults that trigger SAFE_STOP after grace expiry.
+    """
+    print("Precondition: Reset + waiting for stable CVC RUN state...")
     mqtt_reset()
-    time.sleep(2)
+    time.sleep(1)
+
+    # Phase 1: wait for RUN
     val, elapsed = poll_signal(
         db, bus, CAN_VEHICLE_STATE, "Vehicle_State_Mode",
         lambda v: int(v) == 1, timeout=timeout,
     )
-    return elapsed is not None
+    if elapsed is None:
+        state = STATE_NAMES.get(int(val), val) if val is not None else "NO_SIGNAL"
+        print(f"  [FAIL] CVC state={state} after {timeout}s")
+        return False
+    print(f"  [OK] CVC reached RUN ({elapsed:.0f}ms), verifying stability...")
+
+    # Phase 2: verify stays in RUN for stable_sec
+    end = time.time() + stable_sec
+    while time.time() < end:
+        decoded = can_recv_decoded(db, bus, CAN_VEHICLE_STATE, timeout=2)
+        if decoded:
+            mode = int(decoded.get("Vehicle_State_Mode", 0))
+            if mode != 1:
+                # Fell out of RUN — retry from phase 1
+                print(f"  ... CVC dropped to {STATE_NAMES.get(mode, mode)}, retrying...")
+                val, elapsed = poll_signal(
+                    db, bus, CAN_VEHICLE_STATE, "Vehicle_State_Mode",
+                    lambda v: int(v) == 1, timeout=timeout,
+                )
+                if elapsed is None:
+                    print(f"  [FAIL] CVC did not re-enter RUN")
+                    return False
+                end = time.time() + stable_sec  # restart stability timer
+    print(f"  [OK] CVC stable in RUN for {stable_sec}s")
+    return True
+
+
+def reset_and_wait_run(db, bus, timeout=30.0, restart_containers=True):
+    """Reset all faults and wait for CVC to return to RUN.
+
+    If restart_containers=True, restarts CVC+RZC+SC+plant-sim Docker
+    containers to clear firmware-latched faults (overcurrent, overtemp).
+    """
+    mqtt_reset()
+    if restart_containers:
+        try:
+            subprocess.run(
+                ["sudo", "docker", "compose", "-f",
+                 "docker/docker-compose.dev.yml",
+                 "restart", "cvc", "rzc", "sc", "plant-sim"],
+                timeout=30, capture_output=True, cwd=os.getcwd(),
+            )
+        except Exception:
+            pass
+        time.sleep(5)
+    else:
+        time.sleep(2)
+    val, elapsed = poll_signal(
+        db, bus, CAN_VEHICLE_STATE, "Vehicle_State_Mode",
+        lambda v: int(v) == 1, timeout=timeout,
+    )
+    if elapsed is None:
+        return False
+    # Verify stability past grace period
+    end = time.time() + 12.0
+    while time.time() < end:
+        decoded = can_recv_decoded(db, bus, CAN_VEHICLE_STATE, timeout=2)
+        if decoded and int(decoded.get("Vehicle_State_Mode", 0)) != 1:
+            # Dropped out — wait for re-entry
+            val2, elapsed2 = poll_signal(
+                db, bus, CAN_VEHICLE_STATE, "Vehicle_State_Mode",
+                lambda v: int(v) == 1, timeout=timeout,
+            )
+            if elapsed2 is None:
+                return False
+            end = time.time() + 12.0
+    return True
 
 
 def verify_normal_operation(db, bus, duration=5.0):
