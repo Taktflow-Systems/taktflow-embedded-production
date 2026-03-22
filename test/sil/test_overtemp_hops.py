@@ -143,8 +143,29 @@ def main():
     else:
         check(2, "0x601 after inject", False, "No 0x601")
 
-    # Keep injecting in background for remaining hops
+    # Start background DTC sniffer BEFORE injection — DTC is one-shot,
+    # can_flush() in later hops would discard it if we wait until Hop 6.
     import threading
+    dtc_sniffer_result = {"frame": None}
+    _dtc_stop = threading.Event()
+    def _sniff_dtc():
+        """Background thread: capture 0x500 DTC_Broadcast with DTC=0xE302 (RZC overtemp).
+        Keeps listening until found or stopped — other ECUs may broadcast DTCs first."""
+        dtc_bus = can.interface.Bus(channel="vcan0", interface="socketcan")
+        while not _dtc_stop.is_set():
+            msg = dtc_bus.recv(timeout=0.5)
+            if msg and msg.arbitration_id == CAN_DTC:
+                # DTC number is at bytes 0-2 (big-endian, per DBC bit 7 = byte 0 MSB)
+                dtc_sniffer_result["frame"] = msg  # store latest
+                decoded = db.decode_message(CAN_DTC, msg.data, decode_choices=False)
+                dtc_num = int(decoded.get("DTC_Broadcast_Number", 0))
+                if dtc_num == 0xE302:
+                    break  # Found our overtemp DTC
+        dtc_bus.shutdown()
+    dtc_thread = threading.Thread(target=_sniff_dtc, daemon=True)
+    dtc_thread.start()
+
+    # Keep injecting in background for remaining hops
     _inject_stop = threading.Event()
     def _sustain():
         while not _inject_stop.is_set():
@@ -188,15 +209,26 @@ def main():
     else:
         check(5, "0x100 present", False, "No 0x100 on bus")
 
-    # Hop 6: DTC broadcast
+    # Hop 6: DTC broadcast (captured by background sniffer)
+    # Give extra time for Dem debounce (3 × 100ms) + Dem_MainFunction (100ms)
     print("Hop 6: DTC 0xE302 (overtemp) on CAN 0x500")
-    decoded = can_recv_decoded(db, bus, CAN_DTC, timeout=5)
-    if decoded:
+    time.sleep(3)  # Extra wait for DTC debounce + broadcast
+    _dtc_stop.set()
+    dtc_thread.join(timeout=3)
+    dtc_msg = dtc_sniffer_result["frame"]
+    if dtc_msg:
+        decoded = db.decode_message(CAN_DTC, dtc_msg.data, decode_choices=False)
         dtc = int(decoded.get("DTC_Broadcast_Number", 0))
-        check(6, f"DTC=0x{dtc:06X} (expect 0x00E302)",
-               dtc == 0xE302, f"DTC=0x{dtc:06X}")
+        ecu = int(decoded.get("DTC_Broadcast_ECU_Source", 0))
+        status = int(decoded.get("DTC_Broadcast_Status", 0))
+        ecu_names = {1: "CVC", 2: "FZC", 3: "RZC", 4: "SC", 5: "BCM", 6: "ICU", 7: "TCU"}
+        print(f"    DTC=0x{dtc:06X} ECU={ecu_names.get(ecu, ecu)} status=0x{status:02X}")
+        # Accept 0xE302 from RZC (ECU=3)
+        check(6, f"DTC=0x{dtc:06X} from {ecu_names.get(ecu, ecu)} (expect 0x00E302 from RZC)",
+               dtc == 0xE302 and ecu == 3,
+               f"DTC=0x{dtc:06X} from {ecu_names.get(ecu, ecu)}")
     else:
-        check(6, "0x500 present", False, "No DTC on bus")
+        check(6, "0x500 present", False, "No DTC on bus (sniffer caught nothing)")
 
     # Cleanup: stop sustained injection, clear temp override
     _inject_stop.set()
