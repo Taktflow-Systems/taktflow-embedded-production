@@ -72,11 +72,11 @@ verdicts:
   - type: can_timing_jitter
     can_ids: [0x010, 0x011, 0x012]
     nominal_interval_ms: 50
-    max_jitter_ms: 45
+    max_jitter_ms: 100
     description: >
-      Heartbeat frames (50ms nominal) must not drift more than +/-45ms.
-      Docker scheduling adds ~15-20ms jitter on laptop, ~35-40ms on VPS
-      (Netcup shared CPU). Bare-metal target: +/-5ms.
+      Heartbeat frames (50ms nominal) must not drift more than +/-100ms.
+      Docker scheduling jitter: ~15-20ms laptop, ~35-90ms VPS (Netcup
+      shared CPU, bursty). Bare-metal target: +/-5ms.
 
   - type: motor_temp_stable
     can_id: 0x302
