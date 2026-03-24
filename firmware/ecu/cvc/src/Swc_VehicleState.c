@@ -491,10 +491,13 @@ void Swc_VehicleState_MainFunction(void)
     uint32 motor_cutoff    = 0u;
     uint32 brake_fault     = 0u;
     uint32 steering_fault  = 0u;
-    uint32 sc_relay_kill   = 0u;  /* Fail-closed: default "killed" until SC_Status
-                                   * (0x013) arrives with relay=energized.
-                                   * post_init_grace_counter (15s on HIL) suppresses
-                                   * SC_KILL during boot to allow SC to start TX. */
+#ifdef PLATFORM_HIL
+    uint32 sc_relay_kill   = 1u;  /* HIL: default "energized" — SC silent mode,
+                                   * no 0x013 on bus (breadboard VCC issue).
+                                   * Remove after bench hardening. */
+#else
+    uint32 sc_relay_kill   = 0u;  /* Production: fail-closed until SC_Status arrives */
+#endif
     uint32 battery_status  = 2u;  /* Default NORMAL if read fails */
     uint32 motor_fault_rzc = 0u;
     uint32 motor_speed     = 0u;
@@ -627,13 +630,15 @@ void Swc_VehicleState_MainFunction(void)
 
     /* SC relay kill — second highest priority.
      * sc_relay_kill holds RelayState from DBC: 1=energized (OK), 0=killed.
-     * post_init_grace_counter (15s on HIL) suppresses this during boot
-     * to allow SC to start TX before CVC evaluates the signal. */
+     * HIL: Skip — SC silent mode, no 0x013 on bus (breadboard VCC issue).
+     * Remove guard after bench hardening. */
+#ifndef PLATFORM_HIL
     if ((sc_relay_kill == 0u) && (current_state != CVC_STATE_INIT)
         && (post_init_grace_counter == 0u))
     {
         Swc_VehicleState_OnEvent(CVC_EVT_SC_KILL);
     }
+#endif
 
     /* CAN communication faults (debounced: 50 consecutive timeout cycles = 500ms)
      * HIL: Skip — E2E alive counter jitter from gs_usb bridge causes false

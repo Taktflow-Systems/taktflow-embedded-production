@@ -122,11 +122,18 @@ void SC_CAN_Init(void)
     /* Configure 6 receive mailboxes with SC CAN IDs */
     dcan1_setup_mailboxes();
 
-    /* Normal (non-silent) operation per SWR-SC-029.
-     * DCAN1TX IFCMD_NEWDAT fix ensures TX works with proper transceiver.
-     * Previously guarded by PLATFORM_HIL (silent mode) due to SN65HVD230
-     * breadboard VCC issue — removed after bench hardening to perfboard. */
+#ifdef PLATFORM_HIL
+    /* HIL: DCAN silent mode — RX only, TX internally ACKed.
+     * SC transceiver breadboard VCC drops after 2-5 min, causing bus-off
+     * that kills all RX. Re-enable normal mode after bench hardening
+     * (perfboard + soldered connections). Confirmed with scope 2026-03-24. */
+    dcan1_reg_write(DCAN_CTL_OFFSET, 0xC1u);    /* Init=1, CCE=1, Test=1 */
+    dcan1_reg_write(DCAN_TEST_OFFSET, 0x08u);   /* TEST.Silent = 1 */
+    dcan1_reg_write(DCAN_CTL_OFFSET, 0x80u);    /* Exit Init: Test=1, Init=0, CCE=0 */
+#else
+    /* Production: normal (non-silent) operation per SWR-SC-029. */
     dcan1_reg_write(DCAN_CTL_OFFSET, 0x00u);    /* Init and CCE cleared — normal operation */
+#endif
 
     can_initialized = TRUE;
 }
