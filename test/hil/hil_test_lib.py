@@ -182,6 +182,42 @@ def check_heartbeat_period(bus, can_id, expected_ms, duration=3.0):
 # MQTT injection
 # ---------------------------------------------------------------------------
 
+# CVC reset via SSH to Windows PC (CubeProgrammer --start triggers MCU reset)
+CVC_RESET_HOST = os.environ.get("CVC_RESET_HOST", "")
+CVC_RESET_CMD = os.environ.get("CVC_RESET_CMD", "")
+
+
+def reset_cvc_hardware():
+    """Reset CVC MCU via CubeProgrammer on Windows PC.
+
+    Set CVC_RESET_HOST and CVC_RESET_CMD environment variables, or
+    call with local command if running on Windows PC directly.
+    Falls back to no-op if not configured.
+    """
+    cmd = CVC_RESET_CMD
+    if not cmd:
+        # Default: local CubeProgrammer reset (when running on Windows PC)
+        stcli = os.environ.get("STCLI",
+            "C:/Program Files (x86)/STMicroelectronics/STM32Cube/"
+            "STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe")
+        sn = os.environ.get("CVC_SN", "0027003C3235510B37333439")
+        cmd = f'"{stcli}" -c port=SWD sn={sn} mode=UR --start'
+
+    host = CVC_RESET_HOST
+    if host:
+        full_cmd = f"ssh {host} '{cmd}'"
+    else:
+        full_cmd = cmd
+
+    print(f"  [RESET] CVC hardware reset...")
+    try:
+        subprocess.run(full_cmd, shell=True, timeout=15,
+                      capture_output=True, text=True)
+        time.sleep(2)  # Wait for MCU to restart
+    except Exception as e:
+        print(f"  [WARN] CVC reset failed: {e}")
+
+
 def mqtt_inject(cmd_type, **kwargs):
     payload = {"type": cmd_type}
     payload.update(kwargs)
@@ -205,11 +241,22 @@ def wait_cvc_run(db, bus, timeout=30.0, stable_sec=5.0):
     """Reset faults, wait for CVC RUN, verify stable.
 
     HIL difference from SIL: with SC on bus, system should reach RUN.
-    Grace period shorter on bare-metal (no Docker scheduling jitter).
+    If CVC is in a latched state (SAFE_STOP/SHUTDOWN), performs hardware
+    reset via CubeProgrammer before waiting.
     """
     print("Precondition: Reset + waiting for stable CVC RUN state...")
     mqtt_reset()
     time.sleep(1)
+
+    # Check current state — if latched, do hardware reset
+    decoded = can_recv_decoded(db, bus, CAN_VEHICLE_STATE, timeout=3)
+    if decoded:
+        mode = int(decoded.get("Vehicle_State_Mode", 0))
+        if mode >= 4:  # SAFE_STOP(4) or SHUTDOWN(5)
+            print(f"  CVC in {STATE_NAMES.get(mode, mode)} (latched) — resetting...")
+            reset_cvc_hardware()
+            mqtt_reset()
+            time.sleep(3)
 
     # Phase 1: wait for RUN
     val, elapsed = poll_signal(

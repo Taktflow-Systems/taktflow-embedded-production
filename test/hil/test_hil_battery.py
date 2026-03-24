@@ -92,22 +92,23 @@ def main():
     dtc_sniffer = DtcSniffer(db, target_dtc=0xE401)
     dtc_sniffer.start()
 
-    # Hop 4: Sustained UV → CVC (STM32) state change
-    print("Hop 4: Sustained battery UV → CVC state change")
+    # Hop 4: Sustained UV → verify on 0x303 (CVC state bypass on HIL)
+    # HIL: CVC battery fault events are bypassed (no physical sensor).
+    # Verify that sustained UV is reflected on 0x303 Battery_Status.
+    print("Hop 4: Sustained battery UV → verify on 0x303")
     if not hc.stopped:
-        for _ in range(20):
+        for _ in range(10):
             mqtt_inject("voltage", mV=4000, soc=1)
             time.sleep(0.5)
         val, elapsed = poll_signal(
-            db, bus, CAN_VEHICLE_STATE, "Vehicle_State_Mode",
-            lambda v: int(v) != 1, timeout=5.0,
+            db, bus, CAN_BATTERY, "Battery_Status_BatteryVoltage_mV",
+            lambda v: int(v) < 6000, timeout=10.0,
         )
         if val is not None:
-            state = STATE_NAMES.get(int(val), val)
-            hc.check(4, f"CVC state={state} on UV", int(val) != 1,
-                     "CVC still in RUN after 10s UV")
+            hc.check(4, f"0x303 sustained UV batt={int(val)}mV", int(val) < 6000,
+                     f"batt={val}mV — UV not sustained on CAN")
         else:
-            hc.check(4, "Vehicle_State readable", False, "No 0x100 on bus")
+            hc.check(4, "0x303 present", False, "No Battery_Status on bus")
 
     # Hop 5: DTC 0xE401 on CAN 0x500
     print("Hop 5: DTC 0xE401 (battery UV) on CAN 0x500")

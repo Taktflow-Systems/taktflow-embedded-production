@@ -49,27 +49,27 @@ def main():
 
     # Hop 0: BCM receives Vehicle_State (0x100) from physical CVC
     print("Hop 0: BCM receives 0x100 from physical CVC via bridge")
-    # Verify by checking BCM produces 0x360 (it only does if it receives 0x100)
+    # Verify by checking BCM produces 0x016 (heartbeat — it only runs if CAN bridge works)
     msg = can_recv(bus, CAN_BCM_BODY, timeout=5)
-    hc.check(0, "BCM body status 0x360 present", msg is not None,
-             "No 0x360 — BCM may not be receiving bridged CAN traffic")
+    hc.check(0, "BCM heartbeat 0x016 present", msg is not None,
+             "No 0x016 — BCM may not be receiving bridged CAN traffic")
 
-    # Hop 1: BCM body status 0x360 periodic at 100ms
-    print("Hop 1: BCM 0x360 @ 100ms periodic")
+    # Hop 1: BCM heartbeat 0x016 periodic at 500ms (DBC GenMsgCycleTime=500)
+    print("Hop 1: BCM 0x016 @ 500ms periodic")
     if not hc.stopped:
-        avg, jitter, passed = check_heartbeat_period(bus, CAN_BCM_BODY, 100.0,
+        avg, jitter, passed = check_heartbeat_period(bus, CAN_BCM_BODY, 500.0,
                                                       duration=5.0)
-        hc.check(1, f"BCM 0x360 avg={avg}ms jitter={jitter}ms", passed,
+        hc.check(1, f"BCM 0x016 avg={avg}ms jitter={jitter}ms", passed,
                  f"avg={avg}ms jitter={jitter}ms")
 
-    # Hop 2: BCM 0x360 has alive counter
-    print("Hop 2: BCM 0x360 alive counter increments")
+    # Hop 2: BCM 0x016 has alive counter (byte 0 upper nibble)
+    print("Hop 2: BCM 0x016 alive counter increments")
     if not hc.stopped:
         alive_values = []
         for _ in range(5):
             msg = can_recv(bus, CAN_BCM_BODY, timeout=3)
             if msg and len(msg.data) >= 2:
-                alive = msg.data[1] & 0x0F
+                alive = (msg.data[0] >> 4) & 0x0F
                 alive_values.append(alive)
         if len(alive_values) >= 3:
             increments = sum(1 for i in range(len(alive_values) - 1)

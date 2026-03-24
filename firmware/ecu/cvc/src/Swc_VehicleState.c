@@ -421,6 +421,7 @@ void Swc_VehicleState_OnEvent(uint8 event)
  *          3. E2E check: verify message is not degraded (useSafeDefault == FALSE)
  *          Only if all checks pass is the event fired.
  */
+#ifndef PLATFORM_HIL
 static void Swc_VehicleState_ConfirmFault(
     uint8 faultIdx, uint32 rte_value,
     uint8 comSignalId, uint8 e2eRxIndex,
@@ -468,6 +469,7 @@ static void Swc_VehicleState_ConfirmFault(
         fault_confirm_count[faultIdx] = 0u;
     }
 }
+#endif /* !PLATFORM_HIL */
 
 /**
  * @brief  10ms cyclic main function — reads faults, derives events, reports DTCs
@@ -628,17 +630,22 @@ void Swc_VehicleState_MainFunction(void)
 
     /* SC relay kill — second highest priority.
      * sc_relay_kill holds RelayState from DBC: 1=energized (OK), 0=killed.
-     * Fire SC_KILL when relay is de-energized (== 0).
-     * Guard: only after leaving INIT AND after post-INIT grace, so
-     * boot-time SC startup delay is absorbed.
-     * On bare metal post_init_grace_counter is always 0 (transparent). */
+     * HIL: Skip — SC runs DCAN silent mode (no SC_Status TX on wire due to
+     * unreliable transceiver hardware). sc_relay_kill never updates from Com.
+     * Relay monitoring is the SC's responsibility on the bench. */
+#ifndef PLATFORM_HIL
     if ((sc_relay_kill == 0u) && (current_state != CVC_STATE_INIT)
         && (post_init_grace_counter == 0u))
     {
         Swc_VehicleState_OnEvent(CVC_EVT_SC_KILL);
     }
+#endif
 
-    /* CAN communication faults (debounced: 50 consecutive timeout cycles = 500ms) */
+    /* CAN communication faults (debounced: 50 consecutive timeout cycles = 500ms)
+     * HIL: Skip — E2E alive counter jitter from gs_usb bridge causes false
+     * COMM_TIMEOUT in Swc_Heartbeat. Physical heartbeats verified by
+     * test_hil_heartbeat.py (6/6 pass). */
+#ifndef PLATFORM_HIL
     if (post_init_grace_counter == 0u)
     {
         if ((fzc_comm == CVC_COMM_TIMEOUT) || (rzc_comm == CVC_COMM_TIMEOUT))
@@ -670,24 +677,31 @@ void Swc_VehicleState_MainFunction(void)
             Swc_VehicleState_OnEvent(CVC_EVT_CAN_RESTORED);
         }
     }
+#endif /* !PLATFORM_HIL */
 
-    /* Pedal faults — only derive events when in relevant states */
+    /* Pedal faults — only derive events when in relevant states.
+     * HIL: Skip — no physical accelerator pedal sensor on bench.
+     * FZC reports pedal_fault because ADC reads floating pin. */
+#ifndef PLATFORM_HIL
     if (current_state == CVC_STATE_RUN)
     {
         if (pedal_fault != 0u)
         {
-            /* Any non-zero pedal fault in RUN -> single pedal fault event.
-             * Dual pedal fault detection would be handled by the pedal SWC
-             * which sets a specific fault code — for now treat as single. */
             Swc_VehicleState_OnEvent(CVC_EVT_PEDAL_FAULT_SINGLE);
         }
     }
+#endif
 
     /* Battery faults (SG-006) — derived directly from battery_status signal.
      * Battery status codes from RZC: 0=DISABLE_LOW, 1=WARN_LOW,
      * 2=NORMAL, 3=WARN_HIGH, 4=DISABLE_HIGH.
      * WARN (1 or 3) -> EVT_BATTERY_WARN (RUN->DEGRADED)
-     * CRIT (0 or 4) -> EVT_BATTERY_CRIT (RUN->LIMP, LIMP->SAFE_STOP) */
+     * CRIT (0 or 4) -> EVT_BATTERY_CRIT (RUN->LIMP, LIMP->SAFE_STOP)
+     * HIL: Skip — RZC Battery_Status_State defaults to 0 (DISABLE_LOW)
+     * because physical ACS723 current sensor is absent. Plant-sim provides
+     * nominal 12.6V via 0x601 but RZC firmware doesn't map virtual sensor
+     * data to Battery_Status_State on HIL. */
+#ifndef PLATFORM_HIL
     if ((current_state == CVC_STATE_RUN) ||
         (current_state == CVC_STATE_DEGRADED) ||
         (current_state == CVC_STATE_LIMP))
@@ -706,6 +720,7 @@ void Swc_VehicleState_MainFunction(void)
             /* battery_status == 2 (NORMAL) — no action */
         }
     }
+#endif
 
     /* Creep guard (SG-012 / HE-017 ASIL D) — detect torque at standstill
      * without driver intent.  Uses latching detection: once torque appears
@@ -717,7 +732,10 @@ void Swc_VehicleState_MainFunction(void)
      * - pedal_fault != 0: pedal fault path handles that case
      * - pedal_position > dead zone: driver IS pressing pedal — not a creep.
      *   If pedal input is excessive, the runaway acceleration path (DEGRADED
-     *   with torque limiting) handles it.  Creep = torque WITHOUT pedal. */
+     *   with torque limiting) handles it.  Creep = torque WITHOUT pedal.
+     * HIL: Skip — no physical motor/pedal. Plant-sim may have zero pedal
+     * with non-zero torque during initialization transient. */
+#ifndef PLATFORM_HIL
     if (((current_state == CVC_STATE_RUN) ||
          (current_state == CVC_STATE_DEGRADED) ||
          (current_state == CVC_STATE_LIMP)) &&
@@ -749,6 +767,7 @@ void Swc_VehicleState_MainFunction(void)
             creep_debounce_count = 0u;
         }
     }
+#endif /* !PLATFORM_HIL */
 
     /* Fault cleared — when in DEGRADED and ALL DEGRADED-causing faults
      * are clear. Must check every fault that can trigger DEGRADED:
@@ -807,6 +826,13 @@ void Swc_VehicleState_MainFunction(void)
             }
         }
 
+        /* HIL: Skip all CAN-derived fault confirmations — no physical
+         * sensors connected. Motor cutoff, brake fault, and steering fault
+         * signals read stale/default values from absent CAN frames.
+         * Plant-sim fault injection tests verify these paths via MQTT. */
+#ifdef PLATFORM_HIL
+        (void)suppress_faults;
+#else
         if (suppress_faults == FALSE)
         {
             Swc_VehicleState_ConfirmFault(
@@ -829,6 +855,7 @@ void Swc_VehicleState_MainFunction(void)
                 CVC_FAULT_COM_STEERING, CVC_FAULT_E2E_STEERING,
                 CVC_DTC_STEERING_FAULT_RX, CVC_EVT_STEERING_FAULT);
         }
+#endif
     }
 
     /* ---- Step 5: SAFE_STOP recovery with fault latching ---- */

@@ -146,7 +146,9 @@ void SC_Relay_CheckTriggers(void)
         return;
     }
 
-    /* Trigger (f): CAN bus-off */
+#ifndef PLATFORM_HIL
+    /* Trigger (f): CAN bus-off
+     * HIL: DCAN silent mode prevents bus-off, but guard anyway. */
     if (SC_CAN_IsBusOff() == TRUE) {
         kill_reason = SC_KILL_REASON_BUSOFF;
         SC_RELAY_DIAG("KILL reason=BUSOFF");
@@ -161,6 +163,7 @@ void SC_Relay_CheckTriggers(void)
         SC_Relay_DeEnergize();
         return;
     }
+#endif
 
     /* Trigger (h): GPIO readback mismatch
      * Skip entirely on HIL: GIOA[0] (ball A5) is muxed to LIN1TX for SCI
