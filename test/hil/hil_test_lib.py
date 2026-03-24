@@ -46,7 +46,7 @@ MQTT_TOPIC = "taktflow/command/plant_inject"
 # sees all traffic from both vcan0 (bridged) and physical ECUs
 CAN_CHANNEL = os.environ.get("CAN_INTERFACE", "can0")
 
-# CAN IDs (must match gateway/taktflow.dbc)
+# CAN IDs (must match gateway/taktflow_vehicle.dbc)
 CAN_ESTOP         = 0x001
 CAN_CVC_HEARTBEAT = 0x010
 CAN_FZC_HEARTBEAT = 0x011

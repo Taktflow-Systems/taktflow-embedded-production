@@ -239,7 +239,7 @@ services:
         condition: service_started
     environment:
       - CAN_CHANNEL=vcan1
-      - DBC_PATH=/app/taktflow.dbc
+      - DBC_PATH=/app/taktflow_vehicle.dbc
       - MQTT_HOST=localhost
       - MQTT_PORT=1883
       - SAP_QM_API_URL=http://localhost:8090

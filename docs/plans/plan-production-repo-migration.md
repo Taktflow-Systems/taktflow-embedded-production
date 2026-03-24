@@ -370,7 +370,7 @@ End-to-end verification that the production repo compiles, tests pass, and SIL r
 
 ## Open Questions
 
-- Should `taktflow.dbc` be migrated or kept only in ARXML pipeline input? (Currently exists in `gateway/` too)
+- Should `taktflow_vehicle.dbc` be migrated or kept only in ARXML pipeline input? (Currently exists in `gateway/` too)
 - BSW test files: `test/unit/bsw/` or keep alongside BSW modules at `firmware/bsw/*/test/`?
 - HALCoGen tree: full copy or git submodule reference?
 - Should `private/` directory (CAN monitor) be migrated?

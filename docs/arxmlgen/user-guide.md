@@ -102,7 +102,7 @@ input:
     - "arxml/System.arxml"
     - "arxml/PlatformTypes.arxml"   # Multiple files merged automatically
   sidecar: "model/sidecar.yaml"    # Optional. Non-ARXML data (DTCs, enums, etc.)
-  dbc: "gateway/taktflow.dbc"      # Optional. DBC for TX/RX routing + E2E data IDs.
+  dbc: "gateway/taktflow_vehicle.dbc"      # Optional. DBC for TX/RX routing + E2E data IDs.
   e2e_source: "sidecar"            # "dbc" or "sidecar" (default). See section below.
 
 # ============================================================

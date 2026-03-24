@@ -9,7 +9,7 @@
 We have 3 physical STM32 ECUs (CVC, FZC, RZC) on a 500 kbps CAN bus, captured via a Waveshare USB-CAN-A adapter (COM13, 2 Mbps serial). The current `can_monitor_gui.pyw` shows raw hex data in a basic tkinter table. The user wants a professional CANoe-style tool with signal decoding, strip charts, trace logging, and TX capability.
 
 **Key resources already available:**
-- `gateway/taktflow.dbc` — complete DBC with 25+ messages, signal definitions, units, enums, ASIL ratings
+- `gateway/taktflow_vehicle.dbc` — complete DBC with 25+ messages, signal definitions, units, enums, ASIL ratings
 - `scripts/waveshare_can_sniffer.py` — working Waveshare protocol parser
 - `gateway/can_gateway/decoder.py` — cantools-based DBC decoder
 - `cantools` + `pyserial` already installed

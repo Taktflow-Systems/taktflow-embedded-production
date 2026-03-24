@@ -77,7 +77,7 @@ def _decode_can_error(msg: can.Message) -> dict:
 async def run_gateway():
     dbc_path = os.environ.get(
         "DBC_PATH",
-        os.path.join(os.path.dirname(__file__), "..", "taktflow.dbc"),
+        os.path.join(os.path.dirname(__file__), "..", "taktflow_vehicle.dbc"),
     )
     can_channel = os.environ.get("CAN_CHANNEL", "vcan0")
     mqtt_host = os.environ.get("MQTT_HOST", "localhost")

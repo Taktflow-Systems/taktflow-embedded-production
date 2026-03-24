@@ -5,7 +5,6 @@ WORKDIR /app
 COPY gateway/can_gateway/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY gateway/taktflow.dbc /app/taktflow.dbc
 COPY gateway/taktflow_vehicle.dbc /app/taktflow_vehicle.dbc
 COPY gateway/can_gateway/ /app/can_gateway/
 

@@ -76,7 +76,7 @@ def qualify_signal_name(msg_name, sig_name):
 
 
 def main():
-    db = cantools.database.load_file("gateway/taktflow.dbc")
+    db = cantools.database.load_file("gateway/taktflow_vehicle.dbc")
 
     print("=== Current DBC ===")
     print("  Messages: %d" % len(db.messages))

@@ -412,7 +412,7 @@
 
 ### 3.3 DBC Extension for BMS
 - **Gap**: SE3
-- **Action**: Add BMS messages to `gateway/taktflow.dbc`:
+- **Action**: Add BMS messages to `gateway/taktflow_vehicle.dbc`:
   - `BMS_CellVoltages1` (0x620) — cells 1-4
   - `BMS_CellVoltages2` (0x621) — cells 5-8 (etc.)
   - `BMS_PackStatus` (0x630) — SoC, SoH, pack voltage, pack current

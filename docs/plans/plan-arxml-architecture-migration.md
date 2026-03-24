@@ -7,7 +7,7 @@
 
 ## Overview
 
-Migrate the Taktflow embedded platform from hand-written configuration files (`*_Cfg.h`, `Com_Cfg_*.c`, `Rte_Cfg_*.c`, CanIf/PduR tables in `main.c`) to a code-generated architecture using ARXML as the single source of truth. The DBC file (`gateway/taktflow.dbc`) already contains the complete communication matrix and serves as the primary input. Open-source tooling (`autosar-data-py` for ARXML, `cantools` for DBC parsing) eliminates commercial tool dependency.
+Migrate the Taktflow embedded platform from hand-written configuration files (`*_Cfg.h`, `Com_Cfg_*.c`, `Rte_Cfg_*.c`, CanIf/PduR tables in `main.c`) to a code-generated architecture using ARXML as the single source of truth. The DBC file (`gateway/taktflow_vehicle.dbc`) already contains the complete communication matrix and serves as the primary input. Open-source tooling (`autosar-data-py` for ARXML, `cantools` for DBC parsing) eliminates commercial tool dependency.
 
 ### Problem Statement
 
@@ -47,7 +47,7 @@ Current architecture suffers from:
 
 ### Tasks
 - [ ] Install `autosar-data` and `cantools` Python packages
-- [ ] Write spike script that loads `taktflow.dbc` and creates a minimal ARXML with one ECU + one message
+- [ ] Write spike script that loads `taktflow_vehicle.dbc` and creates a minimal ARXML with one ECU + one message
 - [ ] Validate generated ARXML loads back without errors (round-trip test)
 - [ ] Document AUTOSAR version choice (recommend R22-11 / AUTOSAR 4.7.0)
 - [ ] Create `tools/arxml/` directory for all codegen scripts
@@ -66,7 +66,7 @@ Current architecture suffers from:
 ## Phase 1: DBC → ARXML Communication Layer
 
 ### Tasks
-- [ ] Parse `gateway/taktflow.dbc` with `cantools` — extract all 24 messages, 100+ signals, ECU nodes
+- [ ] Parse `gateway/taktflow_vehicle.dbc` with `cantools` — extract all 24 messages, 100+ signals, ECU nodes
 - [ ] Generate `System.arxml`: `CommunicationCluster` (CAN, 500kbps), `PhysicalChannel`, `EcuInstance` × 7
 - [ ] Generate `Communication.arxml`: `ISignalIPdu` per message (CAN ID, DLC, cycle time, send type from `BA_` attributes)
 - [ ] Generate `ISignal` per DBC signal (bit position, length, factor, offset, unit, init value)

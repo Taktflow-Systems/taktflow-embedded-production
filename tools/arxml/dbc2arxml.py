@@ -2,7 +2,7 @@
 """
 DBC -> ARXML Converter for Taktflow Embedded Platform
 
-Reads gateway/taktflow.dbc (+ optional ecu_model.json) and generates
+Reads gateway/taktflow_vehicle.dbc (+ optional ecu_model.json) and generates
 AUTOSAR R22-11 compliant ARXML with full SWC architecture:
   - Platform data types:   SwBaseTypes, ImplementationDataTypes
   - System topology:       ECU instances, CAN cluster, physical channel

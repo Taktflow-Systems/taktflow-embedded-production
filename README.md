@@ -111,10 +111,10 @@ The TMS570 Safety Controller runs a **lockstep dual-core CPU** and intentionally
 
 ## Code Generation Pipeline (DBC → ARXML → C)
 
-The **single source of truth** for all CAN communication is `gateway/taktflow.dbc`. An automated pipeline generates all BSW configuration — no hand-editing of generated files, ever. This mirrors OEM toolchains (Vector DaVinci, EB tresos) using open Python tooling.
+The **single source of truth** for all CAN communication is `gateway/taktflow_vehicle.dbc`. An automated pipeline generates all BSW configuration — no hand-editing of generated files, ever. This mirrors OEM toolchains (Vector DaVinci, EB tresos) using open Python tooling.
 
 ```
-gateway/taktflow.dbc                 ← CAN message matrix (source of truth)
+gateway/taktflow_vehicle.dbc                 ← CAN message matrix (source of truth)
         │
         ▼  tools/arxml/dbc2arxml.py
 arxml/TaktflowSystem.arxml           ← AUTOSAR model (R22-11, PDUs + signals + topology)
@@ -378,7 +378,7 @@ make -f firmware/platform/tms570/Makefile.tms570 build
 cppcheck --project=compile_commands.json --addon=tools/misra/misra.json
 
 # Regenerate configs from DBC (full pipeline)
-python tools/arxml/dbc2arxml.py gateway/taktflow.dbc arxml/
+python tools/arxml/dbc2arxml.py gateway/taktflow_vehicle.dbc arxml/
 python -m tools.arxmlgen
 ```
 
@@ -401,7 +401,7 @@ firmware/
 arxml/                    AUTOSAR model (TaktflowSystem.arxml)
 generated/                Auto-generated per-ECU configuration (Com, Rte, CanIf, PduR, E2E)
 gateway/                  Edge services: CAN gateway, plant sim, diagnostics, ML, MQTT, SAP QM
-  taktflow.dbc            CAN message matrix (single source of truth)
+  taktflow_vehicle.dbc    CAN message matrix (single source of truth)
 docker/                   Container orchestration (SIL, HIL, dev, GIL)
 test/
   unit/                   Unit tests (Unity framework)
@@ -429,7 +429,7 @@ scripts/                  Build, deploy, debug utilities
 
 ## Key Principles
 
-1. **DBC is truth** — all CAN configuration is generated from `gateway/taktflow.dbc`, never hand-edited
+1. **DBC is truth** — all CAN configuration is generated from `gateway/taktflow_vehicle.dbc`, never hand-edited
 2. **Generate, don't copy** — `ecu/*/cfg/` files are machine-generated from ARXML; fix the generator, not the output
 3. **Platform abstraction** — same SWC code compiles identically for STM32, TMS570, and POSIX (Docker SIL)
 4. **Fail-closed safety** — all fault paths transition to a defined safe state; errors are never silently ignored

@@ -102,7 +102,7 @@ No `Rte_Read(173, &uint32)`. No `Com_ReceiveSignal`. No hand-written signal IDs.
 - [ ] Create `gateway/taktflow_vehicle.dbc` — 26 core messages only
 - [ ] Create `gateway/taktflow_sil.dbc` — 0x600, 0x601 virtual sensors
 - [ ] Create `gateway/taktflow_diag.dbc` — UDS messages (0x7xx)
-- [ ] Keep `gateway/taktflow.dbc` as merged file (generated from the 3 above for backward compat)
+- [ ] Keep `gateway/taktflow_vehicle.dbc` as merged file (generated from the 3 above for backward compat)
 
 **1b. Fix signal naming convention**
 - [ ] Qualify ALL signal names: `<MsgShortName>_<Signal>`

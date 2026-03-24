@@ -73,7 +73,7 @@ Our SIL already satisfies P1 (plant-sim + Docker vECUs). The physical bench with
 | **Fault injection** | REST API (`fault-inject` Docker service), 19 SIL scenarios defined in YAML |
 | **SIL platform** | 16-service Docker Compose, deployed live at `sil.taktflow-systems.com` |
 | **ML inference** | Isolation Forest anomaly detection on motor telemetry |
-| **DBC file** | `gateway/taktflow.dbc` — 31 CAN messages, signal-level definitions |
+| **DBC file** | `gateway/taktflow_vehicle.dbc` — 31 CAN messages, signal-level definitions |
 | **Verdict checker** | `verdict_checker.py` — automated pass/fail for SIL scenarios |
 | **CI pipelines** | 4 workflows: unit tests (7-ECU matrix), MISRA (blocking), SIL nightly (19 scenarios), traceability |
 
@@ -325,7 +325,7 @@ ECU under test (physical STM32)
 | CANdevStudio | [github.com/GENIVI/CANdevStudio](https://github.com/GENIVI/CANdevStudio) | Qt GUI for visual CAN node simulation (DBC import, drag-and-drop) |
 
 **What we build**:
-1. Load our existing `gateway/taktflow.dbc` into cantools
+1. Load our existing `gateway/taktflow_vehicle.dbc` into cantools
 2. Python script creates cyclic transmitters for each "absent" node's messages at correct periods
 3. REST endpoint allows test framework to modify signal values mid-test (e.g., set SOC=5% to trigger undervoltage response)
 4. `python-can` broadcast manager runs in kernel space — handles 100+ cyclic frames with negligible CPU
@@ -334,7 +334,7 @@ ECU under test (physical STM32)
 ```python
 import can, cantools
 
-db = cantools.database.load_file('gateway/taktflow.dbc')
+db = cantools.database.load_file('gateway/taktflow_vehicle.dbc')
 bus = can.interface.Bus(channel='can0', bustype='socketcan')
 
 bms_msg = db.get_message_by_name('BMS_Status')

@@ -119,7 +119,7 @@ on:
     paths:
       - 'tools/arxmlgen/**'
       - 'model/**'
-      - 'gateway/taktflow.dbc'
+      - 'gateway/taktflow_vehicle.dbc'
 
 jobs:
   quality:

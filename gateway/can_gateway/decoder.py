@@ -1,4 +1,4 @@
-"""CAN frame decoder using cantools + taktflow.dbc.
+"""CAN frame decoder using cantools + taktflow_vehicle.dbc.
 
 Decodes raw CAN frames into named signal dictionaries.
 """

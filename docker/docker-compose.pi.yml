@@ -79,7 +79,7 @@ services:
         condition: service_started
     environment:
       - CAN_CHANNEL=can0
-      - DBC_PATH=/app/taktflow.dbc
+      - DBC_PATH=/app/taktflow_vehicle.dbc
       - MQTT_HOST=localhost
       - MQTT_PORT=1883
     restart: unless-stopped
@@ -98,7 +98,7 @@ services:
         condition: service_started
     environment:
       - CAN_CHANNEL=can0
-      - DBC_PATH=/app/taktflow.dbc
+      - DBC_PATH=/app/taktflow_vehicle.dbc
       - MQTT_HOST=localhost
       - MQTT_PORT=1883
     restart: unless-stopped

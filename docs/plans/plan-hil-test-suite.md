@@ -25,7 +25,7 @@ SIL has `verdict_checker.py` + 18 YAML scenarios, but these are tied to Docker/v
 | Dashboard test specs | `gateway/fault_inject/test_specs.py` | 8 scenarios with SG/ASIL/HE mapping |
 | Plant-sim (5 models) | `gateway/plant_sim/` | Running on Pi — provides closed-loop environment |
 | HIL launch script | `scripts/hil-plant-sim.sh` | Starts plant-sim on can0 |
-| DBC file | `gateway/taktflow.dbc` | CAN signal definitions for decoding |
+| DBC file | `gateway/taktflow_vehicle.dbc` | CAN signal definitions for decoding |
 
 ## Architecture
 

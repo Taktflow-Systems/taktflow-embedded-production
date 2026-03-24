@@ -62,3 +62,4 @@ firmware/ecu/rzc_f4/
 
 # SCORE HSM (separate repo with its own .git)
 scorehsm/
+gateway/taktflow.dbc.bak

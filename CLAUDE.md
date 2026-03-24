@@ -6,7 +6,7 @@ ISO 26262 ASIL D zonal vehicle platform — 7 ECUs, AUTOSAR-like BSW, CAN 500k, 
 
 **Zonal topology**: CVC (central) + FZC (front) + RZC (rear) + SC (safety, TMS570) + BCM/ICU/TCU (body/instrument/transmission).
 
-**DBC-first workflow**: `gateway/taktflow.dbc` is the single source of truth for CAN communication.
+**DBC-first workflow**: `gateway/taktflow_vehicle.dbc` is the single source of truth for CAN communication.
 `tools/arxml/` converts DBC → ARXML → generated C configs. Never hand-edit generated files.
 
 ## Build & Test
@@ -74,7 +74,7 @@ Commits: Conventional Commits, imperative, <50 chars.
 
 ## Key Principles
 
-1. **DBC is truth** — all CAN config flows from `gateway/taktflow.dbc`
+1. **DBC is truth** — all CAN config flows from `gateway/taktflow_vehicle.dbc`
 2. **Generate, don't copy** — `ecu/*/cfg/` files are generated, never hand-edited
 3. **Platform abstraction** — same SWC code compiles for STM32, TMS570, and POSIX
 4. **Fail-closed safety** — faults → safe state, never ignore errors

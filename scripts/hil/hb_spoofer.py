@@ -40,7 +40,7 @@ except ImportError:
     print("ERROR: python-can not installed. Run: pip install python-can", file=sys.stderr)
     sys.exit(1)
 
-# CAN IDs from gateway/taktflow.dbc (decimal in DBC, hex in firmware)
+# CAN IDs from gateway/taktflow_vehicle.dbc (decimal in DBC, hex in firmware)
 ECU_HEARTBEATS = {
     "cvc": {"id": 0x010, "data_id": 0x02, "ecu_id": 1, "name": "CVC_Heartbeat"},
     "fzc": {"id": 0x011, "data_id": 0x03, "ecu_id": 2, "name": "FZC_Heartbeat"},
