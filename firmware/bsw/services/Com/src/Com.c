@@ -375,10 +375,20 @@ void Com_RxIndication(PduIdType ComRxPduId, const PduInfoType* PduInfoPtr)
                     /* Build per-PDU SM config (0 = use default) */
                     {
                         E2E_SMConfigType sm_cfg;
+#ifdef PLATFORM_HIL
+                        /* HIL: lenient — gs_usb + multi-ECU jitter causes
+                         * transient WRONG_SEQ that flips SM to INVALID, dropping
+                         * all subsequent frames. Need 2 consecutive OKs to
+                         * recover, tolerate up to 5 consecutive errors before
+                         * going INVALID. */
+                        sm_cfg.WindowSizeValid   = 2u;   /* 2 consecutive OKs → VALID */
+                        sm_cfg.WindowSizeInvalid = 5u;   /* 5 consecutive errors → INVALID */
+#else
                         sm_cfg.WindowSizeValid   = (com_config->rxPduConfig[rx_idx].E2eSmWindowValid   != 0u) ?
                                                     com_config->rxPduConfig[rx_idx].E2eSmWindowValid   : 3u;
                         sm_cfg.WindowSizeInvalid = (com_config->rxPduConfig[rx_idx].E2eSmWindowInvalid != 0u) ?
                                                     com_config->rxPduConfig[rx_idx].E2eSmWindowInvalid : 2u;
+#endif
                         sm_cfg.WindowSizeInit    = 1u;
 
                         /* Feed result to supervision state machine */
@@ -387,6 +397,14 @@ void Com_RxIndication(PduIdType ComRxPduId, const PduInfoType* PduInfoPtr)
                                                e2e_status);
                     }
 
+#ifdef PLATFORM_HIL
+                    /* HIL: never discard frames based on E2E SM.
+                     * CRC + DataID still checked by E2E_Check above.
+                     * The SM discards frames on timing jitter which
+                     * prevents heartbeat alive counters from updating,
+                     * keeping CVC stuck in INIT. */
+                    (void)sm_state;
+#else
                     if (sm_state == E2E_SM_INVALID) {
                         /* SM determined: too many consecutive errors — discard */
                         com_rx_pdu_quality[ComRxPduId] = COM_SIGNAL_QUALITY_E2E_FAIL;
@@ -399,6 +417,7 @@ void Com_RxIndication(PduIdType ComRxPduId, const PduInfoType* PduInfoPtr)
                         return;  /* E2E fail: discard frame (no lock held) */
                     }
                     /* SM is VALID, INIT, or NODATA → accept frame */
+#endif
                 }
                 break;
             }

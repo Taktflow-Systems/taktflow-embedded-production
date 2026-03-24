@@ -253,7 +253,19 @@ void Swc_CvcCom_BridgeRxToRte(void)
     (void)Com_ReceiveSignal(CVC_COM_SIG_STEERING_STATUS_STEER_FAULT_STATUS, &steering_fault_val);
     (void)Com_ReceiveSignal(CVC_COM_SIG_MOTOR_STATUS_MOTOR_FAULT_STATUS, &motor_fault_rzc_val);
 
-    /* Bridge to RTE for VehicleState to consume.
+    /* Bridge heartbeat alive counters to RTE for Swc_Heartbeat to poll.
+     * Heartbeat comm STATUS is owned by Swc_Heartbeat — only bridge
+     * the raw alive counter values, not the comm status. */
+    {
+        uint8 fzc_alive = 0u;
+        uint8 rzc_alive = 0u;
+        (void)Com_ReceiveSignal(CVC_COM_SIG_FZC_HEARTBEAT_E_2_E_ALIVE_COUNTER, &fzc_alive);
+        (void)Com_ReceiveSignal(CVC_COM_SIG_RZC_HEARTBEAT_E_2_E_ALIVE_COUNTER, &rzc_alive);
+        (void)Rte_Write(CVC_SIG_FZC_HEARTBEAT_E_2_E_ALIVE_COUNTER, (uint32)fzc_alive);
+        (void)Rte_Write(CVC_SIG_RZC_HEARTBEAT_E_2_E_ALIVE_COUNTER, (uint32)rzc_alive);
+    }
+
+    /* Bridge fault signals to RTE for VehicleState to consume.
      * Heartbeat comm status is owned exclusively by Swc_Heartbeat.c
      * — do NOT write CVC_SIG_FZC/RZC_COMM_STATUS here. */
     (void)Rte_Write(CVC_SIG_BRAKE_FAULT,    (uint32)brake_fault_val);

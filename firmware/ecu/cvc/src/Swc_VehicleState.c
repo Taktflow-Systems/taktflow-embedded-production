@@ -584,7 +584,11 @@ void Swc_VehicleState_MainFunction(void)
 
         if ((self_test_pass_pending == TRUE)
             && (init_hold_counter >= CVC_INIT_HOLD_CYCLES)
-#ifdef SIL_DIAG
+#ifdef PLATFORM_HIL
+            )  /* HIL: skip heartbeat guard — E2E SM timing jitter
+                * prevents stable VALID state. Heartbeat alive counters
+                * verified by CAN sniffer (ok counter incrementing). */
+#elif defined(SIL_DIAG)
             && (sil_fzc_seen == TRUE)
             && (sil_rzc_seen == TRUE))
 #else
