@@ -1350,9 +1350,8 @@ void sc_hw_debug_boot_dump(void)
 void sc_hw_debug_periodic(void)
 {
 #ifdef PLATFORM_HIL
-    /* HIL: minimal output only — verbose SCI prints block the 10ms main loop
-     * for 50ms+, causing DCAN mailbox overwrites and E2E alive counter gaps
-     * that kill the relay. Keep it to one short line. */
+    /* HIL: no SCI output — verbose prints block the 10ms main loop for 50ms+,
+     * causing DCAN mailbox overwrites and heartbeat timeout false positives. */
     sc_sci_puts("\r\n");
 #else
     uint32 ccm_dbg[9];
