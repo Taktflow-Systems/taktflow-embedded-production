@@ -1,9 +1,9 @@
-name: "Vehicle State Machine — Boot to SAFE_STOP"
+name: "Vehicle State Machine — Boot to RUN"
 id: "HIL-007"
 description: >
   Observes the vehicle state machine from boot and verifies it reaches
-  SAFE_STOP.  Without the Safety Controller (TMS570) on the bus sending
-  relay confirmation, SAFE_STOP is the expected steady state.  Also
+  RUN.  On HIL with PLATFORM_HIL guards, CVC bypasses CAN timeout and
+  sensor fault events, so RUN is the expected steady state.  Also
   confirms the Vehicle_State frame (0x100) is present on the bus.
 verifies:
   - "TSR-005"
@@ -23,8 +23,8 @@ steps:
 
 verdicts:
   - type: vehicle_state
-    expected: SAFE_STOP
-    description: "Vehicle state reaches SAFE_STOP (expected without SC)"
+    expected: RUN
+    description: "Vehicle state reaches RUN (HIL: fault events bypassed)"
   - type: can_message
     can_id: 0x100
     description: "Vehicle_State frame present on the bus"

@@ -145,7 +145,7 @@ def check_heartbeat(
 # ---------------------------------------------------------------------------
 
 CRC8_TABLE: list[int] = []
-_CRC8_POLY = 0x07
+_CRC8_POLY = 0x1D  # SAE J1850 — must match E2E.c E2E_Crc8Table
 
 for _i in range(256):
     _crc = _i
@@ -157,44 +157,70 @@ for _i in range(256):
     CRC8_TABLE.append(_crc)
 
 
-def crc8(data: bytes, poly: int = 0x07) -> int:
-    """Compute CRC-8 over data bytes.
+def crc8(data: bytes, init: int = 0xFF, xor_out: int = 0xFF) -> int:
+    """Compute CRC-8 SAE-J1850 over data bytes.
 
-    @param data  Input bytes.
-    @param poly  CRC polynomial (default 0x07 = SAE J1850).
-    @return      CRC-8 value (0-255).
+    Matches firmware E2E.c: init=0xFF, xor_out=0xFF, poly=0x1D (table).
+
+    @param data     Input bytes.
+    @param init     Initial CRC value (default 0xFF).
+    @param xor_out  XOR applied to final CRC (default 0xFF).
+    @return         CRC-8 value (0-255).
     """
-    crc = 0x00
+    crc = init
     for b in data:
         crc = CRC8_TABLE[crc ^ b]
-    return crc
+    return crc ^ xor_out
+
+
+# DataID lookup by CAN ID (from E2E_Cfg_*.c)
+_E2E_DATA_IDS: dict[int, int] = {
+    0x001: 0x01,  # EStop_Broadcast
+    0x010: 0x02,  # CVC_Heartbeat
+    0x011: 0x03,  # FZC_Heartbeat
+    0x012: 0x04,  # RZC_Heartbeat
+    0x100: 0x05,  # Vehicle_State
+    0x101: 0x06,  # Torque_Request
+    0x102: 0x07,  # Steer_Command
+    0x103: 0x08,  # Brake_Command
+}
 
 
 def check_e2e(
     msg: can.Message,
-    crc_byte: int = 0,
-    alive_byte: int = 1,
+    crc_byte: int = 1,
+    alive_byte: int = 0,
     alive_bits: int = 4,
+    data_id: int | None = None,
 ) -> dict[str, Any]:
     """Validate E2E CRC-8 and alive counter on a CAN message.
 
+    E2E layout (AUTOSAR Profile P01):
+      byte 0: [AliveCounter:4 | DataID:4]
+      byte 1: CRC-8 (over bytes[2..N-1] + DataID, init=0xFF, xor_out=0xFF)
+      bytes 2..N: payload
+
     @param msg         CAN message to validate.
-    @param crc_byte    Byte index of CRC field (default 0).
-    @param alive_byte  Byte index of alive counter (default 1).
-    @param alive_bits  Number of bits for alive counter (default 4 = 0-15).
+    @param crc_byte    Byte index of CRC field (default 1).
+    @param alive_byte  Byte index containing alive counter (default 0).
+    @param alive_bits  Number of bits for alive counter (default 4).
+    @param data_id     DataID for CRC calc (auto-detected from CAN ID if None).
     @return  Dict with keys: crc_valid, crc_expected, crc_actual,
              alive_counter, passed.
     """
-    if len(msg.data) < max(crc_byte, alive_byte) + 1:
+    if len(msg.data) < 2:
         return {"passed": False, "error": "Message too short"}
 
     received_crc = msg.data[crc_byte]
-    alive_counter = msg.data[alive_byte] & ((1 << alive_bits) - 1)
+    alive_counter = (msg.data[alive_byte] >> 4) & ((1 << alive_bits) - 1)
 
-    # CRC is computed over all bytes except the CRC byte itself
-    payload = bytearray(msg.data)
-    payload[crc_byte] = 0x00
-    expected_crc = crc8(bytes(payload))
+    # Determine DataID
+    if data_id is None:
+        data_id = _E2E_DATA_IDS.get(msg.arbitration_id, msg.data[0] & 0x0F)
+
+    # CRC over payload bytes (2..N-1) + DataID
+    crc_input = bytes(msg.data[2:]) + bytes([data_id])
+    expected_crc = crc8(crc_input)
 
     return {
         "crc_valid": received_crc == expected_crc,
