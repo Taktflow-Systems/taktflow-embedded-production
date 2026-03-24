@@ -18,9 +18,15 @@
   #define CVC_INIT_HOLD_CYCLES           500u
 #endif
 
-/** @brief  Post-INIT grace: 0 (bare metal — no grace needed) */
+/** @brief  Post-INIT grace: absorb SC startup delay before checking relay.
+ *          0 on production (all ECUs power simultaneously).
+ *          1500 on HIL (SC needs 10s grace + CVC self-test delay). */
 #ifndef CVC_POST_INIT_GRACE_CYCLES
-  #define CVC_POST_INIT_GRACE_CYCLES     0u
+  #ifdef PLATFORM_HIL
+    #define CVC_POST_INIT_GRACE_CYCLES   1500u   /* 15s @ 10ms */
+  #else
+    #define CVC_POST_INIT_GRACE_CYCLES   0u
+  #endif
 #endif
 
 /** @brief  E2E SM FZC window: 4 × 50ms = 200ms */

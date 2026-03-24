@@ -12,14 +12,23 @@
 #ifndef SC_CFG_PLATFORM_H
 #define SC_CFG_PLATFORM_H
 
-/** @brief  Heartbeat timeout: 100ms = 2x 50ms heartbeat period (SG-008 FTTI) */
+/** @brief  Heartbeat timeout: 100ms production, 500ms HIL.
+ *          HIL: DCAN silent mode + gs_usb bridge adds jitter. */
 #ifndef SC_HB_TIMEOUT_TICKS
-  #define SC_HB_TIMEOUT_TICKS       10u
+  #ifdef PLATFORM_HIL
+    #define SC_HB_TIMEOUT_TICKS     50u   /* 500ms — tolerates HIL jitter */
+  #else
+    #define SC_HB_TIMEOUT_TICKS     10u   /* 100ms — 2x 50ms heartbeat (SG-008 FTTI) */
+  #endif
 #endif
 
-/** @brief  Heartbeat confirmation: 30ms */
+/** @brief  Heartbeat confirmation: 30ms production, 100ms HIL */
 #ifndef SC_HB_CONFIRM_TICKS
-  #define SC_HB_CONFIRM_TICKS       3u
+  #ifdef PLATFORM_HIL
+    #define SC_HB_CONFIRM_TICKS     10u
+  #else
+    #define SC_HB_CONFIRM_TICKS     3u
+  #endif
 #endif
 
 /** @brief  Startup grace: 5s production, 10s HIL (Docker vECUs need time) */

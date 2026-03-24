@@ -748,10 +748,13 @@ void dcan1_transmit(uint8 mbIndex, const uint8* data, uint8 dlc)
     mctl = ((uint32)tx_dlc & 0x0Fu) | ((uint32)1u << 8u) | ((uint32)1u << 7u);
     reg_write(DCAN1_BASE, DCAN_IF1MCTL, mctl);
 
-    /* Transfer IF1 → message object 7: write control + data only
+    /* Transfer IF1 → message object 7: write control + data, set TxRqst.
+     * DCAN_IFCMD_NEWDAT (bit 18) is REQUIRED to set TxRqst in the message
+     * object — MCTL.TxRqst (bit 8) is read-only via the IF register path.
+     * Without NEWDAT, the mailbox never enters TX-pending state.
      * (ARB already set by dcan1_config_tx_mailbox at init) */
     reg_write(DCAN1_BASE, DCAN_IF1CMD,
-              DCAN_IFCMD_WR | DCAN_IFCMD_CONTROL |
+              DCAN_IFCMD_WR | DCAN_IFCMD_CONTROL | DCAN_IFCMD_NEWDAT |
               DCAN_IFCMD_DATAA | DCAN_IFCMD_DATAB |
               ((uint32)mbIndex & 0xFFu));
 
@@ -1210,6 +1213,18 @@ static void sc_sci_init_module(uint32 base, uint32 brs)
 
 void sc_sci_init(void)
 {
+    /* Route ball A5 output to LIN1TX so SCI1 TX reaches the XDS110 UART.
+     * HALCoGen muxInit() sets PINMUX[83] = 0x01020202 (GIOA[0] on A5).
+     * Override bits[31:24] to 0x02 = LIN1TX. Without this, the SCI1 TX
+     * signal is trapped inside the chip and never reaches COM11.
+     *
+     * Must be called AFTER systemInit()/muxInit() or the HALCoGen
+     * default will overwrite our setting. */
+    reg_write(IOMM_BASE, IOMM_KICKER0, 0x83E70B13u);  /* unlock IOMM */
+    reg_write(IOMM_BASE, IOMM_KICKER1, 0x95A4F1E0u);
+    reg_write(IOMM_BASE, IOMM_PINMUX83, 0x02020202u); /* LIN1TX on A5 */
+    reg_write(IOMM_BASE, IOMM_KICKER0, 0u);            /* lock IOMM */
+
     /* SCI1/LIN1: 115200 baud at VCLK1=75MHz, BRS=40 → 114329 baud */
     sc_sci_init_module(SCI_BASE, 40u);
 
@@ -1334,6 +1349,12 @@ void sc_hw_debug_boot_dump(void)
 
 void sc_hw_debug_periodic(void)
 {
+#ifdef PLATFORM_HIL
+    /* HIL: minimal output only — verbose SCI prints block the 10ms main loop
+     * for 50ms+, causing DCAN mailbox overwrites and E2E alive counter gaps
+     * that kill the relay. Keep it to one short line. */
+    sc_sci_puts("\r\n");
+#else
     uint32 ccm_dbg[9];
 
     sc_sci_puts("[5s] SC: ES=0x");
@@ -1356,6 +1377,7 @@ void sc_hw_debug_periodic(void)
     sc_sci_puts(" now_SR1="); sc_sci_put_hex32(*(volatile uint32 *)0xFFFFF518u);
     sc_sci_puts(" now_SR3="); sc_sci_put_hex32(*(volatile uint32 *)0xFFFFF520u);
     sc_sci_puts("\r\n");
+#endif
 }
 
 #endif /* PLATFORM_TMS570 */

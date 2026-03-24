@@ -113,19 +113,12 @@ int main(void)
     uint16 sil_diag_tick = 0u;
 #endif
 
-    /* ---- 0. LED+UART -- prove CPU reaches main() ---- */
-    /* LED checkpoint: startup ASM turns GIOB[6:7] ON.
+    /* ---- 0. LED checkpoint -- prove CPU reaches main() ---- */
+    /* Startup ASM turns GIOB[6:7] ON.
      *   Both stay ON  = CPU stuck before main
      *   Both go OFF   = main reached
-     *   Both back ON  = SCI init done */
+     *   Both back ON  = system init done */
     sc_het_led_off();
-    sc_sci_init();
-    sc_het_led_on();
-    sc_sci_puts("=== SC Boot ===\r\n");
-    sc_sci_puts("main() reached OK\r\n");
-
-    /* GAP-SC-005: CCM/ESM register dump (MMIO reads on target, no-op on POSIX) */
-    sc_hw_debug_boot_dump();
 
     /* ---- 1. System initialization ---- */
     systemInit();           /* PLL to 300 MHz (TMS570: HALCoGen, POSIX: no-op) */
@@ -133,10 +126,20 @@ int main(void)
     sc_configure_gpio();    /* SC-specific pin config */
     rtiInit();              /* RTI 10ms tick timer */
 
+    /* SCI must init AFTER systemInit: (a) VCLK1=75MHz post-PLL needed for
+     * correct baud rate (pre-PLL VCLK1=8MHz gives ~12k instead of 115200),
+     * (b) sc_sci_init overrides PINMUX83 which muxInit() sets to GIOA[0]. */
+    sc_sci_init();
+
     /* gioInit() resets DIRB/DOUTB, turning off GIOB[6:7] user LEDs.
      * Re-enable them so they stay ON as a "firmware running" indicator. */
     sc_het_led_on();
-    sc_sci_puts("Init done: GIO, GPIO, RTI\r\n");
+    sc_sci_puts("=== SC Boot ===\r\n");
+    sc_sci_puts("main() reached OK\r\n");
+
+    /* GAP-SC-005: CCM/ESM register dump (MMIO reads on target, no-op on POSIX) */
+    sc_hw_debug_boot_dump();
+    sc_sci_puts("Init done: GIO, GPIO, RTI, SCI\r\n");
 
     /* ---- 2. Module initialization ---- */
     SC_E2E_Init();
@@ -314,6 +317,10 @@ int main(void)
             sc_sci_puts(SC_Heartbeat_IsTimedOut(SC_ECU_RZC) ? "TIMEOUT" : "OK");
             sc_sci_puts(" relay=");
             sc_sci_puts((SC_Relay_IsKilled() == FALSE) ? "ON" : "OFF");
+            if (SC_Relay_IsKilled() == TRUE) {
+                sc_sci_puts(" kill=");
+                sc_sci_put_uint((uint32)SC_Relay_GetKillReason());
+            }
             /* DCAN ES/NEWDAT + CCM/ESM snapshot (MMIO on target, no-op on POSIX) */
             sc_hw_debug_periodic();
         }

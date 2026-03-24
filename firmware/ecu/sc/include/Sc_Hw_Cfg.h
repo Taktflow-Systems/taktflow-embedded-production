@@ -172,8 +172,8 @@
  * E2E Failure Threshold
  * ================================================================== */
 
-#ifdef PLATFORM_POSIX
-#define SC_E2E_MAX_CONSEC_FAIL     255u    /* SIL/VPS: max uint8 — Docker jitter causes alive mismatches */
+#if defined(PLATFORM_POSIX) || defined(PLATFORM_HIL)
+#define SC_E2E_MAX_CONSEC_FAIL     100u    /* SIL/HIL: tolerate frame drops from Docker/gs_usb jitter */
 #else
 #define SC_E2E_MAX_CONSEC_FAIL      3u     /* Target: 3 consecutive E2E failures → relay kill */
 #endif

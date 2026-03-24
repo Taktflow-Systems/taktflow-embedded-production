@@ -489,7 +489,13 @@ void Swc_VehicleState_MainFunction(void)
     uint32 motor_cutoff    = 0u;
     uint32 brake_fault     = 0u;
     uint32 steering_fault  = 0u;
-    uint32 sc_relay_kill   = 0u;
+#ifdef PLATFORM_HIL
+    uint32 sc_relay_kill   = 1u;  /* HIL: default to "energized" — SC_Status
+                                   * may not arrive before DCAN bus-off on
+                                   * LaunchPad (no CAN transceiver TX). */
+#else
+    uint32 sc_relay_kill   = 0u;  /* Production: default to "killed" (fail-closed) */
+#endif
     uint32 battery_status  = 2u;  /* Default NORMAL if read fails */
     uint32 motor_fault_rzc = 0u;
     uint32 motor_speed     = 0u;

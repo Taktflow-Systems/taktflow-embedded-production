@@ -123,8 +123,8 @@ void SC_CAN_Init(void)
     dcan1_setup_mailboxes();
 
     /* Exit init mode — normal (non-silent) operation per SWR-SC-029.
-     * Silent mode is NOT set: TEST register bit 3 is left 0.
-     * TX is constrained to mailbox SC_MB_TX_STATUS (7) by firmware discipline. */
+     * DCAN1TX bug was missing IFCMD_NEWDAT in dcan1_transmit() — fixed.
+     * Silent mode no longer needed. */
     dcan1_reg_write(DCAN_CTL_OFFSET, 0x00u);    /* Init and CCE cleared — normal operation */
 
     can_initialized = TRUE;

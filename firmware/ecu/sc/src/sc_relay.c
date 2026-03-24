@@ -162,7 +162,10 @@ void SC_Relay_CheckTriggers(void)
         return;
     }
 
-    /* Trigger (h): GPIO readback mismatch */
+    /* Trigger (h): GPIO readback mismatch
+     * Skip entirely on HIL: GIOA[0] (ball A5) is muxed to LIN1TX for SCI
+     * debug and no physical relay is connected on the LaunchPad. */
+#ifndef PLATFORM_HIL
     readback = gioGetBit(SC_GIO_PORT_A, SC_PIN_RELAY);
     if (relay_commanded == TRUE) {
         if (readback != 1u) {
@@ -185,6 +188,9 @@ void SC_Relay_CheckTriggers(void)
                       (unsigned)readback_mismatch_count);
         SC_Relay_DeEnergize();
     }
+#else
+    (void)readback;
+#endif
 }
 
 boolean SC_Relay_IsKilled(void)

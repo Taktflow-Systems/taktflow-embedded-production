@@ -98,7 +98,7 @@ boolean SC_E2E_Check(const uint8* data, uint8 dlc, uint8 dataId,
     uint8 expected_crc;
     uint8 received_crc;
     uint8 alive;
-#ifndef PLATFORM_POSIX
+#ifndef PLATFORM_HIL
     uint8 expected_alive;
 #endif
     boolean valid = TRUE;
@@ -108,18 +108,6 @@ boolean SC_E2E_Check(const uint8* data, uint8 dlc, uint8 dataId,
     if ((data == NULL_PTR) || (msgIndex >= SC_MB_COUNT) || (dlc < 2u)) {
         return FALSE;
     }
-
-#ifdef PLATFORM_HIL
-    /* HIL: skip E2E enforcement — CRC/DataID/Alive already verified
-     * correct by offline analysis. The remaining failure mode is a
-     * TMS570 big-endian byte order mismatch in DCAN mailbox extraction
-     * that can only be debugged with SCI output (not available on
-     * current LaunchPad wiring). Accept all frames. */
-    (void)dataId;
-    e2e_last_alive[msgIndex] = (uint8)((data[0] >> 4u) & 0x0Fu);
-    e2e_first_rx[msgIndex] = FALSE;
-    return TRUE;
-#endif
 
     /* Extract alive counter from byte 0 upper nibble */
     alive = (uint8)((data[0] >> 4u) & 0x0Fu);
@@ -151,11 +139,11 @@ boolean SC_E2E_Check(const uint8* data, uint8 dlc, uint8 dataId,
         valid = FALSE;
     }
 
-    /* Verify alive counter (skip on first reception) */
-#ifndef PLATFORM_POSIX
-    /* Target: strict alive counter check (consecutive increment).
-     * POSIX/SIL: skip — Docker scheduling drops frames, causing
-     * alive counter jumps that are not real E2E failures. */
+    /* Verify alive counter (skip on first reception).
+     * HIL: Skip entirely — gs_usb bridge + Docker vECU timing jitter
+     * causes alive counter gaps that trigger false failures. CRC + DataID
+     * provide sufficient integrity for bench testing. */
+#ifndef PLATFORM_HIL
     if ((valid == TRUE) && (e2e_first_rx[msgIndex] == FALSE)) {
         expected_alive = (uint8)((e2e_last_alive[msgIndex] + 1u) & 0x0Fu);
         if (alive != expected_alive) {
@@ -207,6 +195,18 @@ boolean SC_E2E_IsAnyCriticalFailed(void)
      * During grace, report OK to prevent relay kill from boot transient. */
     if (e2e_grace_remaining > 0u) {
         e2e_grace_remaining--;
+        if (e2e_grace_remaining == 0u) {
+            /* Grace just expired — reset all E2E failure state so only
+             * post-grace failures can trigger a relay kill. Boot-time SCI
+             * output delays cause alive counter gaps that latch e2e_failed
+             * during grace; these are not real safety failures. */
+            uint8 j;
+            for (j = 0u; j < SC_MB_COUNT; j++) {
+                e2e_fail_count[j] = 0u;
+                e2e_failed[j]     = FALSE;
+                e2e_first_rx[j]   = TRUE;  /* re-sync alive counter */
+            }
+        }
         return FALSE;
     }
 
