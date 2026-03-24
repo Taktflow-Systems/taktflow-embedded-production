@@ -3,10 +3,10 @@
  * @brief   STM32F4 hardware backend for RZC_F4 (RZC on NUCLEO-F413ZH)
  * @date    2026-03-14
  *
- * @details Board bring-up: HSI 16 MHz -> PLL 96 MHz, bare-metal USART3 debug TX
- *          (PD8=TX, ST-LINK VCP), SysTick via HAL, CAN loopback self-test.
+ * @details Board bring-up: HSE 8 MHz (ST-LINK MCO bypass) -> PLL 96 MHz,
+ *          bare-metal USART3 debug TX (PD8=TX, ST-LINK VCP), SysTick via HAL.
  *
- *          Clock: HSI 16 MHz -> PLL (M=16, N=384, P=4) = 96 MHz
+ *          Clock: HSE 8 MHz -> PLL (M=4, N=96, P=2) = 96 MHz
  *          UART:  USART3 PD8=TX (AF7), 115200 baud @ 48 MHz APB1
  *          CAN:   CAN1 PD0=RX, PD1=TX (AF9), 500 kbps @ 48 MHz APB1
  *
@@ -38,9 +38,8 @@ void Error_Handler(void)
  * ================================================================== */
 
 /**
- * @brief  Configure system clocks: HSI 16 MHz -> PLL -> 96 MHz
- * @note   Derived from CubeMX cuberzccf4fg project, switched to HSI.
- *         HSE bypass requires ST-LINK MCO which may not be available.
+ * @brief  Configure system clocks: HSE 8 MHz -> PLL -> 96 MHz
+ * @note   HSE bypass from ST-LINK MCO (8 MHz) on Nucleo-F413ZH.
  *         APB1 = 48 MHz (div 2), APB2 = 96 MHz (div 1).
  *         Flash latency 3 WS for 96 MHz @ 3.3V.
  */
@@ -221,7 +220,11 @@ void Main_Hw_MpuConfig(void)
 
 void Main_Hw_SysTickInit(uint32 periodUs)
 {
+    /* Start SysTick — CubeMX stm32f4xx_it.c provides SysTick_Handler
+     * which calls HAL_IncTick(). Without HAL_InitTick here, HAL_GetTick()
+     * returns 0 forever, causing HAL_CAN_Init timeout to malfunction. */
     (void)periodUs;
+    HAL_InitTick(TICK_INT_PRIORITY);
 }
 
 void Main_Hw_Wfi(void)
@@ -310,11 +313,6 @@ void Main_Hw_DebugPrintStatus(uint32 tick_us)
     uint8 rec = 0u;
     uint8 err_state = 0u;
     uint32 hb_alive = 0u;
-
-    /* Toggle LD1 (PB0) as visual heartbeat */
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
-    GPIOB->MODER = (GPIOB->MODER & ~(3u << (0u * 2u))) | (1u << (0u * 2u));
-    GPIOB->ODR  ^= (1u << 0u);
 
     (void)Can_GetErrorCounters(0u, &tec, &rec);
     (void)Can_GetControllerErrorState(0u, &err_state);
