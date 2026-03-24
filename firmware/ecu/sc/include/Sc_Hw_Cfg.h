@@ -224,7 +224,7 @@
  * SC_Status TX Period (SWR-SC-030)
  * ================================================================== */
 
-#define SC_MONITORING_TX_PERIOD      50u   /* 50 × 10ms = 500ms SC_Status broadcast */
+#define SC_MONITORING_TX_PERIOD      10u   /* 10 × 10ms = 100ms SC_Status broadcast (DBC: GenMsgCycleTime=100) */
 
 /* ==================================================================
  * SC_Status Byte 2: Mode (low nibble) and Fault Flags (high nibble)

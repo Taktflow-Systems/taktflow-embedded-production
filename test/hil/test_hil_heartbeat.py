@@ -64,11 +64,11 @@ def main():
     hc.check(4, f"SC 0x013 avg={avg}ms jitter={jitter}ms", passed,
              f"avg={avg}ms jitter={jitter}ms")
 
-    # Hop 5: BCM body status 0x360 @ 100ms (vECU Docker)
-    print("Hop 5: BCM body status 0x360 @ 100ms (vECU)")
-    avg, jitter, passed = check_heartbeat_period(bus, CAN_BCM_BODY, 100.0,
+    # Hop 5: BCM heartbeat 0x016 @ 500ms (vECU Docker, DBC GenMsgCycleTime=500)
+    print("Hop 5: BCM heartbeat 0x016 @ 500ms (vECU)")
+    avg, jitter, passed = check_heartbeat_period(bus, CAN_BCM_BODY, 500.0,
                                                   duration=5.0)
-    hc.check(5, f"BCM 0x360 avg={avg}ms jitter={jitter}ms", passed,
+    hc.check(5, f"BCM 0x016 avg={avg}ms jitter={jitter}ms", passed,
              f"avg={avg}ms jitter={jitter}ms")
 
     bus.shutdown()
