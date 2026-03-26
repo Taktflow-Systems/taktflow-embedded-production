@@ -680,7 +680,7 @@ Use this chronicle for append-only procurement updates in date order.
 ## Git State
 
 - **Branching**: Git Flow (main → develop → feature/)
-- **Remote**: github.com/nhuvaoanh123/taktflow-embedded
+- **Remote**: github.com/Taktflow-Systems/taktflow-embedded
 - **Current branch**: develop
 
 ## User Preferences

@@ -124,7 +124,7 @@ Caddy will auto-provision TLS via Let's Encrypt once DNS resolves. No manual cer
 ssh root@<NETCUP_IP>    # or deploy@<NETCUP_IP>
 mkdir -p /opt
 cd /opt
-git clone https://github.com/nhuvaoanh123/taktflow-embedded.git
+git clone https://github.com/Taktflow-Systems/taktflow-embedded.git
 cd taktflow-embedded
 ```
 
