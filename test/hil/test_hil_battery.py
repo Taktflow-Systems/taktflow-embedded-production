@@ -26,6 +26,7 @@ from hil_test_lib import (
     CAN_MOTOR_STATUS, STATE_NAMES, ECU_NAMES,
     open_bus, can_recv_decoded, poll_signal,
     mqtt_inject, mqtt_reset, wait_cvc_run,
+    precondition_all_ecus_healthy,
     verify_normal_operation, DtcSniffer, HopChecker, print_header,
 )
 
@@ -36,6 +37,9 @@ def main():
     hc = HopChecker()
 
     print_header("Battery Voltage Chain Hop Test")
+
+    # Unified precondition: all ECUs healthy
+    precondition_all_ecus_healthy(bus)
 
     # Precondition
     if not wait_cvc_run(db, bus):

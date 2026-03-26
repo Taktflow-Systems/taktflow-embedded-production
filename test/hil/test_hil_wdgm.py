@@ -37,6 +37,7 @@ from hil_test_lib import (
     CAN_SC_STATUS, CAN_DTC,
     ECU_NAMES,
     open_bus, wait_for_all_heartbeats,
+    precondition_all_ecus_healthy,
     print_header, HopChecker, DtcSniffer,
 )
 
@@ -116,17 +117,8 @@ def main():
 
     print_header("Watchdog Supervision Verification")
 
-    # Precondition
-    print("Precondition: Wait for physical ECU heartbeats")
-    hb = wait_for_all_heartbeats(bus, timeout=15.0)
-    stm32_ok = all(hb.get(x, False) for x in
-                   [CAN_CVC_HEARTBEAT, CAN_FZC_HEARTBEAT, CAN_RZC_HEARTBEAT])
-    if not stm32_ok:
-        missing = [hex(k) for k, v in hb.items() if not v]
-        print(f"  [FAIL] Missing ECUs: {missing}")
-        bus.shutdown()
-        sys.exit(1)
-    print("  [OK] CVC/FZC/RZC all present")
+    # Unified precondition: all ECUs healthy
+    precondition_all_ecus_healthy(bus)
     print()
 
     # Start DTC sniffer for watchdog expired DTC

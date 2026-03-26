@@ -22,6 +22,7 @@ from hil_test_lib import (
     CAN_CVC_HEARTBEAT, CAN_FZC_HEARTBEAT, CAN_RZC_HEARTBEAT,
     CAN_SC_STATUS, CAN_BCM_BODY,
     open_bus, check_heartbeat_period, wait_for_all_heartbeats,
+    precondition_all_ecus_healthy,
     print_header, HopChecker,
 )
 
@@ -31,6 +32,9 @@ def main():
     hc = HopChecker()
 
     print_header("HIL Heartbeat Verification")
+
+    # Unified precondition: all ECUs healthy
+    precondition_all_ecus_healthy(bus)
 
     # Hop 0: All 3 STM32 heartbeats present (SC may be in silent mode)
     print("Hop 0: Wait for STM32 ECU heartbeats on bus")

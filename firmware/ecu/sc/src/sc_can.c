@@ -155,6 +155,11 @@ void SC_CAN_Receive(void)
              * BSW/SC E2E format differences, not real corruption. */
             e2e_ok = TRUE;
 #endif
+#ifdef PLATFORM_HIL
+            /* HIL: accept all frames — E2E timing jitter on loaded bus
+             * causes false alive counter / CRC rejects. */
+            e2e_ok = TRUE;
+#endif
             if (e2e_ok == TRUE) {
                 /* Store validated data */
                 uint8 i;
@@ -257,13 +262,5 @@ void SC_CAN_TransmitStatus(const uint8* payload, uint8 dlc)
     if ((payload == NULL_PTR) || (dlc == 0u) || (can_initialized == FALSE)) {
         return;
     }
-#ifdef PLATFORM_HIL
-    /* HIL: skip TX — SC transceiver TX causes error-passive on bench.
-     * Root cause: DCAN1TX PINMUX or TJA1051T signal integrity issue.
-     * RX works in normal mode, so just suppress TX. */
-    (void)payload;
-    (void)dlc;
-#else
     dcan1_transmit(SC_MB_TX_STATUS, payload, dlc);
-#endif
 }

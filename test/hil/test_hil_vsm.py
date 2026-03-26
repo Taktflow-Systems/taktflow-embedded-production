@@ -27,6 +27,7 @@ from hil_test_lib import (
     STATE_NAMES,
     open_bus, can_recv_decoded, poll_signal,
     mqtt_inject, mqtt_reset, wait_cvc_run, reset_and_wait_run,
+    precondition_all_ecus_healthy,
     verify_normal_operation, HopChecker, print_header,
 )
 
@@ -37,6 +38,9 @@ def main():
     hc = HopChecker()
 
     print_header("VSM Fault Transition Hop Test")
+
+    # Unified precondition: all ECUs healthy
+    precondition_all_ecus_healthy(bus)
 
     # Precondition: CVC in RUN (SC on bus → should reach RUN)
     if not wait_cvc_run(db, bus):

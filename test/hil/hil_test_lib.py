@@ -106,6 +106,115 @@ def print_header(test_name):
     print()
 
 
+def precondition_all_ecus_healthy(bus, timeout=15.0):
+    """Verify all 7 ECUs are healthy before running any test.
+
+    Checks:
+      1. Reset plant-sim faults via MQTT (clears stale latches)
+      2. All 4 physical ECU heartbeats present (CVC, FZC, RZC, SC)
+      3. At least 1 vECU heartbeat present (BCM/ICU/TCU)
+      4. CVC in RUN state (byte 2 of 0x100 Vehicle_State)
+      5. No stale MotorFaultStatus on 0x300
+
+    Aborts test with sys.exit(1) if precondition fails.
+    """
+    print("Precondition: All ECUs must be healthy")
+
+    # Step 1: Reset plant-sim faults to clear stale latches from prior tests
+    try:
+        mqtt_pub.single(
+            MQTT_TOPIC, json.dumps({"type": "reset"}),
+            hostname=MQTT_HOST, port=MQTT_PORT,
+        )
+        print("  [OK] Plant-sim faults reset via MQTT")
+    except Exception as e:
+        print(f"  [WARN] MQTT fault reset failed: {e}")
+
+    time.sleep(0.5)  # allow plant-sim to process reset
+
+    physical = {
+        CAN_CVC_HEARTBEAT: "CVC",
+        CAN_FZC_HEARTBEAT: "FZC",
+        CAN_RZC_HEARTBEAT: "RZC",
+        CAN_SC_STATUS: "SC",
+    }
+    vecu = {
+        0x014: "ICU",
+        0x015: "TCU",
+        CAN_BCM_BODY: "BCM",
+    }
+    seen_physical = set()
+    seen_vecu = set()
+    cvc_state = None
+    motor_fault = None
+
+    end = time.time() + timeout
+    while time.time() < end:
+        msg = bus.recv(timeout=0.5)
+        if msg is None:
+            continue
+        aid = msg.arbitration_id
+        if aid in physical:
+            seen_physical.add(aid)
+        if aid in vecu:
+            seen_vecu.add(aid)
+        if aid == CAN_VEHICLE_STATE and msg.dlc >= 3:
+            cvc_state = msg.data[2] & 0x0F
+        if aid == CAN_MOTOR_STATUS and msg.dlc >= 8:
+            motor_fault = msg.data[7]  # MotorFaultStatus at bit 56 = byte 7
+
+        if (len(seen_physical) == 4 and len(seen_vecu) >= 1
+                and cvc_state is not None and motor_fault is not None):
+            break
+
+    # Report
+    missing_phys = [physical[k] for k in physical if k not in seen_physical]
+    phys_names = [physical[k] for k in seen_physical]
+    vecu_names = [vecu[k] for k in seen_vecu]
+
+    if missing_phys:
+        print(f"  [FAIL] Missing physical ECUs: {', '.join(missing_phys)}")
+        print(f"  Present: {', '.join(phys_names)}")
+        sys.exit(1)
+
+    if not seen_vecu:
+        print(f"  [FAIL] No vECU heartbeats (BCM/ICU/TCU)")
+        sys.exit(1)
+
+    state_name = STATE_NAMES.get(cvc_state, f"0x{cvc_state:02X}") if cvc_state is not None else "?"
+    if cvc_state != 1:
+        print(f"  [FAIL] CVC not in RUN (state={state_name})")
+        sys.exit(1)
+
+    if motor_fault and motor_fault != 0:
+        print(f"  [WARN] Stale MotorFaultStatus={motor_fault} — hardware reset RZC")
+        # UDS ECUReset doesn't clear firmware fault latches (TM_TempFault).
+        # Hardware reset via STM32 programmer is the only reliable clear.
+        stcli = (
+            "C:/Program Files (x86)/STMicroelectronics/STM32Cube"
+            "/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe"
+        )
+        rzc_sn = "0670FF383930434B43202436"
+        reset_cmd = f'"{stcli}" -c port=SWD sn={rzc_sn} -rst'
+        host = CVC_RESET_HOST  # same PC hosts all ST-LINK probes
+        try:
+            if host:
+                full_cmd = f"ssh {host} '{reset_cmd}'"
+            else:
+                full_cmd = reset_cmd
+            subprocess.run(full_cmd, shell=True, timeout=15,
+                           capture_output=True)
+            time.sleep(2.0)  # allow RZC to boot and clear latches
+            print("  [OK] RZC hardware reset — fault latches cleared")
+        except Exception as e:
+            print(f"  [WARN] RZC hardware reset failed: {e}")
+
+    print(f"  [OK] Physical: {', '.join(phys_names)}")
+    print(f"  [OK] vECUs:    {', '.join(vecu_names)}")
+    print(f"  [OK] CVC state={state_name}")
+    print()
+
+
 # ---------------------------------------------------------------------------
 # CAN helpers
 # ---------------------------------------------------------------------------

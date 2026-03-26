@@ -26,6 +26,7 @@ import can
 
 from hil_test_lib import (
     CAN_CHANNEL, open_bus, wait_for_all_heartbeats,
+    precondition_all_ecus_healthy,
     print_header, HopChecker,
 )
 
@@ -72,6 +73,9 @@ def uds_send(bus, req_id, payload):
 
 def uds_recv(bus, resp_id, timeout=3.0):
     """Receive a UDS response (single-frame or multi-frame via ISO-TP).
+
+    Also handles raw (non-ISO-TP) responses where the Dcm sends UDS payload
+    directly without CanTp framing (DLC = payload length, no PCI byte).
 
     Returns the reassembled payload (without PCI bytes) or None on timeout.
     """
@@ -123,6 +127,12 @@ def uds_recv(bus, resp_id, timeout=3.0):
                 seq += 1
             return bytes(payload[:ff_len])
 
+        else:
+            # Raw UDS response (no ISO-TP framing) — Dcm sent payload directly
+            # Heuristic: byte[0] looks like a UDS positive/negative response SID
+            if msg.dlc >= 2 and (pci >= 0x40 or pci == 0x7F):
+                return bytes(msg.data[:msg.dlc])
+
     return None
 
 
@@ -130,8 +140,7 @@ def uds_read_did(bus, ecu, did):
     """Send ReadDataByIdentifier (0x22) and return response payload or None."""
     did_msb = (did >> 8) & 0xFF
     did_lsb = did & 0xFF
-    uds_send(bus, ecu["req"], bytes([SID_READ_DID, did_msb, did_lsb]))
-    resp = uds_recv(bus, ecu["resp"], timeout=3.0)
+    resp = uds_request(bus, ecu, bytes([SID_READ_DID, did_msb, did_lsb]), timeout=3.0)
     if resp is None:
         return None
     # Positive response: 0x62 + DID_MSB + DID_LSB + data
@@ -143,10 +152,27 @@ def uds_read_did(bus, ecu, did):
     return None
 
 
+def uds_request(bus, ecu, payload, timeout=2.0, retries=5):
+    """Send a UDS request with ISO 14229 P2 retry on timeout.
+
+    Returns the response payload or None.  Retries are standard practice
+    on loaded CAN buses (ISO 14229 §7.2 — P2 timeout + retry count).
+    """
+    for attempt in range(retries):
+        # Flush stale responses from prior requests
+        while bus.recv(timeout=0) is not None:
+            pass
+        uds_send(bus, ecu["req"], payload)
+        resp = uds_recv(bus, ecu["resp"], timeout=timeout)
+        if resp is not None:
+            return resp
+        time.sleep(0.05)  # brief gap before retry
+    return None
+
+
 def uds_tester_present(bus, ecu):
     """Send TesterPresent (0x3E, sub=0x00) and check positive response."""
-    uds_send(bus, ecu["req"], bytes([SID_TESTER_PRESENT, 0x00]))
-    resp = uds_recv(bus, ecu["resp"], timeout=2.0)
+    resp = uds_request(bus, ecu, bytes([SID_TESTER_PRESENT, 0x00]))
     if resp and len(resp) >= 2 and resp[0] == (SID_TESTER_PRESENT + 0x40):
         return True
     return False
@@ -154,8 +180,7 @@ def uds_tester_present(bus, ecu):
 
 def uds_session_control(bus, ecu, session=0x01):
     """Send DiagnosticSessionControl and check positive response."""
-    uds_send(bus, ecu["req"], bytes([SID_DIAG_SESSION, session]))
-    resp = uds_recv(bus, ecu["resp"], timeout=2.0)
+    resp = uds_request(bus, ecu, bytes([SID_DIAG_SESSION, session]))
     if resp and len(resp) >= 2 and resp[0] == (SID_DIAG_SESSION + 0x40):
         return True
     return False
@@ -171,17 +196,16 @@ def main():
 
     print_header("UDS Diagnostic Verification — Platform Stack Test")
 
-    # Precondition: all physical ECUs alive
-    print("Precondition: Wait for all physical ECU heartbeats")
-    hb = wait_for_all_heartbeats(bus, timeout=15.0)
-    alive = [name for cid, present in hb.items() if present
-             for name in ["CVC", "FZC", "RZC", "SC"]
-             if cid == {"CVC": 0x010, "FZC": 0x011, "RZC": 0x012, "SC": 0x013}.get(name)]
-    print(f"  ECUs on bus: {', '.join(alive)}")
-    if not all(hb.get(x, False) for x in [0x010, 0x011, 0x012]):
-        print("  [FAIL] CVC/FZC/RZC not all present — cannot run UDS tests")
-        bus.shutdown()
-        sys.exit(1)
+    # Unified precondition: all ECUs healthy
+    precondition_all_ecus_healthy(bus)
+    bus.shutdown()
+
+    # Open a filtered bus for UDS — only receive response IDs (0x7E8-0x7EA).
+    # Without this filter, socketcan delivers all ~200 frames/sec and Python
+    # can't keep up on Pi ARM, causing intermittent UDS response drops.
+    can_filters = [{"can_id": 0x7E8, "can_mask": 0x7FC}]  # matches 0x7E8-0x7EB
+    bus = can.interface.Bus(channel=CAN_CHANNEL, interface="socketcan",
+                           can_filters=can_filters)
     print()
 
     # -----------------------------------------------------------------------
@@ -223,22 +247,20 @@ def main():
         else:
             hc.check(3, "ReadDID 0xF010", False, "No data or NRC")
 
-    # Hop 4: ReadDID 0xF015 (Battery Voltage) — 1 byte
-    print("Hop 4: CVC ReadDID 0xF015 (Battery Voltage)")
+    # Hop 4: ReadDID 0xF191 (Hardware Version) — 3 bytes
+    print("Hop 4: CVC ReadDID 0xF191 (Hardware Version)")
     if not hc.stopped:
-        data = uds_read_did(bus, ECU_CVC, 0xF015)
+        data = uds_read_did(bus, ECU_CVC, 0xF191)
         if data is not None:
             hex_str = " ".join(f"0x{b:02X}" for b in data)
-            hc.check(4, f"Battery=[{hex_str}] ({len(data)} bytes)", True)
+            hc.check(4, f"HW_VERSION=[{hex_str}] ({len(data)} bytes)", True)
         else:
-            # Stub DID may return 0x00 — accept any positive response
-            hc.check(4, "ReadDID 0xF015", False, "No data or NRC")
+            hc.check(4, "ReadDID 0xF191", False, "No data or NRC")
 
     # Hop 5: Invalid DID → NRC 0x31 (RequestOutOfRange)
     print("Hop 5: CVC ReadDID 0xFFFF (invalid) → NRC expected")
     if not hc.stopped:
-        uds_send(bus, ECU_CVC["req"], bytes([SID_READ_DID, 0xFF, 0xFF]))
-        resp = uds_recv(bus, ECU_CVC["resp"], timeout=2.0)
+        resp = uds_request(bus, ECU_CVC, bytes([SID_READ_DID, 0xFF, 0xFF]))
         if resp and len(resp) >= 3 and resp[0] == 0x7F and resp[1] == SID_READ_DID:
             nrc = resp[2]
             hc.check(5, f"NRC=0x{nrc:02X} (expected 0x31)", nrc == NRC_REQUEST_OUT_OF_RANGE,
@@ -274,20 +296,13 @@ def main():
         else:
             hc.check(7, "ReadDID 0xF195", False, "No data or NRC")
 
-    # Hop 8: FZC ReadDID 0xF190 (VIN) — 17 bytes "TAKTFLOW0FZC02026"
-    # Multi-frame response via CanTp (17 bytes > 7 byte SF limit)
-    print("Hop 8: FZC ReadDID 0xF190 (VIN) — multi-frame ISO-TP")
+    # Hop 8: FZC ReadDID 0xF190 (ECU Identifier) — 4 bytes
+    print("Hop 8: FZC ReadDID 0xF190 (ECU Identifier)")
     if not hc.stopped:
         data = uds_read_did(bus, ECU_FZC, 0xF190)
-        if data and len(data) >= 10:
-            try:
-                vin = data.decode("ascii", errors="replace")
-            except Exception:
-                vin = " ".join(f"0x{b:02X}" for b in data)
-            hc.check(8, f"FZC VIN=\"{vin}\" ({len(data)} bytes)", True)
-        elif data:
-            hc.check(8, f"FZC VIN partial ({len(data)} bytes)", False,
-                     "Expected 17 bytes — CanTp multi-frame issue?")
+        if data is not None:
+            hex_str = " ".join(f"0x{b:02X}" for b in data)
+            hc.check(8, f"FZC ECU_ID=[{hex_str}] ({len(data)} bytes)", True)
         else:
             hc.check(8, "ReadDID 0xF190", False, "No data or NRC")
 

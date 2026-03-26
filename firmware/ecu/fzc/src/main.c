@@ -39,6 +39,7 @@
 #include "Dem.h"
 #include "WdgM.h"
 #include "BswM.h"
+#include "CanTp.h"
 #include "Dcm.h"
 #include "Rte.h"
 #include "IoHwAb.h"
@@ -83,6 +84,7 @@
 
 extern const Rte_ConfigType  fzc_rte_config;
 extern const Com_ConfigType  fzc_com_config;
+extern const CanTp_ConfigType fzc_cantp_config;
 extern const Dcm_ConfigType  fzc_dcm_config;
 
 /* ==================================================================
@@ -454,6 +456,7 @@ int main(void)
 
     WdgM_Init(&wdgm_config);
     BswM_Init(&bswm_config);
+    CanTp_Init(&fzc_cantp_config);
     Dcm_Init(&fzc_dcm_config);
     Spi_Init(&spi_config);
     Adc_Init(&adc_config);
@@ -522,10 +525,11 @@ int main(void)
             Rte_MainFunction();
         }
 
-        /* 10ms tasks: Dcm, BswM, UART timeout monitoring */
+        /* 10ms tasks: CanTp, Dcm, BswM, UART timeout monitoring */
         if ((tick_us - last_10ms_us) >= 10000u)
         {
             last_10ms_us = tick_us;
+            CanTp_MainFunction();
             Dcm_MainFunction();
             BswM_MainFunction();
             CanSM_MainFunction();

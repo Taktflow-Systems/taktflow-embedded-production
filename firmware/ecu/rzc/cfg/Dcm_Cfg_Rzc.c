@@ -276,6 +276,6 @@ static const Dcm_DidTableType rzc_did_table[] = {
 const Dcm_ConfigType rzc_dcm_config = {
     .DidTable    = rzc_did_table,
     .DidCount    = (uint8)RZC_DCM_DID_COUNT,
-    .TxPduId     = 0xFFu,         /* No UDS response TX PDU for RZC */
+    .TxPduId     = RZC_COM_TX_UDS_RESP_RZC,  /* UDS response via CanIf → 0x7EA */
     .S3TimeoutMs = 5000u,
 };

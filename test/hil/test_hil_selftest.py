@@ -36,7 +36,7 @@ from hil_test_lib import (
     STATE_NAMES, ECU_NAMES,
     open_bus, can_recv, can_recv_decoded,
     reset_cvc_hardware, uds_ecu_reset_rzc,
-    wait_for_all_heartbeats,
+    wait_for_all_heartbeats, precondition_all_ecus_healthy,
     print_header, HopChecker, DtcSniffer,
 )
 
@@ -76,15 +76,7 @@ def main():
     # Phase 1: Verify all ECUs currently running (baseline)
     # -----------------------------------------------------------------------
     print("Phase 1: Baseline — verify all ECUs currently running")
-    hb = wait_for_all_heartbeats(bus, timeout=15.0)
-    stm32_ok = all(hb.get(x, False) for x in
-                   [CAN_CVC_HEARTBEAT, CAN_FZC_HEARTBEAT, CAN_RZC_HEARTBEAT])
-    if not stm32_ok:
-        missing = [hex(k) for k, v in hb.items() if not v]
-        print(f"  [FAIL] Missing ECUs: {missing} — power on all ECUs first")
-        bus.shutdown()
-        sys.exit(1)
-    print("  [OK] CVC/FZC/RZC all present")
+    precondition_all_ecus_healthy(bus)
     print()
 
     # -----------------------------------------------------------------------

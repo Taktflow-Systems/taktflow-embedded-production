@@ -374,6 +374,6 @@ def reset_mqtt_faults(host: str, port: int = 1883) -> bool:
     return inject_mqtt_fault(
         host,
         "taktflow/command/plant_inject",
-        {"fault": "reset"},
+        {"type": "reset"},
         port,
     )

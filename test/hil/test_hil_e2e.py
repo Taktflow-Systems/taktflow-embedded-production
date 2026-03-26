@@ -21,7 +21,8 @@ import can
 
 from hil_test_lib import (
     CAN_VEHICLE_STATE, CAN_CVC_HEARTBEAT,
-    open_bus, can_recv, print_header, HopChecker,
+    open_bus, can_recv, precondition_all_ecus_healthy,
+    print_header, HopChecker,
 )
 
 
@@ -58,6 +59,9 @@ def main():
     hc = HopChecker()
 
     print_header("E2E Protection Verification")
+
+    # Unified precondition: all ECUs healthy
+    precondition_all_ecus_healthy(bus)
 
     # Hop 0: Vehicle_State (0x100) has valid CRC-8
     # E2E layout: byte0=[Alive:4|DataID:4], byte1=CRC, bytes2..5=payload

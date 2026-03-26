@@ -28,7 +28,7 @@ from hil_test_lib import (
     DBC_PATH,
     CAN_VEHICLE_STATE, CAN_BCM_BODY, CAN_MOTOR_CURRENT,
     open_bus, can_recv, can_recv_decoded, poll_signal,
-    check_heartbeat_period,
+    check_heartbeat_period, precondition_all_ecus_healthy,
     wait_cvc_run, HopChecker, print_header,
 )
 
@@ -39,6 +39,9 @@ def main():
     hc = HopChecker()
 
     print_header("Body / Instrument / Telematic vECU Verification")
+
+    # Unified precondition: all ECUs healthy
+    precondition_all_ecus_healthy(bus)
 
     # Precondition: system in RUN (needs physical SC + CVC)
     if not wait_cvc_run(db, bus):
