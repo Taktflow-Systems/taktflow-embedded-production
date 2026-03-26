@@ -212,8 +212,6 @@ Std_ReturnType Swc_FzcCom_E2eCheck(const uint8* data, uint8 length, uint8 dataId
 
 void Swc_FzcCom_Receive(void)
 {
-    Std_ReturnType ret;
-
     if (FzcCom_Initialized != TRUE) {
         return;
     }
@@ -222,47 +220,9 @@ void Swc_FzcCom_Receive(void)
      * Resets the silence counter — prevents false CAN-loss latch. */
     Swc_FzcCanMonitor_NotifyRx();
 
-    /* NOTE: Com_ReceiveSignal reads extracted signal values from shadow
-     * buffers (not raw PDU bytes).  E2E protection should be applied at
-     * the PDU level (TODO:POST-BETA — add Com_GetRxPduData + E2E at PDU
-     * layer).  Signal IDs use FZC_COM_SIG_* defines from Fzc_Cfg.h. */
-
-    /* ---- RX: 0x001 E-stop (uint8) ---- */
-    {
-        uint8 estop_val = 0u;
-        ret = Com_ReceiveSignal(FZC_COM_SIG_ESTOP_BROADCAST_ACTIVE, &estop_val);
-        if (ret == E_OK) {
-            (void)Rte_Write(FZC_SIG_ESTOP_ACTIVE, (uint32)estop_val);
-        }
-    }
-
-    /* ---- RX: 0x100 Vehicle State (uint8) ---- */
-    {
-        uint8 vs_val = 0u;
-        ret = Com_ReceiveSignal(FZC_COM_SIG_VEHICLE_STATE_MODE, &vs_val);
-        if (ret == E_OK) {
-            (void)Rte_Write(FZC_SIG_VEHICLE_STATE, (uint32)vs_val);
-        }
-    }
-
-    /* ---- RX: 0x102 Steering Command (sint16) ---- */
-    {
-        sint16 steer_val = 0;
-        ret = Com_ReceiveSignal(FZC_COM_SIG_STEER_COMMAND_STEER_ANGLE_CMD, &steer_val);
-        if (ret == E_OK) {
-            (void)Rte_Write(FZC_SIG_STEER_CMD,
-                (uint32)((uint16)steer_val));
-        }
-    }
-
-    /* ---- RX: 0x103 Brake Command (uint8) ---- */
-    {
-        uint8 brake_val = 0u;
-        ret = Com_ReceiveSignal(FZC_COM_SIG_BRAKE_COMMAND_BRAKE_FORCE_CMD, &brake_val);
-        if (ret == E_OK) {
-            (void)Rte_Write(FZC_SIG_BRAKE_CMD, (uint32)brake_val);
-        }
-    }
+    /* RX signal bridging removed — Com RX auto-push handles all
+     * signal extraction and Rte_Write via rxSignalConfig[].rteSignalId.
+     * Only CanMonitor notification remains. */
 }
 
 /* ==================================================================
