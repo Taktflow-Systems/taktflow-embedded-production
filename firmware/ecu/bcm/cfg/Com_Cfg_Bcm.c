@@ -432,26 +432,26 @@ static const Com_TxPduConfigType bcm_tx_pdu_config[] = {
 
 static const Com_RxPduConfigType bcm_rx_pdu_config[] = {
     /* pduId,                     dlc, timeoutMs, e2eProt, dataId, maxDelta, demEvt, smValid, smInvalid */
-    { BCM_COM_RX_ESTOP_BROADCAST,     4u,     0u, TRUE ,  1u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x001 @satisfies SG-008 */
-    { BCM_COM_RX_CVC_HEARTBEAT,     4u,     0u, TRUE ,  2u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x010 @satisfies SG-008 */
-    { BCM_COM_RX_FZC_HEARTBEAT,     4u,     0u, TRUE ,  3u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x011 @satisfies SG-008 */
-    { BCM_COM_RX_RZC_HEARTBEAT,     4u,     0u, TRUE ,  4u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x012 @satisfies SG-008 */
+    { BCM_COM_RX_ESTOP_BROADCAST,     4u,    30u, TRUE ,  1u,  3u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x001 @satisfies SG-008 */
+    { BCM_COM_RX_CVC_HEARTBEAT,     4u,   150u, TRUE ,  2u,  7u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x010 @satisfies SG-008 */
+    { BCM_COM_RX_FZC_HEARTBEAT,     4u,   150u, TRUE ,  3u,  7u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x011 @satisfies SG-008 */
+    { BCM_COM_RX_RZC_HEARTBEAT,     4u,   150u, TRUE ,  4u,  7u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x012 @satisfies SG-008 */
     { BCM_COM_RX_SC_STATUS,     4u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x013 @satisfies SG-008 */
-    { BCM_COM_RX_ICU_HEARTBEAT,     4u,     0u, TRUE ,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x014 */
-    { BCM_COM_RX_TCU_HEARTBEAT,     4u,     0u, TRUE ,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x015 */
-    { BCM_COM_RX_VEHICLE_STATE,     6u,     0u, TRUE ,  5u,  1u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x100 @satisfies SG-001,SG-008 */
-    { BCM_COM_RX_TORQUE_REQUEST,     8u,     0u, TRUE ,  6u,  1u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x101 @satisfies SG-001 */
-    { BCM_COM_RX_STEER_COMMAND,     8u,     0u, TRUE ,  7u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x102 @satisfies SG-003 */
-    { BCM_COM_RX_BRAKE_COMMAND,     8u,     0u, TRUE ,  8u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x103 @satisfies SG-004 */
-    { BCM_COM_RX_STEERING_STATUS,     8u,     0u, TRUE ,  9u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x200 @satisfies SG-003 */
-    { BCM_COM_RX_BRAKE_STATUS,     8u,     0u, TRUE , 10u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x201 @satisfies SG-004 */
+    { BCM_COM_RX_ICU_HEARTBEAT,     4u,  1500u, TRUE ,  0u, 14u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x014 */
+    { BCM_COM_RX_TCU_HEARTBEAT,     4u,  1500u, TRUE ,  0u, 14u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x015 */
+    { BCM_COM_RX_VEHICLE_STATE,     6u,    30u, TRUE ,  5u,  3u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x100 @satisfies SG-001,SG-008 */
+    { BCM_COM_RX_TORQUE_REQUEST,     8u,    30u, TRUE ,  6u,  3u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x101 @satisfies SG-001 */
+    { BCM_COM_RX_STEER_COMMAND,     8u,    30u, TRUE ,  7u,  3u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x102 @satisfies SG-003 */
+    { BCM_COM_RX_BRAKE_COMMAND,     8u,    30u, TRUE ,  8u,  3u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x103 @satisfies SG-004 */
+    { BCM_COM_RX_STEERING_STATUS,     8u,   150u, TRUE ,  9u,  7u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x200 @satisfies SG-003 */
+    { BCM_COM_RX_BRAKE_STATUS,     8u,   150u, TRUE , 10u,  7u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x201 @satisfies SG-004 */
     { BCM_COM_RX_BRAKE_FAULT,     4u,     0u, TRUE , 11u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x210 @satisfies SG-004,SG-008 */
-    { BCM_COM_RX_MOTOR_CUTOFF_REQ,     4u,     0u, TRUE , 12u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x211 @satisfies SG-008 */
-    { BCM_COM_RX_LIDAR_DISTANCE,     8u,     0u, TRUE , 13u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x220 @satisfies SG-007 */
-    { BCM_COM_RX_MOTOR_STATUS,     8u,     0u, TRUE , 14u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x300 @satisfies SG-002,SG-006 */
-    { BCM_COM_RX_MOTOR_CURRENT,     8u,     0u, TRUE , 15u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x301 @satisfies SG-006 */
-    { BCM_COM_RX_MOTOR_TEMPERATURE,     8u,     0u, TRUE ,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x302 @satisfies SG-006 */
-    { BCM_COM_RX_BATTERY_STATUS,     6u,     0u, TRUE ,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x303 */
+    { BCM_COM_RX_MOTOR_CUTOFF_REQ,     4u,   150u, TRUE , 12u,  7u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x211 @satisfies SG-008 */
+    { BCM_COM_RX_LIDAR_DISTANCE,     8u,    30u, TRUE , 13u,  3u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x220 @satisfies SG-007 */
+    { BCM_COM_RX_MOTOR_STATUS,     8u,   300u, TRUE , 14u, 12u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x300 @satisfies SG-002,SG-006 */
+    { BCM_COM_RX_MOTOR_CURRENT,     8u,   300u, TRUE , 15u, 12u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x301 @satisfies SG-006 */
+    { BCM_COM_RX_MOTOR_TEMPERATURE,     8u,   300u, TRUE ,  0u, 12u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x302 @satisfies SG-006 */
+    { BCM_COM_RX_BATTERY_STATUS,     6u,  3000u, TRUE ,  0u, 14u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x303 */
     { BCM_COM_RX_BODY_CONTROL_CMD,     4u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x350 */
     { BCM_COM_RX_DTC_BROADCAST,     8u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x500 */
     { BCM_COM_RX_XCP_REQ_CVC,     8u,     0u, FALSE,  0u,  2u, COM_DEM_EVENT_NONE, 0u, 0u },   /* CAN 0x550 */

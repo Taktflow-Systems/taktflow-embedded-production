@@ -6,45 +6,45 @@
 
 ---
 
-### Step 1: Build the base with our Makefile
+### Step 1: Build the base with our Makefile ✅ DONE
 - Create `Makefile` for this project (standalone, no reference to production firmware)
 - `make` → `fzc_threadx.elf`
 - Flash → LED blinks
 - **PASS criteria**: LED toggles every 500ms
 
-### Step 2: Add UART printf
+### Step 2: Add UART printf ✅ DONE
 - Enable LPUART1 (already in ST example's `main.c`)
 - Add `printf("ThreadX running, tick=%lu\n", tx_time_get())` in thread
 - Flash → check COM3 at 115200
 - **PASS criteria**: UART prints tick count every second
 
-### Step 3: Add FDCAN init (HAL)
+### Step 3: Add FDCAN init (HAL) ✅ DONE
 - Add `HAL_FDCAN_Init()` in `main.c` after `SystemClock_Config()`
 - Configure: PA11/PA12 AF9, 500kbps, classic CAN
 - Add `HAL_FDCAN_Start()` + `HAL_FDCAN_ActivateNotification()`
 - Flash → no crash
 - **PASS criteria**: No HardFault, LED still blinks, UART still prints
 
-### Step 4: Send one CAN frame from ThreadX thread
+### Step 4: Send one CAN frame from ThreadX thread ✅ DONE
 - In MainThread: `HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &txHeader, txData)`
 - Send ID=0x558, data=[0xDE, 0xAD, 0xBE, 0xEF]
 - Flash → check `candump can0` on Pi
 - **PASS criteria**: `558#DEADBEEF` appears on CAN bus
 
-### Step 5: Send periodic CAN frames from ThreadX timer
+### Step 5: Send periodic CAN frames from ThreadX timer ✅ DONE
 - Create `tx_timer_create(&can_timer, "CAN", can_tx_callback, 0, 100, 100, TX_AUTO_ACTIVATE)`
 - Callback sends CAN frame with incrementing counter
 - Flash → verify periodic frames on Pi
 - **PASS criteria**: `candump` shows frames every 1 second (100 ticks × 10ms)
 
-### Step 6: Receive CAN frame via ISR + ThreadX event flag
+### Step 6: Receive CAN frame via ISR + ThreadX event flag ✅ DONE
 - Enable FDCAN RX FIFO0 interrupt
 - In `FDCAN1_IT0_IRQHandler`: read frame, `tx_event_flags_set(&can_event, 0x1, TX_OR)`
 - In a CAN RX thread: `tx_event_flags_get(&can_event, 0x1, TX_AND_CLEAR, &actual, TX_WAIT_FOREVER)`
 - Send `cansend can0 123#AABBCCDD` from Pi → verify UART prints received frame
 - **PASS criteria**: CAN RX works from ISR through ThreadX to thread
 
-### Step 7: Add BSW modules (one by one)
+### Step 7: Add BSW modules (one by one) ✅ DONE
 - 7a: Add `Can.c` (our MCAL wrapper) — verify CAN still works
 - 7b: Add `CanIf.c` + routing table — verify TX PDU routing
 - 7c: Add `Com.c` + signal packing — verify cyclic frames (0x200, 0x201)
@@ -52,22 +52,39 @@
 - 7e: Add SWCs (Swc_Heartbeat first) — verify heartbeat frame on CAN
 - Each sub-step: flash, verify CAN frames on Pi, no HardFault
 
-### Step 8: Add UDS/Diagnostics
+### Step 8: Add UDS/Diagnostics ✅ DONE
 - Add `CanTp.c`, `Dcm.c`, `PduR.c`
 - Configure DoCAN on 0x7E0/0x7E8
 - Send TesterPresent from Pi → verify response
 - **PASS criteria**: `cansend can0 7E0#023E00...` → `7E8#027E00...`
 
-### Step 9: Full FZC application
+### Step 9: Full FZC application ✅ DONE
 - Add all SWCs (Steering, Brake, Lidar, Safety, Buzzer)
 - Add self-test
 - Add WdgM, Dem, BswM
 - Run full HIL test suite
 - **PASS criteria**: Same behavior as bare-metal FZC, but on ThreadX
 
-### Step 10: Port to RZC and HSM
-- Copy the working pattern to F413ZH (bxCAN, different HAL)
-- Copy to L552ZE (TrustZone, Cortex-M33 ThreadX port)
+### Step 10: Port to RZC and HSM ✅ DONE (code complete)
+- ✅ Copy the working pattern to F413ZH (bxCAN, RZC SWCs + full UDS)
+  - `experiments/threadx-can-f4/` — Step 9 with all RZC SWCs + CanTp/Dcm/BswM/WdgM/Dem
+- ✅ Copy to G474RE for CVC (FDCAN, CVC SWCs + full UDS)
+  - `experiments/threadx-cvc/` — Step 9 with all CVC SWCs + UDS diagnostics
+- ✅ Create L552ZE experiment (Cortex-M33 ThreadX port)
+  - `experiments/threadx-l5/` — Step 1 (LED + UART), bare-metal registers
+  - ThreadX Cortex-M33 port, custom startup + linker script
+  - Ready for Step 2 (FDCAN) once board is available
+
+---
+
+## Status Summary (2026-03-26)
+
+| Experiment | Target | Step | Status |
+|------------|--------|------|--------|
+| threadx-can | FZC / G474RE | 9 | ✅ Full FZC app, ELF builds |
+| threadx-can-f4 | RZC / F413ZH | 9 | ✅ Full RZC app + UDS |
+| threadx-cvc | CVC / G474RE | 9 | ✅ Full CVC app + UDS |
+| threadx-l5 | HSM / L552ZE | 1 | ✅ Skeleton ready, needs HW verify |
 
 ---
 

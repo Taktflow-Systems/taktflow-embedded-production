@@ -102,8 +102,12 @@ typedef struct {
 
 /** Com module configuration */
 typedef struct {
-    const Com_SignalConfigType*  signalConfig;
-    uint8                        signalCount;
+    const Com_SignalConfigType*  signalConfig;    /**< Legacy combined table (deprecated) */
+    uint8                        signalCount;     /**< Legacy combined count (deprecated) */
+    const Com_SignalConfigType*  txSignalConfig;  /**< TX signal table (auto-pull from RTE) */
+    uint16                       txSignalCount;
+    const Com_SignalConfigType*  rxSignalConfig;  /**< RX signal table (auto-push to RTE) */
+    uint16                       rxSignalCount;
     const Com_TxPduConfigType*   txPduConfig;
     uint8                        txPduCount;
     const Com_RxPduConfigType*   rxPduConfig;

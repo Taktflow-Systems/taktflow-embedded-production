@@ -25,18 +25,49 @@ static {{ sig | c_type }}  sig_rx_{{ sig.name | lower }};
  * Maps signal ID -> bit position, size, type, parent PDU, shadow buffer
  * ================================================================== */
 
-static const Com_SignalConfigType {{ ecu.name }}_signal_config[] = {
-    /* TX signals — no RTE binding (TX uses Rte_Read → Com_SendSignal path) */
+/* TX signal table — iterated by Com_MainFunction_Tx auto-pull */
+static const Com_SignalConfigType {{ ecu.name }}_tx_signal_config[] = {
     /* id, bitPos, bitSize, type,       pduId,                      shadowBuf,       rteSignalId,  updateBit */
 {% set ns = namespace(com_id=0) %}
 {% for pdu in ecu.tx_pdus %}
 {% for sig in pdu.signals %}
-    { {{ "%2d"|format(ns.com_id) }}u, {{ "%4d"|format(sig.bit_position) }}u, {{ "%5d"|format(sig.bit_size) }}u, {{ sig | com_type }}, {{ ecu.prefix }}_COM_TX_{{ pdu.name | upper_snake }}, &sig_tx_{{ sig.name | lower }}, COM_RTE_SIGNAL_NONE, COM_NO_UPDATE_BIT },
+{% set sn = sig.name | lower %}
+{% set is_e2e = "e_2_e_" in sn or "e2e_" in sn %}
+    { {{ "%2d"|format(ns.com_id) }}u, {{ "%4d"|format(sig.bit_position) }}u, {{ "%5d"|format(sig.bit_size) }}u, {{ sig | com_type }}, {{ ecu.prefix }}_COM_TX_{{ pdu.name | upper_snake }}, &sig_tx_{{ sig.name | lower }}, {{ "COM_RTE_SIGNAL_NONE" if is_e2e else ecu.prefix ~ "_SIG_" ~ (sig.name | upper_snake) }}, COM_NO_UPDATE_BIT },
 {% set ns.com_id = ns.com_id + 1 %}
 {% endfor %}
 {% endfor %}
+};
 
-    /* RX signals — auto-push to RTE on reception */
+#define {{ ecu.prefix }}_COM_TX_SIGNAL_COUNT  (sizeof({{ ecu.name }}_tx_signal_config) / sizeof({{ ecu.name }}_tx_signal_config[0]))
+
+/* RX signal table — iterated by Com_RxIndication auto-push */
+static const Com_SignalConfigType {{ ecu.name }}_rx_signal_config[] = {
+    /* id, bitPos, bitSize, type,       pduId,                      shadowBuf,       rteSignalId,  updateBit */
+{% set ns.com_id = 0 %}
+{% for pdu in ecu.rx_pdus %}
+{% for sig in pdu.signals %}
+    { {{ "%2d"|format(ns.com_id) }}u, {{ "%4d"|format(sig.bit_position) }}u, {{ "%5d"|format(sig.bit_size) }}u, {{ sig | com_type }}, {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }}, &sig_rx_{{ sig.name | lower }}, {{ ecu.prefix }}_SIG_{{ sig.name | upper_snake }}, COM_NO_UPDATE_BIT },
+{% set ns.com_id = ns.com_id + 1 %}
+{% endfor %}
+{% endfor %}
+};
+
+#define {{ ecu.prefix }}_COM_RX_SIGNAL_COUNT  (sizeof({{ ecu.name }}_rx_signal_config) / sizeof({{ ecu.name }}_rx_signal_config[0]))
+
+/* Legacy combined table — used by Com_SendSignal / Com_ReceiveSignal.
+ * TX signals first (indexed by FZC_COM_SIG_* TX defines), then RX signals.
+ * TODO: migrate SWC code to Rte_Write/Rte_Read and remove this table. */
+static const Com_SignalConfigType {{ ecu.name }}_signal_config[] = {
+{% set ns.com_id = 0 %}
+{% for pdu in ecu.tx_pdus %}
+{% for sig in pdu.signals %}
+{% set sn = sig.name | lower %}
+{% set is_e2e = "e_2_e_" in sn or "e2e_" in sn %}
+    { {{ "%2d"|format(ns.com_id) }}u, {{ "%4d"|format(sig.bit_position) }}u, {{ "%5d"|format(sig.bit_size) }}u, {{ sig | com_type }}, {{ ecu.prefix }}_COM_TX_{{ pdu.name | upper_snake }}, &sig_tx_{{ sig.name | lower }}, {{ "COM_RTE_SIGNAL_NONE" if is_e2e else ecu.prefix ~ "_SIG_" ~ (sig.name | upper_snake) }}, COM_NO_UPDATE_BIT },
+{% set ns.com_id = ns.com_id + 1 %}
+{% endfor %}
+{% endfor %}
 {% for pdu in ecu.rx_pdus %}
 {% for sig in pdu.signals %}
     { {{ "%2d"|format(ns.com_id) }}u, {{ "%4d"|format(sig.bit_position) }}u, {{ "%5d"|format(sig.bit_size) }}u, {{ sig | com_type }}, {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }}, &sig_rx_{{ sig.name | lower }}, {{ ecu.prefix }}_SIG_{{ sig.name | upper_snake }}, COM_NO_UPDATE_BIT },
@@ -80,11 +111,15 @@ static const Com_RxPduConfigType {{ ecu.name }}_rx_pdu_config[] = {
  * ================================================================== */
 
 const Com_ConfigType {{ ecu.name }}_com_config = {
-    .signalConfig = {{ ecu.name }}_signal_config,
-    .signalCount  = (uint8){{ ecu.prefix }}_COM_SIGNAL_COUNT,
-    .txPduConfig  = {{ ecu.name }}_tx_pdu_config,
-    .txPduCount   = (uint8){{ ecu.prefix }}_COM_TX_PDU_COUNT,
-    .rxPduConfig  = {{ ecu.name }}_rx_pdu_config,
-    .rxPduCount   = (uint8){{ ecu.prefix }}_COM_RX_PDU_COUNT,
+    .signalConfig    = {{ ecu.name }}_signal_config,
+    .signalCount     = (uint8){{ ecu.prefix }}_COM_SIGNAL_COUNT,
+    .txSignalConfig  = {{ ecu.name }}_tx_signal_config,
+    .txSignalCount   = {{ ecu.prefix }}_COM_TX_SIGNAL_COUNT,
+    .rxSignalConfig  = {{ ecu.name }}_rx_signal_config,
+    .rxSignalCount   = {{ ecu.prefix }}_COM_RX_SIGNAL_COUNT,
+    .txPduConfig     = {{ ecu.name }}_tx_pdu_config,
+    .txPduCount      = (uint8){{ ecu.prefix }}_COM_TX_PDU_COUNT,
+    .rxPduConfig     = {{ ecu.name }}_rx_pdu_config,
+    .rxPduCount      = (uint8){{ ecu.prefix }}_COM_RX_PDU_COUNT,
     .mainFunctionPeriodMs = {{ ecu.rte_period_ms | default(10) }}u,
 };

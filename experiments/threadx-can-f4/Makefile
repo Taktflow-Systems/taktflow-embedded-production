@@ -49,7 +49,10 @@ CUBEMX_SRC = $(ROOT)/firmware/ecu/rzc_f4/cuberzccf4fg/Core/Src
 
 vpath %.c Src $(BSW)/mcal/Can/src $(BSW)/services/Det/src $(BSW)/services/SchM/src \
          $(BSW)/ecual/CanIf/src $(BSW)/ecual/PduR/src $(BSW)/services/Com/src \
-         $(BSW)/services/E2E/src $(BSW)/rte/src $(PLAT_F4)/src \
+         $(BSW)/services/E2E/src $(BSW)/services/CanTp/src $(BSW)/services/Dcm/src \
+         $(BSW)/services/BswM/src $(BSW)/services/WdgM/src $(BSW)/services/Dem/src \
+         $(BSW)/services/CanSM/src $(BSW)/services/Xcp/src \
+         $(BSW)/rte/src $(PLAT_F4)/src \
          $(ECU_RZC)/cfg $(ECU_RZC)/src $(CUBEMX_SRC)
 
 INCLUDES += -I$(BSW)/include -I$(BSW)/mcal/Can/include -I$(BSW)/services/Det/include \
@@ -57,6 +60,7 @@ INCLUDES += -I$(BSW)/include -I$(BSW)/mcal/Can/include -I$(BSW)/services/Det/inc
             -I$(BSW)/ecual/CanIf/include -I$(BSW)/ecual/PduR/include \
             -I$(BSW)/services/E2E/include -I$(BSW)/services/Dem/include \
             -I$(BSW)/services/WdgM/include -I$(BSW)/services/BswM/include \
+            -I$(BSW)/services/CanSM/include -I$(BSW)/services/Xcp/include \
             -I$(BSW)/services/Dcm/include -I$(BSW)/services/NvM/include \
             -I$(BSW)/services/CanTp/include -I$(BSW)/services/Sil/include \
             -I$(BSW)/rte/include -I$(BSW)/ecual/IoHwAb/include \
@@ -66,7 +70,7 @@ INCLUDES += -I$(BSW)/include -I$(BSW)/mcal/Can/include -I$(BSW)/services/Det/inc
             -I$(BSW)/os/include -I$(BSW)/os/bootstrap/include \
             -I$(PLAT_F4)/include -I$(ECU_RZC)/include -I$(ECU_RZC)/cfg
 
-# Step 9: Full BSW + all RZC SWCs
+# Step 9: Full BSW + UDS + all RZC SWCs
 APP_SRCS = main.c SchM_ThreadX.c bsw_stubs.c \
            stm32f4xx_hal_msp.c \
            Can.c Can_Hw_STM32F4.c Det.c \
@@ -74,6 +78,10 @@ APP_SRCS = main.c SchM_ThreadX.c bsw_stubs.c \
            PduR.c PduR_Cfg_Rzc.c \
            Com.c Com_Cfg_Rzc.c \
            E2E.c E2E_Sm.c E2E_Cfg_Rzc.c \
+           CanTp.c CanTp_Cfg_Rzc.c \
+           Dcm.c Dcm_Cfg_Rzc.c \
+           BswM.c WdgM.c Dem.c \
+           CanSM.c Xcp.c SchM_Timing.c \
            Rte.c Rte_Cfg_Rzc.c \
            Swc_Battery.c Swc_CurrentMonitor.c Swc_Encoder.c \
            Swc_Heartbeat.c Swc_Motor.c Swc_RzcCom.c \

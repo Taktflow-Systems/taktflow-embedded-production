@@ -10,7 +10,7 @@ SZ      = $(PREFIX)size
 MCU = -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 
 CFLAGS  = $(MCU) -Wall -Wextra -std=c99 -Og -g3 -DDEBUG
-CFLAGS += -DSTM32G474xx -DUSE_HAL_DRIVER -DTX_INCLUDE_USER_DEFINE_FILE -DCANTP_ENABLED
+CFLAGS += -DSTM32G474xx -DUSE_HAL_DRIVER -DTX_INCLUDE_USER_DEFINE_FILE -DCANTP_ENABLED -DPLATFORM_HIL
 CFLAGS += -fdata-sections -ffunction-sections
 
 ASFLAGS = $(MCU) -DTX_INCLUDE_USER_DEFINE_FILE
@@ -39,6 +39,7 @@ INCLUDES += -I$(BSW)/ecual/CanIf/include -I$(BSW)/ecual/PduR/include
 INCLUDES += -I$(BSW)/services/E2E/include -I$(BSW)/services/Dem/include
 INCLUDES += -I$(BSW)/services/WdgM/include -I$(BSW)/services/BswM/include
 INCLUDES += -I$(BSW)/services/Dcm/include -I$(BSW)/services/NvM/include
+INCLUDES += -I$(BSW)/services/CanSM/include -I$(BSW)/services/Xcp/include
 INCLUDES += -I$(BSW)/services/CanTp/include -I$(BSW)/services/Sil/include
 INCLUDES += -I$(BSW)/rte/include -I$(BSW)/ecual/IoHwAb/include
 INCLUDES += -I$(BSW)/mcal/Spi/include -I$(BSW)/mcal/Adc/include
@@ -57,24 +58,31 @@ vpath %.c Src \
     $(BSW)/mcal/Can/src $(BSW)/services/Det/src \
     $(BSW)/ecual/CanIf/src $(BSW)/ecual/PduR/src \
     $(BSW)/services/Com/src $(BSW)/services/E2E/src \
+    $(BSW)/services/CanTp/src $(BSW)/services/Dcm/src \
+    $(BSW)/services/BswM/src $(BSW)/services/WdgM/src $(BSW)/services/Dem/src \
+    $(BSW)/services/CanSM/src $(BSW)/services/Xcp/src $(BSW)/services/SchM/src \
     $(BSW)/rte/src $(PLAT_G4)/src \
     $(ECU_CVC)/cfg $(ECU_CVC)/src \
     $(HAL_DRV)/Src $(FZC_EXP)/Src
 vpath %.c $(TX_COMMON)/src
 vpath %.S $(TX_PORT)/src Src
 
-# Step 7: Full BSW + CVC SWCs
+# Step 9: Full BSW + UDS + CVC SWCs
 APP_SRCS = main.c SchM_ThreadX.c bsw_stubs.c \
     Can.c Can_Hw_STM32.c Det.c \
     CanIf.c CanIf_Cfg_Cvc.c \
     PduR.c PduR_Cfg_Cvc.c \
     Com.c Com_Cfg_Cvc.c \
     E2E.c E2E_Sm.c E2E_Cfg_Cvc.c \
+    CanTp.c CanTp_Cfg_Cvc.c \
+    Dcm.c Dcm_Cfg_Cvc.c \
+    BswM.c WdgM.c Dem.c \
+    CanSM.c Xcp.c SchM_Timing.c \
     Rte.c Rte_Cfg_Cvc.c \
     Swc_Heartbeat.c Swc_VehicleState.c Swc_Pedal.c \
     Swc_EStop.c Swc_Dashboard.c Swc_CvcCom.c \
-    Swc_CanMonitor.c Swc_Watchdog.c Swc_Nvm.c \
-    Swc_CvcDcm.c Swc_Scheduler.c Ssd1306.c
+    Swc_CvcDcm.c Swc_CanMonitor.c Swc_Watchdog.c Swc_Nvm.c \
+    Swc_Scheduler.c Swc_SelfTest.c Ssd1306.c
 
 # HAL
 HAL_SRCS = stm32g4xx_hal.c stm32g4xx_hal_cortex.c \

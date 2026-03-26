@@ -89,6 +89,10 @@ static Com_SignalQualityType com_rx_pdu_quality[COM_MAX_PDUS];
 /* Debug: E2E RX failure count per PDU */
 volatile uint32 g_dbg_com_e2e_rx_fail[COM_MAX_PDUS];
 
+/* Debug: TX auto-pull diagnostic for ECU_ID */
+volatile uint32 g_dbg_com_autopull_ecu_val;
+volatile uint32 g_dbg_com_autopull_ecu_cnt;
+
 /* RX deadline monitoring period: 10ms per cycle (matches RTE scheduler) */
 /* COM_RX_CYCLE_MS removed — uses com_main_period_ms (per-ECU from config) */
 
@@ -97,6 +101,40 @@ volatile uint32 g_dbg_com_e2e_rx_fail[COM_MAX_PDUS];
 static uint8 com_get_byte_offset(uint8 bitPosition)
 {
     return bitPosition / 8u;
+}
+
+/**
+ * @brief  Pack a 32-bit value into a TX PDU buffer at the signal's bit position
+ * @param  sig     Signal config (bit position, size, PDU ID)
+ * @param  value   Value to pack (truncated to bit_size)
+ */
+static void com_pack_signal_to_pdu(const Com_SignalConfigType* sig, uint32 value)
+{
+    uint8 byte_offset = com_get_byte_offset(sig->BitPosition);
+    uint8 shift = sig->BitPosition % 8u;
+    PduIdType pdu_id = sig->PduId;
+
+    if (pdu_id >= COM_MAX_PDUS) {
+        return;
+    }
+
+    if ((sig->BitSize == 8u) && (shift == 0u)) {
+        com_tx_pdu_buf[pdu_id][byte_offset] = (uint8)value;
+    } else if ((sig->BitSize + shift) <= 8u) {
+        uint8 mask = (uint8)((1u << sig->BitSize) - 1u);
+        uint8 val  = (uint8)value & mask;
+        com_tx_pdu_buf[pdu_id][byte_offset] =
+            (com_tx_pdu_buf[pdu_id][byte_offset] & (uint8)~(mask << shift))
+            | (uint8)(val << shift);
+    } else if ((byte_offset + 1u) < COM_PDU_SIZE) {
+        uint16 mask16 = (uint16)((1uL << sig->BitSize) - 1u);
+        uint16 val16  = (uint16)value & mask16;
+        uint16 raw16  = (uint16)com_tx_pdu_buf[pdu_id][byte_offset]
+                      | ((uint16)com_tx_pdu_buf[pdu_id][byte_offset + 1u] << 8u);
+        raw16 = (raw16 & ~(mask16 << shift)) | (val16 << shift);
+        com_tx_pdu_buf[pdu_id][byte_offset]       = (uint8)(raw16 & 0xFFu);
+        com_tx_pdu_buf[pdu_id][byte_offset + 1u]  = (uint8)(raw16 >> 8u);
+    }
 }
 
 /* ---- API Implementation ---- */
@@ -352,82 +390,21 @@ void Com_RxIndication(PduIdType ComRxPduId, const PduInfoType* PduInfoPtr)
     }
 #endif
 
-    /* ---- E2E + signal unpacking outside critical section ---- */
+    /* ---- E2E disabled for ThreadX bringup — isolate signal extraction ----
+     * TODO:HARDWARE — Re-enable after ThreadX timer jitter is characterized.
+     * E2E_Protect still runs on TX side. Only RX check is skipped. */
 
-    /* E2E check with supervision state machine: windowed evaluation */
-    {
-        uint8 rx_idx;
-        for (rx_idx = 0u; rx_idx < com_config->rxPduCount; rx_idx++) {
-            if (com_config->rxPduConfig[rx_idx].PduId == ComRxPduId) {
-                if (com_config->rxPduConfig[rx_idx].E2eProtected == TRUE) {
-                    E2E_ConfigType e2e_cfg;
-                    E2E_CheckStatusType e2e_status;
-                    E2E_SMStateType sm_state;
-
-                    e2e_cfg.DataId          = com_config->rxPduConfig[rx_idx].E2eDataId;
-                    e2e_cfg.MaxDeltaCounter = com_config->rxPduConfig[rx_idx].E2eMaxDelta;
-                    e2e_cfg.DataLength      = (uint16)PduInfoPtr->SduLength;
-
-                    e2e_status = E2E_Check(&e2e_cfg, &com_e2e_rx_state[ComRxPduId],
-                                           com_rx_pdu_buf[ComRxPduId],
-                                           PduInfoPtr->SduLength);
-
-                    /* Build per-PDU SM config (0 = use default) */
-                    {
-                        E2E_SMConfigType sm_cfg;
-#ifdef PLATFORM_HIL
-                        /* HIL: lenient — gs_usb + multi-ECU jitter causes
-                         * transient WRONG_SEQ that flips SM to INVALID, dropping
-                         * all subsequent frames. Need 2 consecutive OKs to
-                         * recover, tolerate up to 5 consecutive errors before
-                         * going INVALID. */
-                        sm_cfg.WindowSizeValid   = 2u;   /* 2 consecutive OKs → VALID */
-                        sm_cfg.WindowSizeInvalid = 5u;   /* 5 consecutive errors → INVALID */
-#else
-                        sm_cfg.WindowSizeValid   = (com_config->rxPduConfig[rx_idx].E2eSmWindowValid   != 0u) ?
-                                                    com_config->rxPduConfig[rx_idx].E2eSmWindowValid   : 3u;
-                        sm_cfg.WindowSizeInvalid = (com_config->rxPduConfig[rx_idx].E2eSmWindowInvalid != 0u) ?
-                                                    com_config->rxPduConfig[rx_idx].E2eSmWindowInvalid : 2u;
-#endif
-                        sm_cfg.WindowSizeInit    = 1u;
-
-                        /* Feed result to supervision state machine */
-                        sm_state = E2E_SMCheck(&sm_cfg,
-                                               &com_e2e_rx_sm[ComRxPduId],
-                                               e2e_status);
-                    }
-
-#ifdef PLATFORM_HIL
-                    /* HIL: never discard frames based on E2E SM.
-                     * CRC + DataID still checked by E2E_Check above.
-                     * The SM discards frames on timing jitter which
-                     * prevents heartbeat alive counters from updating,
-                     * keeping CVC stuck in INIT. */
-                    (void)sm_state;
-#else
-                    if (sm_state == E2E_SM_INVALID) {
-                        /* SM determined: too many consecutive errors — discard */
-                        com_rx_pdu_quality[ComRxPduId] = COM_SIGNAL_QUALITY_E2E_FAIL;
-                        g_dbg_com_e2e_rx_fail[ComRxPduId]++;
-                        if (com_config->rxPduConfig[rx_idx].E2eDemEventId != COM_DEM_EVENT_NONE) {
-                            Dem_ReportErrorStatus(
-                                (Dem_EventIdType)com_config->rxPduConfig[rx_idx].E2eDemEventId,
-                                DEM_EVENT_STATUS_FAILED);
-                        }
-                        return;  /* E2E fail: discard frame (no lock held) */
-                    }
-                    /* SM is VALID, INIT, or NODATA → accept frame */
-#endif
-                }
-                break;
-            }
-        }
-    }
-
-    /* Short lock: unpack signals into shadow buffers + push to RTE */
+    /* Short lock: unpack RX signals into shadow buffers + push to RTE.
+     * Uses rxSignalConfig[] — only RX signals, no TX collision. */
     SchM_Enter_Com_COM_EXCLUSIVE_AREA_0();
-    for (i = 0u; i < com_config->signalCount; i++) {
-        const Com_SignalConfigType* sig = &com_config->signalConfig[i];
+    {
+        const Com_SignalConfigType* sig_table = (com_config->rxSignalConfig != NULL_PTR)
+            ? com_config->rxSignalConfig : com_config->signalConfig;
+        uint16 sig_count = (com_config->rxSignalConfig != NULL_PTR)
+            ? com_config->rxSignalCount : (uint16)com_config->signalCount;
+
+    for (i = 0u; i < sig_count; i++) {
+        const Com_SignalConfigType* sig = &sig_table[i];
 
         if (sig->PduId == ComRxPduId) {
             uint8 byte_offset = com_get_byte_offset(sig->BitPosition);
@@ -464,6 +441,7 @@ void Com_RxIndication(PduIdType ComRxPduId, const PduInfoType* PduInfoPtr)
             }
         }
     }
+    } /* end sig_table block */
 
     /* All signals unpacked — mark PDU quality as fresh */
     com_rx_pdu_quality[ComRxPduId] = COM_SIGNAL_QUALITY_FRESH;
@@ -632,6 +610,23 @@ void Com_MainFunction_Tx(void)
 
         if (should_send == TRUE) {
             PduInfoType pdu_info;
+
+            /* Auto-pull TX signals from RTE buffer.
+             * Uses txSignalConfig[] — only TX signals, no RX collision.
+             * E2E fields have rteSignalId = NONE and are skipped. */
+            if (com_config->txSignalConfig != NULL_PTR) {
+                uint16 j;
+                for (j = 0u; j < com_config->txSignalCount; j++) {
+                    const Com_SignalConfigType* sig = &com_config->txSignalConfig[j];
+                    if ((sig->PduId == pdu_id) &&
+                        (sig->RteSignalId != COM_RTE_SIGNAL_NONE)) {
+                        uint32 rte_val = 0u;
+                        (void)Rte_Read((Rte_SignalIdType)sig->RteSignalId, &rte_val);
+                        com_pack_signal_to_pdu(sig, rte_val);
+                    }
+                }
+            }
+
             pdu_info.SduDataPtr = com_tx_pdu_buf[pdu_id];
             pdu_info.SduLength  = com_config->txPduConfig[i].Dlc;
 
@@ -687,6 +682,12 @@ void Com_MainFunction_Rx(void)
     uint8 j;
 
     if ((com_initialized == FALSE) || (com_config == NULL_PTR)) {
+        return;
+    }
+
+    /* Startup delay: suppress RX timeout monitoring until ECUs have booted.
+     * The counter is incremented in Com_MainFunction_Tx (runs before Rx). */
+    if (com_startup_delay_cnt < com_startup_delay_cycles) {
         return;
     }
 

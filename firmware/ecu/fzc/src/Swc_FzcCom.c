@@ -295,12 +295,15 @@ void Swc_FzcCom_TransmitSchedule(void)
         uint32 vs = 0u;
         uint32 fm = 0u;
         uint8 ecu_id = FZC_ECU_ID;
-        uint8 state_fault;
+        uint8 op_mode;
+        uint8 fault_nibble;
         (void)Rte_Read(FZC_SIG_VEHICLE_STATE, &vs);
         (void)Rte_Read(FZC_SIG_FAULT_MASK, &fm);
-        state_fault = (uint8)(((fm & 0x0Fu) << 4u) | (vs & 0x0Fu));
+        op_mode      = (uint8)(vs & 0x0Fu);
+        fault_nibble = (uint8)(fm & 0x0Fu);
         (void)Com_SendSignal(FZC_COM_SIG_FZC_HEARTBEAT_ECU_ID, &ecu_id);
-        (void)Com_SendSignal(FZC_COM_SIG_FZC_HEARTBEAT_FAULT_STATUS, &state_fault);
+        (void)Com_SendSignal(FZC_COM_SIG_FZC_HEARTBEAT_OPERATING_MODE, &op_mode);
+        (void)Com_SendSignal(FZC_COM_SIG_FZC_HEARTBEAT_FAULT_STATUS, &fault_nibble);
     }
 
     /* ---- TX: Steering/Brake status → Com shadow buffers (10ms cyclic) ---- */

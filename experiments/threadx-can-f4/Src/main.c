@@ -1,10 +1,14 @@
 /**
  * @file    main.c
- * @brief   ThreadX + bxCAN experiment for STM32F413ZH (Steps 1-6)
- * @date    2026-03-20
+ * @brief   ThreadX + bxCAN experiment for STM32F413ZH (Step 9: full RZC)
+ * @date    2026-03-26
  *
  * Adapted from working G474RE ThreadX experiment.
  * Differences: bxCAN (not FDCAN), HSI 96MHz (not HSE 170MHz), RZC (not FZC).
+ *
+ * Step 9: Full RZC application with all SWCs + UDS diagnostics.
+ *   - Real BSW services: CanTp, Dcm, BswM, WdgM, Dem
+ *   - Stubs: IoHwAb, NvM, MCAL peripherals (no F4 HW backends yet)
  */
 
 #include "stm32f4xx_hal.h"
@@ -17,6 +21,11 @@
 #include "E2E.h"
 #include "Rte.h"
 #include "Det.h"
+#include "CanTp.h"
+#include "Dcm.h"
+#include "BswM.h"
+#include "WdgM.h"
+#include "Dem.h"
 #include "Rzc_Cfg.h"
 #include "Swc_Heartbeat.h"
 #include "Swc_Motor.h"
@@ -25,7 +34,11 @@
 #include "Swc_Encoder.h"
 #include "Swc_TempMonitor.h"
 #include "Swc_RzcCom.h"
+#include "Swc_RzcDcm.h"
+#include "Swc_RzcNvm.h"
 #include "Swc_RzcSafety.h"
+#include "Swc_RzcScheduler.h"
+#include "Swc_RzcSelfTest.h"
 #include "Swc_RzcSensorFeeder.h"
 #include <stdio.h>
 #include <string.h>
@@ -139,6 +152,8 @@ extern const CanIf_ConfigType rzc_canif_config;
 extern const PduR_ConfigType  rzc_pdur_config;
 extern const Com_ConfigType   rzc_com_config;
 extern const Rte_ConfigType   rzc_rte_config;
+extern const CanTp_ConfigType rzc_cantp_config;
+extern const Dcm_ConfigType   rzc_dcm_config;
 
 /* Wrapper: BSW Can_Write uses Can_PduType, we simplify for experiment */
 static int CAN_TX(uint32_t id, const uint8_t* data, uint8_t dlc)
@@ -174,12 +189,23 @@ static void bsw_timer_callback(ULONG param)
     bsw_tick++;
     HAL_IncTick();
 
-    /* CAN + Com every 10ms */
+    /* CAN + Com + UDS every 10ms */
     if ((bsw_tick % 10u) == 0u)
     {
+        /* Bus-off auto-recovery */
+        if ((CAN1->ESR & CAN_ESR_BOFF) != 0u)
+        {
+            Can_Init(&rzc_can_config);
+            Can_SetControllerMode(0u, CAN_CS_STARTED);
+            return;  /* Skip BSW this cycle — just recovered */
+        }
+
         Can_MainFunction_Read();
         Com_MainFunction_Tx();
         Com_MainFunction_Rx();
+        CanTp_MainFunction();
+        Dcm_MainFunction();
+        BswM_MainFunction();
     }
 
     /* Rte every 1ms */
@@ -215,6 +241,14 @@ static void main_thread_entry(ULONG param)
     E2E_Init();
     Uart_Print("  7c: PduR+Com+E2E OK\r\n");
 
+    /* Step 8: UDS diagnostics */
+    Dem_Init(NULL_PTR);
+    CanTp_Init(&rzc_cantp_config);
+    Dcm_Init(&rzc_dcm_config);
+    BswM_Init(NULL_PTR);
+    WdgM_Init(NULL_PTR);
+    Uart_Print("  8: CanTp+Dcm+BswM+WdgM+Dem OK\r\n");
+
     /* Step 7d: Rte */
     Rte_Init(&rzc_rte_config);
     Uart_Print("  7d: Rte OK\r\n");
@@ -227,7 +261,11 @@ static void main_thread_entry(ULONG param)
     Swc_Encoder_Init();
     Swc_TempMonitor_Init();
     Swc_RzcCom_Init();
+    Swc_RzcDcm_Init();
+    Swc_RzcNvm_Init();
     Swc_RzcSafety_Init();
+    Swc_RzcScheduler_Init();
+    Swc_RzcSelfTest_Init(NULL_PTR);
     Swc_RzcSensorFeeder_Init();
     Uart_Print("  SWC init OK\r\n");
 
@@ -400,7 +438,7 @@ int main(void)
     Uart_Init();
     Led_Init();
 
-    Uart_Print("\r\n=== F413ZH ThreadX + bxCAN (Steps 1-6) ===\r\n");
+    Uart_Print("\r\n=== F413ZH ThreadX + bxCAN (Step 9: Full RZC) ===\r\n");
     Uart_Print("Clock: 96 MHz, ThreadX tick: 1000 Hz\r\n\r\n");
 
     tx_kernel_enter();  /* Never returns */

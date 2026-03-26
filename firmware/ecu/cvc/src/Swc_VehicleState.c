@@ -499,7 +499,7 @@ void Swc_VehicleState_MainFunction(void)
     uint32 sc_relay_kill   = 0u;  /* Production: fail-closed until SC_Status arrives */
 #endif
     uint32 battery_status  = 2u;  /* Default NORMAL if read fails */
-    uint32 motor_fault_rzc = 0u;
+    uint32 motor_fault_rzc = 1u;  /* Default FAULT until Motor_Status confirmed fresh */
     uint32 motor_speed     = 0u;
     uint32 torque_request  = 0u;
     uint32 pedal_position  = 0u;
@@ -523,6 +523,13 @@ void Swc_VehicleState_MainFunction(void)
     (void)Rte_Read(CVC_SIG_MOTOR_SPEED,    &motor_speed);
     (void)Rte_Read(CVC_SIG_TORQUE_REQUEST, &torque_request);
     (void)Rte_Read(CVC_SIG_PEDAL_POSITION, &pedal_position);
+
+    /* If Motor_Status PDU timed out, Com zeroed motor_fault_rzc to 0.
+     * Treat timed-out signal as fault (1) — not "OK" (0). Prevents false
+     * recovery from SAFE_STOP when RZC stops transmitting. */
+    if (Com_GetRxPduQuality(CVC_COM_RX_MOTOR_STATUS) == COM_SIGNAL_QUALITY_TIMED_OUT) {
+        motor_fault_rzc = 1u;
+    }
 
 #ifdef SIL_DIAG
     {
@@ -947,6 +954,6 @@ void Swc_VehicleState_MainFunction(void)
     /* ---- Step 6: Write current state to RTE ---- */
     (void)Rte_Write(CVC_SIG_VEHICLE_STATE, (uint32)current_state);
 
-    /* NOTE: CAN 0x100 TX is handled by Swc_CvcCom_TransmitSchedule
-     * with full E2E protection and fault mask composition. */
+    /* Heartbeat OperatingMode — auto-pulled by Com_MainFunction_Tx */
+    (void)Rte_Write(CVC_SIG_CVC_HEARTBEAT_OPERATING_MODE, (uint32)current_state);
 }

@@ -112,6 +112,7 @@ class Ecu:
     uds_tx_pdu_name: str = ""
     dtc_events: dict[str, int] = field(default_factory=dict)
     rte_period_ms: int = 10  # Com_MainFunction_Tx call period (from *_RTE_PERIOD_MS)
+    com_rx_period_ms: int = 10  # Com_MainFunction_Rx call period (from sidecar runnables)
     e2e_data_ids: dict[str, int] = field(default_factory=dict)
     enums: dict[str, int] = field(default_factory=dict)
     thresholds: dict[str, int | str] = field(default_factory=dict)

@@ -1,57 +1,49 @@
 /**
  * @file    bsw_stubs.c
- * @brief   Stubs for BSW/MCAL modules not yet on ThreadX CVC experiment
+ * @brief   Stubs for modules not yet ported to CVC ThreadX experiment
+ * @date    2026-03-26
+ *
+ * Real BSW services (CanTp, Dcm, BswM, WdgM, Dem, CanSM, Xcp) are linked
+ * from production firmware tree. Only OS, IoHwAb, NvM, and MCAL peripherals
+ * are stubbed.
  */
 #include "Std_Types.h"
 #include "ComStack_Types.h"
+#include "IoHwAb.h"
 
 /* Os stubs */
 void Os_Init(void) {}
 void StartOS(uint8 mode) { (void)mode; }
 
-/* CanTp stubs */
-void CanTp_Init(const void* cfg) { (void)cfg; }
-void CanTp_RxIndication(PduIdType id, const PduInfoType* info) { (void)id; (void)info; }
-void CanTp_TxConfirmation(PduIdType id) { (void)id; }
-void CanTp_MainFunction(void) {}
-
-/* Dcm stubs */
-void Dcm_Init(const void* cfg) { (void)cfg; }
-void Dcm_RxIndication(PduIdType id, Std_ReturnType result) { (void)id; (void)result; }
-void Dcm_TxConfirmation(PduIdType id, Std_ReturnType result) { (void)id; (void)result; }
-void Dcm_MainFunction(void) {}
-
-/* BswM / WdgM / Dem / NvM stubs */
-void BswM_Init(const void* cfg) { (void)cfg; }
-void BswM_MainFunction(void) {}
-void BswM_RequestMode(uint16 user, uint16 mode) { (void)user; (void)mode; }
-void WdgM_Init(const void* cfg) { (void)cfg; }
-void WdgM_MainFunction(void) {}
-void WdgM_UpdateAliveCounter(uint16 id) { (void)id; }
-void WdgM_CheckpointReached(uint16 seId, uint16 cpId) { (void)seId; (void)cpId; }
-void Dem_Init(const void* cfg) { (void)cfg; }
-void Dem_ReportErrorStatus(uint16 id, uint8 status) { (void)id; (void)status; }
-void Dem_MainFunction(void) {}
+/* NvM stubs — flash backend not available in experiment */
 void NvM_Init(const void* cfg) { (void)cfg; }
 void NvM_MainFunction(void) {}
 Std_ReturnType NvM_ReadBlock(uint16 id, void* dst) { (void)id; (void)dst; return E_OK; }
 Std_ReturnType NvM_WriteBlock(uint16 id, const void* src) { (void)id; (void)src; return E_OK; }
 
-/* IoHwAb stubs — CVC reads pedal, E-Stop, battery via IoHwAb */
-void IoHwAb_Init(const void* cfg) { (void)cfg; }
-uint16 IoHwAb_ReadPedalPosition(void) { return 0u; }
-uint16 IoHwAb_ReadPedalAngle(void) { return 0u; }
+/* IoHwAb stubs — match production signatures from IoHwAb.h */
+Std_ReturnType IoHwAb_ReadPedalAngle(uint8 SensorId, uint16* Angle) { (void)SensorId; if (Angle) *Angle = 0u; return E_OK; }
+Std_ReturnType IoHwAb_ReadSteeringAngle(uint16* Angle) { if (Angle) *Angle = 0u; return E_OK; }
+Std_ReturnType IoHwAb_ReadMotorCurrent(uint16* Current_mA) { if (Current_mA) *Current_mA = 0u; return E_OK; }
+Std_ReturnType IoHwAb_ReadMotorTemp(uint16* Temp_dC) { if (Temp_dC) *Temp_dC = 250u; return E_OK; }
+Std_ReturnType IoHwAb_ReadMotorTemp2(uint16* Temp_dC) { if (Temp_dC) *Temp_dC = 250u; return E_OK; }
+Std_ReturnType IoHwAb_ReadBatteryVoltage(uint16* Voltage_mV) { if (Voltage_mV) *Voltage_mV = 12600u; return E_OK; }
+Std_ReturnType IoHwAb_ReadBrakePosition(uint16* Position) { if (Position) *Position = 0u; return E_OK; }
+Std_ReturnType IoHwAb_SetMotorPWM(uint8 Direction, uint16 DutyCycle) { (void)Direction; (void)DutyCycle; return E_OK; }
+Std_ReturnType IoHwAb_SetSteeringServoPWM(uint16 DutyCycle) { (void)DutyCycle; return E_OK; }
+Std_ReturnType IoHwAb_SetBrakeServoPWM(uint16 DutyCycle) { (void)DutyCycle; return E_OK; }
+Std_ReturnType IoHwAb_ReadEStop(uint8* State) { if (State) *State = 0u; return E_OK; }
+Std_ReturnType IoHwAb_ReadEncoderCount(uint32* Count) { if (Count) *Count = 0u; return E_OK; }
+Std_ReturnType IoHwAb_ReadEncoderDirection(uint8* Dir) { if (Dir) *Dir = 0u; return E_OK; }
 
-/* SelfTest stub */
-void Swc_SelfTest_Init(void) {}
-void Swc_SelfTest_MainFunction(void) {}
-uint8  IoHwAb_ReadEStop(void) { return 0u; }
-uint16 IoHwAb_ReadBatteryVoltage(void) { return 12600u; }
-sint16 IoHwAb_ReadMotorTemp(void) { return 250; }
-uint16 IoHwAb_ReadMotorCurrent(void) { return 0u; }
-uint32 IoHwAb_ReadEncoderCount(void) { return 0u; }
-uint8  IoHwAb_ReadEncoderDirection(void) { return 0u; }
-void   IoHwAb_SetMotorPWM(uint8 dir, uint16 duty) { (void)dir; (void)duty; }
+/* SelfTest HW stubs — all pass (no real HW tests in experiment) */
+Std_ReturnType SelfTest_Hw_SpiLoopback(void) { return E_OK; }
+Std_ReturnType SelfTest_Hw_CanLoopback(void) { return E_OK; }
+Std_ReturnType SelfTest_Hw_NvmCheck(void) { return E_OK; }
+Std_ReturnType SelfTest_Hw_OledAck(void) { return E_OK; }
+Std_ReturnType SelfTest_Hw_MpuVerify(void) { return E_OK; }
+Std_ReturnType SelfTest_Hw_CanaryCheck(void) { return E_OK; }
+Std_ReturnType SelfTest_Hw_RamPattern(void) { return E_OK; }
 
 /* MCAL stubs */
 void Spi_Init(const void* cfg) { (void)cfg; }

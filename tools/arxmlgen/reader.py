@@ -108,6 +108,9 @@ class ArxmlReader:
                     if define_name not in ecu.e2e_data_ids:
                         ecu.e2e_data_ids[define_name] = pdu.e2e_data_id
 
+        # Compute E2E MaxDeltaCounter and RX timeout from scheduler periods
+        self._compute_e2e_params(ecus)
+
         # Apply traceability (Satisfies, ASIL) from DBC to all PDUs
         self._apply_dbc_traceability(ecus)
 
@@ -784,6 +787,12 @@ class ArxmlReader:
             elif "rte_internal_signal_count" in ecu_data:
                 ecu.rte_internal_signal_count = int(ecu_data["rte_internal_signal_count"])
 
+            # Extract Com_MainFunction_Rx period for E2E param computation
+            if "runnables" in ecu_data:
+                com_rx = ecu_data["runnables"].get("Com_MainFunction_Rx", {})
+                if "period_ms" in com_rx:
+                    ecu.com_rx_period_ms = int(com_rx["period_ms"])
+
             # Runnable scheduling — override ARXML runnables or create from sidecar
             if "runnables" in ecu_data:
                 runnable_overrides = ecu_data["runnables"]
@@ -950,6 +959,60 @@ class ArxmlReader:
                         f"E2E PDU '{pdu.name}' has no E2E_DataID in DBC — "
                         f"add BA_ \"E2E_DataID\" BO_ {pdu.can_id} <id>;"
                     )
+
+    def _compute_e2e_params(self, ecus: dict[str, Ecu]):
+        """Derive E2E MaxDeltaCounter and RX timeout from scheduler periods.
+
+        AUTOSAR approach: E2E parameters are computed from the relationship
+        between TX cycle time (DBC GenMsgCycleTime) and RX poll period
+        (Com_MainFunction_Rx call rate from sidecar runnables).
+
+        MaxDeltaCounter = ceil(tx_cycle_ms / rx_poll_ms) + margin
+            - Allows for one full TX cycle of jitter before E2E rejects
+            - margin=2 covers CAN arbitration delay + scheduler jitter
+
+        timeout_ms = tx_cycle_ms * 3
+            - Standard AUTOSAR: 3× the TX period before declaring timeout
+            - Sufficient for bus-off recovery (1 retry cycle)
+
+        This makes E2E params independent of the OS — changing the scheduler
+        period in sidecar.yaml and re-running the pipeline auto-adjusts.
+        """
+        import math
+
+        updated = 0
+        for ecu in ecus.values():
+            rx_poll_ms = ecu.com_rx_period_ms
+            if rx_poll_ms <= 0:
+                continue
+
+            for pdu in ecu.rx_pdus:
+                if not pdu.e2e_protected:
+                    continue
+                # RX PDUs have cycle_ms=0 (receiver side) — look up TX cycle from DBC
+                tx_cycle_ms = self._dbc_cycle_map.get(pdu.name, pdu.cycle_ms)
+                if tx_cycle_ms <= 0:
+                    continue
+
+                # MaxDeltaCounter: how many RX polls fit in one TX cycle + margin
+                computed_delta = math.ceil(tx_cycle_ms / rx_poll_ms) + 2
+                # Clamp to 4-bit alive counter range (0-15)
+                computed_delta = min(computed_delta, 14)
+
+                # RX timeout: 3× the TX period (AUTOSAR default)
+                computed_timeout = tx_cycle_ms * 3
+
+                # Only override if computed value differs from DBC default
+                if pdu.e2e_max_delta != computed_delta:
+                    pdu.e2e_max_delta = computed_delta
+                    updated += 1
+
+                if pdu.timeout_ms == 0:
+                    pdu.timeout_ms = computed_timeout
+
+        if updated > 0:
+            _info(f"  E2E params: {updated} RX PDUs updated "
+                  f"(MaxDeltaCounter derived from scheduler periods)")
 
     def _apply_dbc_traceability(self, ecus: dict[str, Ecu]):
         """Apply Satisfies and ASIL from DBC attributes to PDU objects."""

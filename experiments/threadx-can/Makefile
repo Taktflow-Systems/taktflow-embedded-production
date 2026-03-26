@@ -78,9 +78,11 @@ C_SOURCES += \
   $(FW)/bsw/mcal/Can/src/Can.c \
   $(FW)/platform/stm32/src/Can_Hw_STM32.c
 
-# ---- Step 7a: Det (needed by Can.c, CanIf.c, etc.) ----
+# ---- Step 7a: Det + CanSM + SchM_Timing ----
 C_SOURCES += \
-  $(FW)/bsw/services/Det/src/Det.c
+  $(FW)/bsw/services/Det/src/Det.c \
+  $(FW)/bsw/services/CanSM/src/CanSM.c \
+  $(FW)/bsw/services/SchM/src/SchM_Timing.c
 
 # ---- Step 7b: CanIf ----
 C_SOURCES += \
@@ -125,7 +127,7 @@ C_SOURCES += \
   $(FW)/platform/stm32/src/Uart_Hw_STM32.c \
   $(FW)/platform/stm32/src/Gpt_Hw_STM32.c
 
-# ---- Step 8: UDS Diagnostics ----
+# ---- Step 8: UDS Diagnostics + XCP ----
 C_SOURCES += \
   $(FW)/bsw/services/CanTp/src/CanTp.c \
   $(FW)/bsw/services/Dcm/src/Dcm.c \
@@ -134,6 +136,7 @@ C_SOURCES += \
   $(FW)/bsw/services/BswM/src/BswM.c \
   $(FW)/bsw/services/Dem/src/Dem.c \
   $(FW)/bsw/services/WdgM/src/WdgM.c \
+  $(FW)/bsw/services/Xcp/src/Xcp.c \
   $(FW)/ecu/fzc/cfg/Dcm_Cfg_Fzc.c \
   $(FW)/ecu/fzc/cfg/E2E_Cfg_Fzc.c \
   $(FW)/ecu/fzc/cfg/PduR_Cfg_Fzc.c \
@@ -172,7 +175,9 @@ INCLUDES = \
   -I$(FW)/bsw/services/WdgM/include \
   -I$(FW)/bsw/services/Dcm/include \
   -I$(FW)/bsw/services/BswM/include \
+  -I$(FW)/bsw/services/CanSM/include \
   -I$(FW)/bsw/services/CanTp/include \
+  -I$(FW)/bsw/services/Xcp/include \
   -I$(FW)/bsw/services/NvM/include \
   -I$(FW)/bsw/rte/include \
   -I$(FW)/bsw/ecual/IoHwAb/include \
@@ -199,15 +204,18 @@ LDFLAGS  = $(MCU) -specs=nosys.specs -specs=nano.specs -T$(LDSCRIPT) \
            -Wl,--gc-sections -Wl,-Map=$(BUILD)/$(TARGET).map,--cref
 
 ##############################################################################
-# Object lists
+# Object lists — strip ../../ so all objects stay INSIDE build/
 ##############################################################################
 
+# Strip leading ../../ from firmware paths → objects go to build/firmware/...
+strip_dotdot = $(patsubst ../../%,%,$1)
+
 # C objects
-OBJECTS  = $(addprefix $(BUILD)/,$(C_SOURCES:.c=.o))
+OBJECTS  = $(addprefix $(BUILD)/,$(call strip_dotdot,$(C_SOURCES:.c=.o)))
 # .s objects (lowercase, no preprocessor)
-OBJECTS += $(addprefix $(BUILD)/,$(ASM_SOURCES:.s=.o))
+OBJECTS += $(addprefix $(BUILD)/,$(call strip_dotdot,$(ASM_SOURCES:.s=.o)))
 # .S objects (uppercase, preprocessor)
-OBJECTS += $(addprefix $(BUILD)/,$(ASM_SOURCES_S:.S=.o))
+OBJECTS += $(addprefix $(BUILD)/,$(call strip_dotdot,$(ASM_SOURCES_S:.S=.o)))
 
 # Directories to create
 OBJDIRS = $(sort $(dir $(OBJECTS)))
@@ -228,8 +236,8 @@ $(OBJDIRS):
 $(BUILD)/%.o: %.c | $(OBJDIRS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# BSW sources from production tree — relax warnings for generated code
-$(BUILD)/$(FW)/%.o: $(FW)/%.c | $(OBJDIRS)
+# BSW/firmware sources — map ../../firmware/X to build/firmware/X
+$(BUILD)/firmware/%.o: $(FW)/%.c | $(OBJDIRS)
 	$(CC) $(CFLAGS) -Wno-error=unused-parameter -Wno-error=unused-variable -c $< -o $@
 
 # ThreadX kernel C sources — relax unused-parameter
@@ -259,8 +267,8 @@ size: $(BUILD)/$(TARGET).elf
 # Flash via STM32CubeProgrammer
 PROGRAMMER = "C:/Program Files (x86)/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe"
 flash: $(BUILD)/$(TARGET).elf
-	$(PROGRAMMER) --connect port=SWD index=2 --download $< --verify --start
+	$(PROGRAMMER) --connect port=SWD sn=001A00363235510B37333439 reset=HWrst --download $< --verify --start
 
-# Clean
+# Clean — rm -rf build/ is sufficient now (no escaped paths)
 clean:
 	rm -rf $(BUILD)

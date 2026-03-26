@@ -1,10 +1,14 @@
 /**
  * @file    main.c
- * @brief   ThreadX CVC on G474RE — Step 7: BSW comm stack
- * @date    2026-03-20
+ * @brief   ThreadX CVC on G474RE — Step 9: full CVC application
+ * @date    2026-03-26
  *
  * Adapted from PROVEN FZC experiment (app_threadx.c).
  * Same timer structure, same init order, CVC configs.
+ *
+ * Step 9: Full CVC application with all SWCs + UDS diagnostics.
+ *   - Real BSW services: CanTp, Dcm, BswM, WdgM, Dem
+ *   - Stubs: IoHwAb, NvM, MCAL peripherals
  */
 
 #include "stm32g4xx_hal.h"
@@ -19,7 +23,13 @@
 #include "E2E.h"
 #include "Rte.h"
 #include "Det.h"
+#include "CanTp.h"
+#include "Dcm.h"
+#include "BswM.h"
+#include "WdgM.h"
+#include "Dem.h"
 #include "Cvc_Cfg.h"
+#include "Cvc_App.h"
 
 /* SWCs */
 #include "Swc_Heartbeat.h"
@@ -28,9 +38,12 @@
 #include "Swc_EStop.h"
 #include "Swc_Dashboard.h"
 #include "Swc_CvcCom.h"
+#include "Swc_CvcDcm.h"
 #include "Swc_CanMonitor.h"
 #include "Swc_Watchdog.h"
 #include "Swc_Nvm.h"
+#include "Swc_Scheduler.h"
+#include "Swc_SelfTest.h"
 
 #include <string.h>
 
@@ -157,6 +170,8 @@ extern const CanIf_ConfigType cvc_canif_config;
 extern const PduR_ConfigType  cvc_pdur_config;
 extern const Com_ConfigType   cvc_com_config;
 extern const Rte_ConfigType   cvc_rte_config;
+extern const CanTp_ConfigType cvc_cantp_config;
+extern const Dcm_ConfigType   cvc_dcm_config;
 
 /* ================================================================
  * ThreadX resources
@@ -173,7 +188,7 @@ static UCHAR        pool_mem[POOL_SIZE];
 
 static volatile uint32_t can_tx_count = 0;
 
-/* 10ms: CAN RX/TX + Com + bus-off recovery */
+/* 10ms: CAN RX/TX + Com + UDS + bus-off recovery */
 static void BSW_10ms_Callback(ULONG arg)
 {
     (void)arg;
@@ -185,11 +200,19 @@ static void BSW_10ms_Callback(ULONG arg)
         HAL_FDCAN_Stop(&hfdcan1);
         HAL_FDCAN_DeInit(&hfdcan1);
         MX_FDCAN1_Init();  /* re-inits + starts */
+        return;  /* Skip BSW this cycle — just recovered */
     }
 
     Can_MainFunction_Read();
+
+    /* No legacy Swc_CvcCom bridge needed — TX auto-pull reads from RTE,
+     * RX auto-push writes to RTE. Swc_VehicleState writes state to RTE. */
+
     Com_MainFunction_Tx();
     Com_MainFunction_Rx();
+    CanTp_MainFunction();
+    Dcm_MainFunction();
+    BswM_MainFunction();
 }
 
 /* 1ms: Rte scheduler (SAME as FZC experiment) */
@@ -224,6 +247,14 @@ static void main_entry(ULONG param)
     E2E_Init();
     uart_puts("  PduR+Com+E2E OK\r\n");
 
+    /* Step 8: UDS diagnostics */
+    Dem_Init(NULL_PTR);
+    CanTp_Init(&cvc_cantp_config);
+    Dcm_Init(&cvc_dcm_config);
+    BswM_Init(NULL_PTR);
+    WdgM_Init(NULL_PTR);
+    uart_puts("  CanTp+Dcm+BswM+WdgM+Dem OK\r\n");
+
     Rte_Init(&cvc_rte_config);
     uart_puts("  Rte OK\r\n");
 
@@ -234,10 +265,20 @@ static void main_entry(ULONG param)
     Swc_EStop_Init();
     Swc_Dashboard_Init();
     Swc_CvcCom_Init();
+    Swc_CvcDcm_Init();
     Swc_CanMonitor_Init();
     Swc_Watchdog_Init(NULL_PTR);
     Swc_Nvm_Init();
+    Swc_Scheduler_Init(NULL_PTR);
+    (void)Swc_SelfTest_Startup();
     uart_puts("  SWC init OK\r\n");
+
+    /* Write constant RTE signals for TX auto-pull */
+    (void)Rte_Write(CVC_SIG_CVC_HEARTBEAT_ECU_ID, (uint32)CVC_ECU_ID_CVC);
+
+    /* Trigger self-test pass event — required for VSM INIT→RUN transition */
+    Swc_VehicleState_OnEvent(CVC_EVT_SELF_TEST_PASS);
+    uart_puts("  Self-test PASS event sent\r\n");
 
     tx_thread_sleep(200);
     uart_puts("CVC running.\r\n");
@@ -303,7 +344,7 @@ int main(void)
     SystemClock_Config();
     MX_LPUART1_UART_Init();
 
-    uart_puts("\r\n=== G474RE ThreadX CVC (Step 7) ===\r\n");
+    uart_puts("\r\n=== G474RE ThreadX CVC (Step 9: Full CVC) ===\r\n");
 
     /* FDCAN init BEFORE ThreadX kernel — same as FZC */
     MX_FDCAN1_Init();

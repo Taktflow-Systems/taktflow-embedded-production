@@ -35,6 +35,7 @@
 #include "Rte.h"
 #include "Det.h"
 #include "Fzc_Cfg.h"
+#include "Fzc_App.h"
 #include "Swc_Heartbeat.h"
 #include "Swc_Steering.h"
 #include "Swc_Brake.h"
@@ -217,6 +218,10 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
   Swc_Buzzer_Init();
   Swc_FzcSensorFeeder_Init();
 
+  /* Write constant RTE signals — auto-pulled by Com_MainFunction_Tx */
+  (void)Rte_Write(FZC_SIG_VEHICLE_STATE, 1u);           /* Force RUN for standalone test */
+  (void)Rte_Write(FZC_SIG_FZC_HEARTBEAT_ECU_ID, (uint32)FZC_ECU_ID);
+
   /* Start CAN controller via BSW API */
   (void)Can_SetControllerMode(0u, CAN_CS_STARTED);
 
@@ -301,18 +306,18 @@ void MainThread_Entry(ULONG thread_input)
     HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
 
     {
-      extern volatile uint32 com_tx_send_count[];
-      extern volatile uint32 g_dbg_com_tx_skip[];
-      extern volatile uint32 g_dbg_com_tx_calls;
-      extern volatile uint32 g_dbg_hw_tx_total;
-      extern volatile uint32 g_dbg_hw_tx_0x200;
-      printf("t=%lu comCalls=%lu sent1=%lu skip1=%lu hw=%lu hw200=%lu\r\n",
+      extern volatile uint32 g_dbg_com_autopull_ecu_val;
+      extern volatile uint32 g_dbg_com_autopull_ecu_cnt;
+      uint32 vs = 99u;
+      uint32 ecuid = 99u;
+      (void)Rte_Read(FZC_SIG_VEHICLE_STATE, &vs);
+      (void)Rte_Read(FZC_SIG_FZC_HEARTBEAT_ECU_ID, &ecuid);
+      printf("t=%lu vs=%lu rte76=%lu pull=%lu/%lu\r\n",
              (unsigned long)tx_time_get(),
-             (unsigned long)g_dbg_com_tx_calls,
-             (unsigned long)com_tx_send_count[1],
-             (unsigned long)g_dbg_com_tx_skip[1],
-             (unsigned long)g_dbg_hw_tx_total,
-             (unsigned long)g_dbg_hw_tx_0x200);
+             (unsigned long)vs,
+             (unsigned long)ecuid,
+             (unsigned long)g_dbg_com_autopull_ecu_val,
+             (unsigned long)g_dbg_com_autopull_ecu_cnt);
     }
 
     /* Thread sleep for 5s (5000 ticks at 1000Hz) */
@@ -503,6 +508,9 @@ static void CAN_Periodic_Callback(ULONG arg)
 static void BSW_1ms_Callback(ULONG arg)
 {
   (void)arg;
+  /* Force constant signals every cycle — ensures auto-pull sees them */
+  (void)Rte_Write(FZC_SIG_FZC_HEARTBEAT_ECU_ID, (uint32)FZC_ECU_ID);
+  (void)Rte_Write(FZC_SIG_VEHICLE_STATE, 1u);
   Rte_MainFunction();
 }
 
