@@ -61,7 +61,7 @@ volatile uint32 g_dbg_com_tx_stuck[COM_MAX_PDUS];
 /* TX startup delay: suppress TX for first N ms after init (override per ECU in Cfg.h) */
 static uint16 com_startup_delay_cnt;
 #ifndef COM_STARTUP_DELAY_MS
-#define COM_STARTUP_DELAY_MS  50u  /**< Default 50ms; override per ECU for staggering */
+#define COM_STARTUP_DELAY_MS  500u  /**< Default 500ms — must exceed RX deadline timeout */
 #endif
 /* Startup delay computed at init time from runtime period */
 static uint16 com_startup_delay_cycles;
@@ -191,6 +191,17 @@ void Com_Init(const Com_ConfigType* ConfigPtr)
         PduIdType pid = ConfigPtr->txPduConfig[i].PduId;
         if (pid < COM_MAX_PDUS) {
             com_tx_pdu_index[pid] = i;
+        }
+    }
+
+    /* Initialize comm status signals to OK — deadline monitor will
+     * override with TIMEOUT after the startup delay if no frames arrive.
+     * Prevents false TIMEOUT during boot before heartbeats stabilize. */
+    for (i = 0u; i < ConfigPtr->rxPduCount; i++) {
+        if (ConfigPtr->rxPduConfig[i].CommStatusRteSignalId != COM_RTE_SIGNAL_NONE) {
+            (void)Rte_Write(
+                (Rte_SignalIdType)ConfigPtr->rxPduConfig[i].CommStatusRteSignalId,
+                (uint32)COM_COMM_STATUS_OK);
         }
     }
 
@@ -814,6 +825,20 @@ void Com_MainFunction_Rx(void)
             }
 
             com_rx_pdu_quality[pdu_id] = COM_SIGNAL_QUALITY_TIMED_OUT;
+
+            /* Write COMM_TIMEOUT to RTE if configured */
+            if (com_config->rxPduConfig[i].CommStatusRteSignalId != COM_RTE_SIGNAL_NONE) {
+                (void)Rte_Write(
+                    (Rte_SignalIdType)com_config->rxPduConfig[i].CommStatusRteSignalId,
+                    (uint32)COM_COMM_STATUS_TIMEOUT);
+            }
+        } else if (com_rx_pdu_quality[pdu_id] == COM_SIGNAL_QUALITY_FRESH) {
+            /* Frame recently received — write COMM_OK */
+            if (com_config->rxPduConfig[i].CommStatusRteSignalId != COM_RTE_SIGNAL_NONE) {
+                (void)Rte_Write(
+                    (Rte_SignalIdType)com_config->rxPduConfig[i].CommStatusRteSignalId,
+                    (uint32)COM_COMM_STATUS_OK);
+            }
         }
 
         SchM_Exit_Com_COM_EXCLUSIVE_AREA_0();

@@ -783,6 +783,16 @@ class ArxmlReader:
                         if dtc_name in ecu.dtc_events:
                             pdu.e2e_dem_event_id = ecu.dtc_events[dtc_name]
 
+            # Comm status RTE signal mapping (PDU name → RTE signal name)
+            # When RX deadline fires, write COMM_TIMEOUT to this RTE signal
+            if "comm_status_map" in ecu_data:
+                cs_map = ecu_data["comm_status_map"]
+                for pdu in ecu.rx_pdus:
+                    if pdu.name in cs_map:
+                        sig_name = cs_map[pdu.name]
+                        if sig_name in ecu.rte_signal_map:
+                            pdu.comm_status_rte_signal_id = ecu.rte_signal_map[sig_name]
+
             # Enums
             if "enums" in ecu_data:
                 ecu.enums.update(ecu_data["enums"])

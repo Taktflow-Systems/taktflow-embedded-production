@@ -98,9 +98,9 @@ static const Com_TxPduConfigType {{ ecu.name }}_tx_pdu_config[] = {
  * ================================================================== */
 
 static const Com_RxPduConfigType {{ ecu.name }}_rx_pdu_config[] = {
-    /* pduId,                     dlc, timeoutMs, e2eProt, dataId, maxDelta, demEvt, smValid, smInvalid */
+    /* pduId,                     dlc, timeoutMs, e2eProt, dataId, maxDelta, demEvt, smValid, smInvalid, commStatusSigId */
 {% for pdu in ecu.rx_pdus %}
-    { {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }}, {{ "%5d"|format(pdu.dlc) }}u, {{ "%5d"|format(pdu.timeout_ms) }}u, {{ "TRUE " if pdu.e2e_protected else "FALSE" }}, {{ "%2d"|format(pdu.e2e_data_id if pdu.e2e_data_id is not none else 0) }}u, {{ "%2d"|format(pdu.e2e_max_delta) }}u, {{ pdu.e2e_dem_event_id if pdu.e2e_dem_event_id >= 0 else "COM_DEM_EVENT_NONE" }}, {{ pdu.e2e_sm_window_valid }}u, {{ pdu.e2e_sm_window_invalid }}u },   /* CAN {{ pdu.can_id | hex3 }}{{ " @satisfies " + pdu.satisfies if pdu.satisfies else "" }} */
+    { {{ ecu.prefix }}_COM_RX_{{ pdu.name | upper_snake }}, {{ "%5d"|format(pdu.dlc) }}u, {{ "%5d"|format(pdu.timeout_ms) }}u, {{ "TRUE " if pdu.e2e_protected else "FALSE" }}, {{ "%2d"|format(pdu.e2e_data_id if pdu.e2e_data_id is not none else 0) }}u, {{ "%2d"|format(pdu.e2e_max_delta) }}u, {{ pdu.e2e_dem_event_id if pdu.e2e_dem_event_id >= 0 else "COM_DEM_EVENT_NONE" }}, {{ pdu.e2e_sm_window_valid }}u, {{ pdu.e2e_sm_window_invalid }}u, {{ pdu.comm_status_rte_signal_id if pdu.comm_status_rte_signal_id >= 0 else "COM_RTE_SIGNAL_NONE" }} },   /* CAN {{ pdu.can_id | hex3 }}{{ " @satisfies " + pdu.satisfies if pdu.satisfies else "" }} */
 {% endfor %}
 };
 
