@@ -1,6 +1,6 @@
 # Plan: HIL Test Suite — Closed-Loop Plant-Sim Verification
 
-**Status**: IN PROGRESS (Phases 1-3 DONE)
+**Status**: IN PROGRESS (Phases 1-3, 5 DONE; Phase 4 PENDING; Phase 6 IN PROGRESS)
 **Branch**: `feature/hil-test-suite`
 **Traces**: TSR-035, TSR-038, TSR-046, GAP-6
 **Prerequisite**: plan-hil-plant-sim (DONE — plant-sim running on Pi with can0)
@@ -128,6 +128,7 @@ These verify that the plant-sim produces correct physics on CAN, and POSIX ECU s
 | 3 | Create CAN keyword helpers (`test/hil/can_helpers.py`) | DONE |
 | 4 | Run on Pi and validate all 26 tests | PENDING |
 | 5 | Add to CI as manual trigger workflow | DONE |
+| 6 | Platform HIL tests — UDS, scheduler, self-test, watchdog | IN PROGRESS |
 
 ---
 
@@ -280,7 +281,7 @@ HIL tests can't run in GitHub Actions (needs physical CAN bus). The workflow:
 | `test/hil/scenarios/*.yaml` | NEW — 26 scenario files |
 | `.github/workflows/hil-test.yml` | NEW — CI workflow (manual) |
 
-**Total**: ~30 new files, 0 modifications to existing code.
+**Total**: ~30 new files (Phases 1-5), ~15 new files (Phase 6), 1 bug fix.
 
 ## Risk Assessment
 
@@ -304,3 +305,62 @@ HIL tests can't run in GitHub Actions (needs physical CAN bus). The workflow:
 | **Total** | **26** | **18** | **18** | **17** | **QM-D** |
 
 This covers **35% of TSRs** (18/51) and **22% of SSRs** (18/81) that are testable without physical ECU hardware. The remaining requirements need either physical STM32 sensor input (IoHwAb override) or SC on the bus.
+
+---
+
+### Phase 6: Platform HIL Tests — UDS, Scheduler, Self-Test, Watchdog
+
+**What**: Add platform-specific HIL tests that verify the firmware platform stack (Dcm, CanTp, SchM, WdgM, self-test) on physical ECU hardware. These tests exercise layers below the SWC level.
+
+**Test Scripts (4 new):**
+
+| File | Description | Hops |
+|------|-------------|------|
+| `test/hil/test_hil_uds.py` | UDS diagnostics: TesterPresent, ReadDID, ECUReset, NRC on CVC/FZC/RZC | 16 |
+| `test/hil/test_hil_scheduler.py` | Scheduler timing: mean/std/max_gap on 5 CAN messages + cross-ECU phase | 6 |
+| `test/hil/test_hil_selftest.py` | Startup self-test: RZC ECUReset recovery, CVC hw reset, INIT→RUN, no DTC | 6 |
+| `test/hil/test_hil_wdgm.py` | Watchdog: alive counter increment, 60s heartbeat soak, no WdgM DTC | 5 |
+
+**YAML Scenarios (10 new: HIL-050 through HIL-064):**
+
+| Category | Test IDs | Count | ASIL | Coverage |
+|----------|----------|-------|------|----------|
+| UDS Diagnostics | HIL-050..055 | 6 | QM-B | Dcm + CanTp + CAN MCAL |
+| Scheduler Timing | HIL-060..061 | 2 | QM-C | SchM + GPT timer |
+| Startup Self-Test | HIL-062 | 1 | D | 7-step self-test on STM32 |
+| Watchdog Supervision | HIL-063..064 | 2 | D | WdgM alive counter + soak |
+
+**Bug Fix:**
+- `test/hil/test_hil_battery.py`: Added missing `CAN_MOTOR_STATUS` import
+
+**UDS DID Coverage:**
+
+| ECU | CAN Req→Resp | DIDs Tested | Key Verifications |
+|-----|-------------|-------------|-------------------|
+| CVC | 0x7E0→0x7E8 | 0xF190, 0xF010, 0xF015 | SW version, vehicle state, battery voltage, NRC |
+| FZC | 0x7E1→0x7E9 | 0xF190, 0xF195, 0xF022 | VIN (multi-frame CanTp), SW version, lidar distance |
+| RZC | 0x7E2→0x7EA | 0xF030, 0xF031, 0xF033, 0xF035 | Motor current/temp, battery voltage, derating, ECUReset |
+
+**Files:**
+
+| File | Change |
+|------|--------|
+| `test/hil/test_hil_uds.py` | NEW — UDS diagnostic verification |
+| `test/hil/test_hil_scheduler.py` | NEW — Scheduler timing verification |
+| `test/hil/test_hil_selftest.py` | NEW — Startup self-test verification |
+| `test/hil/test_hil_wdgm.py` | NEW — Watchdog supervision verification |
+| `test/hil/test_hil_battery.py` | FIX — Missing CAN_MOTOR_STATUS import |
+| `test/hil/scenarios/hil_050_*.yaml` | NEW — 6 UDS scenarios |
+| `test/hil/scenarios/hil_060_*.yaml` | NEW — 2 scheduler scenarios |
+| `test/hil/scenarios/hil_062_*.yaml` | NEW — 1 self-test scenario |
+| `test/hil/scenarios/hil_063_*.yaml` | NEW — 2 watchdog scenarios |
+
+**Updated Totals:**
+
+| Metric | Before | After |
+|--------|--------|-------|
+| Test scripts | 7 | 11 |
+| YAML scenarios | 26 | 37 |
+| Total hops | ~40 | ~73 |
+| TSR coverage | 18/51 (35%) | 21/51 (41%) |
+| SSR coverage | 18/81 (22%) | 23/81 (28%) |

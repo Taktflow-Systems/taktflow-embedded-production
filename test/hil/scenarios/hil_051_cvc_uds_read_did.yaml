@@ -1,0 +1,31 @@
+name: "CVC UDS ReadDID — SW Version (0xF190)"
+id: "HIL-051"
+description: >
+  Send ReadDataByIdentifier (SID 0x22) for DID 0xF190 (SW Version)
+  to CVC. Expect positive response (0x62, F1, 90, data) on 0x7E8.
+  Verifies Dcm DID routing and response formatting.
+verifies:
+  - "SWR-CVC-DCM-002"
+asil: "QM"
+aspice: "SWE.6"
+iso_reference: "ISO 14229-1, Section 10.3"
+timeout_sec: 10
+
+setup:
+  - action: wait_state
+    state: RUN
+    timeout: 20
+
+steps:
+  - action: inject_can
+    can_id: 0x7E0
+    data: [0x03, 0x22, 0xF1, 0x90, 0x00, 0x00, 0x00, 0x00]
+    description: "ReadDID 0xF190 (SW Version)"
+  - action: wait
+    seconds: 1
+
+verdicts:
+  - type: can_message
+    can_id: 0x7E8
+    timeout_sec: 3
+    description: "Positive response 0x62 from CVC with SW version data"

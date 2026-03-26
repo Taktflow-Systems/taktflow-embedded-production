@@ -1,0 +1,37 @@
+name: "ECU Startup Self-Test — CVC Reset Recovery"
+id: "HIL-062"
+description: >
+  Reset CVC via UDS ECUReset, verify heartbeat recovers within 5s
+  and no self-test DTC is broadcast. Tests the 7-step startup
+  self-test (SPI, CAN, NVM, OLED, MPU, canary, RAM) on physical
+  STM32G474RE hardware.
+verifies:
+  - "SWR-CVC-029"
+  - "TSR-046"
+asil: "D"
+aspice: "SWE.6"
+iso_reference: "ISO 26262 Part 6, Section 9 — SW Self-Test"
+timeout_sec: 30
+
+setup:
+  - action: wait_state
+    state: RUN
+    timeout: 20
+
+steps:
+  - action: reset
+    description: "Reset CVC via CubeProgrammer (hardware reset)"
+  - action: wait
+    seconds: 10
+    description: "Wait for self-test + BSW init + state machine"
+
+verdicts:
+  - type: heartbeat
+    can_id: 0x010
+    period_ms: 50
+    tolerance_pct: 15
+    description: "CVC heartbeat recovered after reset"
+  - type: vehicle_state
+    expected: RUN
+    within_ms: 30000
+    description: "CVC reaches RUN after self-test pass"

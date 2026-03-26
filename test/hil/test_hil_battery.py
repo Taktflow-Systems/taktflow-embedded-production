@@ -23,7 +23,7 @@ import cantools
 from hil_test_lib import (
     DBC_PATH,
     CAN_VEHICLE_STATE, CAN_RZC_VSENSOR, CAN_BATTERY, CAN_DTC,
-    STATE_NAMES, ECU_NAMES,
+    CAN_MOTOR_STATUS, STATE_NAMES, ECU_NAMES,
     open_bus, can_recv_decoded, poll_signal,
     mqtt_inject, mqtt_reset, wait_cvc_run,
     verify_normal_operation, DtcSniffer, HopChecker, print_header,

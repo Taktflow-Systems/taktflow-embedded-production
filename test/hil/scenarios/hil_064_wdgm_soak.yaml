@@ -1,0 +1,41 @@
+name: "WdgM Heartbeat Soak — 60s Stability"
+id: "HIL-064"
+description: >
+  Monitor all physical ECU heartbeats for 60s to verify watchdog
+  supervision stability. No heartbeat gaps > 125ms (2.5× 50ms period)
+  and no WdgM DTC (event 15) on CAN 0x500. A gap indicates watchdog
+  timeout → MCU reset → heartbeat loss.
+verifies:
+  - "SWR-BSW-019"
+  - "TSR-047"
+asil: "D"
+aspice: "SWE.6"
+iso_reference: "ISO 26262 Part 6, Section 9 — Watchdog Supervision"
+timeout_sec: 90
+
+setup:
+  - action: wait_state
+    state: RUN
+    timeout: 20
+
+steps:
+  - action: wait
+    seconds: 60
+    description: "60s heartbeat soak monitoring"
+
+verdicts:
+  - type: heartbeat
+    can_id: 0x010
+    period_ms: 50
+    tolerance_pct: 15
+    description: "CVC heartbeat stable over 60s"
+  - type: heartbeat
+    can_id: 0x011
+    period_ms: 50
+    tolerance_pct: 15
+    description: "FZC heartbeat stable over 60s"
+  - type: heartbeat
+    can_id: 0x012
+    period_ms: 50
+    tolerance_pct: 15
+    description: "RZC heartbeat stable over 60s"

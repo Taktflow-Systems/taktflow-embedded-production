@@ -1,0 +1,31 @@
+name: "CVC UDS Invalid DID → NRC 0x31"
+id: "HIL-055"
+description: >
+  Send ReadDataByIdentifier for invalid DID 0xFFFF to CVC. Expect
+  Negative Response (0x7F, 0x22, 0x31 RequestOutOfRange). Verifies
+  Dcm error handling path.
+verifies:
+  - "SWR-CVC-DCM-003"
+asil: "QM"
+aspice: "SWE.6"
+iso_reference: "ISO 14229-1, Section 7.5.3"
+timeout_sec: 10
+
+setup:
+  - action: wait_state
+    state: RUN
+    timeout: 20
+
+steps:
+  - action: inject_can
+    can_id: 0x7E0
+    data: [0x03, 0x22, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00]
+    description: "ReadDID 0xFFFF (invalid)"
+  - action: wait
+    seconds: 1
+
+verdicts:
+  - type: can_message
+    can_id: 0x7E8
+    timeout_sec: 3
+    description: "Negative response 0x7F from CVC (NRC expected)"

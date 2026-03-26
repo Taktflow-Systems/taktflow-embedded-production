@@ -183,20 +183,25 @@ def check_heartbeat_period(bus, can_id, expected_ms, duration=3.0):
 # ---------------------------------------------------------------------------
 
 # CVC reset via SSH to Windows PC (CubeProgrammer --start triggers MCU reset)
+# When running on Pi, set CVC_RESET_HOST=andao@192.168.0.105 to SSH to Windows PC.
+# When running on Windows PC, leave CVC_RESET_HOST empty for local execution.
 CVC_RESET_HOST = os.environ.get("CVC_RESET_HOST", "")
 CVC_RESET_CMD = os.environ.get("CVC_RESET_CMD", "")
+
+# Auto-detect: if running on Linux (Pi) and no host set, default to Windows PC
+if not CVC_RESET_HOST and sys.platform == "linux":
+    CVC_RESET_HOST = os.environ.get("PC_HOST", "andao@192.168.0.105")
 
 
 def reset_cvc_hardware():
     """Reset CVC MCU via CubeProgrammer on Windows PC.
 
-    Set CVC_RESET_HOST and CVC_RESET_CMD environment variables, or
-    call with local command if running on Windows PC directly.
-    Falls back to no-op if not configured.
+    When running on Pi: SSHes to Windows PC to invoke CubeProgrammer.
+    When running on Windows PC: runs CubeProgrammer locally.
+    Falls back to no-op with warning if connection fails.
     """
     cmd = CVC_RESET_CMD
     if not cmd:
-        # Default: local CubeProgrammer reset (when running on Windows PC)
         stcli = os.environ.get("STCLI",
             "C:/Program Files (x86)/STMicroelectronics/STM32Cube/"
             "STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe")
@@ -209,7 +214,7 @@ def reset_cvc_hardware():
     else:
         full_cmd = cmd
 
-    print(f"  [RESET] CVC hardware reset...")
+    print(f"  [RESET] CVC hardware reset{' via ' + host if host else ''}...")
     try:
         subprocess.run(full_cmd, shell=True, timeout=15,
                       capture_output=True, text=True)

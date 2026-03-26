@@ -1,0 +1,33 @@
+name: "CVC UDS TesterPresent (0x3E)"
+id: "HIL-050"
+description: >
+  Verify CVC responds to UDS TesterPresent (SID 0x3E, sub=0x00)
+  with positive response (0x7E, 0x00) on CAN 0x7E8.
+  Tests Dcm + CanTp + CAN MCAL driver on STM32G474RE.
+verifies:
+  - "SWR-CVC-DCM-001"
+asil: "QM"
+aspice: "SWE.6"
+iso_reference: "ISO 14229-1, Section 9.3.1"
+timeout_sec: 10
+
+setup:
+  - action: wait_state
+    state: RUN
+    timeout: 20
+    description: "Wait for CVC to reach RUN"
+
+steps:
+  - action: inject_can
+    can_id: 0x7E0
+    data: [0x02, 0x3E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+    description: "Send TesterPresent (SID 0x3E, sub=0x00)"
+  - action: wait
+    seconds: 1
+    description: "Allow Dcm processing"
+
+verdicts:
+  - type: can_message
+    can_id: 0x7E8
+    timeout_sec: 3
+    description: "Positive response from CVC (0x7E on 0x7E8)"

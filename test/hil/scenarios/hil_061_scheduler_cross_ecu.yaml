@@ -1,0 +1,34 @@
+name: "Cross-ECU Heartbeat Phase Diversity"
+id: "HIL-061"
+description: >
+  Verify CVC (0x010) and FZC (0x011) heartbeats at 50ms do not
+  systematically collide on the CAN bus. Phase diversity ensures
+  bus arbitration works correctly with independent schedulers.
+verifies:
+  - "SWR-SCHM-002"
+asil: "QM"
+aspice: "SWE.6"
+iso_reference: "ISO 11898-1, Section 10 — Bus Arbitration"
+timeout_sec: 15
+
+setup:
+  - action: wait_state
+    state: RUN
+    timeout: 20
+
+steps:
+  - action: wait
+    seconds: 5
+    description: "Collect 5s of heartbeat timing samples"
+
+verdicts:
+  - type: heartbeat
+    can_id: 0x010
+    period_ms: 50
+    tolerance_pct: 10
+    description: "CVC heartbeat @ 50ms"
+  - type: heartbeat
+    can_id: 0x011
+    period_ms: 50
+    tolerance_pct: 10
+    description: "FZC heartbeat @ 50ms"

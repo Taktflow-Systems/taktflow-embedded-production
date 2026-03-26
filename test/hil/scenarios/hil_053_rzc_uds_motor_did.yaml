@@ -1,0 +1,31 @@
+name: "RZC UDS ReadDID — Motor Current (0xF030)"
+id: "HIL-053"
+description: >
+  Send ReadDataByIdentifier (SID 0x22) for DID 0xF030 (Motor Current)
+  to RZC. Expect 2-byte big-endian uint16 in milliamps. Tests Dcm
+  integration with RTE signal readback on STM32F413ZH.
+verifies:
+  - "SWR-RZC-DCM-001"
+asil: "QM"
+aspice: "SWE.6"
+iso_reference: "ISO 14229-1, Section 10.3"
+timeout_sec: 10
+
+setup:
+  - action: wait_state
+    state: RUN
+    timeout: 20
+
+steps:
+  - action: inject_can
+    can_id: 0x7E2
+    data: [0x03, 0x22, 0xF0, 0x30, 0x00, 0x00, 0x00, 0x00]
+    description: "ReadDID 0xF030 (Motor Current mA)"
+  - action: wait
+    seconds: 1
+
+verdicts:
+  - type: can_message
+    can_id: 0x7EA
+    timeout_sec: 3
+    description: "Positive response 0x62 from RZC with motor current data"

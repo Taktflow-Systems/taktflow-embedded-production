@@ -28,6 +28,13 @@
 #include "sc_types.h"
 #include "Sc_Hw_Cfg.h"
 
+/* HALCoGen CAN API — declared extern to avoid HL_can.h include
+ * (HL_sys_common.h triggers -Werror with tiarmclang legacy TI macro warnings).
+ * canREG1 = (canBASE_t *)0xFFF7DC00 per HL_reg_can.h */
+typedef volatile struct canBase canBASE_t;
+extern uint32 canTransmit(canBASE_t *node, uint32 messageBox, const uint8 *data);
+#define canREG1 ((canBASE_t *)0xFFF7DC00u)
+
 /* ==================================================================
  * TMS570LC43x Register Base Addresses
  * ================================================================== */
@@ -708,9 +715,7 @@ boolean dcan1_get_mailbox_data(uint8 mbIndex, uint8* data, uint8* dlc)
  */
 void dcan1_transmit(uint8 mbIndex, const uint8* data, uint8 dlc)
 {
-    uint32 data_a;
-    uint32 data_b;
-    uint32 mctl;
+    uint8  i;
     uint8  tx_dlc;
 
     if (mbIndex != SC_MB_TX_STATUS) {
@@ -721,43 +726,23 @@ void dcan1_transmit(uint8 mbIndex, const uint8* data, uint8 dlc)
     }
 
     tx_dlc = (dlc > 8u) ? 8u : dlc;
+    (void)tx_dlc;
 
-    /* Pack bytes into 32-bit words: byte0 in bits 7:0, byte1 in 15:8, etc. */
-    data_a = ((uint32)data[0])              |
-             ((uint32)data[1] << 8u)        |
-             ((uint32)data[2] << 16u)       |
-             ((uint32)data[3] << 24u);
+    /* Use HALCoGen's canTransmit() which is proven to work on this LaunchPad.
+     * The custom register-level TX code had endianness issues with IF1CMD/IF1DATA
+     * on TMS570 BE32 — canTransmit() handles byte ordering correctly via
+     * IF1DATx[] register array and s_canByteOrder[] lookup.
+     * See: docs/lessons-learned/embedded-bringup-tms570-can-tx.md */
+    (void)canTransmit(canREG1, (uint32)mbIndex, data);
 
-    if (tx_dlc > 4u) {
-        data_b = ((uint32)data[4])          |
-                 ((uint32)data[5] << 8u)    |
-                 ((uint32)data[6] << 16u)   |
-                 ((uint32)data[7] << 24u);
-    } else {
-        data_b = 0u;
+    /* Wait for TX to complete (IF1 not busy) */
+    i = 0u;
+    while (((*(volatile uint32*)(DCAN1_BASE + 0x100u)) & 0x80u) != 0u) {
+        i++;
+        if (i > 200u) {
+            break;  /* Safety: don't spin forever */
+        }
     }
-
-    dcan1_wait_if1_ready();
-
-    /* Write payload into IF1 data registers */
-    reg_write(DCAN1_BASE, DCAN_IF1DATA, data_a);
-    reg_write(DCAN1_BASE, DCAN_IF1DATB, data_b);
-
-    /* MCTL: DLC + TxRqst (bit 8) + EOB (bit 7) — triggers transmission */
-    mctl = ((uint32)tx_dlc & 0x0Fu) | ((uint32)1u << 8u) | ((uint32)1u << 7u);
-    reg_write(DCAN1_BASE, DCAN_IF1MCTL, mctl);
-
-    /* Transfer IF1 → message object 7: write control + data, set TxRqst.
-     * DCAN_IFCMD_NEWDAT (bit 18) is REQUIRED to set TxRqst in the message
-     * object — MCTL.TxRqst (bit 8) is read-only via the IF register path.
-     * Without NEWDAT, the mailbox never enters TX-pending state.
-     * (ARB already set by dcan1_config_tx_mailbox at init) */
-    reg_write(DCAN1_BASE, DCAN_IF1CMD,
-              DCAN_IFCMD_WR | DCAN_IFCMD_CONTROL | DCAN_IFCMD_NEWDAT |
-              DCAN_IFCMD_DATAA | DCAN_IFCMD_DATAB |
-              ((uint32)mbIndex & 0xFFu));
-
-    dcan1_wait_if1_ready();
 }
 
 /* ==================================================================

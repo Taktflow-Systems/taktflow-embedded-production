@@ -1,0 +1,31 @@
+name: "FZC UDS ReadDID — VIN (0xF190, multi-frame)"
+id: "HIL-052"
+description: >
+  Send ReadDataByIdentifier (SID 0x22) for DID 0xF190 (VIN) to FZC.
+  VIN is 17 bytes ("TAKTFLOW0FZC02026") requiring ISO-TP multi-frame
+  response. Tests CanTp segmentation on STM32G474RE.
+verifies:
+  - "SWR-FZC-DCM-001"
+asil: "QM"
+aspice: "SWE.6"
+iso_reference: "ISO 14229-1, Section 10.3 + ISO 15765-2"
+timeout_sec: 15
+
+setup:
+  - action: wait_state
+    state: RUN
+    timeout: 20
+
+steps:
+  - action: inject_can
+    can_id: 0x7E1
+    data: [0x03, 0x22, 0xF1, 0x90, 0x00, 0x00, 0x00, 0x00]
+    description: "ReadDID 0xF190 (VIN) — triggers multi-frame"
+  - action: wait
+    seconds: 2
+
+verdicts:
+  - type: can_message
+    can_id: 0x7E9
+    timeout_sec: 5
+    description: "First Frame or Single Frame from FZC with VIN data"

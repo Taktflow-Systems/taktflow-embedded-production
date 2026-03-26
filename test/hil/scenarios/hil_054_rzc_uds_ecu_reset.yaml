@@ -1,0 +1,33 @@
+name: "RZC UDS ECUReset — Fault Latch Clear"
+id: "HIL-054"
+description: >
+  Send ECUReset (SID 0x11, sub=0x01 hardReset) to RZC. Verify positive
+  response (0x51, 0x01) and heartbeat recovery within 5s. ECUReset
+  re-initializes Motor + TempMonitor SWCs clearing fault latches.
+verifies:
+  - "SWR-RZC-DCM-002"
+asil: "B"
+aspice: "SWE.6"
+iso_reference: "ISO 14229-1, Section 9.4"
+timeout_sec: 15
+
+setup:
+  - action: wait_state
+    state: RUN
+    timeout: 20
+
+steps:
+  - action: inject_can
+    can_id: 0x7E2
+    data: [0x02, 0x11, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00]
+    description: "ECUReset hardReset"
+  - action: wait
+    seconds: 3
+    description: "Allow RZC to re-initialize"
+
+verdicts:
+  - type: heartbeat
+    can_id: 0x012
+    period_ms: 50
+    tolerance_pct: 15
+    description: "RZC heartbeat recovered at 50ms after ECUReset"

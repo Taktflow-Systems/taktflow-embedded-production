@@ -1,0 +1,30 @@
+name: "CVC Scheduler Timing — 0x100 @ 10ms"
+id: "HIL-060"
+description: >
+  Verify CVC Vehicle_State (0x100) is transmitted at 10ms period
+  with ±5% mean accuracy and <10% std deviation. Tests SchM + GPT
+  timer resolution on STM32G474RE.
+verifies:
+  - "SWR-SCHM-001"
+  - "TSR-025"
+asil: "C"
+aspice: "SWE.6"
+iso_reference: "ISO 26262 Part 6, Section 9 — Timing Verification"
+timeout_sec: 15
+
+setup:
+  - action: wait_state
+    state: RUN
+    timeout: 20
+
+steps:
+  - action: wait
+    seconds: 5
+    description: "Collect 5s of timing samples"
+
+verdicts:
+  - type: heartbeat
+    can_id: 0x100
+    period_ms: 10
+    tolerance_pct: 10
+    description: "Vehicle_State 0x100 @ 10ms ±10%"

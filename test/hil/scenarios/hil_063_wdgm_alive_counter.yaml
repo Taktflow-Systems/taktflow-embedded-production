@@ -1,0 +1,35 @@
+name: "WdgM Alive Counter Verification"
+id: "HIL-063"
+description: >
+  Verify alive counter in CAN heartbeat frames (byte 0, upper nibble)
+  increments monotonically. Alive counter is driven by WdgM
+  CheckpointReached — correct increment proves WdgM supervision
+  is active and feeding the external watchdog (TPS3823).
+verifies:
+  - "SWR-BSW-019"
+  - "SWR-BSW-020"
+asil: "D"
+aspice: "SWE.6"
+iso_reference: "ISO 26262 Part 6, Section 9 — Watchdog Supervision"
+timeout_sec: 15
+
+setup:
+  - action: wait_state
+    state: RUN
+    timeout: 20
+
+steps:
+  - action: wait
+    seconds: 5
+    description: "Collect alive counter samples"
+
+verdicts:
+  - type: e2e
+    can_id: 0x010
+    description: "CVC heartbeat E2E alive counter increments"
+  - type: e2e
+    can_id: 0x011
+    description: "FZC heartbeat E2E alive counter increments"
+  - type: e2e
+    can_id: 0x012
+    description: "RZC heartbeat E2E alive counter increments"
