@@ -24,6 +24,9 @@
 #include "stm32g4xx_hal.h"
 #include "Fzc_Cfg.h"
 #include "Can.h"
+#include "Com.h"
+#include "Rte.h"
+#include "Fzc_App.h"
 #include "Swc_FzcCanMonitor.h"
 
 /* ==================================================================
@@ -267,7 +270,6 @@ Std_ReturnType Main_Hw_UartLidarTest(void)
  */
 Std_ReturnType Main_Hw_CanLoopbackTest(void)
 {
-    extern Std_ReturnType Can_Hw_LoopbackTest(void);
     return Can_Hw_LoopbackTest();
 }
 
@@ -345,18 +347,9 @@ void Main_Hw_DebugPrintStatus(uint32 tick_us)
     can_status = Swc_FzcCanMonitor_GetStatus();
     (void)Can_GetErrorCounters(0u, &tec, &rec);
 
-    extern volatile uint32 g_dbg_hw_tx_total;
-    extern volatile uint32 g_dbg_1ms_count;
-    extern volatile uint32 g_dbg_com_tx_calls;
     Dbg_Uart_Print("[");
     Dbg_PrintU32(tick_us / 1000000u);
-    Dbg_Uart_Print("s] FZC: 1ms=");
-    Dbg_PrintU32(g_dbg_1ms_count);
-    Dbg_Uart_Print(" com=");
-    Dbg_PrintU32(g_dbg_com_tx_calls);
-    Dbg_Uart_Print(" TX=");
-    Dbg_PrintU32(g_dbg_hw_tx_total);
-    Dbg_Uart_Print(" CAN=");
+    Dbg_Uart_Print("s] FZC: CAN=");
     if (can_status == FZC_CAN_OK)
     {
         Dbg_Uart_Print("OK");

@@ -17,7 +17,7 @@
 /* Timer thread stack — default 1024 is too small for Rte_MainFunction()
  * which dispatches all SWC runnables (Brake, Steering, Lidar, Safety, etc.).
  * FZC has 8+ runnables, each using ~100-200 bytes of stack. */
-#define TX_TIMER_THREAD_STACK_SIZE  4096
+#define TX_TIMER_THREAD_STACK_SIZE  8192
 
 /* Stack checking for debug builds */
 #ifndef NDEBUG

@@ -83,30 +83,10 @@ extern const CanTp_ConfigType rzc_cantp_config;
 extern const Dcm_ConfigType  rzc_dcm_config;
 
 /* ==================================================================
- * Hardware Abstraction Externs (implemented per platform)
+ * Hardware Abstraction Interface (declared in Main_Hw.h, MISRA 8.5)
  * ================================================================== */
 
-extern void           Main_Hw_SystemClockInit(void);
-extern void           Main_Hw_MpuConfig(void);
-extern void           Main_Hw_SysTickInit(uint32 periodUs);
-extern void           Main_Hw_Wfi(void);
-extern uint32         Main_Hw_GetTick(void);
-
-/* 5s periodic debug status — UART print on STM32, no-op on POSIX */
-extern void           Main_Hw_DebugPrintStatus(uint32 tick_us);
-
-/* Init-time CAN TX diagnostic test — real test on STM32, no-op on POSIX */
-extern void           Main_Hw_CanTxDiagTest(void);
-
-/* Self-test hardware externs */
-extern Std_ReturnType Main_Hw_Bts7960GpioTest(void);
-extern Std_ReturnType Main_Hw_Acs723ZeroCalTest(void);
-extern Std_ReturnType Main_Hw_NtcRangeTest(void);
-extern Std_ReturnType Main_Hw_EncoderStuckTest(void);
-extern Std_ReturnType Main_Hw_CanLoopbackTest(void);
-extern Std_ReturnType Main_Hw_MpuVerifyTest(void);
-extern Std_ReturnType Main_Hw_RamPatternTest(void);
-extern void           Main_Hw_PlantStackCanary(void);
+#include "Main_Hw.h"
 
 /* ==================================================================
  * Static Configuration Constants
@@ -296,8 +276,6 @@ void Timer_1ms_Callback(ULONG arg)
 void Timer_10ms_Callback(ULONG arg)
 {
     (void)arg;
-    Com_MainFunction_Tx();
-    Com_MainFunction_Rx();
     CanTp_MainFunction();
     Dcm_MainFunction();
     BswM_MainFunction();

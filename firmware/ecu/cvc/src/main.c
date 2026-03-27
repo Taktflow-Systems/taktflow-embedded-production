@@ -71,24 +71,10 @@ extern const Com_ConfigType  cvc_com_config;
 extern const Dcm_ConfigType  cvc_dcm_config;
 
 /* ==================================================================
- * Hardware Abstraction Externs (implemented per platform)
+ * Hardware Abstraction Interface (declared in Main_Hw.h, MISRA 8.5)
  * ================================================================== */
 
-extern void           Main_Hw_SystemClockInit(void);
-extern void           Main_Hw_MpuConfig(void);
-extern void           Main_Hw_SysTickInit(uint32 periodUs);
-extern void           Main_Hw_Wfi(void);
-extern uint32         Main_Hw_GetTick(void);
-
-/* Self-test hardware externs */
-extern Std_ReturnType Main_Hw_SpiLoopbackTest(void);
-extern Std_ReturnType Main_Hw_CanLoopbackTest(void);
-extern Std_ReturnType Main_Hw_OledAckTest(void);
-extern Std_ReturnType Main_Hw_RamPatternTest(void);
-extern void           Main_Hw_PlantStackCanary(void);
-
-/* 5s periodic debug status — UART print on STM32, no-op on POSIX */
-extern void           Main_Hw_DebugPrintStatus(uint32 tick_us);
+#include "Main_Hw.h"
 
 #ifdef USE_THREADX
 #include "tx_api.h"
@@ -269,6 +255,7 @@ static const BswM_ConfigType bswm_config = {
  * Self-Test Sequence (SWR-CVC-029)
  * ================================================================== */
 
+#ifndef PLATFORM_HIL
 /**
  * @brief  Run CVC power-on self-test sequence
  * @return CVC_SELF_TEST_PASS if all tests pass, CVC_SELF_TEST_FAIL otherwise
@@ -315,6 +302,7 @@ static uint8 Main_RunSelfTest(void)
     Det_ReportRuntimeError(DET_MODULE_CVC_MAIN, 0u, MAIN_API_SELF_TEST, DET_E_DBG_SELF_TEST_PASS);
     return CVC_SELF_TEST_PASS;
 }
+#endif /* !PLATFORM_HIL */
 
 /* ==================================================================
  * Tick Counters
@@ -338,8 +326,6 @@ void Timer_10ms_Callback(ULONG arg)
 {
     (void)arg;
     Swc_CvcCom_TransmitSchedule(Main_Hw_GetTick() / 1000u);
-    Com_MainFunction_Tx();
-    Com_MainFunction_Rx();
     Dcm_MainFunction();
     BswM_MainFunction();
     CanSM_MainFunction();
@@ -425,7 +411,6 @@ int main(void)
     /* HIL: skip self-test — CAN loopback can fail if bus has traffic
      * from other ECUs during boot. Force PASS. */
     self_test_result = CVC_SELF_TEST_PASS;
-    (void)Main_RunSelfTest;  /* suppress unused warning */
 #else
     self_test_result = Main_RunSelfTest();
 #endif
@@ -503,15 +488,11 @@ int main(void)
             last_5s_us = tick_us;
             Main_Hw_DebugPrintStatus(tick_us);
 #ifdef SIL_DIAG
-            {
-                extern volatile uint32 g_dbg_com_tx_calls;
-                extern volatile uint32 com_tx_send_count[];
-                fprintf(stderr, "[MAIN] t=%us com_tx_calls=%u hb_sends=%u vs_sends=%u\n",
-                    (unsigned)(tick_us / 1000000u),
-                    (unsigned)g_dbg_com_tx_calls,
-                    (unsigned)com_tx_send_count[1],  /* heartbeat PDU */
-                    (unsigned)com_tx_send_count[2]);  /* vehicle state PDU */
-            }
+            fprintf(stderr, "[MAIN] t=%us com_tx_calls=%u hb_sends=%u vs_sends=%u\n",
+                (unsigned)(tick_us / 1000000u),
+                (unsigned)g_dbg_com_tx_calls,
+                (unsigned)com_tx_send_count[1],  /* heartbeat PDU */
+                (unsigned)com_tx_send_count[2]);  /* vehicle state PDU */
 #endif
         }
     }

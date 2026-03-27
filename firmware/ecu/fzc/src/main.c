@@ -88,26 +88,10 @@ extern const CanTp_ConfigType fzc_cantp_config;
 extern const Dcm_ConfigType  fzc_dcm_config;
 
 /* ==================================================================
- * Hardware Abstraction Externs (implemented per platform)
+ * Hardware Abstraction Interface (declared in Main_Hw.h, MISRA 8.5)
  * ================================================================== */
 
-extern void           Main_Hw_SystemClockInit(void);
-extern void           Main_Hw_MpuConfig(void);
-extern void           Main_Hw_SysTickInit(uint32 periodUs);
-extern void           Main_Hw_Wfi(void);
-extern uint32         Main_Hw_GetTick(void);
-
-/* Self-test hardware externs */
-extern Std_ReturnType Main_Hw_ServoNeutralTest(void);
-extern Std_ReturnType Main_Hw_SpiSensorTest(void);
-extern Std_ReturnType Main_Hw_UartLidarTest(void);
-extern Std_ReturnType Main_Hw_CanLoopbackTest(void);
-extern Std_ReturnType Main_Hw_MpuVerifyTest(void);
-extern Std_ReturnType Main_Hw_RamPatternTest(void);
-extern void           Main_Hw_PlantStackCanary(void);
-
-/* 5s periodic debug status — UART print on STM32, no-op on POSIX */
-extern void           Main_Hw_DebugPrintStatus(uint32 tick_us);
+#include "Main_Hw.h"
 
 /* ==================================================================
  * Static Configuration Constants
@@ -340,11 +324,9 @@ static volatile uint32 tick_us;
  * @note   Executes in ThreadX timer thread context.
  *         Dispatches all RTE runnables configured at 1ms period.
  */
-volatile uint32 g_dbg_1ms_count = 0u;
 void Timer_1ms_Callback(ULONG arg)
 {
     (void)arg;
-    g_dbg_1ms_count++;
     Rte_MainFunction();
 }
 
@@ -357,8 +339,6 @@ void Timer_1ms_Callback(ULONG arg)
 void Timer_10ms_Callback(ULONG arg)
 {
     (void)arg;
-    Com_MainFunction_Tx();  /* Explicit TX dispatch — RTE dispatch not working in ThreadX */
-    Com_MainFunction_Rx();
     Dcm_MainFunction();
     BswM_MainFunction();
     CanSM_MainFunction();
