@@ -98,12 +98,7 @@ typedef struct {
     uint8      E2eDemEventId;       /**< DEM event on E2E fail (COM_DEM_EVENT_NONE=disabled) */
     uint8      E2eSmWindowValid;    /**< SM: consecutive OK to recover (0=use default 3) */
     uint8      E2eSmWindowInvalid;  /**< SM: consecutive ERR to invalidate (0=use default 2) */
-    uint16     CommStatusRteSignalId; /**< RTE signal for COMM_OK/TIMEOUT (COM_RTE_SIGNAL_NONE=disabled) */
 } Com_RxPduConfigType;
-
-/** Comm status values written to CommStatusRteSignalId */
-#define COM_COMM_STATUS_OK      0u
-#define COM_COMM_STATUS_TIMEOUT 1u
 
 /** Com module configuration */
 typedef struct {

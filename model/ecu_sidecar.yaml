@@ -62,12 +62,6 @@ ecus:
       RZC_Heartbeat: CVC_DTC_COMM_RZC_TIMEOUT
       SC_Status: CVC_DTC_COMM_SC_TIMEOUT
 
-    # RX deadline → comm status: PDU name → RTE signal name (from generated Cfg.h)
-    # Com_MainFunction_Rx writes COMM_OK(0)/TIMEOUT(1) to these on deadline
-    comm_status_map:
-      FZC_Heartbeat: FZC_Heartbeat_FaultStatus
-      RZC_Heartbeat: RZC_Heartbeat_FaultStatus
-
     enums:
       CVC_STATE_INIT: 0
       CVC_STATE_RUN: 1

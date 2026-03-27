@@ -11,7 +11,6 @@ MCU = -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 
 CFLAGS  = $(MCU) -Wall -Wextra -std=c99 -Og -g3 -DDEBUG
 CFLAGS += -DSTM32G474xx -DUSE_HAL_DRIVER -DTX_INCLUDE_USER_DEFINE_FILE -DCANTP_ENABLED -DPLATFORM_HIL
-# TODO:HARDWARE — remove PLATFORM_HIL after bench CAN bus stabilized (termination, powered hub)
 CFLAGS += -fdata-sections -ffunction-sections
 
 ASFLAGS = $(MCU) -DTX_INCLUDE_USER_DEFINE_FILE

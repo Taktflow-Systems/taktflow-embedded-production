@@ -409,7 +409,6 @@ int main(void)
         {
             last_1ms_us = tick_us;
             Rte_MainFunction();
-            Can_MainFunction_Write();  /* Drain bxCAN TX software queue */
         }
 
         /* 10ms tasks: CanTp, Dcm, BswM */

@@ -50,7 +50,6 @@ class Pdu:
     e2e_sm_window_valid: int = 0    # 0 = use default (computed from cycle time)
     e2e_sm_window_invalid: int = 0  # 0 = use default (computed from cycle time)
     e2e_dem_event_id: int = -1      # -1 = COM_DEM_EVENT_NONE (no DTC on E2E fail)
-    comm_status_rte_signal_id: int = -1  # -1 = COM_RTE_SIGNAL_NONE (no comm status)
     satisfies: str = ""    # Requirement traceability (e.g., "TSR-022 FSR-001")
     asil: str = "QM"       # ASIL classification
 
