@@ -272,6 +272,10 @@ static void main_entry(ULONG param)
     /* Write constant RTE signals for TX auto-pull */
     (void)Rte_Write(CVC_SIG_CVC_HEARTBEAT_ECU_ID, (uint32)CVC_ECU_ID_CVC);
 
+    /* SC not on bench — default relay to energized (1=OK).
+     * Com deadline monitor will override with 0 if SC_Status timeout fires. */
+    (void)Rte_Write(CVC_SIG_SC_RELAY_KILL, 1u);
+
     /* Trigger self-test pass event — required for VSM INIT→RUN transition */
     Swc_VehicleState_OnEvent(CVC_EVT_SELF_TEST_PASS);
     uart_puts("  Self-test PASS event sent\r\n");

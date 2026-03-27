@@ -1,0 +1,14 @@
+
+# ---- Step 8: UDS Diagnostics (CanTp + Dcm + E2E + BswM) ----
+C_SOURCES += \
+  $(FW)/bsw/services/CanTp/src/CanTp.c \
+  $(FW)/bsw/services/Dcm/src/Dcm.c \
+  $(FW)/bsw/services/E2E/src/E2E.c \
+  $(FW)/bsw/services/E2E/src/E2E_Sm.c \
+  $(FW)/bsw/services/BswM/src/BswM.c \
+  $(FW)/bsw/services/Dem/src/Dem.c \
+  $(FW)/bsw/services/WdgM/src/WdgM.c \
+  $(FW)/ecu/fzc/cfg/Dcm_Cfg_Fzc.c \
+  $(FW)/ecu/fzc/cfg/E2E_Cfg_Fzc.c \
+  $(FW)/ecu/fzc/cfg/PduR_Cfg_Fzc.c \
+  $(FW)/ecu/fzc/cfg/CanIf_Cfg_Fzc.c
