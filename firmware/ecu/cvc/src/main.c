@@ -90,6 +90,10 @@ extern void           Main_Hw_PlantStackCanary(void);
 /* 5s periodic debug status — UART print on STM32, no-op on POSIX */
 extern void           Main_Hw_DebugPrintStatus(uint32 tick_us);
 
+#ifdef USE_THREADX
+#include "tx_api.h"
+#endif
+
 /* ==================================================================
  * Static Configuration Constants
  * ================================================================== */
@@ -319,6 +323,42 @@ static uint8 Main_RunSelfTest(void)
 static volatile uint32 tick_us;
 
 /* ==================================================================
+ * ThreadX Timer Callbacks (USE_THREADX only)
+ * ================================================================== */
+
+#ifdef USE_THREADX
+
+void Timer_1ms_Callback(ULONG arg)
+{
+    (void)arg;
+    Rte_MainFunction();
+}
+
+void Timer_10ms_Callback(ULONG arg)
+{
+    (void)arg;
+    Swc_CvcCom_TransmitSchedule(Main_Hw_GetTick() / 1000u);
+    Dcm_MainFunction();
+    BswM_MainFunction();
+    CanSM_MainFunction();
+}
+
+void Timer_100ms_Callback(ULONG arg)
+{
+    (void)arg;
+    WdgM_MainFunction();
+    Dem_MainFunction();
+}
+
+void Timer_5s_Callback(ULONG arg)
+{
+    (void)arg;
+    Main_Hw_DebugPrintStatus(Main_Hw_GetTick());
+}
+
+#endif
+
+/* ==================================================================
  * Main Entry Point
  * ================================================================== */
 
@@ -330,10 +370,12 @@ static volatile uint32 tick_us;
  */
 int main(void)
 {
+#ifndef USE_THREADX
     uint32 last_1ms_us   = 0u;
     uint32 last_10ms_us  = 0u;
     uint32 last_100ms_us = 0u;
     uint32 last_5s_us    = 0u;
+#endif
     uint8  self_test_result;
 
     /* ---- Step 1: Hardware initialization ---- */
@@ -409,7 +451,11 @@ int main(void)
     Main_Hw_SysTickInit(1000u);
     Det_ReportRuntimeError(DET_MODULE_CVC_MAIN, 0u, MAIN_API_RUN, DET_E_DBG_SYSTICK_START);
 
-    /* ---- Step 8: Main loop ---- */
+    /* ---- Step 8: Main loop / RTOS kernel ---- */
+
+#ifdef USE_THREADX
+    tx_kernel_enter();
+#else
     for (;;)
     {
         Main_Hw_Wfi();
@@ -467,6 +513,7 @@ int main(void)
 #endif
         }
     }
+#endif /* USE_THREADX else */
 
     /* MISRA: unreachable but satisfies compiler */
     return 0;
