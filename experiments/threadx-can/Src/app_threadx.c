@@ -482,12 +482,9 @@ static void CAN_Periodic_Callback(ULONG arg)
     return;  /* Skip Com/BSW this cycle — just recovered */
   }
 
-  /* Poll CAN RX via BSW */
-  Can_MainFunction_Read();
-
-  /* BSW 10ms cyclic services */
-  Com_MainFunction_Tx();
-  Com_MainFunction_Rx();
+  /* Can_MainFunction_Read, Com_MainFunction_Tx/Rx, Can_MainFunction_BusOff
+   * are dispatched by Rte_MainFunction via the runnable table.
+   * Do NOT call them here — double-calling doubles the TX rate. */
   CanTp_MainFunction();
   Dcm_MainFunction();
   BswM_MainFunction();

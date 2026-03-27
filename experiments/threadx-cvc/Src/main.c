@@ -203,13 +203,9 @@ static void BSW_10ms_Callback(ULONG arg)
         return;  /* Skip BSW this cycle — just recovered */
     }
 
-    Can_MainFunction_Read();
-
-    /* No legacy Swc_CvcCom bridge needed — TX auto-pull reads from RTE,
-     * RX auto-push writes to RTE. Swc_VehicleState writes state to RTE. */
-
-    Com_MainFunction_Tx();
-    Com_MainFunction_Rx();
+    /* Can_MainFunction_Read, Com_MainFunction_Tx/Rx, Can_MainFunction_BusOff
+     * are dispatched by Rte_MainFunction via the runnable table.
+     * Do NOT call them here — double-calling doubles the TX rate. */
     CanTp_MainFunction();
     Dcm_MainFunction();
     BswM_MainFunction();
