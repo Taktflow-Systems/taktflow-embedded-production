@@ -40,6 +40,7 @@ firmware/bsw/os/bootstrap/test/*.exe
 *.pem
 *.key
 credentials.*
+gateway/mosquitto/passwd
 
 # Docker build cache
 docker/*.tar

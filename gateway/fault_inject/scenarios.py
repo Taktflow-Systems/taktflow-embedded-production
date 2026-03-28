@@ -18,6 +18,17 @@ import can
 import docker
 import paho.mqtt.client as paho_mqtt
 
+# Use the filtered Docker socket proxy (tcp://127.0.0.1:2375) when available,
+# fall back to the local Docker socket for development without the proxy.
+_DOCKER_HOST = os.environ.get("DOCKER_HOST", "")
+
+
+def _docker_client() -> docker.DockerClient:
+    """Return a Docker client connected via the socket proxy or local socket."""
+    if _DOCKER_HOST:
+        return docker.DockerClient(base_url=_DOCKER_HOST)
+    return docker.from_env()
+
 try:
     from ..lib.dbc_encoder import CanEncoder
 except ImportError:
@@ -497,7 +508,7 @@ def heartbeat_loss() -> str:
 
     Use 'reset' to restart all containers and recover.
     """
-    client = docker.from_env()
+    client = _docker_client()
     target = "docker-fzc-1"
     try:
         c = client.containers.get(target)
@@ -522,7 +533,7 @@ def sc_relay_kill() -> str:
 
     This is the primary demo scenario for the simulated relay feature.
     """
-    client = docker.from_env()
+    client = _docker_client()
     target = "docker-fzc-1"
     try:
         c = client.containers.get(target)
@@ -604,7 +615,7 @@ def _clear_nvm_files() -> None:
 
     Deleting the NvM files ensures a truly clean reset with no DTC carryover.
     """
-    client = docker.from_env()
+    client = _docker_client()
     all_containers = _ZONE_CONTAINERS + [_PLANT_CONTAINER, _SC_CONTAINER, _CVC_CONTAINER]
     for name in all_containers:
         try:
@@ -633,7 +644,7 @@ def _reset_all_containers() -> list[str]:
     """
     import concurrent.futures
 
-    client = docker.from_env()
+    client = _docker_client()
     # Plant-sim IS restarted — MQTT reset alone isn't sufficient because
     # CVC may still be sending stale commands (e.g. steer=-45 from SAFE_STOP)
     # between the MQTT reset and the container kill, causing plant-sim to
@@ -721,7 +732,7 @@ def reset() -> str:
     send_estop_clear()
     _clear_nvm_files()
 
-    client = docker.from_env()
+    client = _docker_client()
     all_ecu_names = _ZONE_CONTAINERS + [_SC_CONTAINER, _CVC_CONTAINER]
 
     # Phase 1: Kill ALL ECU containers (plant-sim stays running)

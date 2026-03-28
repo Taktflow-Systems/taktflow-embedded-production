@@ -575,6 +575,10 @@ def setup_mqtt() -> mqtt.Client:
             log.error("MQTT connect failed: rc=%d", rc)
 
     client.on_connect = on_connect
+    mqtt_user = os.environ.get("MQTT_USER", "")
+    mqtt_pass = os.environ.get("MQTT_PASSWORD", "")
+    if mqtt_user:
+        client.username_pw_set(mqtt_user, mqtt_pass)
     client.connect_async(mqtt_host, mqtt_port, keepalive=30)
     client.loop_start()
     return client

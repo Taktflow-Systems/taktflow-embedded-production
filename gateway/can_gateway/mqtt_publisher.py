@@ -8,6 +8,7 @@ Topic structure:
 
 import json
 import logging
+import os
 import time
 from datetime import datetime, timezone
 
@@ -59,6 +60,10 @@ class MqttPublisher:
 
     def connect(self):
         """Connect to the MQTT broker with auto-reconnect."""
+        mqtt_user = os.environ.get("MQTT_USER", "")
+        mqtt_pass = os.environ.get("MQTT_PASSWORD", "")
+        if mqtt_user:
+            self._client.username_pw_set(mqtt_user, mqtt_pass)
         self._client.connect_async(self.host, self.port, keepalive=30)
         self._client.loop_start()
 

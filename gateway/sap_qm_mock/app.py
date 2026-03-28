@@ -86,13 +86,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — allow all origins for demo purposes
+# CORS — restrict to known origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://taktflow-systems.com",
+        "https://www.taktflow-systems.com",
+        "http://localhost:3000",
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "X-Api-Key", "X-Client-Id"],
 )
 
 # Mount the OData-style router
@@ -117,7 +121,7 @@ async def health_check() -> dict[str, str]:
 if __name__ == "__main__":
     uvicorn.run(
         "sap_qm_mock.app:app",
-        host="0.0.0.0",
+        host="127.0.0.1",
         port=SAP_PORT,
         reload=False,
         log_level="info",

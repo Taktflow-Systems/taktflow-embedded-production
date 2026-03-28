@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import ssl
 import sys
 import threading
@@ -176,6 +177,9 @@ class FaultApiClient:
         url = f"{self.base_url}{path}"
         data = None if body is None else json.dumps(body).encode("utf-8")
         headers = {"Content-Type": "application/json"}
+        api_key = os.environ.get("FAULT_API_KEY", "")
+        if api_key:
+            headers["X-Api-Key"] = api_key
         if add_client_header:
             headers["X-Client-Id"] = self.client_id
         req = urllib.request.Request(url, data=data, method=method, headers=headers)
@@ -291,6 +295,10 @@ def connect_probe(mqtt_host: str, mqtt_port: int, monitor: VerdictProbe) -> paho
 
     client.on_connect = _on_connect
     client.on_message = _on_message
+    mqtt_user = os.environ.get("MQTT_USER", "")
+    mqtt_pass = os.environ.get("MQTT_PASSWORD", "")
+    if mqtt_user:
+        client.username_pw_set(mqtt_user, mqtt_pass)
     client.connect(mqtt_host, mqtt_port, keepalive=30)
     client.loop_start()
     return client

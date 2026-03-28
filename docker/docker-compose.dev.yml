@@ -201,6 +201,8 @@ services:
       - DBC_PATH=/app/taktflow_vehicle.dbc
       - MQTT_HOST=localhost
       - MQTT_PORT=1883
+      - MQTT_USER=${MQTT_USER:-taktflow}
+      - MQTT_PASSWORD=${MQTT_PASSWORD:-taktflow-dev}
       - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
     restart: unless-stopped
 
@@ -210,6 +212,8 @@ services:
     network_mode: host
     volumes:
       - ../gateway/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ../gateway/mosquitto/acl:/mosquitto/config/acl:ro
+      - ../gateway/mosquitto/passwd:/mosquitto/config/passwd:ro
     restart: unless-stopped
 
   # --- CAN-to-MQTT Gateway ---
@@ -233,6 +237,8 @@ services:
       - DBC_PATH=/app/taktflow_vehicle.dbc
       - MQTT_HOST=localhost
       - MQTT_PORT=1883
+      - MQTT_USER=${MQTT_USER:-taktflow}
+      - MQTT_PASSWORD=${MQTT_PASSWORD:-taktflow-dev}
       - SAP_QM_API_URL=http://localhost:8090
     restart: unless-stopped
 
@@ -248,6 +254,8 @@ services:
     environment:
       - MQTT_HOST=localhost
       - MQTT_PORT=1883
+      - MQTT_USER=${MQTT_USER:-taktflow}
+      - MQTT_PASSWORD=${MQTT_PASSWORD:-taktflow-dev}
       - WS_PORT=8080
     restart: unless-stopped
 
@@ -276,6 +284,8 @@ services:
     environment:
       - MQTT_HOST=localhost
       - MQTT_PORT=1883
+      - MQTT_USER=${MQTT_USER:-taktflow}
+      - MQTT_PASSWORD=${MQTT_PASSWORD:-taktflow-dev}
       - SAP_PORT=8090
     restart: unless-stopped
 
@@ -291,6 +301,30 @@ services:
     environment:
       - MQTT_HOST=localhost
       - MQTT_PORT=1883
+      - MQTT_USER=${MQTT_USER:-taktflow}
+      - MQTT_PASSWORD=${MQTT_PASSWORD:-taktflow-dev}
+    restart: unless-stopped
+
+  # --- Docker Socket Proxy (filtered API for fault-inject) ---
+  docker-proxy:
+    image: tecnativa/docker-socket-proxy:0.2
+    network_mode: host
+    environment:
+      CONTAINERS: 1       # allow container list/start/stop
+      POST: 1             # allow POST (start/stop/exec)
+      EXEC: 1             # allow exec (NvM file cleanup)
+      IMAGES: 0
+      VOLUMES: 0
+      NETWORKS: 0
+      SERVICES: 0
+      BUILD: 0
+      COMMIT: 0
+      CONFIGS: 0
+      SECRETS: 0
+      SWARM: 0
+      SYSTEM: 0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
 
   # --- Fault Injection API ---
@@ -302,19 +336,23 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       can-setup:
         condition: service_completed_successfully
       mqtt-broker:
+        condition: service_started
+      docker-proxy:
         condition: service_started
     environment:
       - CAN_CHANNEL=vcan0
       - FAULT_PORT=8091
       - MQTT_HOST=localhost
       - MQTT_PORT=1883
+      - MQTT_USER=${MQTT_USER:-taktflow}
+      - MQTT_PASSWORD=${MQTT_PASSWORD:-taktflow-dev}
       - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
+      - DOCKER_HOST=tcp://127.0.0.1:2375
+      - FAULT_API_KEY=${FAULT_API_KEY:-}
     restart: unless-stopped
 
 volumes:

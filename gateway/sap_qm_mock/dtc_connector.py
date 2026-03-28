@@ -222,6 +222,10 @@ class DTCConnector:
         self._client.on_connect = self._on_connect  # type: ignore[assignment]
         self._client.on_message = self._on_message  # type: ignore[assignment]
         self._client.on_disconnect = self._on_disconnect  # type: ignore[assignment]
+        mqtt_user = os.environ.get("MQTT_USER", "")
+        mqtt_pass = os.environ.get("MQTT_PASSWORD", "")
+        if mqtt_user:
+            self._client.username_pw_set(mqtt_user, mqtt_pass)
 
         for attempt in range(15):
             try:

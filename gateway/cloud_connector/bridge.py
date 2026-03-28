@@ -130,6 +130,10 @@ class CloudBridge:
 
     def start(self) -> None:
         """Connect both MQTT clients and start network loops."""
+        mqtt_user = os.environ.get("MQTT_USER", "")
+        mqtt_pass = os.environ.get("MQTT_PASSWORD", "")
+        if mqtt_user:
+            self._local_client.username_pw_set(mqtt_user, mqtt_pass)
         logger.info("Connecting to local MQTT %s:%s", MQTT_HOST, MQTT_PORT)
         self._local_client.connect_async(MQTT_HOST, MQTT_PORT, keepalive=60)
         self._local_client.loop_start()

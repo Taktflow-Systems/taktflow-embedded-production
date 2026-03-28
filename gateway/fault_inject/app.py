@@ -39,6 +39,9 @@ logging.basicConfig(
 )
 log = logging.getLogger("fault_inject")
 
+# API key for mutating endpoints (empty = no auth, dev mode)
+FAULT_API_KEY = os.environ.get("FAULT_API_KEY", "")
+
 # MQTT client for publishing reset/command messages
 _mqtt_client: paho_mqtt.Client | None = None
 
@@ -158,6 +161,10 @@ def _init_mqtt() -> paho_mqtt.Client:
 
     client.on_connect = _on_connect
     client.on_disconnect = _on_disconnect
+    mqtt_user = os.environ.get("MQTT_USER", "")
+    mqtt_pass = os.environ.get("MQTT_PASSWORD", "")
+    if mqtt_user:
+        client.username_pw_set(mqtt_user, mqtt_pass)
     client.connect_async(host, port, keepalive=30)
     client.loop_start()
     log.info("MQTT client connecting to %s:%d", host, port)
@@ -214,8 +221,9 @@ def _on_startup():
 # ---------------------------------------------------------------------------
 
 @app.post("/api/fault/control/acquire")
-def acquire_control(body: ClientIdBody):
+def acquire_control(body: ClientIdBody, request: Request):
     """Acquire 5-min control lock. Returns 409 if already held by someone else."""
+    _check_api_key(request)
     now = time.time()
     with _lock_mu:
         # Check if lock is already held (and not expired)
@@ -243,8 +251,9 @@ def acquire_control(body: ClientIdBody):
 
 
 @app.post("/api/fault/control/release")
-def release_control(body: ClientIdBody):
+def release_control(body: ClientIdBody, request: Request):
     """Release control lock early. Returns 403 if not the holder."""
+    _check_api_key(request)
     with _lock_mu:
         if _control_lock["client_id"] != body.client_id:
             raise HTTPException(status_code=403, detail="Not the lock holder")
@@ -270,6 +279,19 @@ def control_status():
             "client_id": _control_lock["client_id"] or "" if locked else "",
             "remaining_sec": max(0, int(_control_lock["expires_at"] - now)) if locked else 0,
         }
+
+
+# ---------------------------------------------------------------------------
+# API key guard
+# ---------------------------------------------------------------------------
+
+def _check_api_key(request: Request) -> None:
+    """Reject mutating requests without a valid API key (if configured)."""
+    if not FAULT_API_KEY:
+        return  # No key configured — dev mode, allow all
+    key = request.headers.get("X-Api-Key", "")
+    if key != FAULT_API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
 
 # ---------------------------------------------------------------------------
@@ -300,6 +322,7 @@ def _check_control_lock(request: Request) -> None:
 @app.post("/api/fault/scenario/{name}")
 def trigger_scenario(name: str, request: Request):
     """Trigger a fault scenario by name."""
+    _check_api_key(request)
     _check_control_lock(request)
     entry = SCENARIOS.get(name)
     if entry is None:
@@ -328,6 +351,7 @@ def trigger_scenario(name: str, request: Request):
 @app.post("/api/fault/reset")
 def reset_all(request: Request):
     """Power-cycle reset: restart ECU containers to clear all latched faults."""
+    _check_api_key(request)
     _check_control_lock(request)
     global _idle_paused
     log.info("Power-cycle reset initiated")
@@ -372,6 +396,7 @@ def health_check():
 @app.post("/api/test/run")
 def start_test_run(body: TestRunBody, request: Request):
     """Start E2E test suite. Requires control lock."""
+    _check_api_key(request)
     _check_control_lock(request)
     if _test_runner is None:
         raise HTTPException(status_code=503, detail="Test runner not initialized")
@@ -385,6 +410,7 @@ def start_test_run(body: TestRunBody, request: Request):
 @app.post("/api/test/stop")
 def stop_test_run(request: Request):
     """Stop the running test suite after the current scenario."""
+    _check_api_key(request)
     _check_control_lock(request)
     if _test_runner is None:
         raise HTTPException(status_code=503, detail="Test runner not initialized")
@@ -433,7 +459,7 @@ def main():
     log.info("Starting fault injection API on port %d", port)
     uvicorn.run(
         "fault_inject.app:app",
-        host="0.0.0.0",
+        host="127.0.0.1",
         port=port,
         log_level="info",
     )

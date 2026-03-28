@@ -120,6 +120,10 @@ class PlantSimulator:
         self._mqtt.message_callback_add(
             "taktflow/command/plant_inject", self._on_inject_cmd
         )
+        mqtt_user = os.environ.get("MQTT_USER", "")
+        mqtt_pass = os.environ.get("MQTT_PASSWORD", "")
+        if mqtt_user:
+            self._mqtt.username_pw_set(mqtt_user, mqtt_pass)
         # Synchronous connect with retry — broker may still be starting
         for attempt in range(15):
             try:

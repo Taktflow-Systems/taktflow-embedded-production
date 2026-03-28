@@ -298,6 +298,12 @@ async def main():
     client.on_connect = make_on_connect(buffers)
     client.on_message = make_on_message(buffers, reset_flag)
 
+    # MQTT authentication
+    mqtt_user = os.environ.get("MQTT_USER", "")
+    mqtt_pass = os.environ.get("MQTT_PASSWORD", "")
+    if mqtt_user:
+        client.username_pw_set(mqtt_user, mqtt_pass)
+
     # Connect (non-blocking loop)
     logger.info("Connecting to MQTT broker %s:%s …", MQTT_HOST, MQTT_PORT)
     client.connect_async(MQTT_HOST, MQTT_PORT, keepalive=60)

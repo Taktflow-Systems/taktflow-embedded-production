@@ -1,0 +1,7 @@
+# Mosquitto ACL — Taktflow MQTT topic access control
+# All internal services share a single user but ACL limits topic scope.
+# Format: https://mosquitto.org/man/mosquitto-conf-5.html
+
+# CAN gateway: publishes decoded CAN telemetry and DTC alerts
+user taktflow
+topic readwrite taktflow/#
