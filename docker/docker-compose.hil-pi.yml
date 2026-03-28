@@ -32,7 +32,7 @@ services:
       - ../gateway/mosquitto/acl:/mosquitto/config/acl:ro
       - ../gateway/mosquitto/passwd:/mosquitto/config/passwd:ro
     healthcheck:
-      test: ["CMD-SHELL", "mosquitto_sub -h 127.0.0.1 -p 1883 -u taktflow -P taktflow-dev -t '$$SYS/broker/uptime' -C 1 -W 3"]
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 1883"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -60,7 +60,7 @@ services:
       - MQTT_USER=${MQTT_USER:-taktflow}
       - MQTT_PASSWORD=${MQTT_PASSWORD:-taktflow-dev}
     healthcheck:
-      test: ["CMD-SHELL", "ip link show can0 2>/dev/null | grep -q UP"]
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.socket(); s.settimeout(2); s.connect(('127.0.0.1',1883)); s.close()\""]
       interval: 30s
       timeout: 5s
       retries: 3

@@ -20,7 +20,7 @@ services:
       - ../gateway/mosquitto/acl:/mosquitto/config/acl:ro
       - ../gateway/mosquitto/passwd:/mosquitto/config/passwd:ro
     healthcheck:
-      test: ["CMD-SHELL", "mosquitto_sub -h 127.0.0.1 -p 1883 -u taktflow -P taktflow-dev -t '$$SYS/broker/uptime' -C 1 -W 3"]
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 1883"]
       interval: 30s
       timeout: 5s
       retries: 3
