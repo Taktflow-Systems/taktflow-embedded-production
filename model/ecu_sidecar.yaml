@@ -466,6 +466,8 @@ ecus:
       ICU_DTC_PAGE_SIZE: 8
 
   tcu:
+    uds_rx_pdu_name: "UDS_Phys_Req_TCU"
+    uds_tx_pdu_name: "UDS_Resp_TCU"
     dtc_events:
       TCU_DTC_AGING_CLEAR_CYCLES: 0
 
