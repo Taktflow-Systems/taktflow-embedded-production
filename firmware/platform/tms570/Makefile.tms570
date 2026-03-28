@@ -66,6 +66,7 @@ SC_CFLAGS += -Wall -Wextra -Werror
 HAL_CFLAGS  = $(COMMON_CFLAGS) $(INC_FLAGS)
 HAL_CFLAGS += -Wall -Wno-unused-parameter -Wno-unused-variable
 HAL_CFLAGS += -Wno-ti-macros -Wno-ti-pragmas
+HAL_CFLAGS += -D__rev=__builtin_bswap32
 
 # --- Linker script (HALCoGen-generated .cmd format) ---
 LDSCRIPT = $(HALCOGEN_DIR)/source/HL_sys_link.cmd
@@ -135,7 +136,7 @@ CCXML  = $(SC_DIR)/TMS570LC43xx_XDS110.ccxml
 # Targets
 # =============================================================================
 
-.PHONY: all flash size clean check-halcogen blinky flash-blinky
+.PHONY: all flash size clean check-halcogen blinky flash-blinky eth-ping flash-eth-ping
 
 all: check-halcogen $(ELF)
 	@echo "=== Built $(ELF) ==="
@@ -203,6 +204,50 @@ $(BLINKY_OBJ): $(BLINKY_SRC) | $(BUILD_DIR)
 flash-blinky: $(BLINKY_ELF)
 	@echo "=== Flashing blinky test via DSLite (XDS110) ==="
 	"$(DSLITE)" load -c "$(CCXML)" -f "$(BLINKY_ELF)"
+
+# --- Standalone Ethernet ping test (EMAC + ARP + ICMP, no safety stack) ---
+# Uses HALCoGen init + EMAC driver + test_eth_ping.c only (no SC app sources).
+# GIOA[3]/GIOA[4] used for PHY reset/powerdown instead of LEDs.
+ETH_PING_SRC = $(SC_DIR)/test/test_eth_ping.c
+ETH_PING_OBJ = $(BUILD_DIR)/test_eth_ping.o
+
+# HALCoGen objects needed: all except HL_sys_main.c (we have our own main)
+# Keep HL_gio.c and HL_rti.c for this test (no SC wrapper conflict)
+HALCOGEN_ETH_EXCLUDE = $(HALCOGEN_DIR)/source/HL_sys_main.c \
+                       $(HALCOGEN_DIR)/source/HL_notification.c
+HALCOGEN_ETH_SRCS = $(filter-out $(HALCOGEN_ETH_EXCLUDE),$(HALCOGEN_SRCS_ALL))
+HAL_ETH_OBJS = $(patsubst %.c,$(BUILD_DIR)/eth/%.o,$(HALCOGEN_ETH_SRCS))
+ASM_ETH_OBJS = $(patsubst %.asm,$(BUILD_DIR)/eth/%.o,$(HALCOGEN_ASM))
+ETH_STARTUP_OBJ = $(BUILD_DIR)/eth/$(SC_DIR)/src/sc_startup.o
+ETH_PING_ELF = $(BUILD_DIR)/test_eth_ping.elf
+
+eth-ping: check-halcogen $(ETH_PING_ELF)
+	@echo "=== Built $(ETH_PING_ELF) (standalone Ethernet ping test) ==="
+	@echo "Flash: make -f firmware/platform/tms570/Makefile.tms570 flash-eth-ping"
+	@echo "Test:  ping 192.168.1.200"
+
+$(ETH_PING_ELF): $(ETH_PING_OBJ) $(HAL_ETH_OBJS) $(ASM_ETH_OBJS) $(ETH_STARTUP_OBJ) | $(BUILD_DIR)
+	$(CC) $(LDFLAGS) $^ $(LDSCRIPT) -o $@
+
+$(ETH_PING_OBJ): $(ETH_PING_SRC) | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(HAL_CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/eth/$(HALCOGEN_DIR)/%.o: $(HALCOGEN_DIR)/%.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(HAL_CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/eth/$(HALCOGEN_DIR)/%.o: $(HALCOGEN_DIR)/%.asm | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(MCU_FLAGS) -x ti-asm -c $< -o $@
+
+$(BUILD_DIR)/eth/$(SC_DIR)/src/sc_startup.o: $(SC_DIR)/src/sc_startup.S | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(MCU_FLAGS) $(INC_FLAGS) -c $< -o $@
+
+flash-eth-ping: $(ETH_PING_ELF)
+	@echo "=== Flashing Ethernet ping test via DSLite (XDS110) ==="
+	"$(DSLITE)" load -c "$(CCXML)" -f "$(ETH_PING_ELF)"
 
 # --- Firmware size report ---
 size: $(ELF)
