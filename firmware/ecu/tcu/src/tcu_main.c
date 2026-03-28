@@ -37,51 +37,24 @@ extern const Rte_ConfigType  tcu_rte_config;
 extern const Com_ConfigType  tcu_com_config;
 extern const Dcm_ConfigType  tcu_dcm_config;
 
-/* ---- CanIf TX PDU Mapping ---- */
+/* CanIf config — use GENERATED routing table from CanIf_Cfg_Tcu.c
+ * DO NOT hand-write CAN ID routing here. All routing is generated from
+ * DBC → ARXML → codegen. */
+extern const CanIf_ConfigType tcu_canif_config;
+#define canif_config tcu_canif_config
 
-static const CanIf_TxPduConfigType canif_tx_config[] = {
-    { 0x015u, TCU_COM_TX_HEARTBEAT,       4u, 0u },  /* PDU 0: TCU heartbeat */
-    { 0x644u, TCU_COM_TX_UDS_RSP,         8u, 0u },  /* PDU 1: UDS response */
-};
+/* PduR config — use GENERATED routing table from PduR_Cfg_Tcu.c
+ * DO NOT hand-write routing tables here. All routing is generated from
+ * DBC → ARXML → codegen. The generated config routes UDS_Phys_Req_TCU
+ * through CanTp for ISO-TP segmentation. */
+extern const PduR_ConfigType tcu_pdur_config;
 
-static const CanIf_RxPduConfigType canif_rx_config[] = {
-    { 0x7DFu, TCU_COM_RX_UDS_FUNC,       8u, FALSE },
-    { 0x604u, TCU_COM_RX_UDS_PHYS,       8u, FALSE },
-    { 0x100u, TCU_COM_RX_VEHICLE_STATE,   8u, FALSE },
-    { 0x301u, TCU_COM_RX_MOTOR_CURRENT,   8u, FALSE },
-    { 0x302u, TCU_COM_RX_MOTOR_TEMP,      8u, FALSE },
-    { 0x303u, TCU_COM_RX_BATTERY,         8u, FALSE },
-    { 0x500u, TCU_COM_RX_DTC_BCAST,       8u, FALSE },
-    { 0x010u, TCU_COM_RX_HB_CVC,          8u, FALSE },
-    { 0x011u, TCU_COM_RX_HB_FZC,          8u, FALSE },
-    { 0x012u, TCU_COM_RX_HB_RZC,          8u, FALSE },
-};
-
-static const CanIf_ConfigType canif_config = {
-    .txPduConfig = canif_tx_config,
-    .txPduCount  = (uint8)(sizeof(canif_tx_config) / sizeof(canif_tx_config[0])),
-    .rxPduConfig = canif_rx_config,
-    .rxPduCount  = (uint8)(sizeof(canif_rx_config) / sizeof(canif_rx_config[0])),
-};
-
-
-/** PduR routing: RX PDUs route to Com or Dcm */
-static const PduR_RoutingTableType pdur_routing[] = {
-    { TCU_COM_RX_UDS_FUNC,       PDUR_DEST_CANTP, TCU_COM_RX_UDS_FUNC      },
-    { TCU_COM_RX_UDS_PHYS,       PDUR_DEST_CANTP, TCU_COM_RX_UDS_PHYS      },
-    { TCU_COM_RX_VEHICLE_STATE,  PDUR_DEST_COM,   TCU_COM_RX_VEHICLE_STATE },
-    { TCU_COM_RX_MOTOR_CURRENT,  PDUR_DEST_COM,   TCU_COM_RX_MOTOR_CURRENT },
-    { TCU_COM_RX_MOTOR_TEMP,     PDUR_DEST_COM,   TCU_COM_RX_MOTOR_TEMP    },
-    { TCU_COM_RX_BATTERY,        PDUR_DEST_COM,   TCU_COM_RX_BATTERY       },
-    { TCU_COM_RX_DTC_BCAST,      PDUR_DEST_COM,   TCU_COM_RX_DTC_BCAST     },
-    { TCU_COM_RX_HB_CVC,         PDUR_DEST_COM,   TCU_COM_RX_HB_CVC       },
-    { TCU_COM_RX_HB_FZC,         PDUR_DEST_COM,   TCU_COM_RX_HB_FZC       },
-    { TCU_COM_RX_HB_RZC,         PDUR_DEST_COM,   TCU_COM_RX_HB_RZC       },
-};
-
-static const PduR_ConfigType pdur_cfg = {
-    .routingTable = pdur_routing,
-    .routingCount = (uint8)(sizeof(pdur_routing) / sizeof(pdur_routing[0])),
+/** CanTp configuration — single channel for UDS diagnostics */
+static const CanTp_ConfigType tcu_cantp_config = {
+    .rxPduId      = 0u,                    /* CanTp RX channel ID               */
+    .txPduId      = TCU_COM_TX_UDS_RSP,    /* TX frames → CanIf PDU (0x644)    */
+    .fcTxPduId    = TCU_COM_TX_UDS_RSP,    /* FC frames → same CAN ID          */
+    .upperRxPduId = 0u,                    /* Dcm RX PDU ID                     */
 };
 
 /* ---- TCU Heartbeat ---- */
@@ -140,7 +113,8 @@ int main(void)
 
     /* ECUAL */
     CanIf_Init(&canif_config);
-    PduR_Init(&pdur_cfg);
+    PduR_Init(&tcu_pdur_config);
+    CanTp_Init(&tcu_cantp_config);
 
     /* Services */
     Com_Init(&tcu_com_config);
@@ -185,6 +159,7 @@ int main(void)
 
         /* BSW CAN processing: transmit queued frames */
         Com_MainFunction_Tx();
+        Can_MainFunction_Write();
 
         /* CanTp + Dcm for UDS processing */
         CanTp_MainFunction();

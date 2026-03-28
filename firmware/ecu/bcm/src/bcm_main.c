@@ -252,6 +252,7 @@ int main(void)
 
         /* BSW CAN processing: transmit queued frames */
         Com_MainFunction_Tx();
+        Can_MainFunction_Write();
     }
     }
 
