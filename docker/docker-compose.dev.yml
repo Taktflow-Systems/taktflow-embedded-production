@@ -36,7 +36,16 @@ services:
           echo '[can-setup] Persist:  echo vcan | sudo tee /etc/modules-load.d/vcan.conf';
           exit 1;
         fi;
-        ip -d link show vcan0
+        ip -d link show vcan0;
+        if ip link show vcan1 > /dev/null 2>&1; then
+          ip link set vcan1 up;
+          echo '[can-setup] vcan1 already existed — set UP';
+        elif ip link add vcan1 type vcan; then
+          ip link set vcan1 up;
+          echo '[can-setup] created vcan1 (BMS demo) — set UP';
+        else
+          echo '[can-setup] WARNING: cannot create vcan1 — BMS demo will not work';
+        fi
       "
     cap_drop: [ALL]
     cap_add:
@@ -503,6 +512,35 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    restart: unless-stopped
+
+  # --- foxBMS BMS Dashboard (vECU + plant + ML + web on vcan1) ---
+  bms-web:
+    build:
+      context: ${FOXBMS_DIR:-../../foxbms-posix}
+      dockerfile: docker/Dockerfile.bms-web
+    network_mode: host
+    mem_limit: 512m
+    cpus: 1.5
+    cap_drop: [ALL]
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_MODULE
+    volumes:
+      - /lib/modules:/lib/modules:ro
+    depends_on:
+      can-setup:
+        condition: service_completed_successfully
+    environment:
+      - FOXBMS_CAN_IF=vcan1
+      - BMS_WEB_PORT=8092
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8092/')\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     restart: unless-stopped
 
 volumes:

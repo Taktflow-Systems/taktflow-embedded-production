@@ -13,5 +13,18 @@ sil.taktflow-systems.com {
     reverse_proxy /api/fault/* localhost:8091
     reverse_proxy /api/test/* localhost:8091
 
+    # foxBMS BMS Dashboard (vECU + plant + ML + web on port 8092)
+    redir /bms /bms/ permanent
+    handle_path /bms/* {
+        reverse_proxy localhost:8081
+    }
+
+    # foxBMS BMS Documentation
+    redir /bms-docs /bms-docs/ permanent
+    handle_path /bms-docs/* {
+        rewrite * /docs{uri}
+        reverse_proxy localhost:8081
+    }
+
     redir / https://taktflow-systems.com/embedded permanent
 }
