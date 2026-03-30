@@ -83,8 +83,13 @@ class MQTTVerdictMonitor:
             if len(parts) < 4:
                 return
             msg_name, sig_name = parts[2], parts[3]
+            # Strip message prefix from signal name (CAN gateway publishes
+            # "Vehicle_State_Mode" but ws_bridge strips to "Mode").
+            prefix = msg_name + "_"
+            if sig_name.startswith(prefix):
+                sig_name = sig_name[len(prefix):]
 
-            if msg_name == "Vehicle_State" and sig_name == "VehicleState":
+            if msg_name == "Vehicle_State" and sig_name in ("Mode", "VehicleState"):
                 new_state = self._int(payload)
                 if new_state != self.vehicle_state:
                     self.vehicle_state = new_state
