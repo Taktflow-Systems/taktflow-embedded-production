@@ -622,7 +622,7 @@ static const Com_TxPduConfigType fzc_tx_pdu_config[] = {
     { FZC_COM_TX_STEERING_STATUS,     8u,    50u, COM_TX_MODE_PERIODIC, TRUE ,  9u,  4u,  8u },   /* CAN 0x200 @satisfies SG-003 */
     { FZC_COM_TX_BRAKE_STATUS,     8u,    50u, COM_TX_MODE_PERIODIC, TRUE , 10u,  4u,  8u },   /* CAN 0x201 @satisfies SG-004 */
     { FZC_COM_TX_BRAKE_FAULT,     4u,     0u, COM_TX_MODE_DIRECT  , TRUE , 11u,  4u,  8u },   /* CAN 0x210 @satisfies SG-004,SG-008 */
-    { FZC_COM_TX_MOTOR_CUTOFF_REQ,     4u,    50u, COM_TX_MODE_PERIODIC, TRUE , 12u,  4u,  8u },   /* CAN 0x211 @satisfies SG-008 */
+    { FZC_COM_TX_MOTOR_CUTOFF_REQ,     4u,     0u, COM_TX_MODE_DIRECT  , TRUE , 12u,  4u,  8u },   /* CAN 0x211 @satisfies SG-008 — event-driven only */
     { FZC_COM_TX_LIDAR_DISTANCE,     8u,    10u, COM_TX_MODE_PERIODIC, TRUE , 13u,  4u,  8u },   /* CAN 0x220 @satisfies SG-007 */
     { FZC_COM_TX_DTC_BROADCAST,     8u,     0u, COM_TX_MODE_DIRECT  , FALSE,  0u,  0u,  8u },   /* CAN 0x500 */
     { FZC_COM_TX_XCP_RESP_FZC,     8u,     0u, COM_TX_MODE_DIRECT  , FALSE,  0u,  0u,  8u },   /* CAN 0x553 */
