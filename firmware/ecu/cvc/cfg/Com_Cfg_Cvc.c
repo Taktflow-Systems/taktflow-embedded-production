@@ -609,8 +609,8 @@ static const Com_TxPduConfigType cvc_tx_pdu_config[] = {
     { CVC_COM_TX_BODY_CONTROL_CMD,     4u,   100u, COM_TX_MODE_PERIODIC, FALSE,  0u,  0u,  8u },   /* CAN 0x350 */
     { CVC_COM_TX_DTC_BROADCAST,     8u,     0u, COM_TX_MODE_DIRECT  , FALSE,  0u,  0u,  8u },   /* CAN 0x500 */
     { CVC_COM_TX_XCP_RESP_CVC,     8u,     0u, COM_TX_MODE_DIRECT  , FALSE,  0u,  0u,  8u },   /* CAN 0x551 */
-    { CVC_COM_TX_FZC_VIRTUAL_SENSORS,     8u,    10u, COM_TX_MODE_PERIODIC, FALSE,  0u,  0u,  8u },   /* CAN 0x600 */
-    { CVC_COM_TX_RZC_VIRTUAL_SENSORS,     8u,    10u, COM_TX_MODE_PERIODIC, FALSE,  0u,  0u,  8u },   /* CAN 0x601 */
+    { CVC_COM_TX_FZC_VIRTUAL_SENSORS,     8u,     0u, COM_TX_MODE_NONE    , FALSE,  0u,  0u,  8u },   /* CAN 0x600 DISABLED — plant-sim only */
+    { CVC_COM_TX_RZC_VIRTUAL_SENSORS,     8u,     0u, COM_TX_MODE_NONE    , FALSE,  0u,  0u,  8u },   /* CAN 0x601 DISABLED — plant-sim only */
     { CVC_COM_TX_UDS_RESP_CVC,     8u,     0u, COM_TX_MODE_DIRECT  , FALSE,  0u,  0u,  8u },   /* CAN 0x7E8 */
 };
 
