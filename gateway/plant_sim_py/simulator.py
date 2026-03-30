@@ -246,11 +246,14 @@ class PlantSimulator:
 
         elif arb_id == RX_TORQUE_REQUEST:
             if len(data) >= 4 and not self.estop_active:
-                # CVC sends torque as uint16 LE at bytes 2-3 (Com signal 5,
-                # bitPos=16, bitSize=16).  Value 0-1000 from torque LUT.
-                torque_raw = struct.unpack_from('<H', data, 2)[0]
-                self.motor.duty_pct = min(100.0, float(torque_raw) / 10.0)
-                self.motor.direction = 1 if torque_raw > 0 else 0
+                # DBC: Torque_Request_Command_pct : 16|8@1+ (1,0) [0|100]
+                # Single byte at byte 2, 0-100% duty, factor=1.
+                # Previous uint16 read bled Direction + PedalPosition1 bits
+                # from byte 3, causing phantom 100% duty and SC creep guard.
+                torque_raw = data[2]
+                self.motor.duty_pct = min(100.0, float(torque_raw))
+                # DBC: Torque_Request_Direction : 24|2@1+ (1,0) [0|2]
+                self.motor.direction = data[3] & 0x03
 
         elif arb_id == RX_STEER_COMMAND:
             if len(data) >= 4 and not self.estop_active:
