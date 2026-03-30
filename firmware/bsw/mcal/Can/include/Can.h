@@ -69,6 +69,8 @@ extern Std_ReturnType Can_Hw_Transmit(Can_IdType id, const uint8* data, uint8 dl
 extern boolean        Can_Hw_Receive(Can_IdType* id, uint8* data, uint8* dlc);
 extern boolean        Can_Hw_IsBusOff(void);
 extern void           Can_Hw_GetErrorCounters(uint8* tec, uint8* rec);
+extern Std_ReturnType Can_Hw_LoopbackTest(void);
+extern uint8          Can_Hw_GetHalState(void);
 
 /* ---- CanIf Callbacks (provided by upper layer) ---- */
 extern void CanIf_RxIndication(Can_IdType canId, const uint8* sduPtr, uint8 dlc);
@@ -153,5 +155,6 @@ extern volatile uint32 g_can_tx_busy_count;
 extern volatile uint32 g_can_tx_queue_hwm;
 extern volatile uint32 g_can_rx_012_count;
 extern volatile uint32 g_can_rx_011_count;
+extern volatile uint32 g_dbg_hw_tx_total;
 
 #endif /* CAN_H */

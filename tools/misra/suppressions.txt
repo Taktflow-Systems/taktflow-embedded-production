@@ -1,14 +1,98 @@
+# MISRA C:2012 cppcheck suppression list
+# Format: rule[:file-glob]   (no spaces around colon)
+# Backed by: docs/safety/analysis/misra-deviation-register.md
+#
+# Suppression categories:
+#   [A] Advisory — no formal deviation required; tracked at ASIL D
+#   [R] Required — formal deviation required; every entry here must have a
+#       DEV-NNN record in misra-deviation-register.md
+#   [M] Mandatory — no suppressions permitted (never suppress mandatory rules)
+#
+# Global suppressions (no file scope) are ONLY used where the pattern is
+# pervasive across the entire codebase AND a single DEV-NNN entry covers all
+# instances.  File-scoped or inline suppressions are preferred otherwise.
+
+# ---------------------------------------------------------------------------
+# [A] Advisory rules — global (pervasive AUTOSAR BSW patterns)
+# ---------------------------------------------------------------------------
+
+# 2.3  A project should not contain unused type declarations
+#      — AUTOSAR typedef headers declare all types; not all are used in every TU
 misra-c2012-2.3
+# 2.4  A project should not contain unused tag declarations
 misra-c2012-2.4
+# 2.5  A project should not contain unused macro declarations
+#      — AUTOSAR config headers define all IDs; not all are used in every ECU
 misra-c2012-2.5
+# 2.7  There should be no unused parameters in functions
+#      — AUTOSAR callbacks receive fixed-signature parameters; unused ones are (void)d
+misra-c2012-2.7
+# 5.9  Identifiers that define objects or functions with internal linkage should be unique
 misra-c2012-5.9
+# 8.7  Functions and objects should not be defined with external linkage if only used in one TU
+#      — BSW APIs are used by multiple ECU mains; single-TU analysis gives false positives
 misra-c2012-8.7
+# 8.9  An object should be defined at block scope if its identifier only appears in a single function
 misra-c2012-8.9
-misra-c2012-9.3
-misra-c2012-10.8
+# 8.11 When an array with external linkage is declared, its size should be explicitly specified
+misra-c2012-8.11
+# 12.1 The precedence of operators within expressions should be made explicit
 misra-c2012-12.1
+# 12.3 The comma operator should not be used
+misra-c2012-12.3
+# 13.3 A full expression containing an increment (++) or decrement (--) operator should have
+#      no other potential side effects other than that caused by the increment or decrement
+misra-c2012-13.3
+# 15.5 A function should have a single point of exit at the end
+#      — AUTOSAR BSW uses early-return guard clauses; restructuring to single-exit
+#        adds indentation and reduces readability without safety benefit
 misra-c2012-15.5
+# 17.8 A function parameter should not be modified
 misra-c2012-17.8
+# 18.4 The +, -, += and -= operators should not be applied to an expression of pointer type
+misra-c2012-18.4
+# 20.5 #undef should not be used
+misra-c2012-20.5
+# 20.9 All identifiers used in the controlling expression of #if or #elif preprocessing directives
+#      shall be #defined before evaluation
+misra-c2012-20.9
+
+# ---------------------------------------------------------------------------
+# [R] Required rules — global (DEV-NNN entries in misra-deviation-register.md)
+# ---------------------------------------------------------------------------
+
+# 5.6  A typedef name shall be a unique identifier  — DEV-008 (pending)
+misra-c2012-5.6
+# 5.7  A tag name shall be a unique identifier  — DEV-008 (pending)
+misra-c2012-5.7
+# 5.8  Identifiers that define objects or functions with external linkage shall be unique
+misra-c2012-5.8
+# 8.2  Function types shall be in prototype form with named parameters
+#      — AUTOSAR BSW function pointer tables use unnamed-parameter prototypes
+misra-c2012-8.2
+# 8.5  An external object or function shall be declared only once in one file  — DEV-006
+#      ECU main.c files use extern declarations for per-ECU generated config structs
+#      (cvc_rte_config, cvc_com_config, etc.). Symbols are unique per-ECU; no ODR risk.
+#      Block-scope and duplicate externs resolved: debug vars in module headers,
+#      Main_Hw_* functions consolidated in firmware/platform/stm32/include/Main_Hw.h.
+misra-c2012-8.5
+# 9.2  The initializer for an aggregate or union shall be enclosed in braces  — DEV-007 (pending)
+misra-c2012-9.2
+# 9.3  Arrays shall not be partially initialized  — DEV-007 (pending)
+misra-c2012-9.3
+# 10.3 Narrowing casts from composite expressions — DEV-004; pervasive in CAN byte-packing
+misra-c2012-10.3
+# 10.4 Mixed-width operands in arithmetic  — DEV-005; pervasive in BSW interface comparisons
+misra-c2012-10.4
+# 10.8 Cast of composite expression to different essential type  — DEV-004
+misra-c2012-10.8
+# 11.6 Pointer-to-integer cast (non-uintptr_t path)  — DEV-003 covers uintptr_t usage in Xcp.c
+misra-c2012-11.6
+
+# ---------------------------------------------------------------------------
+# [A] Advisory rules — file-scoped
+# ---------------------------------------------------------------------------
+
 misra-c2012-21.5:*/bcm_main.c
 misra-c2012-21.5:*/icu_main.c
 misra-c2012-21.6:*/icu_main.c
@@ -19,57 +103,71 @@ misra-c2012-21.6:*/*_hw_posix.c
 misra-c2012-21.8:*/*_hw_posix.c
 misra-c2012-21.10:*/*_hw_posix.c
 misra-c2012-17.7:*/*_hw_posix.c
+misra-c2012-17.7:*/Dem.c
+misra-c2012-21.15:*/Dem.c
+misra-c2012-21.6:*/Dem.c
+
+# ---------------------------------------------------------------------------
+# [R] Required rules — file-scoped (see deviation register for each)
+# ---------------------------------------------------------------------------
+
+# 8.4  A compatible declaration shall be visible when an object or function with external
+#      linkage is defined — platform MCAL implementations; forward declarations in headers
 misra-c2012-8.4:*/*_hw_posix.c
 misra-c2012-8.4:*/*_hw_stm32.c
-misra-c2012-8.6:*/*_hw_stm32.c
-misra-c2012-12.2:*/*_hw_stm32.c
-misra-c2012-17.3:*/*_hw_stm32.c
-misra-config:*/*_hw_stm32.c
-misra-c2012-10.2:*/*_hw_stm32.c
 misra-c2012-8.4:*/*_hw_tms570.c
 misra-c2012-8.4:*/*_Hw_STM32.c
-misra-c2012-8.6:*/*_hw_posix.c
-misra-c2012-8.6:*/*_hw_tms570.c
 misra-c2012-8.4:*/cfg/*.c
-misra-c2012-8.5
+# 8.6  An identifier with external linkage shall have exactly one external definition
+misra-c2012-8.6:*/*_hw_posix.c
+misra-c2012-8.6:*/*_hw_stm32.c
+misra-c2012-8.6:*/*_hw_tms570.c
+misra-c2012-8.6:*/cfg/*.c
+misra-c2012-8.6:*/generated_unused/*.c
+misra-c2012-8.6:*/cvc/src/main.c
+# 10.2 STM32 HAL register bit-field operations use platform-specific hex constants
+misra-c2012-10.2:*/*_hw_stm32.c
+misra-c2012-10.2:*/main.c
+# 11.4 Advisory — DEV-003: pointer-to-integer casts in Xcp.c now carry inline suppressions;
+#      retain this file-scope entry as belt-and-suspenders until cppcheck version >= 2.14
+#      reliably honours inline suppressions for this rule on all build machines.
+# NOTE: inline cppcheck-suppress misra-c2012-11.4 annotations are present at the 3 cast
+#       sites in Xcp.c (lines ~358, ~438, ~507). This file-level entry is intentionally
+#       kept as a fallback.  Remove when inline suppression is confirmed sufficient.
+misra-c2012-11.4:*/Xcp.c
+# 11.5 DEV-001: void* cast in Com signal packing (AUTOSAR SWS pattern)
 misra-c2012-11.5:*/Com.c
+# 11.8 DEV-002: const removal in AUTOSAR BSW callback interfaces
 misra-c2012-11.8:*/Com.c
 misra-c2012-11.8:*/CanIf.c
-misra-c2012-17.3:*/CanIf.c
 misra-c2012-11.8:*/Dcm.c
+# 11.4 Advisory  — CanIf/Dcm integer-to-pointer casts in platform shims
+misra-c2012-11.4:*/sc_main.c
+# 12.2 STM32/TMS570 bit-field read ordering is MISRA-flagged
+misra-c2012-12.2:*/*_hw_stm32.c
+misra-c2012-12.2:*/*_hw_tms570.c
+# 17.3 Implicit function declarations in legacy POSIX/SC shims
+misra-c2012-17.3:*/CanIf.c
 misra-c2012-17.3:*/Dcm.c
+misra-c2012-17.3:*/Swc_RzcSelfTest.c
+misra-c2012-17.3:*/*_hw_stm32.c
 misra-c2012-17.3:*/sc_hw_posix.c
-misra-config:*/sc_hw_posix.c
+# 20.1 #include order in generated/legacy headers
+misra-c2012-20.1:rzc/src/main.c
+misra-c2012-20.1:*/Det.h
+# 21.6 fprintf/printf in SIL diagnostic builds (guarded by SIL_DIAG)
 misra-c2012-21.6:*/cvc/src/*.c
 misra-c2012-21.6:*/fzc/src/*.c
 misra-c2012-21.6:*/rzc/src/*.c
-misra-c2012-21.6:*/Dem.c
-misra-c2012-17.7:*/Dem.c
-misra-c2012-21.15:*/Dem.c
-misra-c2012-10.2:*/main.c
-misra-c2012-20.1:rzc/src/main.c
-misra-c2012-11.4:*/sc_main.c
-misra-c2012-12.2:*/*_hw_tms570.c
-misra-c2012-17.3:*/Swc_RzcSelfTest.c
-misra-c2012-20.1:*/Det.h
-misra-config
-misra-c2012-5.6
-misra-c2012-5.7
-misra-c2012-5.8
-misra-c2012-8.6:*/cfg/*.c
-misra-c2012-8.6:*/generated_unused/*.c
-misra-c2012-20.5
-misra-c2012-20.9
-misra-c2012-18.4
-misra-c2012-8.11
-misra-c2012-2.7
-misra-c2012-9.2
-misra-c2012-13.3
-misra-c2012-12.3
-misra-c2012-10.3
-misra-c2012-10.4
-misra-c2012-11.6
-misra-c2012-8.2
+
+# ---------------------------------------------------------------------------
+# Catch-all: suppress cppcheck tool-configuration noise in platform files
+# ---------------------------------------------------------------------------
+misra-config:*/*_hw_stm32.c
+misra-config:*/sc_hw_posix.c
+
+# ---------------------------------------------------------------------------
+# Wildcard: exclude generated and vendor driver directories entirely
+# ---------------------------------------------------------------------------
 *:*/cfg/Core/*
 *:*/cfg/Drivers/*
-misra-c2012-8.6:*/cvc/src/main.c

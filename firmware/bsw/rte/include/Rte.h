@@ -123,4 +123,8 @@ Std_ReturnType Rte_Read(Rte_SignalIdType SignalId, uint32* DataPtr);
  */
 void Rte_MainFunction(void);
 
+/* Debug counters (bring-up diagnostics — volatile, accessed from main.c) */
+extern volatile uint32 g_dbg_rte_calls;
+extern volatile uint32 g_dbg_rte_skipped;
+
 #endif /* RTE_H */

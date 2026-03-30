@@ -71,4 +71,8 @@ CanSM_StateType CanSM_GetState(void);
  */
 boolean CanSM_IsCommunicationAllowed(void);
 
+/* Debug counters (bring-up diagnostics — volatile, accessed from main.c) */
+extern volatile uint32 g_dbg_cansm_busoff_count;
+extern volatile uint32 g_dbg_cansm_recovery_count;
+
 #endif /* CANSM_H */

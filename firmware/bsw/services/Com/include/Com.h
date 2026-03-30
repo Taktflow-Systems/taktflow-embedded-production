@@ -157,6 +157,10 @@ Std_ReturnType Com_TriggerIPDUSend(PduIdType PduId);
  */
 Std_ReturnType Com_FlushTxPdu(PduIdType PduId);
 
+/* Debug counters (bring-up diagnostics — volatile, accessed from main.c) */
+extern volatile uint32 g_dbg_com_tx_calls;
+extern volatile uint32 com_tx_send_count[];
+
 /* ---- Type-safe signal send macros ---- */
 
 #define Com_SendSignal_u8(sigId, valPtr)  \

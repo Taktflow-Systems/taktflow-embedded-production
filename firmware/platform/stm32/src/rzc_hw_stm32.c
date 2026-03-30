@@ -165,7 +165,6 @@ void Dbg_Uart_Print(const char *str)
  */
 uint8 Main_Hw_GetCanHalState(void)
 {
-    extern uint8 Can_Hw_GetHalState(void);
     return Can_Hw_GetHalState();
 }
 
@@ -346,7 +345,6 @@ Std_ReturnType Main_Hw_EncoderStuckTest(void)
  */
 Std_ReturnType Main_Hw_CanLoopbackTest(void)
 {
-    extern Std_ReturnType Can_Hw_LoopbackTest(void);
     return Can_Hw_LoopbackTest();
 }
 

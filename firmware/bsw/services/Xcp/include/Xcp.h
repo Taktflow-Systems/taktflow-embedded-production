@@ -90,4 +90,9 @@ void Xcp_RxIndication(PduIdType RxPduId, const PduInfoType* PduInfoPtr);
  */
 boolean Xcp_IsConnected(void);
 
+/* Debug counters (bring-up diagnostics — volatile, accessed from main.c) */
+extern volatile uint32 g_dbg_xcp_rx_count;
+extern volatile uint32 g_dbg_xcp_tx_count;
+extern volatile uint32 g_dbg_xcp_err_count;
+
 #endif /* XCP_H */

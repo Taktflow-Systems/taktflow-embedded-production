@@ -221,12 +221,8 @@ void os_reset_runtime_state(void)
     os_suspend_all_nesting = 0u;
     os_suspend_os_nesting = 0u;
 #if defined(UNIT_TEST)
-    {
-        extern uint8 os_test_all_interrupts_disabled;
-        extern uint8 os_test_os_interrupts_disabled;
-        os_test_all_interrupts_disabled = 0u;
-        os_test_os_interrupts_disabled = 0u;
-    }
+    os_test_all_interrupts_disabled = 0u;
+    os_test_os_interrupts_disabled = 0u;
 #endif
 }
 

@@ -158,6 +158,11 @@ extern uint8 os_suspend_os_nesting;
 #define OS_ALLOWED_SHUTDOWN     OS_LEVEL_BIT(OS_CALLLEVEL_SHUTDOWN_HOOK)
 
 #if defined(UNIT_TEST)
+/* Test instrumentation variables (defined in Os_Interrupt.c / Os_MemProt.c) */
+extern uint8 os_test_all_interrupts_disabled;
+extern uint8 os_test_os_interrupts_disabled;
+extern uint8 os_test_mp_loaded_count;
+
 void os_clear_task_cfg(void);
 void os_clear_resource_cfg(void);
 void os_clear_alarm_cfg(void);

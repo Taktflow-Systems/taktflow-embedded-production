@@ -241,7 +241,6 @@ Std_ReturnType Main_Hw_SpiLoopbackTest(void)
  */
 Std_ReturnType Main_Hw_CanLoopbackTest(void)
 {
-    extern Std_ReturnType Can_Hw_LoopbackTest(void);
     return Can_Hw_LoopbackTest();
 }
 

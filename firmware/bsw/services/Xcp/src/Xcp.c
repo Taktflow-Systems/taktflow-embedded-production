@@ -33,7 +33,7 @@ static boolean xcp_unlocked    = FALSE;  /**< TRUE after successful Seed & Key *
 
 /** Seed & Key state */
 static uint32 xcp_seed         = 0u;     /**< Current seed (0 = no pending challenge) */
-static uint8  xcp_seed_pending = FALSE;  /**< TRUE between GET_SEED and UNLOCK */
+static boolean xcp_seed_pending = FALSE;  /**< TRUE between GET_SEED and UNLOCK */
 static uint8  xcp_unlock_fail_count = 0u;
 #define XCP_MAX_UNLOCK_ATTEMPTS  3u      /**< Lock out after 3 consecutive failures */
 #define XCP_LOCKOUT_ACTIVE       0xFFu
@@ -354,6 +354,9 @@ static void xcp_cmd_short_upload(const uint8* data, uint8 length)
         return;
     }
 
+    /* DEV-003: XCP protocol requires integer-to-pointer; uintptr_t is the portable idiom per
+     * C99 §7.20.1.4; address range validated by xcp_validate_address() on the line above */
+    // cppcheck-suppress misra-c2012-11.4
     src = (const uint8*)(uintptr_t)addr;
 
     xcp_tx_buf[0] = XCP_RES_OK;
@@ -434,6 +437,9 @@ static void xcp_cmd_short_download(const uint8* data, uint8 length)
         return;
     }
 
+    /* DEV-003: XCP protocol requires integer-to-pointer; uintptr_t is the portable idiom per
+     * C99 §7.20.1.4; address range validated by xcp_validate_address() on the line above */
+    // cppcheck-suppress misra-c2012-11.4
     dst = (uint8*)(uintptr_t)addr;
 
     for (i = 0u; i < num_bytes; i++) {
@@ -503,6 +509,9 @@ static void xcp_cmd_upload(const uint8* data, uint8 length)
         return;
     }
 
+    /* DEV-003: XCP protocol requires integer-to-pointer; uintptr_t is the portable idiom per
+     * C99 §7.20.1.4; address range validated by xcp_validate_address() on the line above */
+    // cppcheck-suppress misra-c2012-11.4
     src = (const uint8*)(uintptr_t)xcp_mta;
 
     xcp_tx_buf[0] = XCP_RES_OK;

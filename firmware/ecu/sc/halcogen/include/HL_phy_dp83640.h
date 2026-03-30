@@ -85,7 +85,8 @@ typedef enum phyTimeStamp
 
 
 /* PHY ID. The LSB nibble will vary between different phy revisions */
-#define DP83640_PHY_ID                   (0x0007C0F0u)
+/* DP83630 on LAUNCHXL2-570LC43: ID1=0x2000 ID2=0x5CE1 → combined=0x20005CE0 (masked) */
+#define DP83640_PHY_ID                   (0x20005CE0u)
 #define DP83640_PHY_ID_REV_MASK          (0x0000000Fu)
 
 /* Pause operations */

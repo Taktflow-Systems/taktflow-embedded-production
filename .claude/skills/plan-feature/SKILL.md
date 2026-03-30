@@ -3,7 +3,7 @@ name: plan-feature
 description: "Create a structured implementation plan for a new feature or change"
 argument-hint: "<feature name or description>"
 user-invocable: true
-allowed-tools: "Read, Grep, Glob"
+allowed-tools: "Read, Grep, Glob, Bash(ls *)"
 ---
 
 ## Human-in-the-Loop (HITL) Comment Lock
@@ -28,10 +28,11 @@ Create a structured implementation plan for: $ARGUMENTS
 ## Process
 
 1. **Understand the request** — clarify requirements if ambiguous
-2. **Explore existing code** — find related modules, interfaces, patterns
-3. **Identify affected files** — list every file that needs changes
-4. **Design the approach** — architecture decisions, data flow, interfaces
-5. **Write the plan** — structured plan document in `docs/plans/`
+2. **Capture the working directory** — run `ls -1` on the current working directory (and each affected subdirectory) and record the actual output. Use this listing as the ground truth for all file references; never reference a path that does not appear in the listing.
+3. **Explore existing code** — find related modules, interfaces, patterns
+4. **Identify affected files** — list every file that needs changes, cross-referencing against the `ls` output captured in step 2
+5. **Design the approach** — architecture decisions, data flow, interfaces
+6. **Write the plan** — structured plan document in `docs/plans/`
 
 ## Plan Template
 
@@ -46,6 +47,11 @@ Write to `docs/plans/<feature-name>.md` using this format:
 
 ## Overview
 One paragraph describing what this feature does and why.
+
+## Working Directory Snapshot
+
+<!-- Paste the actual output of `ls -1 <affected-dirs>` here so workers can verify file existence -->
+    <ls output captured at plan creation time>
 
 ## Phase Table
 

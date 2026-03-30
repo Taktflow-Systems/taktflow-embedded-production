@@ -13,12 +13,8 @@
  * @copyright Taktflow Systems 2026
  */
 #include "CanSM.h"
+#include "Can.h"
 #include "Det.h"
-
-/* ---- External: CAN driver control ---- */
-extern Std_ReturnType Can_SetControllerMode(uint8 Controller, uint8 Mode);
-#define CAN_CS_STARTED  0u
-#define CAN_CS_STOPPED  1u
 
 /* ---- Internal State ---- */
 
@@ -105,8 +101,10 @@ void CanSM_MainFunction(void)
         return;
     }
 
-    /* Advance recovery timer */
-    cansm_recovery_timer += CANSM_MAIN_PERIOD_MS;
+    /* Advance recovery timer — (uint16) cast documents narrowing per MISRA Rule 10.3;
+     * implicit widening of cansm_recovery_timer in the addition covered by global 10.3/10.7
+     * suppression in tools/misra/suppressions.txt. */
+    cansm_recovery_timer = (uint16)(cansm_recovery_timer + CANSM_MAIN_PERIOD_MS);
 
     if (cansm_recovery_level == 1u) {
         /* L1: fast recovery */

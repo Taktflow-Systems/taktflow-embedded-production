@@ -568,14 +568,20 @@ static void phy_release(void)
     /* 3. Configure GIOA[3] and GIOA[4] as outputs */
     gioPORTA->DIR |= (uint32)(1U << 3U) | (uint32)(1U << 4U);
 
-    /* 4. GIOA[3]=HIGH (RESET_N release), GIOA[4]=HIGH (PHY power enable) */
-    gioPORTA->DSET = (uint32)(1U << 3U) | (uint32)(1U << 4U);
+    /* 4. Power on PHY: GIOA[4]=HIGH (power enable)
+     *    Keep GIOA[3]=LOW (hold in reset) while power stabilizes */
+    gioPORTA->DCLR = (uint32)(1U << 3U);   /* RESET_N = LOW (assert reset) */
+    gioPORTA->DSET = (uint32)(1U << 4U);   /* PHY power enable = HIGH */
 
-    /* 5. Wait 200ms for PHY to stabilize (DP83630 requires 167ms post-POR)
-     * At 300 MHz, ~3 cycles/iteration → 200ms ≈ 20,000,000 iterations */
-    for (delay = 0U; delay < 20000000U; delay++) {
-        /* ~200ms at 300MHz */
-    }
+    /* 5. Wait 50ms for power to stabilize before releasing reset */
+    for (delay = 0U; delay < 5000000U; delay++) {}
+
+    /* 6. Release reset: GIOA[3]=HIGH */
+    gioPORTA->DSET = (uint32)(1U << 3U);
+
+    /* 7. Wait 200ms for PHY to complete internal initialization
+     * DP83630 requires 167ms post-POR for PLL lock */
+    for (delay = 0U; delay < 20000000U; delay++) {}
 }
 
 /* ================================================================
@@ -642,9 +648,10 @@ int main(void)
         uart_puts("\r\n");
     }
 
-    /* 5. PHY diagnostics + soft reset + auto-negotiate */
+    /* 5. PHY diagnostics + PWRDN defeat + auto-negotiate */
     {
         volatile uint16 phyReg = 0U;
+        volatile uint32 w;
 
         /* Read PHY ID */
         MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 2U, &phyReg);
@@ -657,42 +664,148 @@ int main(void)
         uart_put_hex8((uint8)(phyReg));
         uart_puts("\r\n");
 
-        /* Read PHY BSR (status) */
-        MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 1U, &phyReg);
-        uart_puts("PHY BSR=0x");
+        /* Read initial BMCR to see PWRDN state */
+        MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, &phyReg);
+        uart_puts("BMCR initial=0x");
         uart_put_hex8((uint8)(phyReg >> 8U));
         uart_put_hex8((uint8)(phyReg));
+        uart_puts(" PWRDN=");
+        uart_puts((phyReg & 0x0800U) ? "YES" : "no");
         uart_puts("\r\n");
 
-        /* Test MDIO write capability */
-        uart_puts("MDIO write test: ");
+        /* === PWRDN defeat strategy ===
+         * The DP83630 PWRDN_INT pin is a strap pin: sampled at reset.
+         * If held HIGH during reset, PHY enters power-down mode.
+         * Strategy: toggle hardware reset while trying to influence strap,
+         * then use soft-reset to clear PWRDN. */
+
+        /* Attempt 1: Soft-reset to clear PWRDN strap bits */
+        uart_puts("PHY: soft-reset... ");
+        MDIOPhyRegWrite(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, (uint16)0x8000U);
+        for (w = 0U; w < 10000000U; w++) {}  /* wait 100ms for reset */
         MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, &phyReg);
         uart_puts("BMCR=0x");
         uart_put_hex8((uint8)(phyReg >> 8U));
         uart_put_hex8((uint8)(phyReg));
+        uart_puts("\r\n");
 
-        /* Try writing 0x1100 (auto-neg enable, no powerdown) */
-        MDIOPhyRegWrite(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, (uint16)0x1100U);
-        volatile uint32 w;
+        /* Attempt 2: Explicitly clear PWRDN (bit 11) + enable autoneg */
+        uart_puts("PHY: clear PWRDN + enable autoneg... ");
+        MDIOPhyRegWrite(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, (uint16)0x1000U);
         for (w = 0U; w < 3000000U; w++) {}
         MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, &phyReg);
-        uart_puts(" -> wrote 0x1100, read=0x");
+        uart_puts("BMCR=0x");
         uart_put_hex8((uint8)(phyReg >> 8U));
         uart_put_hex8((uint8)(phyReg));
+        uart_puts(" PWRDN=");
+        uart_puts((phyReg & 0x0800U) ? "STUCK" : "CLEARED");
+        uart_puts("\r\n");
 
-        /* Also try writing ANAR (reg 4) as a writable register test */
-        MDIOPhyRegWrite(MDIO_0_BASE, EMAC_PHYADDRESS, 4U, (uint16)0x01E1U);
+        /* Attempt 3: If PWRDN still stuck, try hardware reset toggle
+         * Hold reset LOW, wait, release — re-sample strap pins */
+        if (phyReg & 0x0800U) {
+            uart_puts("PHY: hw-reset toggle (GIOA3 LOW->HIGH)... ");
+            gioPORTA->DCLR = (uint32)(1U << 3U);  /* assert reset */
+            for (w = 0U; w < 5000000U; w++) {}     /* 50ms reset pulse */
+            gioPORTA->DSET = (uint32)(1U << 3U);   /* release reset */
+            for (w = 0U; w < 20000000U; w++) {}    /* 200ms stabilize */
+
+            MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, &phyReg);
+            uart_puts("BMCR=0x");
+            uart_put_hex8((uint8)(phyReg >> 8U));
+            uart_put_hex8((uint8)(phyReg));
+            uart_puts("\r\n");
+
+            /* One more try: clear PWRDN after fresh HW reset */
+            MDIOPhyRegWrite(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, (uint16)0x1000U);
+            for (w = 0U; w < 3000000U; w++) {}
+            MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, &phyReg);
+            uart_puts("BMCR final=0x");
+            uart_put_hex8((uint8)(phyReg >> 8U));
+            uart_put_hex8((uint8)(phyReg));
+            uart_puts(" PWRDN=");
+            uart_puts((phyReg & 0x0800U) ? "STUCK" : "CLEARED");
+            uart_puts("\r\n");
+        }
+
+        /* Attempt 4: Scan all 32 PHY addresses for alive PHYs
+         * Maybe PHY address isn't 1 */
+        {
+            volatile uint32 *mdio = (volatile uint32 *)0xFCF78900U;
+            uint32 alive = mdio[2];
+            uart_puts("MDIO ALIVE=0x");
+            uart_put_hex8((uint8)(alive >> 24U));
+            uart_put_hex8((uint8)(alive >> 16U));
+            uart_put_hex8((uint8)(alive >> 8U));
+            uart_put_hex8((uint8)(alive));
+            uart_puts(" (bit N=1 means PHY at addr N responds)\r\n");
+        }
+
+        /* Attempt 5: Disable Energy Detect to prevent auto-PWRDN
+         * EDCR (0x1E) — Energy Detect Control Register
+         * Default 0x3F80 may auto-powerdown when no link energy detected.
+         * Clear bits to disable energy detect power-save. */
+        uart_puts("EDCR disable energy detect: ");
+        MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0x1EU, &phyReg);
+        uart_puts("was=0x");
+        uart_put_hex8((uint8)(phyReg >> 8U));
+        uart_put_hex8((uint8)(phyReg));
+        /* Clear all energy detect bits — disable auto-powerdown */
+        MDIOPhyRegWrite(MDIO_0_BASE, EMAC_PHYADDRESS, 0x1EU, (uint16)0x0000U);
         for (w = 0U; w < 3000000U; w++) {}
-        MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 4U, &phyReg);
-        uart_puts(" ANAR=0x");
+        MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0x1EU, &phyReg);
+        uart_puts(" now=0x");
         uart_put_hex8((uint8)(phyReg >> 8U));
         uart_put_hex8((uint8)(phyReg));
         uart_puts("\r\n");
 
+        /* Now try clearing PWRDN again after energy detect is disabled */
+        uart_puts("BMCR clear PWRDN (post-EDCR): ");
+        MDIOPhyRegWrite(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, (uint16)0x1000U);
+        for (w = 0U; w < 5000000U; w++) {}
+        MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, &phyReg);
+        uart_puts("BMCR=0x");
+        uart_put_hex8((uint8)(phyReg >> 8U));
+        uart_put_hex8((uint8)(phyReg));
+        uart_puts(" PWRDN=");
+        uart_puts((phyReg & 0x0800U) ? "STUCK" : "CLEARED!");
+        uart_puts("\r\n");
+
+        /* Also check PHYSTS for power-save bit */
+        MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0x10U, &phyReg);
+        uart_puts("PHYSTS=0x");
+        uart_put_hex8((uint8)(phyReg >> 8U));
+        uart_put_hex8((uint8)(phyReg));
+        uart_puts(" (pwrsave=");
+        uart_puts((phyReg & 0x0002U) ? "YES" : "no");
+        uart_puts(")\r\n");
+
+        /* Full register dump for diagnostics */
+        uart_puts("PHY regs:\r\n");
+        {
+            uint32 reg;
+            for (reg = 0U; reg < 32U; reg++) {
+                MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, reg, &phyReg);
+                if ((reg % 8U) == 0U) {
+                    uart_puts("  ");
+                    uart_put_hex8((uint8)reg);
+                    uart_puts(": ");
+                }
+                uart_put_hex8((uint8)(phyReg >> 8U));
+                uart_put_hex8((uint8)(phyReg));
+                uart_puts(" ");
+                if ((reg % 8U) == 7U) {
+                    uart_puts("\r\n");
+                }
+            }
+        }
+
+        /* Set advertisement: 100TX-FD + 100TX + 10T-FD + 10T */
+        MDIOPhyRegWrite(MDIO_0_BASE, EMAC_PHYADDRESS, 4U, (uint16)0x01E1U);
+
         /* Start auto-negotiation */
         uart_puts("PHY: auto-negotiate... ");
-        phyReg |= 0x1200U; /* AUTONEG_ENABLE | AUTONEG_RESTART */
-        MDIOPhyRegWrite(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, phyReg);
+        MDIOPhyRegWrite(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, (uint16)0x1200U);
 
         /* Wait for link (poll BSR bit 2 for up to 5 seconds) */
         {
@@ -700,7 +813,7 @@ int main(void)
             volatile uint16 bsr = 0U;
             for (tries = 0U; tries < 500U; tries++) {
                 MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 1U, &bsr);
-                if (bsr & 0x0004U) {
+                if ((bsr & 0x0004U) != 0U) {
                     break; /* link up */
                 }
                 volatile uint32 d;
@@ -727,53 +840,46 @@ int main(void)
 
     emac_result = EMACHWInit(g_my_mac);
     if (emac_result != EMAC_ERR_OK) {
-        uart_puts("FAILED (");
+        uart_puts("WARN (");
         uart_put_dec(emac_result);
-        uart_puts(")\r\n");
+        uart_puts(") — EMACHWInit returned error, but EMAC DMA is initialized.\r\n");
 
-        /* Dump MII pinmux registers to check TX path */
+        /* Dump diagnostic registers */
         {
-            uart_puts("PINMUX dump (MII TX/RX path):\r\n");
-            /* EMAC MACCONTROL — check MII enable, duplex, speed */
             volatile uint32 *emac = (volatile uint32 *)0xFCF78000U;
             uart_puts("  MACCONTROL=0x");
             uart_put_hex8((uint8)(emac[0x104U/4U] >> 24U));
             uart_put_hex8((uint8)(emac[0x104U/4U] >> 16U));
             uart_put_hex8((uint8)(emac[0x104U/4U] >> 8U));
             uart_put_hex8((uint8)(emac[0x104U/4U]));
-            uart_puts("\r\n");
-            /* PINMUX[160] — MII vs RMII select */
-            uart_puts("  PINMUX160=0x");
-            uart_put_hex8((uint8)(pinMuxReg->PINMUX[160] >> 24U));
-            uart_put_hex8((uint8)(pinMuxReg->PINMUX[160] >> 16U));
-            uart_put_hex8((uint8)(pinMuxReg->PINMUX[160] >> 8U));
-            uart_put_hex8((uint8)(pinMuxReg->PINMUX[160]));
-            uart_puts("\r\n");
-            /* PHY BMCR (reg 0) — check if PHY is in powerdown or isolate */
+
             volatile uint16 bmcr = 0U;
             MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, &bmcr);
-            uart_puts("  PHY BMCR=0x");
+            uart_puts(" BMCR=0x");
             uart_put_hex8((uint8)(bmcr >> 8U));
             uart_put_hex8((uint8)(bmcr));
             uart_puts(" (pwrdn=");
             uart_puts((bmcr & 0x0800U) ? "YES" : "no");
-            uart_puts(" isolate=");
-            uart_puts((bmcr & 0x0400U) ? "YES" : "no");
-            uart_puts(" loopbk=");
-            uart_puts((bmcr & 0x4000U) ? "YES" : "no");
             uart_puts(")\r\n");
-        }
 
-        /* Blink GIOB[6:7] LEDs to indicate failure */
-        for (;;) {
-            volatile uint32 d;
-            gioPORTB->DSET = (uint32)(1U << 6U) | (uint32)(1U << 7U);
-            for (d = 0U; d < 15000000U; d++) {}
-            gioPORTB->DCLR = (uint32)(1U << 6U) | (uint32)(1U << 7U);
-            for (d = 0U; d < 15000000U; d++) {}
+            /* If PWRDN still stuck, try one last clear and force-continue */
+            if (bmcr & 0x0800U) {
+                uart_puts("  Force-clearing PWRDN post-EMACHWInit...\r\n");
+                MDIOPhyRegWrite(MDIO_0_BASE, EMAC_PHYADDRESS, 0U,
+                                (uint16)(bmcr & ~0x0800U));
+                volatile uint32 d;
+                for (d = 0U; d < 3000000U; d++) {}
+                MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, &bmcr);
+                uart_puts("  BMCR now=0x");
+                uart_put_hex8((uint8)(bmcr >> 8U));
+                uart_put_hex8((uint8)(bmcr));
+                uart_puts("\r\n");
+            }
         }
+        uart_puts("Continuing anyway — EMAC DMA initialized, will attempt packet I/O.\r\n");
+    } else {
+        uart_puts("OK\r\n");
     }
-    uart_puts("OK\r\n");
 
     /* 5. Enable RX/TX interrupts */
     g_hdkif = &hdkif_data[0U];
@@ -794,14 +900,38 @@ int main(void)
     gioPORTB->DSET = (uint32)(1U << 6U) | (uint32)(1U << 7U);
 
     /* 6. Main loop — poll for received packets */
-    for (;;) {
-        if (g_rx_ready != 0U) {
-            process_packet(g_rx_buf, g_rx_len);
-            g_rx_ready = 0U;
-        }
+    {
+        volatile uint32 heartbeat = 0U;
+        for (;;) {
+            if (g_rx_ready != 0U) {
+                process_packet(g_rx_buf, g_rx_len);
+                g_rx_ready = 0U;
+            }
 
-        /* Call EMACReceive to process RX descriptors (polled mode) */
-        EMACReceive(g_hdkif);
+            /* Call EMACReceive to process RX descriptors (polled mode) */
+            EMACReceive(g_hdkif);
+
+            /* Periodic heartbeat every ~5 seconds */
+            heartbeat++;
+            if (heartbeat >= 50000000U) {
+                heartbeat = 0U;
+                uart_puts("[HB] rx=");
+                uart_put_dec(g_rx_count);
+                uart_puts(" tx=");
+                uart_put_dec(g_tx_count);
+                uart_puts(" arp=");
+                uart_put_dec(g_arp_count);
+                uart_puts(" icmp=");
+                uart_put_dec(g_icmp_count);
+
+                /* Check link status */
+                volatile uint16 bsr = 0U;
+                MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 1U, &bsr);
+                uart_puts(" link=");
+                uart_puts((bsr & 0x0004U) ? "UP" : "DOWN");
+                uart_puts("\r\n");
+            }
+        }
     }
 
     return 0;
