@@ -102,13 +102,8 @@ extern const CanIf_ConfigType cvc_canif_config;
  * all Com RX PDU routing. */
 extern const PduR_ConfigType cvc_pdur_config;
 
-/** CanTp configuration — single channel for UDS diagnostics */
-static const CanTp_ConfigType cantp_config = {
-    .rxPduId      = 0u,                    /* CanTp RX channel ID               */
-    .txPduId      = CVC_COM_TX_UDS_RSP,    /* TX frames → CanIf PDU (0x7E8)    */
-    .fcTxPduId    = CVC_COM_TX_UDS_RSP,    /* FC frames → same CAN ID          */
-    .upperRxPduId = 0u,                    /* Dcm RX PDU ID                     */
-};
+/** CanTp configuration — generated from ARXML (CanTp_Cfg_Cvc.c) */
+extern const CanTp_ConfigType cvc_cantp_config;
 
 /** SPI driver configuration — AS5048A angle sensors (CPOL=0, CPHA=1, 16-bit) */
 static const Spi_ConfigType spi_config = {
@@ -375,7 +370,7 @@ int main(void)
     Det_ReportRuntimeError(DET_MODULE_CVC_MAIN, 0u, MAIN_API_INIT, DET_E_DBG_CAN_INIT_OK);
     CanIf_Init(&canif_config);
     PduR_Init(&cvc_pdur_config);
-    CanTp_Init(&cantp_config);
+    CanTp_Init(&cvc_cantp_config);
     Com_Init(&cvc_com_config);
     E2E_Init();
     Dem_Init(NULL_PTR);

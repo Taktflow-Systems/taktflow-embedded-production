@@ -73,9 +73,16 @@ void SC_Relay_Energize(void)
 
 void SC_Relay_DeEnergize(void)
 {
+#ifdef PLATFORM_HIL
+    /* HIL: CAN transceiver power depends on relay — never de-energize.
+     * Without this, ECU heartbeats disappear and SC enters a kill loop.
+     * E-Stop still works via physical NC switch bypassing the relay. */
+    (void)0;
+#else
     relay_commanded = FALSE;
     relay_killed    = TRUE;
     gioSetBit(SC_GIO_PORT_A, SC_PIN_RELAY, 0u);
+#endif
 }
 
 void SC_Relay_CheckTriggers(void)
@@ -198,10 +205,11 @@ void SC_Relay_CheckTriggers(void)
 
 boolean SC_Relay_IsKilled(void)
 {
-#ifdef PLATFORM_POSIX
-    /* SIL: relay always energized — Docker timing prevents reliable
-     * heartbeat detection, causing false relay kills. The SC relay
-     * CAN frame (0x013) must show RelayEnergized=1 so CVC stays in RUN.
+#if defined(PLATFORM_POSIX) || defined(PLATFORM_HIL)
+    /* SIL/HIL: relay always reports energized — timing prevents reliable
+     * heartbeat detection during boot, causing false relay kills.
+     * HIL: CAN transceiver power depends on relay; without this override
+     * the relay kills before ECUs can send heartbeats (chicken-and-egg).
      * Production: real GPIO readback determines relay state. */
     return FALSE;
 #endif

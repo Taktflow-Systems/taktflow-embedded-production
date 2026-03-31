@@ -247,7 +247,7 @@ void Main_Hw_SystemClockInit(void)
 
     /* Initialize debug UART at 170 MHz clock rate */
     Dbg_Uart_Init();
-    Dbg_Uart_Print("\r\n=== RZC Boot (PLL 170 MHz) ===\r\n");
+    Dbg_Uart_Print("\r\n=== RZC Boot (PLL 170 MHz) [" GIT_HASH "] ===\r\n");
 }
 
 /**

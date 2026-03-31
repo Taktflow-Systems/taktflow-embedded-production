@@ -118,6 +118,12 @@ void SC_Heartbeat_Monitor(void)
     }
 
     for (i = 0u; i < SC_ECU_COUNT; i++) {
+#ifdef PLATFORM_HIL
+        /* HIL: skip FZC monitoring — FZC CAN transceiver not wired yet */
+        if (i == SC_ECU_FZC) {
+            continue;
+        }
+#endif
         /* Skip if already confirmed (latched) */
         if (hb_confirmed[i] == TRUE) {
             continue;

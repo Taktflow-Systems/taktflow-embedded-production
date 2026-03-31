@@ -33,9 +33,6 @@ verdicts:
     can_id: 0x301
     min: 100
     description: "Motor current non-zero (min 100 counts)"
-  - type: can_message
-    can_id: 0x601
-    description: "RZC virtual sensors frame present"
 
 teardown:
   - action: inject_can

@@ -27,9 +27,11 @@ static const CanIf_TxPduConfigType cvc_tx_pdu_config[] = {
     { 0x350u,  CVC_COM_TX_BODY_CONTROL_CMD,  4u, 0u },
     { 0x500u,  CVC_COM_TX_DTC_BROADCAST,  8u, 0u },
     { 0x551u,  CVC_COM_TX_XCP_RESP_CVC,  8u, 0u },
-    /* 0x600/0x601 virtual sensors REMOVED — plant-sim is sole sender.
-     * CVC was sending 0-initialized frames that overwrote plant-sim's
-     * real physics data, causing RZC to see 0mV battery → UV cascade. */
+    /* 0x600/0x601 virtual sensors — kept as placeholders for PDU index
+     * consistency with Cvc_Cfg.h defines. Com_Cfg marks them TX_MODE_NONE
+     * so no periodic transmission occurs. Plant-sim is the sole sender. */
+    { 0x600u,  CVC_COM_TX_FZC_VIRTUAL_SENSORS,  8u, 0u },
+    { 0x601u,  CVC_COM_TX_RZC_VIRTUAL_SENSORS,  8u, 0u },
     { 0x7E8u,  CVC_COM_TX_UDS_RESP_CVC,  8u, 0u },
 };
 

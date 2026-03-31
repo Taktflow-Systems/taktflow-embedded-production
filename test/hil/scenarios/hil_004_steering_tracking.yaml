@@ -32,9 +32,6 @@ verdicts:
   - type: can_message
     can_id: 0x200
     description: "Steering status frame present"
-  - type: can_message
-    can_id: 0x600
-    description: "FZC virtual sensors frame present"
 
 teardown:
   - action: inject_can

@@ -134,7 +134,7 @@ int main(void)
     /* gioInit() resets DIRB/DOUTB, turning off GIOB[6:7] user LEDs.
      * Re-enable them so they stay ON as a "firmware running" indicator. */
     sc_het_led_on();
-    sc_sci_puts("=== SC Boot ===\r\n");
+    sc_sci_puts("=== SC Boot [" GIT_HASH "] ===\r\n");
     sc_sci_puts("main() reached OK\r\n");
 
     /* GAP-SC-005: CCM/ESM register dump (MMIO reads on target, no-op on POSIX) */

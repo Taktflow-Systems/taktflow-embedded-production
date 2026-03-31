@@ -22,10 +22,14 @@ SZ  = $(TI_CGT_DIR)/bin/tiarmsize
 # --- MCU flags (TMS570LC4357 = Cortex-R5F, VFPv3-D16, hard float, big-endian) ---
 MCU_FLAGS = -mcpu=cortex-r5 -marm -mfpu=vfpv3-d16 -mfloat-abi=hard -mbig-endian
 
+# --- Git hash (embedded in firmware for traceability) ---
+GIT_HASH := $(shell git rev-parse --short=8 HEAD 2>/dev/null || echo "unknown")
+
 # --- Common compiler flags (shared by HALCoGen and SC) ---
 COMMON_CFLAGS  = $(MCU_FLAGS)
 COMMON_CFLAGS += -std=c99
 COMMON_CFLAGS += -DPLATFORM_TMS570
+COMMON_CFLAGS += -DGIT_HASH=\"$(GIT_HASH)\"
 COMMON_CFLAGS += -fdata-sections -ffunction-sections
 
 # --- Build mode (default: debug for bring-up phase) ---

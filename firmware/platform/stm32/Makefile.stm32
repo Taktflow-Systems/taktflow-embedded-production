@@ -28,10 +28,14 @@ OCD     = openocd
 # --- MCU flags (STM32G474RE = Cortex-M4 with FPU) ---
 MCU_FLAGS  = -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 
+# --- Git hash (embedded in firmware for traceability) ---
+GIT_HASH := $(shell git rev-parse --short=8 HEAD 2>/dev/null || echo "unknown")
+
 # --- Compiler flags ---
 CFLAGS  = $(MCU_FLAGS)
 CFLAGS += -Wall -Wextra -Werror -std=c99
 CFLAGS += -DPLATFORM_STM32 -DSTM32G474xx -DUSE_HAL_DRIVER -DUSE_NUCLEO_64 -DCANTP_ENABLED
+CFLAGS += -DGIT_HASH=\"$(GIT_HASH)\"
 CFLAGS += -fdata-sections -ffunction-sections
 
 # --- Build mode (default: debug for bring-up phase) ---
@@ -79,7 +83,7 @@ FW        = firmware
 BSW       = $(FW)/bsw
 ECU       = $(FW)/ecu
 PLAT      = $(FW)/platform/stm32
-BUILD_DIR = build/stm32
+BUILD_DIR = build/stm32/$(TARGET)
 
 # --- CubeMX generated project paths ---
 # CubeMX output lives in the CVC ECU cfg dir (all 3 ECUs share STM32G474RETx).
