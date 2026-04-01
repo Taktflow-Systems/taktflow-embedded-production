@@ -70,6 +70,9 @@
 /** Max DTC slots for reporting */
 #define CVCDCM_MAX_DTC_SLOTS          20u
 
+/** Deferred reset delay: cycles of MainFunction (10ms each) before NVIC_SystemReset */
+#define CVCDCM_RESET_DELAY_CYCLES      5u
+
 /* ==================================================================
  * Types
  * ================================================================== */
@@ -129,5 +132,10 @@ Std_ReturnType Swc_CvcDcm_ReportDtc(uint8* dtcBuffer, uint8 maxEntries,
  * @return E_OK on success
  */
 Std_ReturnType Swc_CvcDcm_ClearDtc(void);
+
+/**
+ * @brief  10ms cyclic — handles deferred MCU reset after ECUReset service
+ */
+void Swc_CvcDcm_MainFunction(void);
 
 #endif /* SWC_CVCDCM_H */

@@ -200,7 +200,6 @@ static uint8 Main_RunSelfTest(void)
     /* Item 1: Plant stack canary for stack overflow detection */
     Main_Hw_PlantStackCanary();
 
-#ifndef PLATFORM_HIL
     /* Item 2: BTS7960 GPIO toggle — verify R_EN/L_EN control path */
     if (Main_Hw_Bts7960GpioTest() != E_OK)
     {
@@ -228,7 +227,6 @@ static uint8 Main_RunSelfTest(void)
         Dem_ReportErrorStatus(RZC_DTC_ENCODER, DEM_EVENT_STATUS_FAILED);
         return RZC_SELF_TEST_FAIL;
     }
-#endif /* !PLATFORM_HIL — sensors not present on HIL bench */
 
     /* Item 6: CAN loopback — CAN controller self-test */
     if (Main_Hw_CanLoopbackTest() != E_OK)

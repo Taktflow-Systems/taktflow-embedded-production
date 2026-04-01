@@ -28,6 +28,10 @@
 #include "Dem.h"
 #include "Rte.h"
 
+#ifdef PLATFORM_STM32
+#include "stm32g4xx.h"       /* NVIC_SystemReset() */
+#endif
+
 /* ==================================================================
  * Supported UDS Service Table
  * ================================================================== */
@@ -69,6 +73,9 @@ static uint8   CvcDcm_Initialized;
 /* DTC RAM storage */
 static uint8   CvcDcm_DtcStatus[CVCDCM_MAX_DTC_SLOTS];
 static uint8   CvcDcm_DtcCount;
+
+/* Deferred MCU reset countdown (0 = no pending reset) */
+static uint8   CvcDcm_ResetPending;
 
 /* Software version string (fixed) */
 static const uint8 CvcDcm_SwVersion[4] = { 0x01u, 0x00u, 0x00u, 0x00u };
@@ -125,7 +132,8 @@ void Swc_CvcDcm_Init(void)
         CvcDcm_DtcStatus[i] = 0u;
     }
 
-    CvcDcm_DtcCount   = 0u;
+    CvcDcm_DtcCount    = 0u;
+    CvcDcm_ResetPending = 0u;
     CvcDcm_Initialized = TRUE;
 }
 
@@ -246,6 +254,18 @@ Std_ReturnType Swc_CvcDcm_ProcessRequest(const Swc_CvcDcm_RequestType* request,
             break;
         }
 
+        case CVCDCM_SID_ECU_RESET:
+        {
+            /* Positive response first, then schedule deferred MCU reset.
+             * Countdown of 5 cycles (50ms at 10ms) allows Dcm to send
+             * the response on CAN before NVIC_SystemReset() fires. */
+            response->data[0] = sid + 0x40u;
+            response->data[1] = (request->length >= 2u) ? request->data[1] : 0x01u;
+            response->length  = 2u;
+            CvcDcm_ResetPending = CVCDCM_RESET_DELAY_CYCLES;
+            break;
+        }
+
         default:
         {
             /* Other supported services: positive response stub */
@@ -256,6 +276,24 @@ Std_ReturnType Swc_CvcDcm_ProcessRequest(const Swc_CvcDcm_RequestType* request,
     }
 
     return E_OK;
+}
+
+/* ==================================================================
+ * API: Swc_CvcDcm_MainFunction (10ms cyclic — deferred reset)
+ * ================================================================== */
+
+void Swc_CvcDcm_MainFunction(void)
+{
+    if (CvcDcm_ResetPending > 0u)
+    {
+        CvcDcm_ResetPending--;
+        if (CvcDcm_ResetPending == 0u)
+        {
+#ifdef PLATFORM_STM32
+            NVIC_SystemReset();
+#endif
+        }
+    }
 }
 
 /* ==================================================================

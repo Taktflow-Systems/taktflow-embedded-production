@@ -32,6 +32,7 @@
 #include "WdgM.h"
 #include "BswM.h"
 #include "Dcm.h"
+#include "Swc_CvcDcm.h"
 #include "CanTp.h"
 #include "CanSM.h"
 #include "FiM.h"
@@ -322,6 +323,7 @@ void Timer_10ms_Callback(ULONG arg)
     (void)arg;
     Swc_CvcCom_TransmitSchedule(Main_Hw_GetTick() / 1000u);
     Dcm_MainFunction();
+    Swc_CvcDcm_MainFunction();
     BswM_MainFunction();
     CanSM_MainFunction();
 }
@@ -399,6 +401,7 @@ int main(void)
     Swc_Heartbeat_Init();
     Swc_Dashboard_Init();
     Swc_CvcCom_Init();
+    Swc_CvcDcm_Init();
     Det_ReportRuntimeError(DET_MODULE_CVC_MAIN, 0u, MAIN_API_INIT, DET_E_DBG_SWC_INIT_OK);
 
     /* ---- Step 4: Self-test sequence ---- */
@@ -456,6 +459,7 @@ int main(void)
             Swc_CvcCom_TransmitSchedule(tick_us / 1000u);
             CanTp_MainFunction();
             Dcm_MainFunction();
+            Swc_CvcDcm_MainFunction();
             BswM_MainFunction();
             CanSM_MainFunction();
         }
