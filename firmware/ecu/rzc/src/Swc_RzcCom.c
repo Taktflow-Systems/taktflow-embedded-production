@@ -54,8 +54,13 @@
 /** E2E consecutive failure threshold for safe default */
 #define RZCCOM_E2E_FAIL_LIMIT    3u
 
-/** Torque command timeout in 10ms cycles: 100ms / 10ms = 10 */
+/** Torque command timeout in 10ms cycles.
+ *  Production: 10 (100ms). SIL: 50 (500ms) to absorb Docker jitter. */
+#ifdef SIL_DIAG
+#define RZCCOM_TORQUE_TIMEOUT   50u
+#else
 #define RZCCOM_TORQUE_TIMEOUT   10u
+#endif
 
 /** Heartbeat TX period in 10ms cycles: 50ms / 10ms = 5 */
 #define RZCCOM_HB_PERIOD         5u
@@ -81,6 +86,9 @@ static uint8   RzcCom_RxFailCount[RZCCOM_ALIVE_SLOTS];
 
 /** Torque command timeout counter (10ms cycles since last valid RX) */
 static uint16  RzcCom_TorqueTimeout;
+
+/** Last torque value read — used to detect new commands (including 0%) */
+static uint32  RzcCom_LastTorqueRaw;
 
 /** Heartbeat TX cycle counter */
 static uint8   RzcCom_HbCycleCount;
@@ -356,10 +364,13 @@ void Swc_RzcCom_Receive(void)
     new_torque_received = FALSE;
     (void)Rte_Read(RZC_SIG_TORQUE_CMD, &torque_raw);
 
-    /* Detect new torque command (simplified: any non-zero read) */
-    if (torque_raw != 0u)
+    /* Detect new torque command: value changed since last read.
+     * Using != 0 missed legitimate 0% commands and new non-zero
+     * commands that arrive with the same value as init (0). */
+    if (torque_raw != RzcCom_LastTorqueRaw)
     {
         new_torque_received = TRUE;
+        RzcCom_LastTorqueRaw = torque_raw;
     }
 
     /* Torque command timeout: 100ms with no new command */

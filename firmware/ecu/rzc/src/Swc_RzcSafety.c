@@ -67,7 +67,13 @@
 #define CAN_SILENCE_CYCLES      20u
 
 /** CAN error warning threshold in 10ms cycles: 500ms / 10ms = 50 */
+/** CAN error warning threshold in 10ms cycles.
+ *  Production: 50 (500ms). SIL: 500 (5s) to avoid racing E2E DTCs. */
+#ifdef SIL_DIAG
+#define CAN_ERR_WARN_CYCLES    500u
+#else
 #define CAN_ERR_WARN_CYCLES     50u
+#endif
 
 /** CAN controller ID (only one CAN controller on RZC) */
 #define CAN_CONTROLLER_0        0u

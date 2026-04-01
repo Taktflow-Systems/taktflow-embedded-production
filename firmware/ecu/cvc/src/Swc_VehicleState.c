@@ -234,12 +234,12 @@ static uint16 safe_stop_clear_count;
 static uint16 post_init_grace_counter;
 
 /** @brief  CAN timeout debounce — consecutive timeout cycles before fault.
- *          Production: 50 cycles (500ms). SIL: 500 cycles (5s) to absorb
+ *          Production: 50 cycles (500ms). SIL: 200 cycles (2s) to absorb
  *          Docker container scheduling jitter on heartbeat delivery. */
 #ifdef SIL_DIAG
-#define CAN_TMO_DEBOUNCE_THRESHOLD  3000u  /* 30s — VPS shared CPU jitter */
+#define CAN_TMO_DEBOUNCE_THRESHOLD   200u  /* 2s — Docker jitter margin */
 #else
-#define CAN_TMO_DEBOUNCE_THRESHOLD   50u
+#define CAN_TMO_DEBOUNCE_THRESHOLD    50u
 #endif
 static uint16 can_tmo_debounce;
 
