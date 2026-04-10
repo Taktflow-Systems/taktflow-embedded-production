@@ -55,6 +55,9 @@ docker/certs/
 .tmp_*/
 tmp/
 
+# CodeQL artifacts (symlinks that cause infinite nesting)
+_codeql_detected_source_root
+
 # Generated codegen output (reproducible via tools/arxmlgen)
 generated/
 
