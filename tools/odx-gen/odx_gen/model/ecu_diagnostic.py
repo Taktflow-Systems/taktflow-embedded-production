@@ -14,9 +14,9 @@ from typing import Optional
 class DidEntry:
     """A single Data Identifier entry, parsed from a Dcm_Cfg_<Ecu>.c row."""
 
-    did_id: int                # 16-bit DID, e.g. 0xF190
+    did_id: int                # 16-bit DID, parsed from a hex literal
     name: str                  # parsed from trailing /* comment */, may be ""
-    callback: str              # C function name, e.g. "Dcm_ReadDid_EcuId"
+    callback: str              # C function name of the read callback
     length_bytes: int          # data length in bytes
     source_file: str           # absolute path to the parsed Dcm_Cfg_*.c
     source_line: int           # 1-based line number in source_file
@@ -26,8 +26,8 @@ class DidEntry:
 class ServiceEntry:
     """A UDS service id implemented by Dcm.c."""
 
-    sid: int                   # service id, e.g. 0x22
-    name: str                  # canonical name, e.g. "ReadDataByIdentifier"
+    sid: int                   # service id, parsed from a #define DCM_SID_*
+    name: str                  # canonical UDS service name
     source_file: str           # absolute path to Dcm.c (or Dcm.h for SID macro)
     source_line: int
 
