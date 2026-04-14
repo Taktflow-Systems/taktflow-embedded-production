@@ -106,6 +106,9 @@ BSW_SRCS = \
     $(BSW)/ecual/IoHwAb/src/IoHwAb_Posix.c \
     $(BSW)/services/Com/src/Com.c \
     $(BSW)/services/Dcm/src/Dcm.c \
+    $(BSW)/services/Dcm/src/Dcm_ReadDtcInfo.c \
+    $(BSW)/services/Dcm/src/Dcm_ClearDtc.c \
+    $(BSW)/services/Dcm/src/Dcm_RoutineControl.c \
     $(BSW)/services/Dem/src/Dem.c \
     $(BSW)/services/E2E/src/E2E.c \
     $(BSW)/services/E2E/src/E2E_Sm.c \

@@ -122,7 +122,7 @@ $(TEST_DIR)/build:
 # det_dep/schm_dep conditionally include Det.c/SchM.c (excluded when module IS that module).
 $(TEST_DIR)/build/test_%: $(TEST_DIR)/test_%.c $(UNITY_SRC) | $(TEST_DIR)/build
 	$(CC) $(CFLAGS) $(COV_CFLAGS) -I$(TEST_DIR)/mocks \
-		$< $(call find_source,$(call strip_asil,$*)) $(call det_dep,$*) $(call schm_dep,$*) $(UNITY_SRC) -o $@ $(COV_LDFLAGS)
+		$< $(call find_source,$(call strip_asil,$*)) $(call extra_srcs,$*) $(call det_dep,$*) $(call schm_dep,$*) $(UNITY_SRC) -o $@ $(COV_LDFLAGS)
 
 # Helper: strip ASIL suffix from module name (e.g., Can_asild -> Can)
 strip_asil = $(patsubst %_asild,%,$(patsubst %_asilc,%,$(patsubst %_asilb,%,$(patsubst %_asila,%,$(patsubst %_qm,%,$(1))))))
@@ -133,6 +133,8 @@ strip_asil = $(patsubst %_asild,%,$(patsubst %_asilc,%,$(patsubst %_asilb,%,$(pa
 define find_source
 $(or $(wildcard $(MCAL_DIR)/$(1)/src/$(1).c),$(wildcard $(ECUAL_DIR)/$(1)/src/$(1).c),$(wildcard $(SERVICES_DIR)/$(1)/src/$(1).c),$(wildcard $(RTE_DIR)/$(1)/src/$(1).c),$(wildcard $(RTE_DIR)/src/$(1).c),$(wildcard $(MCAL_DIR)/*/src/$(1).c),$(wildcard $(ECUAL_DIR)/*/src/$(1).c),$(wildcard $(SERVICES_DIR)/*/src/$(1).c),$(wildcard $(RTE_DIR)/*/src/$(1).c))
 endef
+
+extra_srcs = $(if $(filter Dcm,$(call strip_asil,$(1))),$(SERVICES_DIR)/Dcm/src/Dcm_ReadDtcInfo.c $(SERVICES_DIR)/Dcm/src/Dcm_ClearDtc.c $(SERVICES_DIR)/Dcm/src/Dcm_RoutineControl.c,)
 
 # Helper: return DET_SRC unless the module IS Det (avoids double-linking)
 det_dep = $(if $(filter Det,$(call strip_asil,$(1))),,$(DET_SRC))

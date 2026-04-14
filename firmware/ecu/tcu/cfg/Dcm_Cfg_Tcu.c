@@ -169,4 +169,6 @@ const Dcm_ConfigType tcu_dcm_config = {
     .DidCount    = (uint8)(sizeof(tcu_did_table) / sizeof(tcu_did_table[0])),
     .TxPduId     = TCU_COM_TX_UDS_RSP,
     .S3TimeoutMs = 5000u,
+    .RoutineTable = NULL_PTR,
+    .RoutineCount = 0u,
 };

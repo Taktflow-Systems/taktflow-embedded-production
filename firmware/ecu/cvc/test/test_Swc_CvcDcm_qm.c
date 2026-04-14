@@ -41,6 +41,7 @@ typedef uint8           Std_ReturnType;
 #define CVCDCM_SID_TESTER_PRESENT     0x3Eu
 
 #define CVCDCM_NUM_SERVICES             8u
+#define CVCDCM_RESET_DELAY_CYCLES       5u
 
 #define CVCDCM_DID_SW_VERSION        0xF190u
 #define CVCDCM_DID_VEHICLE_STATE     0xF010u
