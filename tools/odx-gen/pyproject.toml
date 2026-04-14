@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "odx-gen"
+version = "0.1.0"
+description = "Generate ODX PDX files by parsing Taktflow firmware C config sources"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Proprietary" }
+authors = [
+    { name = "Taktflow Systems" },
+]
+dependencies = [
+    "odxtools>=11.0,<12.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+odx-gen = "odx_gen.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["odx_gen*"]
+
+[tool.setuptools.package-data]
+odx_gen = ["data/*.json"]
