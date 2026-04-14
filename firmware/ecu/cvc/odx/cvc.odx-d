@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ODX-D MODEL-VERSION="2.2.0">
+  <DIAG-LAYER-CONTAINER ID="DLC.CVC.SOVD.DRAFT">
+    <SHORT-NAME>CVC_SOVD_DRAFT</SHORT-NAME>
+    <LONG-NAME>CVC draft ODX for SOVD Phase 0</LONG-NAME>
+    <DESC>
+      <L-2 L="EN">Draft CVC ODX. Structured and parseable, but not yet validated against ASAM XSD.</L-2>
+    </DESC>
+
+    <DIAG-LAYERS>
+      <BASE-VARIANT ID="BV.CVC.GENERIC_DCM">
+        <SHORT-NAME>CVC_GENERIC_DCM</SHORT-NAME>
+        <LONG-NAME>CVC generic BSW DCM surface</LONG-NAME>
+        <DESC>
+          <L-2 L="EN">This draft models the generic BSW DCM surface from firmware/bsw/services/Dcm plus the CVC DID cfg. The repo also contains an ECU-local Swc_CvcDcm with a broader service set; that local stack is not the source of truth for this draft.</L-2>
+        </DESC>
+
+        <COMMUNICATION-PARAMETERS>
+          <CAN-PHYSICAL-REQUEST-ID>0x7E0</CAN-PHYSICAL-REQUEST-ID>
+          <CAN-PHYSICAL-RESPONSE-ID>0x7E8</CAN-PHYSICAL-RESPONSE-ID>
+          <CAN-FUNCTIONAL-REQUEST-ID>0x7DF</CAN-FUNCTIONAL-REQUEST-ID>
+          <TRANSPORT-PROTOCOL>ISO-TP</TRANSPORT-PROTOCOL>
+        </COMMUNICATION-PARAMETERS>
+
+        <DIAG-COMMS>
+          <DIAG-SERVICE ID="DS.CVC.10">
+            <SHORT-NAME>DiagnosticSessionControl</SHORT-NAME>
+            <SERVICE-ID>0x10</SERVICE-ID>
+            <STATUS>implemented</STATUS>
+            <REQUEST>
+              <BYTE-POSITION INDEX="0">0x10</BYTE-POSITION>
+              <BYTE-POSITION INDEX="1">subFunction</BYTE-POSITION>
+            </REQUEST>
+            <POS-RESPONSE>
+              <BYTE-POSITION INDEX="0">0x50</BYTE-POSITION>
+              <BYTE-POSITION INDEX="1">subFunction</BYTE-POSITION>
+            </POS-RESPONSE>
+            <NEG-RESPONSE>
+              <FORMAT>0x7F 0x10 NRC</FORMAT>
+            </NEG-RESPONSE>
+            <SUBFUNCTIONS>
+              <SUBFUNCTION CODE="0x01" NAME="defaultSession"/>
+              <SUBFUNCTION CODE="0x03" NAME="extendedSession"/>
+            </SUBFUNCTIONS>
+          </DIAG-SERVICE>
+
+          <DIAG-SERVICE ID="DS.CVC.11">
+            <SHORT-NAME>ECUReset</SHORT-NAME>
+            <SERVICE-ID>0x11</SERVICE-ID>
+            <STATUS>implemented</STATUS>
+            <REQUEST>
+              <BYTE-POSITION INDEX="0">0x11</BYTE-POSITION>
+              <BYTE-POSITION INDEX="1">resetType</BYTE-POSITION>
+            </REQUEST>
+            <POS-RESPONSE>
+              <BYTE-POSITION INDEX="0">0x51</BYTE-POSITION>
+              <BYTE-POSITION INDEX="1">resetType</BYTE-POSITION>
+            </POS-RESPONSE>
+            <SUBFUNCTIONS>
+              <SUBFUNCTION CODE="0x01" NAME="hardReset"/>
+              <SUBFUNCTION CODE="0x03" NAME="softReset"/>
+            </SUBFUNCTIONS>
+          </DIAG-SERVICE>
+
+          <DIAG-SERVICE ID="DS.CVC.22">
+            <SHORT-NAME>ReadDataByIdentifier</SHORT-NAME>
+            <SERVICE-ID>0x22</SERVICE-ID>
+            <STATUS>implemented</STATUS>
+            <REQUEST>
+              <BYTE-POSITION INDEX="0">0x22</BYTE-POSITION>
+              <BYTE-POSITION INDEX="1">didHigh</BYTE-POSITION>
+              <BYTE-POSITION INDEX="2">didLow</BYTE-POSITION>
+            </REQUEST>
+            <POS-RESPONSE>
+              <BYTE-POSITION INDEX="0">0x62</BYTE-POSITION>
+              <BYTE-POSITION INDEX="1">didHigh</BYTE-POSITION>
+              <BYTE-POSITION INDEX="2">didLow</BYTE-POSITION>
+              <BYTE-POSITION INDEX="3">data...</BYTE-POSITION>
+            </POS-RESPONSE>
+            <SUPPORTED-DIDS>
+              <DID-REF REF-ID="DID.CVC.F010"/>
+              <DID-REF REF-ID="DID.CVC.F190"/>
+              <DID-REF REF-ID="DID.CVC.F191"/>
+              <DID-REF REF-ID="DID.CVC.F195"/>
+            </SUPPORTED-DIDS>
+          </DIAG-SERVICE>
+
+          <DIAG-SERVICE ID="DS.CVC.27">
+            <SHORT-NAME>SecurityAccess</SHORT-NAME>
+            <SERVICE-ID>0x27</SERVICE-ID>
+            <STATUS>implemented</STATUS>
+            <REQUEST>
+              <BYTE-POSITION INDEX="0">0x27</BYTE-POSITION>
+              <BYTE-POSITION INDEX="1">subFunction</BYTE-POSITION>
+              <BYTE-POSITION INDEX="2">seedOrKey...</BYTE-POSITION>
+            </REQUEST>
+            <POS-RESPONSE>
+              <BYTE-POSITION INDEX="0">0x67</BYTE-POSITION>
+              <BYTE-POSITION INDEX="1">subFunction</BYTE-POSITION>
+            </POS-RESPONSE>
+            <SUBFUNCTIONS>
+              <SUBFUNCTION CODE="0x01" NAME="requestSeed" DATA-LENGTH="4"/>
+              <SUBFUNCTION CODE="0x02" NAME="sendKey" DATA-LENGTH="4"/>
+            </SUBFUNCTIONS>
+            <SESSION-PRECONDITION>extendedSession</SESSION-PRECONDITION>
+          </DIAG-SERVICE>
+
+          <DIAG-SERVICE ID="DS.CVC.3E">
+            <SHORT-NAME>TesterPresent</SHORT-NAME>
+            <SERVICE-ID>0x3E</SERVICE-ID>
+            <STATUS>implemented</STATUS>
+            <REQUEST>
+              <BYTE-POSITION INDEX="0">0x3E</BYTE-POSITION>
+              <BYTE-POSITION INDEX="1">subFunction</BYTE-POSITION>
+            </REQUEST>
+            <POS-RESPONSE>
+              <BYTE-POSITION INDEX="0">0x7E</BYTE-POSITION>
+              <BYTE-POSITION INDEX="1">0x00 or request without suppress bit</BYTE-POSITION>
+            </POS-RESPONSE>
+            <NOTES>
+              <NOTE>Suppress positive response bit 0x80 is accepted by the generic DCM.</NOTE>
+            </NOTES>
+          </DIAG-SERVICE>
+
+          <DIAG-SERVICE ID="DS.CVC.19">
+            <SHORT-NAME>ReadDTCInformation</SHORT-NAME>
+            <SERVICE-ID>0x19</SERVICE-ID>
+            <STATUS>placeholder</STATUS>
+            <DESC>
+              <L-2 L="EN">Planned for Phase 1. Generic BSW DCM has no handler yet. Generic DEM also lacks filter APIs expected by a standards-shaped implementation.</L-2>
+            </DESC>
+          </DIAG-SERVICE>
+
+          <DIAG-SERVICE ID="DS.CVC.14">
+            <SHORT-NAME>ClearDiagnosticInformation</SHORT-NAME>
+            <SERVICE-ID>0x14</SERVICE-ID>
+            <STATUS>placeholder</STATUS>
+            <DESC>
+              <L-2 L="EN">Planned for Phase 1. Generic BSW DCM has no handler yet. Generic DEM currently only exposes Dem_ClearAllDTCs().</L-2>
+            </DESC>
+          </DIAG-SERVICE>
+
+          <DIAG-SERVICE ID="DS.CVC.31">
+            <SHORT-NAME>RoutineControl</SHORT-NAME>
+            <SERVICE-ID>0x31</SERVICE-ID>
+            <STATUS>placeholder</STATUS>
+            <DESC>
+              <L-2 L="EN">Planned for Phase 1. Intended routines include motor self-test and brake check. No generic routine registry exists yet in BSW DCM.</L-2>
+            </DESC>
+          </DIAG-SERVICE>
+        </DIAG-COMMS>
+
+        <DATA-DICTIONARY-SPEC>
+          <DIDS>
+            <DID ID="DID.CVC.F010">
+              <SHORT-NAME>VehicleState</SHORT-NAME>
+              <DID-NUMBER>0xF010</DID-NUMBER>
+              <BYTE-LENGTH>1</BYTE-LENGTH>
+              <DATA-TYPE>u8 enum</DATA-TYPE>
+              <SOURCE>firmware/ecu/cvc/cfg/Dcm_Cfg_Cvc.c</SOURCE>
+            </DID>
+
+            <DID ID="DID.CVC.F190">
+              <SHORT-NAME>EcuIdentifier</SHORT-NAME>
+              <DID-NUMBER>0xF190</DID-NUMBER>
+              <BYTE-LENGTH>4</BYTE-LENGTH>
+              <DATA-TYPE>ASCII[4]</DATA-TYPE>
+              <SOURCE>firmware/ecu/cvc/cfg/Dcm_Cfg_Cvc.c</SOURCE>
+            </DID>
+
+            <DID ID="DID.CVC.F191">
+              <SHORT-NAME>HardwareVersion</SHORT-NAME>
+              <DID-NUMBER>0xF191</DID-NUMBER>
+              <BYTE-LENGTH>3</BYTE-LENGTH>
+              <DATA-TYPE>u8[3]</DATA-TYPE>
+              <SOURCE>firmware/ecu/cvc/cfg/Dcm_Cfg_Cvc.c</SOURCE>
+            </DID>
+
+            <DID ID="DID.CVC.F195">
+              <SHORT-NAME>SoftwareVersion</SHORT-NAME>
+              <DID-NUMBER>0xF195</DID-NUMBER>
+              <BYTE-LENGTH>3</BYTE-LENGTH>
+              <DATA-TYPE>u8[3]</DATA-TYPE>
+              <SOURCE>firmware/ecu/cvc/cfg/Dcm_Cfg_Cvc.c</SOURCE>
+            </DID>
+          </DIDS>
+        </DATA-DICTIONARY-SPEC>
+
+        <NEG-RESPONSE-CODES>
+          <NRC CODE="0x11" NAME="serviceNotSupported"/>
+          <NRC CODE="0x12" NAME="subFunctionNotSupported"/>
+          <NRC CODE="0x13" NAME="incorrectMessageLengthOrInvalidFormat"/>
+          <NRC CODE="0x31" NAME="requestOutOfRange"/>
+          <NRC CODE="0x33" NAME="securityAccessDenied"/>
+          <NRC CODE="0x35" NAME="invalidKey"/>
+          <NRC CODE="0x36" NAME="exceededNumberOfAttempts"/>
+        </NEG-RESPONSE-CODES>
+      </BASE-VARIANT>
+    </DIAG-LAYERS>
+  </DIAG-LAYER-CONTAINER>
+</ODX-D>
