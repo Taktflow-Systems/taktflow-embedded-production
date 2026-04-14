@@ -14,6 +14,8 @@ authors = [
 ]
 dependencies = [
     "odxtools>=11.0,<12.0",
+    "cantools>=39.0",
+    "PyYAML>=6.0",
 ]
 
 [project.optional-dependencies]
@@ -29,4 +31,4 @@ where = ["."]
 include = ["odx_gen*"]
 
 [tool.setuptools.package-data]
-odx_gen = ["data/*.json"]
+odx_gen = ["data/*.json", "data/*.yaml", "config/*.yaml"]
