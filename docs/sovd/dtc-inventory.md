@@ -30,40 +30,42 @@ That means event IDs `0..17` inherit the default `dem_dtc_codes[]` array from
 
 So the numeric mapping below is real for this checkout, but the inline comments in `Dem.c` are not
 the source of truth for CVC event semantics. The source of truth for the event names is the CVC
-headers, and those names do not fully line up with the generic `Dem.c` comments.
+headers, and those names do not fully line up with the generic `Dem.c` comments. CVC now remaps
+its event IDs explicitly in `firmware/ecu/cvc/src/main.c`, using the shared architecture DTC
+families first and local extension codes where the CVC event set is more detailed.
 
 ## Static event rows found in this checkout
 
 | ECU | EventId | DTC code | Event name | Source SWC | Mapping status |
 |-----|---------|----------|------------|------------|----------------|
-| CVC | `0` | `0xC00100` | Pedal Plausibility | `firmware/ecu/cvc/src/Swc_Pedal.c` | generic default slot 0 |
-| CVC | `1` | `0xC00200` | Pedal Stuck | `firmware/ecu/cvc/src/Swc_Pedal.c` | generic default slot 1 |
-| CVC | `2` | `0xC00300` | Pedal Range | not found in non-test source | generic default slot 2 |
-| CVC | `3` | `0xC00400` | Comm Fzc Timeout | not found in non-test source | generic default slot 3 |
-| CVC | `4` | `0xC10100` | Comm Rzc Timeout | not found in non-test source | generic default slot 4 |
-| CVC | `5` | `0xC10200` | Comm Sc Timeout | not found in non-test source | generic default slot 5 |
-| CVC | `6` | `0xC10300` | Vehicle State | not found in non-test source | generic default slot 6 |
-| CVC | `7` | `0xC20100` | Estop Fault | `firmware/ecu/cvc/src/Swc_EStop.c` | generic default slot 7 |
-| CVC | `8` | `0xC20200` | Motor Overcurrent | `firmware/ecu/cvc/src/Swc_VehicleState.c` | generic default slot 8 |
-| CVC | `9` | `0xC20300` | Motor Overspeed | not found in non-test source | generic default slot 9 |
-| CVC | `10` | `0xC30100` | Battery Low | `firmware/ecu/cvc/src/Swc_VehicleState.c` | generic default slot 10 |
-| CVC | `11` | `0xC30200` | Battery Critical | not found in non-test source | generic default slot 11 |
-| CVC | `12` | `0xC40100` | Steering Fault | `firmware/ecu/cvc/src/Swc_VehicleState.c` | generic default slot 12 |
-| CVC | `13` | `0xC50100` | Brake Fault | `firmware/ecu/cvc/src/Swc_VehicleState.c` | generic default slot 13 |
-| CVC | `14` | `0xC50200` | Lidar Fault | not found in non-test source | generic default slot 14 |
-| CVC | `15` | `0xC60100` | Can Bus Off | not found in non-test source | generic default slot 15 |
-| CVC | `16` | `0xC60200` | Self Test Fail | `firmware/ecu/cvc/src/Swc_SelfTest.c` | generic default slot 16 |
-| CVC | `17` | `0xC70100` | Watchdog Fault | not found in non-test source | generic default slot 17 |
-| CVC | `18` | `UNMAPPED` | Sc Relay Kill | not found in non-test source | no local override, `dem_dtc_codes[event] == 0` |
-| CVC | `19` | `UNMAPPED` | Display Comm | `firmware/ecu/cvc/src/Swc_Dashboard.c` | no local override, `dem_dtc_codes[event] == 0` |
-| CVC | `20` | `UNMAPPED` | Creep Fault | `firmware/ecu/cvc/src/Swc_VehicleState.c` | no local override, `dem_dtc_codes[event] == 0` |
-| CVC | `21` | `UNMAPPED` | Pedal Sensor1 Fail | `firmware/ecu/cvc/src/Swc_Pedal.c` | no local override, `dem_dtc_codes[event] == 0` |
-| CVC | `22` | `UNMAPPED` | Pedal Sensor2 Fail | `firmware/ecu/cvc/src/Swc_Pedal.c` | no local override, `dem_dtc_codes[event] == 0` |
-| CVC | `23` | `UNMAPPED` | Safe Stop Entry | `firmware/ecu/cvc/src/main.c` comment only | no local override, `dem_dtc_codes[event] == 0` |
-| CVC | `24` | `UNMAPPED` | Motor Cutoff Rx | `firmware/ecu/cvc/src/Swc_VehicleState.c` | no local override, `dem_dtc_codes[event] == 0` |
-| CVC | `25` | `UNMAPPED` | Brake Fault Rx | `firmware/ecu/cvc/src/Swc_VehicleState.c` | no local override, `dem_dtc_codes[event] == 0` |
-| CVC | `26` | `UNMAPPED` | Steering Fault Rx | `firmware/ecu/cvc/src/Swc_VehicleState.c` | no local override, `dem_dtc_codes[event] == 0` |
-| CVC | `27` | `UNMAPPED` | Nvm Crc Fail | `firmware/ecu/cvc/src/Swc_SelfTest.c` | no local override, `dem_dtc_codes[event] == 0` |
+| CVC | `0` | `0xC00100` | Pedal Plausibility | `firmware/ecu/cvc/src/Swc_Pedal.c` | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `1` | `0xC00400` | Pedal Stuck | `firmware/ecu/cvc/src/Swc_Pedal.c` | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `2` | `0xC00500` | Pedal Range | not found in non-test source | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `3` | `0xC10100` | Comm Fzc Timeout | not found in non-test source | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `4` | `0xC10200` | Comm Rzc Timeout | not found in non-test source | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `5` | `0xC10600` | Comm Sc Timeout | not found in non-test source | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `6` | `0xC50200` | Vehicle State | not found in non-test source | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `7` | `0xC40100` | Estop Fault | `firmware/ecu/cvc/src/Swc_EStop.c` | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `8` | `0xC20100` | Motor Overcurrent | `firmware/ecu/cvc/src/Swc_VehicleState.c` | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `9` | `0xC20200` | Motor Overspeed | not found in non-test source | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `10` | `0xC20400` | Battery Low | `firmware/ecu/cvc/src/Swc_VehicleState.c` | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `11` | `0xC20500` | Battery Critical | not found in non-test source | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `12` | `0xC30100` | Steering Fault | `firmware/ecu/cvc/src/Swc_VehicleState.c` | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `13` | `0xC30400` | Brake Fault | `firmware/ecu/cvc/src/Swc_VehicleState.c` | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `14` | `0xC30300` | Lidar Fault | not found in non-test source | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `15` | `0xC10300` | Can Bus Off | not found in non-test source | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `16` | `0xC60100` | Self Test Fail | `firmware/ecu/cvc/src/Swc_SelfTest.c` | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `17` | `0xC50100` | Watchdog Fault | not found in non-test source | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `18` | `0xC40200` | Sc Relay Kill | not found in non-test source | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `19` | `0xC70100` | Display Comm | `firmware/ecu/cvc/src/Swc_Dashboard.c` | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `20` | `0xC20300` | Creep Fault | `firmware/ecu/cvc/src/Swc_VehicleState.c` | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `21` | `0xC00200` | Pedal Sensor1 Fail | `firmware/ecu/cvc/src/Swc_Pedal.c` | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `22` | `0xC00300` | Pedal Sensor2 Fail | `firmware/ecu/cvc/src/Swc_Pedal.c` | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `23` | `0xC50300` | Safe Stop Entry | `firmware/ecu/cvc/src/main.c` comment only | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `24` | `0xC10700` | Motor Cutoff Rx | `firmware/ecu/cvc/src/Swc_VehicleState.c` | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `25` | `0xC30500` | Brake Fault Rx | `firmware/ecu/cvc/src/Swc_VehicleState.c` | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `26` | `0xC30200` | Steering Fault Rx | `firmware/ecu/cvc/src/Swc_VehicleState.c` | mapped in `firmware/ecu/cvc/src/main.c` |
+| CVC | `27` | `0xC60200` | Nvm Crc Fail | `firmware/ecu/cvc/src/Swc_SelfTest.c` | mapped in `firmware/ecu/cvc/src/main.c` |
 | FZC | `0` | `0x00D001` | Steer Plausibility | `firmware/ecu/fzc/src/Swc_Steering.c` | mapped in `firmware/ecu/fzc/src/main.c` |
 | FZC | `1` | `0x00D002` | Steer Range | `firmware/ecu/fzc/src/Swc_Steering.c` | mapped in `firmware/ecu/fzc/src/main.c` |
 | FZC | `2` | `0x00D003` | Steer Rate | not found in non-test source | mapped in `firmware/ecu/fzc/src/main.c` |

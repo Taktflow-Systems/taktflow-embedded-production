@@ -26,7 +26,6 @@
 #include "CanTp.h"
 #include "Rte.h"
 
-#include "Swc_UdsServer.h"
 #include "Swc_DtcStore.h"
 #include "Swc_Obd2Pids.h"
 #include "Tcu_Cfg.h"
@@ -128,7 +127,6 @@ int main(void)
 
     /* ---- SWC Initialization ---- */
 
-    Swc_UdsServer_Init();
     Swc_DtcStore_Init();
     Swc_Obd2Pids_Init();
 

@@ -15,6 +15,7 @@
  */
 #include "Std_Types.h"
 #include "Cvc_Cfg.h"
+#include "Cvc_App.h"
 #ifdef SIL_DIAG
 #include <stdio.h>
 #endif
@@ -32,7 +33,6 @@
 #include "WdgM.h"
 #include "BswM.h"
 #include "Dcm.h"
-#include "Swc_CvcDcm.h"
 #include "CanTp.h"
 #include "CanSM.h"
 #include "FiM.h"
@@ -323,7 +323,6 @@ void Timer_10ms_Callback(ULONG arg)
     (void)arg;
     Swc_CvcCom_TransmitSchedule(Main_Hw_GetTick() / 1000u);
     Dcm_MainFunction();
-    Swc_CvcDcm_MainFunction();
     BswM_MainFunction();
     CanSM_MainFunction();
 }
@@ -378,6 +377,37 @@ int main(void)
     Dem_Init(NULL_PTR);
     Dem_SetEcuId(0x10u);                    /* CVC ECU ID for DTC broadcasts */
     Dem_SetBroadcastPduId(CVC_COM_TX_DTC);  /* CanIf TX for CAN 0x500 */
+    /* Align CVC DTC numbering with the repo architecture families, then use
+     * local extension codes where the current CVC event model is more detailed
+     * than the shared architecture table. */
+    Dem_SetDtcCode(CVC_DTC_PEDAL_PLAUSIBILITY, 0xC00100u);
+    Dem_SetDtcCode(CVC_DTC_PEDAL_STUCK,        0xC00400u);
+    Dem_SetDtcCode(CVC_DTC_PEDAL_RANGE,        0xC00500u);
+    Dem_SetDtcCode(CVC_DTC_COMM_FZC_TIMEOUT,   0xC10100u);
+    Dem_SetDtcCode(CVC_DTC_COMM_RZC_TIMEOUT,   0xC10200u);
+    Dem_SetDtcCode(CVC_DTC_COMM_SC_TIMEOUT,    0xC10600u);
+    Dem_SetDtcCode(CVC_DTC_VEHICLE_STATE,      0xC50200u);
+    Dem_SetDtcCode(CVC_DTC_ESTOP_FAULT,        0xC40100u);
+    Dem_SetDtcCode(CVC_DTC_MOTOR_OVERCURRENT,  0xC20100u);
+    Dem_SetDtcCode(CVC_DTC_MOTOR_OVERSPEED,    0xC20200u);
+    Dem_SetDtcCode(CVC_DTC_BATTERY_LOW,        0xC20400u);
+    Dem_SetDtcCode(CVC_DTC_BATTERY_CRITICAL,   0xC20500u);
+    Dem_SetDtcCode(CVC_DTC_STEERING_FAULT,     0xC30100u);
+    Dem_SetDtcCode(CVC_DTC_BRAKE_FAULT,        0xC30400u);
+    Dem_SetDtcCode(CVC_DTC_LIDAR_FAULT,        0xC30300u);
+    Dem_SetDtcCode(CVC_DTC_CAN_BUS_OFF,        0xC10300u);
+    Dem_SetDtcCode(CVC_DTC_SELF_TEST_FAIL,     0xC60100u);
+    Dem_SetDtcCode(CVC_DTC_WATCHDOG_FAULT,     0xC50100u);
+    Dem_SetDtcCode(CVC_DTC_SC_RELAY_KILL,      0xC40200u);
+    Dem_SetDtcCode(CVC_DTC_DISPLAY_COMM,       0xC70100u);
+    Dem_SetDtcCode(CVC_DTC_CREEP_FAULT,        0xC20300u);
+    Dem_SetDtcCode(CVC_DTC_PEDAL_SENSOR1_FAIL, 0xC00200u);
+    Dem_SetDtcCode(CVC_DTC_PEDAL_SENSOR2_FAIL, 0xC00300u);
+    Dem_SetDtcCode(CVC_DTC_SAFE_STOP_ENTRY,    0xC50300u);
+    Dem_SetDtcCode(CVC_DTC_MOTOR_CUTOFF_RX,    0xC10700u);
+    Dem_SetDtcCode(CVC_DTC_BRAKE_FAULT_RX,     0xC30500u);
+    Dem_SetDtcCode(CVC_DTC_STEERING_FAULT_RX,  0xC30200u);
+    Dem_SetDtcCode(CVC_DTC_NVM_CRC_FAIL,       0xC60200u);
     CanSM_Init(&cansm_config);
     FiM_Init(&cvc_fim_config);
     Xcp_Init(&cvc_xcp_config);
@@ -401,7 +431,6 @@ int main(void)
     Swc_Heartbeat_Init();
     Swc_Dashboard_Init();
     Swc_CvcCom_Init();
-    Swc_CvcDcm_Init();
     Det_ReportRuntimeError(DET_MODULE_CVC_MAIN, 0u, MAIN_API_INIT, DET_E_DBG_SWC_INIT_OK);
 
     /* ---- Step 4: Self-test sequence ---- */
@@ -459,7 +488,6 @@ int main(void)
             Swc_CvcCom_TransmitSchedule(tick_us / 1000u);
             CanTp_MainFunction();
             Dcm_MainFunction();
-            Swc_CvcDcm_MainFunction();
             BswM_MainFunction();
             CanSM_MainFunction();
         }
