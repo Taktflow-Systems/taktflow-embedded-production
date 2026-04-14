@@ -25,6 +25,7 @@
 #include "Dem.h"
 #include "CanTp.h"
 #include "Rte.h"
+#include "DoIp_Posix.h"
 
 #include "Swc_DtcStore.h"
 #include "Swc_Obd2Pids.h"
@@ -47,6 +48,13 @@ extern const CanIf_ConfigType tcu_canif_config;
  * DBC → ARXML → codegen. The generated config routes UDS_Phys_Req_TCU
  * through CanTp for ISO-TP segmentation. */
 extern const PduR_ConfigType tcu_pdur_config;
+
+static const DoIp_Posix_ConfigType tcu_doip_config = {
+    .LogicalAddress = 0x0004u,
+    .Vin = { 'T', 'A', 'K', 'T', 'F', 'L', 'O', 'W', '0', '0', '0', '0', '0', '0', '0', '0', '1' },
+    .Eid = { 'T', 'C', 'U', '0', '0', '1' },
+    .Gid = { 'T', 'F', 'P', 'O', 'S', 'X' },
+};
 
 /** CanTp configuration — single channel for UDS diagnostics */
 static const CanTp_ConfigType tcu_cantp_config = {
@@ -123,6 +131,10 @@ int main(void)
     /* RTE */
     Rte_Init(&tcu_rte_config);
 
+    if (DoIp_Posix_Init(&tcu_doip_config) != E_OK) {
+        (void)printf("[TCU] DoIP init failed\n");
+    }
+
     (void)printf("[TCU] BSW stack initialized\n");
 
     /* ---- SWC Initialization ---- */
@@ -162,6 +174,7 @@ int main(void)
         /* CanTp + Dcm for UDS processing */
         CanTp_MainFunction();
         Dcm_MainFunction();
+        DoIp_Posix_MainFunction();
 
         Sil_Time_Sleep((uint32)TCU_RTE_PERIOD_MS * 1000u); /* tick from codegen */
     }
@@ -169,6 +182,7 @@ int main(void)
     /* ---- Shutdown ---- */
 
     (void)Can_SetControllerMode(0u, CAN_CS_STOPPED);
+    DoIp_Posix_Deinit();
     (void)printf("[TCU] Shutdown complete\n");
 
     return 0;

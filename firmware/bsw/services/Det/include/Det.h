@@ -82,6 +82,7 @@
 #define DCM_API_INIT                    0x00u
 #define DCM_API_MAIN_FUNCTION           0x01u
 #define DCM_API_RX_INDICATION           0x02u
+#define DCM_API_DISPATCH_REQUEST        0x03u
 
 /* Dem API IDs */
 #define DEM_API_INIT                    0x00u

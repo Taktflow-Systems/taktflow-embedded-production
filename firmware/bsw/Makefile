@@ -30,6 +30,7 @@ CFLAGS += -Iservices/NvM/include -Iservices/SchM/include -Iservices/Det/include
 CFLAGS += -Iservices/CanTp/include
 CFLAGS += -Irte/include
 CFLAGS += -Ios/include
+CFLAGS += -I../platform/posix/include
 
 # Source directories
 MCAL_DIR = mcal

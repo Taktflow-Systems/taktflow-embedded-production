@@ -145,6 +145,10 @@ BSW_SRCS = \
     $(BSW)/os/bootstrap/port/src/Os_Port_TaskBinding.c \
     $(PLAT)/src/Os_Port_Posix.c
 
+ifneq ($(filter $(TARGET),bcm icu tcu),)
+  BSW_SRCS += $(PLAT)/src/DoIp_Posix.c
+endif
+
 ifeq ($(TARGET),fzc)
   BSW_SRCS += $(BSW)/mcal/Uart/src/Uart.c $(PLAT)/src/Uart_Posix.c
 endif

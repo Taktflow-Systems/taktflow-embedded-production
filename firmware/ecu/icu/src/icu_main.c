@@ -36,7 +36,10 @@
 #include "CanIf.h"
 #include "PduR.h"
 #include "Com.h"
+#include "Dcm.h"
+#include "Dem.h"
 #include "Rte.h"
+#include "DoIp_Posix.h"
 
 /* ==================================================================
  * SWC Headers
@@ -67,6 +70,14 @@
 
 extern const Rte_ConfigType  icu_rte_config;
 extern const Com_ConfigType  icu_com_config;
+extern const Dcm_ConfigType  icu_dcm_config;
+
+static const DoIp_Posix_ConfigType icu_doip_config = {
+    .LogicalAddress = 0x0006u,
+    .Vin = { 'T', 'A', 'K', 'T', 'F', 'L', 'O', 'W', '0', '0', '0', '0', '0', '0', '0', '0', '1' },
+    .Eid = { 'I', 'C', 'U', '0', '0', '1' },
+    .Gid = { 'T', 'F', 'P', 'O', 'S', 'X' },
+};
 
 /* ==================================================================
  * Static Configuration Constants
@@ -204,7 +215,13 @@ int main(void)
     CanIf_Init(&canif_config);
     PduR_Init(&pdur_config);
     Com_Init(&icu_com_config);
+    Dem_Init(NULL_PTR);
+    Dcm_Init(&icu_dcm_config);
     Rte_Init(&icu_rte_config);
+
+    if (DoIp_Posix_Init(&icu_doip_config) != E_OK) {
+        (void)fprintf(stderr, "[ICU] DoIP init failed\n");
+    }
 
     /* ---- Step 3: ncurses terminal UI initialization ---- */
     /* Graceful fallback: if no terminal is available (headless Pi, nohup),
@@ -269,12 +286,21 @@ int main(void)
 
         /* Check for bus-off condition */
         Can_MainFunction_BusOff();
+
+        for (uint8 diag_tick = 0u;
+             diag_tick < (ICU_RTE_PERIOD_MS / DCM_MAIN_CYCLE_MS);
+             diag_tick++) {
+            Dcm_MainFunction();
+            DoIp_Posix_MainFunction();
+        }
     }
 
     /* ---- Step 7: Clean shutdown ---- */
     if (ncurses_active != 0) {
         (void)endwin();
     }
+
+    DoIp_Posix_Deinit();
 
     return 0;
 }

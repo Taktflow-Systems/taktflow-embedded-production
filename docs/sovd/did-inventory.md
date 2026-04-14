@@ -6,12 +6,12 @@ This inventory is sourced from ECU cfg files in this checkout, per the Line B Da
 
 Planned target in `WORKING-LINES.md`: about `16 DIDs x 7 ECUs`.
 
-Actual checkout result: `33 cfg-backed DIDs across 4 ECUs`.
+Actual checkout result: `39 cfg-backed DIDs across 6 ECUs`.
 
 Reason for the gap:
 
-- `CVC`, `FZC`, `RZC`, and `TCU` have `Dcm_Cfg_<Ecu>.c` files.
-- `BCM`, `ICU`, and `SC` do not have `Dcm_Cfg_<Ecu>.c` files in this checkout.
+- `CVC`, `FZC`, `RZC`, `TCU`, `BCM`, and `ICU` now have `Dcm_Cfg_<Ecu>.c`
+  files in this checkout.
 - `SC` is also called out elsewhere in the repo as a bare-metal safety controller outside the
   generic AUTOSAR BSW DCM path.
 
@@ -23,8 +23,8 @@ Reason for the gap:
 | FZC | `firmware/ecu/fzc/cfg/Dcm_Cfg_Fzc.c` | present | 9 generic BSW DIDs |
 | RZC | `firmware/ecu/rzc/cfg/Dcm_Cfg_Rzc.c` | present | 11 generic BSW DIDs |
 | TCU | `firmware/ecu/tcu/cfg/Dcm_Cfg_Tcu.c` | present | 8 DIDs; local `Swc_UdsServer` still owns most request dispatch |
-| BCM | none found | missing | no `Dcm_Cfg_Bcm.c` in this checkout |
-| ICU | none found | missing | no `Dcm_Cfg_Icu.c` in this checkout |
+| BCM | `firmware/ecu/bcm/cfg/Dcm_Cfg_Bcm.c` | present | 3 minimal generic BSW DIDs for DoIP reachability |
+| ICU | `firmware/ecu/icu/cfg/Dcm_Cfg_Icu.c` | present | 3 minimal generic BSW DIDs for DoIP reachability |
 | SC | none found | missing | no `Dcm_Cfg_Sc.c`; SC is outside generic BSW DCM path |
 
 ## Discovered cfg-backed DIDs
@@ -64,6 +64,12 @@ Reason for the gap:
 | TCU | `0xF190` | VIN | `ASCII[17]` | 17 | `Dcm_ReadDid_Vin` |
 | TCU | `0xF191` | Hardware Version | `ASCII or bytes[5]` | 5 | `Dcm_ReadDid_HwVersion` |
 | TCU | `0xF195` | Software Version | `ASCII or bytes[5]` | 5 | `Dcm_ReadDid_SwVersion` |
+| BCM | `0xF190` | ECU Identifier | `ASCII[4]` | 4 | static cfg callback |
+| BCM | `0xF191` | Hardware Version | `u8[3]` | 3 | static cfg callback |
+| BCM | `0xF195` | Software Version | `u8[3]` | 3 | static cfg callback |
+| ICU | `0xF190` | ECU Identifier | `ASCII[4]` | 4 | static cfg callback |
+| ICU | `0xF191` | Hardware Version | `u8[3]` | 3 | static cfg callback |
+| ICU | `0xF195` | Software Version | `u8[3]` | 3 | static cfg callback |
 
 ## Notes for Phase 1
 
@@ -74,3 +80,6 @@ Reason for the gap:
 - `RZC DID 0xF036` is explicitly a placeholder until a dedicated zero-offset signal is exposed.
 - `0xF018` is now shared across `CVC`, `FZC`, and `RZC` with the same bit layout:
   `stationary`, `brake_secured`, `service_session`, `service_mode_enabled`.
+- `BCM` and `ICU` only expose the three generic identity DIDs in this slice.
+  They exist to make the POSIX DoIP path testable without inventing CAN-only
+  diagnostic data for those ECUs.

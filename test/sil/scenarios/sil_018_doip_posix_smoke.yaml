@@ -1,0 +1,34 @@
+# =============================================================================
+# @file    sil_018_doip_posix_smoke.yaml
+# @brief   SIL scenario: BCM DoIP POSIX smoke against an external client
+# @aspice  SWE.5 — Software Component Verification & Integration
+# @iso     ISO 26262 Part 6, Section 10 — Software Integration & Testing
+# @date    2026-04-14
+# =============================================================================
+
+name: "DoIP POSIX Smoke (BCM)"
+id: "SIL-018"
+description: >
+  Build and start the BCM virtual ECU in Docker, then connect from an external
+  Python client over DoIP. The client verifies UDP vehicle identification,
+  TCP routing activation, alive check, and a ReadDataByIdentifier request for
+  DID 0xF190.
+verifies:
+  - "FR-5.1"
+  - "FR-5.4"
+aspice: "SWE.5"
+iso_reference: "ISO 26262 Part 6, Section 10"
+timeout_sec: 120
+
+steps:
+  - action: build
+    target: doip_posix_smoke
+    command: python3 test/sil/doip_posix_smoke.py --compose docker/docker-compose.laptop.yml --service bcm --host 127.0.0.5 --logical-address 0x0005 --expected-id BCM1
+    description: "Launch the BCM Docker service and exercise its DoIP endpoint from a real TCP/UDP client"
+
+verdicts:
+  - type: analysis_result
+    tool: build
+    expected_exit_code: 0
+    expected_output: DOIP_SMOKE_PASS
+    description: "BCM DoIP endpoint accepts discovery, routing activation, and ReadDID 0xF190"

@@ -182,6 +182,24 @@ void Dcm_TpRxIndication(PduIdType RxPduId, const PduInfoType* PduInfoPtr,
                          NotifResultType Result);
 
 /**
+ * @brief  Synchronously dispatch a UDS request and capture the response buffer
+ * @param  RequestData      Request bytes
+ * @param  RequestLength    Request length in bytes
+ * @param  ResponseData     Output buffer for the UDS response
+ * @param  ResponseBufSize  Size of the output buffer
+ * @param  ResponseLength   Output length in bytes; zero when no response is sent
+ * @return E_OK on success, E_NOT_OK on parameter/module errors
+ *
+ * @note   This is the transport seam used by DoIP POSIX. It is not re-entrant
+ *         and shares DCM session/security state with the CAN path.
+ */
+Std_ReturnType Dcm_DispatchRequest(const uint8* RequestData,
+                                   PduLengthType RequestLength,
+                                   uint8* ResponseData,
+                                   PduLengthType ResponseBufSize,
+                                   PduLengthType* ResponseLength);
+
+/**
  * @brief  Check if security access has been granted
  * @return TRUE if unlocked, FALSE if locked
  */

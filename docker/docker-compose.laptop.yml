@@ -20,6 +20,8 @@ services:
         ECU_NAME: bcm
     network_mode: host
     cap_add: [NET_ADMIN]
+    environment:
+      - DOIP_BIND_IP=127.0.0.5
     restart: unless-stopped
 
   # Telematic Control Unit (QM)
@@ -31,6 +33,8 @@ services:
         ECU_NAME: tcu
     network_mode: host
     cap_add: [NET_ADMIN]
+    environment:
+      - DOIP_BIND_IP=127.0.0.4
     restart: unless-stopped
 
   # Instrument Cluster Unit (QM)
@@ -44,6 +48,7 @@ services:
     cap_add: [NET_ADMIN]
     environment:
       - TERM=dumb  # Disable ncurses in Docker
+      - DOIP_BIND_IP=127.0.0.6
     restart: unless-stopped
 
   # Plant Simulator

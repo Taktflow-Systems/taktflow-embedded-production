@@ -1417,6 +1417,62 @@ void test_Dcm_RoutineControl_default_session_rejected(void)
     TEST_ASSERT_EQUAL_HEX8(0x22u, mock_tx_data[2]);
 }
 
+void test_Dcm_DispatchRequest_read_did_captures_response(void)
+{
+    uint8 req[] = {0x22u, 0xF1u, 0x90u};
+    uint8 rsp[DCM_TX_BUF_SIZE];
+    PduLengthType rsp_len = 0u;
+
+    TEST_ASSERT_EQUAL(E_OK,
+                      Dcm_DispatchRequest(req, 3u, rsp, sizeof(rsp), &rsp_len));
+    TEST_ASSERT_EQUAL_UINT8(0u, mock_tx_count);
+    TEST_ASSERT_EQUAL_UINT32(7u, rsp_len);
+    TEST_ASSERT_EQUAL_HEX8(0x62u, rsp[0]);
+    TEST_ASSERT_EQUAL_HEX8(0xF1u, rsp[1]);
+    TEST_ASSERT_EQUAL_HEX8(0x90u, rsp[2]);
+    TEST_ASSERT_EQUAL_HEX8(0x01u, rsp[3]);
+}
+
+void test_Dcm_DispatchRequest_suppress_response_returns_zero_length(void)
+{
+    uint8 req[] = {0x3Eu, 0x80u};
+    uint8 rsp[DCM_TX_BUF_SIZE];
+    PduLengthType rsp_len = 0xFFFFu;
+
+    TEST_ASSERT_EQUAL(E_OK,
+                      Dcm_DispatchRequest(req, 2u, rsp, sizeof(rsp), &rsp_len));
+    TEST_ASSERT_EQUAL_UINT8(0u, mock_tx_count);
+    TEST_ASSERT_EQUAL_UINT32(0u, rsp_len);
+}
+
+void test_Dcm_DispatchRequest_invalid_request_returns_negative_response(void)
+{
+    uint8 req[] = {0xFFu, 0x00u};
+    uint8 rsp[DCM_TX_BUF_SIZE];
+    PduLengthType rsp_len = 0u;
+
+    TEST_ASSERT_EQUAL(E_OK,
+                      Dcm_DispatchRequest(req, 2u, rsp, sizeof(rsp), &rsp_len));
+    TEST_ASSERT_EQUAL_UINT32(3u, rsp_len);
+    TEST_ASSERT_EQUAL_HEX8(0x7Fu, rsp[0]);
+    TEST_ASSERT_EQUAL_HEX8(0xFFu, rsp[1]);
+    TEST_ASSERT_EQUAL_HEX8(0x11u, rsp[2]);
+}
+
+void test_Dcm_DispatchRequest_null_args_rejected(void)
+{
+    uint8 req[] = {0x22u, 0xF1u, 0x90u};
+    uint8 rsp[DCM_TX_BUF_SIZE];
+    PduLengthType rsp_len = 0u;
+
+    TEST_ASSERT_EQUAL(E_NOT_OK,
+                      Dcm_DispatchRequest(NULL_PTR, 3u, rsp, sizeof(rsp), &rsp_len));
+    TEST_ASSERT_EQUAL(E_NOT_OK,
+                      Dcm_DispatchRequest(req, 3u, NULL_PTR, sizeof(rsp), &rsp_len));
+    TEST_ASSERT_EQUAL(E_NOT_OK,
+                      Dcm_DispatchRequest(req, 3u, rsp, sizeof(rsp), NULL_PTR));
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -1499,6 +1555,12 @@ int main(void)
     /* TpRxIndication (CanTp integration) */
     RUN_TEST(test_Dcm_TpRxIndication_success);
     RUN_TEST(test_Dcm_TpRxIndication_error_discards);
+
+    /* Direct dispatch seam */
+    RUN_TEST(test_Dcm_DispatchRequest_read_did_captures_response);
+    RUN_TEST(test_Dcm_DispatchRequest_suppress_response_returns_zero_length);
+    RUN_TEST(test_Dcm_DispatchRequest_invalid_request_returns_negative_response);
+    RUN_TEST(test_Dcm_DispatchRequest_null_args_rejected);
 
     return UNITY_END();
 }
