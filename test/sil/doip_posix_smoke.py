@@ -135,7 +135,7 @@ def verify_udp_vehicle_ident(host: str, port: int, logical_address: int, timeout
     payload_type, payload = parse_frame(raw)
     if payload_type != PAYLOAD_VAM:
         raise RuntimeError(f"expected VAM 0x0004, got 0x{payload_type:04X}")
-    if len(payload) != 33:
+    if len(payload) != 32:
         raise RuntimeError(f"unexpected VAM payload length: {len(payload)}")
 
     actual_address = int.from_bytes(payload[17:19], "big")
