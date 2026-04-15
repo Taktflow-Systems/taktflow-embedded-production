@@ -174,6 +174,7 @@ impl CanInterface {
                 return Err(CanError::Timeout { id: resp_id });
             }
             let guard = self.sock.lock().await;
+            let mut idle = false;
             let event = match socketcan::Socket::read_frame(&*guard) {
                 Ok(frame) => {
                     if frame.raw_id() == resp_id {
@@ -187,7 +188,10 @@ impl CanInterface {
                         None
                     }
                 }
-                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => None,
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                    idle = true;
+                    None
+                }
                 Err(e) => {
                     drop(guard);
                     return Err(CanError::Io(e.to_string()));
@@ -196,24 +200,30 @@ impl CanInterface {
             // Drive any required FC send while still holding the socket
             // guard, so a second concurrent request cannot interleave
             // between a FirstFrame and its FlowControl.
-            if let Some(ev) = event.as_ref() {
-                if let ReassemblerEvent::SendFlowControl { frame: fc_bytes } = ev {
-                    let fc_frame = socketcan::CanDataFrame::new(fc_id, fc_bytes)
-                        .ok_or_else(|| CanError::Io("failed to build FC frame".into()))?;
-                    socketcan::Socket::write_frame(&*guard, &fc_frame)
-                        .map_err(|e| CanError::Io(e.to_string()))?;
-                    tracing::debug!(
-                        req_id = format_args!("0x{req_id:x}"),
-                        resp_id = format_args!("0x{resp_id:x}"),
-                        "ISO-TP FlowControl transmitted after FirstFrame"
-                    );
-                }
+            if let Some(ReassemblerEvent::SendFlowControl { frame: fc_bytes }) = event.as_ref() {
+                let fc_frame = socketcan::CanDataFrame::new(fc_id, fc_bytes)
+                    .ok_or_else(|| CanError::Io("failed to build FC frame".into()))?;
+                socketcan::Socket::write_frame(&*guard, &fc_frame)
+                    .map_err(|e| CanError::Io(e.to_string()))?;
+                tracing::debug!(
+                    req_id = format_args!("0x{req_id:x}"),
+                    resp_id = format_args!("0x{resp_id:x}"),
+                    "ISO-TP FlowControl transmitted after FirstFrame"
+                );
             }
             drop(guard);
             if let Some(ReassemblerEvent::Complete(pdu)) = event {
                 return Ok(pdu);
             }
-            tokio::time::sleep(Duration::from_millis(2)).await;
+            // Only yield when the socket is idle. On a busy bus with
+            // hundreds of unrelated periodic frames per second, sleeping
+            // after every read starves the receive loop and delays the
+            // FC by ~720 ms (observed live on the POSIX compose fleet).
+            if idle {
+                tokio::time::sleep(Duration::from_millis(2)).await;
+            } else {
+                tokio::task::yield_now().await;
+            }
         }
     }
 
