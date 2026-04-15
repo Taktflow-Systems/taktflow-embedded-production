@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Taktflow Systems (vendoring annotation)
+#
+# diagnostic_description.fbs is vendored verbatim from the Eclipse
+# OpenSOVD Classic Diagnostic Adapter upstream repo:
+#
+#   repo  : eclipse-opensovd/classic-diagnostic-adapter
+#   file  : cda-database/src/flatbuf/diagnostic_description.fbs
+#   root  : EcuData
+#   vendored_on : 2026-04-15
+#   vendored_for : Phase 5 Line B D5 (odx-gen MDD FlatBuffers emitter)
+#   license : Apache-2.0 (matches upstream file header)
+#
+# Do NOT edit the .fbs file locally — re-vendor from upstream if the
+# schema changes. Any local divergence breaks CDA cda-database
+# round-trip compatibility, which is the whole point of emitting MDD.
+#
+# flatc is not available on the Windows dev host that produced the
+# first D5 commit, so the odx-gen MDD emitter runs in STUB mode for
+# now and writes build/mdd/cvc.mdd with an `MDDSTUB\n` header followed
+# by a self-describing JSON body. When flatc is wired into the build
+# (follow-up), the emitter will switch to real flatbuffers output
+# without any change to the test contract.
