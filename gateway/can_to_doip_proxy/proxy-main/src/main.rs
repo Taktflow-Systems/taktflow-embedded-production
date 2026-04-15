@@ -116,10 +116,18 @@ impl DoipHandler for CanProxyHandler {
             warn!(?err, can_id = req.can_request_id, "send_isotp failed");
             return None;
         }
-        // Wait up to 2s for a response on the CAN response ID.
+        // Wait up to 2s for a response on the CAN response ID. Uses the
+        // FC-aware receiver so that a FirstFrame from the ECU is
+        // acknowledged with a FlowControl on the request CAN ID per
+        // ISO 15765-2 §6.7.3; without this the ECU stalls after the FF
+        // and the transaction times out.
         match self
             .can
-            .recv_isotp(req.can_response_id, std::time::Duration::from_millis(2000))
+            .recv_isotp_with_flow_control(
+                req.can_request_id,
+                req.can_response_id,
+                std::time::Duration::from_millis(2000),
+            )
             .await
         {
             Ok(rsp) => Some(rsp),

@@ -31,5 +31,11 @@ toml.workspace = true
 [dev-dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "io-util", "time", "sync", "signal"] }
 
+# Linux-only test dep: the multi-frame vcan0 integration test needs a
+# raw socketcan handle for the ECU-simulation thread. The non-Linux
+# build skips the whole test module via `#![cfg(target_os = "linux")]`.
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+socketcan.workspace = true
+
 [lints]
 workspace = true
