@@ -29,7 +29,7 @@
 services:
   cvc:
     build:
-      context: .
+      context: ../..
       dockerfile: firmware/ecu/cvc/Dockerfile
     image: taktflow/cvc-posix:phase4
     network_mode: host
@@ -40,7 +40,7 @@ services:
 
   fzc:
     build:
-      context: .
+      context: ../..
       dockerfile: firmware/ecu/fzc/Dockerfile
     image: taktflow/fzc-posix:phase4
     network_mode: host
@@ -50,7 +50,7 @@ services:
 
   rzc:
     build:
-      context: .
+      context: ../..
       dockerfile: firmware/ecu/rzc/Dockerfile
     image: taktflow/rzc-posix:phase4
     network_mode: host

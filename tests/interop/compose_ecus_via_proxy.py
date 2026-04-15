@@ -26,6 +26,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -33,7 +34,17 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 COMPOSE_FILE = REPO_ROOT / "deploy" / "docker" / "compose-posix-ecus.yml"
-PROXY_CONFIG = REPO_ROOT / "gateway" / "can_to_doip_proxy" / "deploy" / "opensovd-proxy.toml"
+# Use the vcan0 variant: the compose fleet runs with `network_mode: host`
+# and attaches to a vcan0 interface in the host namespace, so the proxy
+# must also point at vcan0. The original opensovd-proxy.toml targets can0
+# (the Pi physical-CAN bench config) and is kept for that path.
+PROXY_CONFIG = REPO_ROOT / "gateway" / "can_to_doip_proxy" / "deploy" / "opensovd-proxy-vcan.toml"
+
+# Make the odx_gen package importable without requiring the caller to set
+# PYTHONPATH. tools/odx-gen is the package root.
+_ODX_GEN_ROOT = REPO_ROOT / "tools" / "odx-gen"
+if _ODX_GEN_ROOT.is_dir() and str(_ODX_GEN_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ODX_GEN_ROOT))
 CVC_IDENTITY = REPO_ROOT / "firmware" / "ecu" / "cvc" / "cfg" / "cvc_identity.toml"
 DCM_CFG_CVC = REPO_ROOT / "firmware" / "ecu" / "cvc" / "cfg" / "Dcm_Cfg_Cvc.c"
 

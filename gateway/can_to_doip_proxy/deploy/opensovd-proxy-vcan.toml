@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Taktflow Systems
+#
+# opensovd-proxy config for vcan0-backed bench runs (Phase 4 Line B D5).
+# Identical to deploy/opensovd-proxy.toml except the CAN interface points
+# at vcan0 instead of can0, so the compose-managed POSIX ECU fleet
+# (deploy/docker/compose-posix-ecus.yml) can share vcan0 with the proxy
+# in the host network namespace without disturbing the Pi bench config.
+#
+# When the Pi bench runs, use opensovd-proxy.toml (can0).
+# When the compose vcan test runs, use opensovd-proxy-vcan.toml (vcan0).
+
+listen_address = "0.0.0.0"
+listen_port = 13400
+can_interface = "vcan0"
+
+[discovery]
+mode = "both"
+
+[[ecu]]
+name = "cvc"
+doip_logical_address = 0x0001
+can_request_id = 0x7E0
+can_response_id = 0x7E8
+
+[[ecu]]
+name = "fzc"
+doip_logical_address = 0x0002
+can_request_id = 0x7E1
+can_response_id = 0x7E9
+
+[[ecu]]
+name = "rzc"
+doip_logical_address = 0x0003
+can_request_id = 0x7E2
+can_response_id = 0x7EA
