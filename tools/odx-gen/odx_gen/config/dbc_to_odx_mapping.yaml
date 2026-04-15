@@ -1,0 +1,41 @@
+# DBC -> ODX mapping rules.
+#
+# This file is the single source of truth for how the DBC ingestion path
+# decides which signals become Data Identifiers (DIDs), how DIDs are
+# numbered, and which UDS services to emit.
+#
+# The Python builder (`build_from_dbc.py`) reads this file at run time.
+# No rules, DID numbers, or service IDs are baked into Python source.
+
+version: "1.0"
+
+# DID allocation ---------------------------------------------------------
+# Every DBC signal that passes the filter gets a DID in this range.
+# Start value and range size come from here; the builder counts up.
+did_range:
+  start: 0xF100        # vendor-defined supplier DID range base per ISO 14229
+  end:   0xF1FF        # inclusive cap; signals beyond are skipped
+
+# Filter: which DBC signals become DIDs ---------------------------------
+# Keep the rule set tiny and declarative. "all" means no filtering beyond
+# basic sanity (name and length fields populated).
+signal_filter:
+  mode: "all"          # all | named_only
+  min_length_bits: 1
+  max_length_bits: 32
+
+# UDS services to emit --------------------------------------------------
+# Each entry becomes a stub DiagService in the PDX. The `sid` is the ISO
+# 14229 service id; `name` is a short canonical name used for the ODX
+# short-name.
+uds_services:
+  - { sid: 0x22, name: ReadDataByIdentifier,      semantic: DATA }
+  - { sid: 0x14, name: ClearDiagnosticInformation, semantic: FUNCTION }
+  - { sid: 0x19, name: ReadDTCInformation,         semantic: FUNCTION }
+
+# Data object properties -------------------------------------------------
+# Encoding hint for how DIDs get represented. The builder uses these
+# defaults when no per-signal override is available.
+dop_defaults:
+  unsigned_base_type: A_UINT32
+  physical_base_type: A_UINT32

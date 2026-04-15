@@ -1,0 +1,88 @@
+# ISO 15031-6 generic OBD-II DTC subset.
+#
+# This file holds a representative sample of the generic powertrain
+# (P0xxx) DTC namespace defined by ISO 15031-6 / SAE J2012 and used by
+# all emissions-compliant OBD-II vehicles.
+#
+# The exact set below is NOT exhaustive — it is a representative subset
+# in the air/fuel/ignition/emissions range (P0100..P0199) used for test
+# and reference PDX generation.
+#
+# Shape (each entry):
+#   code:        textual DTC code (e.g. "P0101")
+#   description: human-readable short description
+#   category:    one of powertrain | body | chassis | network
+#
+# Source references (all public):
+#   - ISO 15031-6:2015 "Road vehicles — Communication between vehicle
+#     and external equipment for emissions-related diagnostics —
+#     Part 6: Diagnostic trouble code definitions"
+#   - SAE J2012 "Diagnostic Trouble Code Definitions"
+#   - https://www.obd-codes.com (public OBD-II reference listing)
+
+version: "1.0"
+standard: "ISO 15031-6 / SAE J2012"
+dtcs:
+  - { code: "P0100", category: powertrain, description: "Mass or Volume Air Flow Circuit Malfunction" }
+  - { code: "P0101", category: powertrain, description: "Mass or Volume Air Flow Circuit Range/Performance Problem" }
+  - { code: "P0102", category: powertrain, description: "Mass or Volume Air Flow Circuit Low Input" }
+  - { code: "P0103", category: powertrain, description: "Mass or Volume Air Flow Circuit High Input" }
+  - { code: "P0104", category: powertrain, description: "Mass or Volume Air Flow Circuit Intermittent" }
+  - { code: "P0105", category: powertrain, description: "Manifold Absolute Pressure/Barometric Pressure Circuit Malfunction" }
+  - { code: "P0106", category: powertrain, description: "Manifold Absolute Pressure/Barometric Pressure Circuit Range/Performance Problem" }
+  - { code: "P0107", category: powertrain, description: "Manifold Absolute Pressure/Barometric Pressure Circuit Low Input" }
+  - { code: "P0108", category: powertrain, description: "Manifold Absolute Pressure/Barometric Pressure Circuit High Input" }
+  - { code: "P0109", category: powertrain, description: "Manifold Absolute Pressure/Barometric Pressure Circuit Intermittent" }
+  - { code: "P0110", category: powertrain, description: "Intake Air Temperature Circuit Malfunction" }
+  - { code: "P0111", category: powertrain, description: "Intake Air Temperature Circuit Range/Performance Problem" }
+  - { code: "P0112", category: powertrain, description: "Intake Air Temperature Circuit Low Input" }
+  - { code: "P0113", category: powertrain, description: "Intake Air Temperature Circuit High Input" }
+  - { code: "P0114", category: powertrain, description: "Intake Air Temperature Circuit Intermittent" }
+  - { code: "P0115", category: powertrain, description: "Engine Coolant Temperature Circuit Malfunction" }
+  - { code: "P0116", category: powertrain, description: "Engine Coolant Temperature Circuit Range/Performance Problem" }
+  - { code: "P0117", category: powertrain, description: "Engine Coolant Temperature Circuit Low Input" }
+  - { code: "P0118", category: powertrain, description: "Engine Coolant Temperature Circuit High Input" }
+  - { code: "P0119", category: powertrain, description: "Engine Coolant Temperature Circuit Intermittent" }
+  - { code: "P0120", category: powertrain, description: "Throttle/Pedal Position Sensor/Switch A Circuit Malfunction" }
+  - { code: "P0121", category: powertrain, description: "Throttle/Pedal Position Sensor/Switch A Range/Performance" }
+  - { code: "P0122", category: powertrain, description: "Throttle/Pedal Position Sensor/Switch A Circuit Low Input" }
+  - { code: "P0123", category: powertrain, description: "Throttle/Pedal Position Sensor/Switch A Circuit High Input" }
+  - { code: "P0124", category: powertrain, description: "Throttle/Pedal Position Sensor/Switch A Circuit Intermittent" }
+  - { code: "P0125", category: powertrain, description: "Insufficient Coolant Temperature for Closed Loop Fuel Control" }
+  - { code: "P0126", category: powertrain, description: "Insufficient Coolant Temperature for Stable Operation" }
+  - { code: "P0130", category: powertrain, description: "O2 Sensor Circuit Malfunction (Bank 1 Sensor 1)" }
+  - { code: "P0131", category: powertrain, description: "O2 Sensor Circuit Low Voltage (Bank 1 Sensor 1)" }
+  - { code: "P0132", category: powertrain, description: "O2 Sensor Circuit High Voltage (Bank 1 Sensor 1)" }
+  - { code: "P0133", category: powertrain, description: "O2 Sensor Circuit Slow Response (Bank 1 Sensor 1)" }
+  - { code: "P0134", category: powertrain, description: "O2 Sensor Circuit No Activity Detected (Bank 1 Sensor 1)" }
+  - { code: "P0135", category: powertrain, description: "O2 Sensor Heater Circuit Malfunction (Bank 1 Sensor 1)" }
+  - { code: "P0140", category: powertrain, description: "O2 Sensor Circuit No Activity Detected (Bank 1 Sensor 2)" }
+  - { code: "P0141", category: powertrain, description: "O2 Sensor Heater Circuit Malfunction (Bank 1 Sensor 2)" }
+  - { code: "P0150", category: powertrain, description: "O2 Sensor Circuit Malfunction (Bank 2 Sensor 1)" }
+  - { code: "P0151", category: powertrain, description: "O2 Sensor Circuit Low Voltage (Bank 2 Sensor 1)" }
+  - { code: "P0152", category: powertrain, description: "O2 Sensor Circuit High Voltage (Bank 2 Sensor 1)" }
+  - { code: "P0153", category: powertrain, description: "O2 Sensor Circuit Slow Response (Bank 2 Sensor 1)" }
+  - { code: "P0154", category: powertrain, description: "O2 Sensor Circuit No Activity Detected (Bank 2 Sensor 1)" }
+  - { code: "P0155", category: powertrain, description: "O2 Sensor Heater Circuit Malfunction (Bank 2 Sensor 1)" }
+  - { code: "P0160", category: powertrain, description: "O2 Sensor Circuit No Activity Detected (Bank 2 Sensor 2)" }
+  - { code: "P0161", category: powertrain, description: "O2 Sensor Heater Circuit Malfunction (Bank 2 Sensor 2)" }
+  - { code: "P0170", category: powertrain, description: "Fuel Trim Malfunction (Bank 1)" }
+  - { code: "P0171", category: powertrain, description: "System too Lean (Bank 1)" }
+  - { code: "P0172", category: powertrain, description: "System too Rich (Bank 1)" }
+  - { code: "P0173", category: powertrain, description: "Fuel Trim Malfunction (Bank 2)" }
+  - { code: "P0174", category: powertrain, description: "System too Lean (Bank 2)" }
+  - { code: "P0175", category: powertrain, description: "System too Rich (Bank 2)" }
+  - { code: "P0180", category: powertrain, description: "Fuel Temperature Sensor A Circuit Malfunction" }
+  - { code: "P0181", category: powertrain, description: "Fuel Temperature Sensor A Circuit Range/Performance" }
+  - { code: "P0182", category: powertrain, description: "Fuel Temperature Sensor A Circuit Low Input" }
+  - { code: "P0183", category: powertrain, description: "Fuel Temperature Sensor A Circuit High Input" }
+  - { code: "P0190", category: powertrain, description: "Fuel Rail Pressure Sensor Circuit Malfunction" }
+  - { code: "P0191", category: powertrain, description: "Fuel Rail Pressure Sensor Circuit Range/Performance" }
+  - { code: "P0192", category: powertrain, description: "Fuel Rail Pressure Sensor Circuit Low Input" }
+  - { code: "P0193", category: powertrain, description: "Fuel Rail Pressure Sensor Circuit High Input" }
+  - { code: "P0194", category: powertrain, description: "Fuel Rail Pressure Sensor Circuit Intermittent" }
+  - { code: "P0195", category: powertrain, description: "Engine Oil Temperature Sensor Malfunction" }
+  - { code: "P0196", category: powertrain, description: "Engine Oil Temperature Sensor Range/Performance" }
+  - { code: "P0197", category: powertrain, description: "Engine Oil Temperature Sensor Low" }
+  - { code: "P0198", category: powertrain, description: "Engine Oil Temperature Sensor High" }
+  - { code: "P0199", category: powertrain, description: "Engine Oil Temperature Sensor Intermittent" }
