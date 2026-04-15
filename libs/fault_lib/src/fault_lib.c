@@ -36,8 +36,10 @@
 #define FAULT_LIB_VERSION_STR "0.1.0-phase3-line-b"
 #endif
 
+#if !defined(FAULT_LIB_TRANSPORT_STUBBED)
 /* One static socket fd, one process, one connection. */
 static int g_fd = -1;
+#endif
 
 /* Encode buffer sized for MAX_FRAME_LEN plus prefix plus a margin for
  * postcard headers (varint lengths). Allocating on stack in report() is
