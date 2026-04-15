@@ -1,0 +1,67 @@
+# =============================================================================
+# Makefile.arm — Phase 5 Line B canonical ARM build wrapper
+#
+# Thin wrapper around firmware/platform/stm32/Makefile.stm32 that:
+#   1. Forces the STM32G474 target (the resolved MCU family per
+#      tools/bench/hardware-map.toml as of 2026-04-15, chipid 0x469).
+#   2. Normalises the ELF output path to build/<TARGET>-arm/<TARGET>_firmware.elf
+#      so cargo xtask flash-cvc / flash-fzc / flash-rzc can look it up at a
+#      stable location independent of the inner CubeMX-driven Makefile.stm32
+#      layout.
+#
+# Run from project root:
+#   make -f firmware/platform/arm/Makefile.arm TARGET=cvc
+#   make -f firmware/platform/arm/Makefile.arm TARGET=fzc
+#   make -f firmware/platform/arm/Makefile.arm TARGET=rzc
+#   make -f firmware/platform/arm/Makefile.arm TARGET=cvc clean
+#
+# Why a wrapper and not a rename: Makefile.stm32 already builds the full
+# CubeMX + HAL + BSW tree against STM32G474RE, and ADR-0006 says we vendor
+# upstream surface area rather than forking it. The wrapper keeps Phase 5
+# changes small (no edits to the live Makefile.stm32 inner tree) while
+# giving Phase 5+ tooling a stable, documented output contract.
+# =============================================================================
+
+ifndef TARGET
+  $(error TARGET is required. Usage: make -f firmware/platform/arm/Makefile.arm TARGET=cvc|fzc|rzc)
+endif
+
+VALID_TARGETS = cvc fzc rzc
+ifeq ($(filter $(TARGET),$(VALID_TARGETS)),)
+  $(error Invalid TARGET='$(TARGET)'. Must be one of: $(VALID_TARGETS))
+endif
+
+# --- Paths ---
+INNER_MAKEFILE = firmware/platform/stm32/Makefile.stm32
+INNER_BUILD    = build/stm32/$(TARGET)
+INNER_ELF      = $(INNER_BUILD)/$(TARGET).elf
+INNER_BIN      = $(INNER_BUILD)/$(TARGET).bin
+
+# Phase 5 canonical output paths — consumed by cargo xtask flash-*
+OUT_DIR = build/$(TARGET)-arm
+OUT_ELF = $(OUT_DIR)/$(TARGET)_firmware.elf
+OUT_BIN = $(OUT_DIR)/$(TARGET)_firmware.bin
+
+.PHONY: all clean size
+
+all: $(OUT_ELF)
+	@echo "=== Phase 5 ARM build complete: $(OUT_ELF) ==="
+
+$(OUT_DIR):
+	mkdir -p $(OUT_DIR)
+
+# Delegate to Makefile.stm32 then copy the artefacts to the Phase 5
+# canonical location. We intentionally copy (not symlink) so the Phase 5
+# path is stable even after `make -f Makefile.stm32 clean`.
+$(OUT_ELF): | $(OUT_DIR)
+	$(MAKE) -f $(INNER_MAKEFILE) TARGET=$(TARGET)
+	cp $(INNER_ELF) $(OUT_ELF)
+	cp $(INNER_BIN) $(OUT_BIN)
+
+size: $(OUT_ELF)
+	$(MAKE) -f $(INNER_MAKEFILE) TARGET=$(TARGET) size
+
+clean:
+	$(MAKE) -f $(INNER_MAKEFILE) TARGET=$(TARGET) clean
+	rm -rf $(OUT_DIR)
+	@echo "=== Phase 5 ARM build directory cleaned ==="
