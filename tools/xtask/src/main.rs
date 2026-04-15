@@ -3,7 +3,8 @@
 //
 // taktflow-xtask — Phase 5 Line B operator flashing tool.
 //
-// Current scope: `flash-cvc` (CVC STM32G474 via ST-LINK + STM32_Programmer_CLI).
+// Current scope: `flash-cvc`, `flash-fzc`, `flash-rzc`
+// (all three STM32G474 boards via ST-LINK + STM32_Programmer_CLI).
 //
 // DEFAULT MODE IS DRY-RUN. This is a hard requirement of the Phase 5 Line B
 // subset prompt: the autonomous worker must NOT flash real hardware — it
@@ -12,13 +13,14 @@
 // STM32_Programmer_CLI binary can be located. When STM32_Programmer_CLI is
 // not installed (e.g. autonomous CI env) the operator workflow is:
 //
-//   1. Autonomous agent runs    : cargo xtask flash-cvc --dry-run
+//   1. Autonomous agent runs    : cargo xtask flash-<ecu> --dry-run
 //   2. Operator inspects output : matches expected serial / elf / port
-//   3. Operator runs manually   : cargo xtask flash-cvc --execute
+//   3. Operator runs manually   : cargo xtask flash-<ecu> --execute
 //
 // The ST-LINK serial is resolved at runtime from
 // tools/bench/hardware-map.toml. No serial is hard-coded in this file;
-// that is enforced by tests/phase5/test_xtask_flash_cvc_dry_run.py.
+// that is enforced by the tests/phase5/test_xtask_flash_*_dry_run.py
+// test suite for each ECU.
 //
 // ADR cross-refs:
 //   ADR-0006 (fork + track upstream + extras)
@@ -110,23 +112,47 @@ enum Cmd {
     /// STM32_Programmer_CLI binary. In dry-run mode the command is
     /// printed to stdout exactly as it would be run, then xtask exits 0.
     FlashCvc {
-        /// Dry-run (default). Prints the command without invoking it.
         #[arg(long, default_value_t = true)]
         dry_run: bool,
-        /// Actually invoke STM32_Programmer_CLI. Overrides --dry-run.
         #[arg(long, default_value_t = false)]
         execute: bool,
-        /// Override the ELF path. Defaults to build/cvc-arm/cvc_firmware.elf.
         #[arg(long)]
         elf: Option<PathBuf>,
-        /// Override the hardware-map.toml path (test hook).
+        #[arg(long, hide = true)]
+        hardware_map: Option<PathBuf>,
+    },
+    /// Flash the FZC firmware ELF via ST-LINK + STM32_Programmer_CLI.
+    ///
+    /// Same contract as flash-cvc, different logical ECU, different
+    /// resolved ST-LINK serial. Default is --dry-run.
+    FlashFzc {
+        #[arg(long, default_value_t = true)]
+        dry_run: bool,
+        #[arg(long, default_value_t = false)]
+        execute: bool,
+        #[arg(long)]
+        elf: Option<PathBuf>,
+        #[arg(long, hide = true)]
+        hardware_map: Option<PathBuf>,
+    },
+    /// Flash the RZC firmware ELF via ST-LINK + STM32_Programmer_CLI.
+    ///
+    /// Same contract as flash-cvc, different logical ECU, different
+    /// resolved ST-LINK serial. Default is --dry-run.
+    FlashRzc {
+        #[arg(long, default_value_t = true)]
+        dry_run: bool,
+        #[arg(long, default_value_t = false)]
+        execute: bool,
+        #[arg(long)]
+        elf: Option<PathBuf>,
         #[arg(long, hide = true)]
         hardware_map: Option<PathBuf>,
     },
 }
 
 // ---------------------------------------------------------------------------
-// Flashing
+// Flashing — shared helper
 // ---------------------------------------------------------------------------
 
 struct FlashPlan {
@@ -174,7 +200,15 @@ fn build_flash_plan(serial: &str, elf: &Path) -> FlashPlan {
     }
 }
 
-fn run_flash_cvc(
+/// Shared flash subcommand runner — parameterised on the logical ECU name.
+///
+/// `target` is the `logical_ecu` key used to look up the ST-LINK serial in
+/// `tools/bench/hardware-map.toml`, and is also used to derive the default
+/// ELF path (`build/<target>-arm/<target>_firmware.elf`).  Every flash-*
+/// subcommand calls through this function so the dry-run / --execute
+/// contract stays in exactly one place.
+fn run_flash(
+    target: &str,
     dry_run: bool,
     execute: bool,
     elf_override: Option<PathBuf>,
@@ -199,28 +233,35 @@ fn run_flash_cvc(
         load_hardware_map(&repo_root)?
     };
 
-    let serial = resolve_stlink_serial(&map, "cvc")?;
+    let serial = resolve_stlink_serial(&map, target)?;
 
+    let default_elf_rel = format!("build/{}-arm/{}_firmware.elf", target, target);
     let elf_path = elf_override
-        .unwrap_or_else(|| repo_root.join("build/cvc-arm/cvc_firmware.elf"));
+        .unwrap_or_else(|| repo_root.join(&default_elf_rel));
 
     let plan = build_flash_plan(&serial, &elf_path);
     let printed = plan.format();
 
     if effective_dry_run {
-        eprintln!("[xtask flash-cvc] DRY-RUN (no hardware contacted)");
-        eprintln!("[xtask flash-cvc] resolved ST-LINK serial: {}", serial);
-        eprintln!("[xtask flash-cvc] resolved ELF path     : {}", elf_path.display());
+        eprintln!("[xtask flash-{}] DRY-RUN (no hardware contacted)", target);
+        eprintln!("[xtask flash-{}] resolved ST-LINK serial: {}", target, serial);
         eprintln!(
-            "[xtask flash-cvc] resolved via              : {}",
+            "[xtask flash-{}] resolved ELF path     : {}",
+            target,
+            elf_path.display()
+        );
+        eprintln!(
+            "[xtask flash-{}] resolved via          : {}",
+            target,
             repo_root.join("tools/bench/hardware-map.toml").display()
         );
         println!("{}", printed);
         eprintln!(
-            "[xtask flash-cvc] To actually flash, rerun with --execute \
+            "[xtask flash-{}] To actually flash, rerun with --execute \
              after confirming the ELF path, serial, and target MCU family \
              (STM32G474) match the board under test. \
-             Do NOT run --execute from an unattended agent."
+             Do NOT run --execute from an unattended agent.",
+            target
         );
         // Suppress the _ warning variant by explicitly noting dry_run was set.
         let _ = dry_run;
@@ -229,13 +270,17 @@ fn run_flash_cvc(
 
     if !elf_path.exists() {
         bail!(
-            "ELF {} does not exist. Run `make -f firmware/platform/arm/Makefile.arm TARGET=cvc` first.",
-            elf_path.display()
+            "ELF {} does not exist. Run `make -f firmware/platform/arm/Makefile.arm TARGET={}` first.",
+            elf_path.display(),
+            target
         );
     }
 
-    eprintln!("[xtask flash-cvc] EXECUTE mode — invoking {}", plan.programmer);
-    eprintln!("[xtask flash-cvc] {}", printed);
+    eprintln!(
+        "[xtask flash-{}] EXECUTE mode — invoking {}",
+        target, plan.programmer
+    );
+    eprintln!("[xtask flash-{}] {}", target, printed);
     let status = Command::new(&plan.programmer)
         .args(&plan.args)
         .status()
@@ -258,6 +303,18 @@ fn main() -> Result<()> {
             execute,
             elf,
             hardware_map,
-        } => run_flash_cvc(dry_run, execute, elf, hardware_map),
+        } => run_flash("cvc", dry_run, execute, elf, hardware_map),
+        Cmd::FlashFzc {
+            dry_run,
+            execute,
+            elf,
+            hardware_map,
+        } => run_flash("fzc", dry_run, execute, elf, hardware_map),
+        Cmd::FlashRzc {
+            dry_run,
+            execute,
+            elf,
+            hardware_map,
+        } => run_flash("rzc", dry_run, execute, elf, hardware_map),
     }
 }
