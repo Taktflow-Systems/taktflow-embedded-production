@@ -18,6 +18,50 @@
 #include "Fzc_Routine_BrakeCheck.h"
 
 /* ==================================================================
+ * Phase 5 Line B D7 follow-up: debug scaffold for silent F190 fault
+ *
+ * The bench test 2026-04-15 showed that FZC returns SingleFrame UDS
+ * responses correctly (F191 HW version works, TesterPresent works)
+ * but produces zero wire output for F190 (20-byte VIN response that
+ * would need ISO-TP FF+CF segmentation). CVC works in the same
+ * scenario with the same build system.
+ *
+ * This scaffold lets the operator toggle a compile-time trace flag
+ * on the next flash cycle. When FZC_DCM_DEBUG_F190 is defined, the
+ * F190 handler logs a pre- and post-call marker so we can tell
+ * whether the handler is even reached, whether it returns E_OK, and
+ * (indirectly) whether dcm_send_response took the MF branch.
+ *
+ * The flag is OFF by default so production builds are untouched.
+ * Enable with `-DFZC_DCM_DEBUG_F190=1` at the Makefile.arm layer or
+ * via `CFLAGS_EXTRA=-DFZC_DCM_DEBUG_F190=1` when invoking make.
+ *
+ * Output sinks:
+ *   - PLATFORM_POSIX : fprintf(stderr, ...) — captured by HIL harness
+ *   - ARM target     : Det_ReportRuntimeError with a synthetic API ID;
+ *                      the DET log is polled by the CAN monitor tap.
+ *
+ * Revert when the root cause is fixed and the operator confirms the
+ * bench replay shows F190 emitting FF on 0x7E9.
+ * ================================================================== */
+#if defined(FZC_DCM_DEBUG_F190)
+  #include "Det.h"
+  #define FZC_DCM_DEBUG_API_READ_VIN_ENTRY 0xF1u
+  #define FZC_DCM_DEBUG_API_READ_VIN_OK    0xF2u
+  #define FZC_DCM_DEBUG_API_READ_VIN_FAIL  0xF3u
+  #ifdef PLATFORM_POSIX
+    #include <stdio.h>
+    #define FZC_DCM_DEBUG_LOG(msg, rc) \
+      (void)fprintf(stderr, "[FZC-DCM-DBG] F190 %s rc=%u\n", (msg), (unsigned)(rc))
+  #else
+    #define FZC_DCM_DEBUG_LOG(msg, rc) \
+      Det_ReportRuntimeError(DET_MODULE_DCM, 0u, (uint8)(rc), 0u)
+  #endif
+#else
+  #define FZC_DCM_DEBUG_LOG(msg, rc) ((void)0)
+#endif
+
+/* ==================================================================
  * Forward declarations for RTE signal reads
  * ================================================================== */
 
@@ -43,15 +87,31 @@ extern Std_ReturnType Rte_Read(uint16 SignalId, uint32* DataPtr);
  */
 static Std_ReturnType Dcm_ReadDid_Vin(uint8* Data, uint8 Length)
 {
+    Std_ReturnType rc;
+
+    FZC_DCM_DEBUG_LOG("entry", FZC_DCM_DEBUG_API_READ_VIN_ENTRY);
+
     if (Data == NULL_PTR)
     {
+        FZC_DCM_DEBUG_LOG("fail-null-data", FZC_DCM_DEBUG_API_READ_VIN_FAIL);
         return E_NOT_OK;
     }
     if (Length < (uint8)FZC_IDENTITY_VIN_LEN)
     {
+        FZC_DCM_DEBUG_LOG("fail-short-buf", FZC_DCM_DEBUG_API_READ_VIN_FAIL);
         return E_NOT_OK;
     }
-    return Fzc_Identity_GetVin(Data, Length);
+
+    rc = Fzc_Identity_GetVin(Data, Length);
+    if (rc == E_OK)
+    {
+        FZC_DCM_DEBUG_LOG("identity-ok", FZC_DCM_DEBUG_API_READ_VIN_OK);
+    }
+    else
+    {
+        FZC_DCM_DEBUG_LOG("identity-fail", FZC_DCM_DEBUG_API_READ_VIN_FAIL);
+    }
+    return rc;
 }
 
 /**
