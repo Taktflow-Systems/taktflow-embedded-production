@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Taktflow Systems
+
+[package]
+name = "proxy-can"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+# SocketCAN is Linux-only. On other hosts proxy-can compiles as a stub so
+# the workspace still checks on Windows/macOS dev machines. Per ADR-0004
+# the proxy only ships on the Pi, so this is cosmetic for dev ergonomics.
+[target.'cfg(target_os = "linux")'.dependencies]
+socketcan.workspace = true
+
+[lints]
+workspace = true

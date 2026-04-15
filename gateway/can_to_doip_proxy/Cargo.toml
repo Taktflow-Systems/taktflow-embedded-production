@@ -1,0 +1,57 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Taktflow Systems (see CONTRIBUTORS)
+#
+# CAN-to-DoIP proxy workspace. Mirrors the opensovd-core workspace style
+# per ADR-0006 so that a future upstream contribution stays low-friction.
+
+[workspace]
+resolver = "3"
+members = [
+    "proxy-core",
+    "proxy-doip",
+    "proxy-can",
+    "proxy-main",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+license = "Apache-2.0"
+repository = "https://github.com/Taktflow-Systems/taktflow-embedded-production"
+
+[workspace.dependencies]
+proxy-core = { path = "proxy-core" }
+proxy-doip = { path = "proxy-doip" }
+proxy-can  = { path = "proxy-can" }
+
+thiserror   = "2.0"
+serde       = { version = "1.0", features = ["derive"] }
+serde_json  = "1.0"
+tokio       = { version = "1", default-features = false, features = ["rt-multi-thread", "macros", "net", "io-util", "sync", "time", "signal"] }
+tracing     = "0.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter", "json"] }
+clap        = { version = "4.5", features = ["derive"] }
+figment     = { version = "0.10", features = ["env", "toml"] }
+toml        = "0.9"
+bytes       = "1"
+hex         = "0.4"
+anyhow      = "1"
+
+# Linux-only CAN deps, target-gated in proxy-can/Cargo.toml
+socketcan   = "3"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+similar_names = "allow"
+clone_on_ref_ptr = "warn"
+indexing_slicing = "deny"
+unwrap_used = "deny"
+arithmetic_side_effects = "deny"
+separated_literal_suffix = "deny"
+
+[workspace.lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(nightly)'] }
+
+[profile.release.package."*"]
+opt-level = 3
