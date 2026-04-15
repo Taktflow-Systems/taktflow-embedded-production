@@ -40,8 +40,9 @@ usb_location = "002d.0000.0003.002.002.000.000.000.000"
 assigned_on = "2026-04-15"
 assigned_by = "Claude autonomous session (operator-delegated choice; POSIX-only work so far, assignment is bookkeeping)"
 flashed_image = "none"
-target_mcu = "TBD — resolve on first `st-info --probe` at Phase 5 D1"
-notes = "First CVC hardware image will be flashed here. Pair this entry with the same CVC POSIX container config in deploy/docker/compose-posix-ecus.yml and the same CVC Dcm_Cfg / cvc_identity.toml fixtures."
+target_mcu = "STM32G47x/G48x (chipid 0x469, 512 KB flash @ 2 KB page, 128 KB SRAM)"
+target_mcu_resolved_on = "2026-04-15 via st-info --probe --connect-under-reset from Windows host"
+notes = "First CVC hardware image will be flashed here. Pair this entry with the same CVC POSIX container config in deploy/docker/compose-posix-ecus.yml and the same CVC Dcm_Cfg / cvc_identity.toml fixtures. MCU family resolved to G474/G484 — plan ARM Makefile + HAL around this."
 
 [[stlink]]
 logical_ecu = "unassigned-1"
@@ -50,8 +51,9 @@ com_port = "COM7"
 usb_location = "002d.0000.0003.002.003.000.000.000.000"
 assigned_on = "2026-04-15"
 flashed_image = "none"
-target_mcu = "TBD"
-notes = "Reserved for fzc or rzc assignment in Phase 5 when a second STM32 board is first flashed"
+target_mcu = "STM32G47x/G48x (chipid 0x469, same family as CVC)"
+target_mcu_resolved_on = "2026-04-15"
+notes = "Reserved for fzc or rzc assignment in Phase 5. Same MCU family as CVC — firmware image reuse is straightforward, only identity/config differs."
 
 [[stlink]]
 logical_ecu = "unassigned-2"
@@ -60,8 +62,9 @@ com_port = "COM8"
 usb_location = "002d.0000.0003.002.001.000.000.000.000"
 assigned_on = "2026-04-15"
 flashed_image = "none"
-target_mcu = "TBD"
-notes = "Reserved for fzc or rzc assignment in Phase 5"
+target_mcu = "STM32G47x/G48x (chipid 0x469, same family as CVC)"
+target_mcu_resolved_on = "2026-04-15"
+notes = "Reserved for fzc or rzc assignment in Phase 5. Same MCU family as CVC."
 
 # ----------------------------------------------------------------------
 # XDS110 probe (TI TMS570 / AURIX)
@@ -115,3 +118,9 @@ role = "Hardware Security Module reference implementation (separate repo at H:\\
 #             (currently COM3). Other assignments TBD. No ARM firmware
 #             has been flashed to any probe yet — Phase 1..4 Line B
 #             targeted POSIX only.
+# 2026-04-15  MCU family resolved for all 3 ST-LINK probes via
+#             `st-info --probe --connect-under-reset` from Windows host:
+#             all three boards are STM32G47x/G48x (chipid 0x469, 512 KB
+#             flash @ 2 KB page, 128 KB SRAM). Single MCU family covers
+#             CVC + FZC + RZC — firmware image structure reuse is
+#             straightforward. Phase 5 Line B ARM Makefile targets G474.
