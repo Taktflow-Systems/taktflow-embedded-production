@@ -2,9 +2,15 @@
 // SPDX-FileCopyrightText: 2026 Taktflow Systems
 //
 // Routing table: DoIP logical address -> CAN request/response ID pair.
-// Tests-first skeleton; green commit adds the implementation.
+// Loaded from a TOML config (opensovd-proxy.toml) that the proxy reads
+// at startup. CAN IDs come from the firmware Dcm_Cfg_<Ecu>.c headers,
+// NOT from hardcoded guesses — the prompt's IMPORTANT rule. The example
+// TOML in tests below mirrors the IDs found in the firmware CanIf_Cfg
+// files today.
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EcuRoute {
     pub name: String,
     pub doip_logical_address: u16,
@@ -12,13 +18,73 @@ pub struct EcuRoute {
     pub can_response_id: u32,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+struct TomlRoot {
+    #[serde(default)]
+    ecu: Vec<EcuRoute>,
+}
+
 #[derive(Debug, Default, Clone)]
-pub struct RoutingTable;
+pub struct RoutingTable {
+    entries: Vec<EcuRoute>,
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum RoutingTableError {
-    #[error("placeholder")]
-    Placeholder,
+    #[error("toml parse: {0}")]
+    TomlParse(String),
+    #[error("duplicate logical address 0x{addr:04x} in routing table")]
+    DuplicateLogicalAddress { addr: u16 },
+    #[error("can_id 0x{id:x} outside 11-bit standard range")]
+    CanIdOutOfRange { id: u32 },
+    #[error("empty routing table")]
+    Empty,
+}
+
+impl RoutingTable {
+    /// Parse from a TOML string.
+    ///
+    /// # Errors
+    /// Returns [`RoutingTableError`] on parse failure, duplicate ECU,
+    /// or out-of-range CAN IDs.
+    pub fn from_toml_str(source: &str) -> Result<Self, RoutingTableError> {
+        let root: TomlRoot =
+            toml::from_str(source).map_err(|e| RoutingTableError::TomlParse(e.to_string()))?;
+        let mut seen = std::collections::HashSet::new();
+        for e in &root.ecu {
+            if e.can_request_id > 0x7FF {
+                return Err(RoutingTableError::CanIdOutOfRange { id: e.can_request_id });
+            }
+            if e.can_response_id > 0x7FF {
+                return Err(RoutingTableError::CanIdOutOfRange { id: e.can_response_id });
+            }
+            if !seen.insert(e.doip_logical_address) {
+                return Err(RoutingTableError::DuplicateLogicalAddress {
+                    addr: e.doip_logical_address,
+                });
+            }
+        }
+        Ok(Self { entries: root.ecu })
+    }
+
+    #[must_use]
+    pub fn len(&self) -> usize {
+        self.entries.len()
+    }
+
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.entries.is_empty()
+    }
+
+    #[must_use]
+    pub fn by_logical_address(&self, addr: u16) -> Option<&EcuRoute> {
+        self.entries.iter().find(|e| e.doip_logical_address == addr)
+    }
+
+    pub fn all(&self) -> impl Iterator<Item = &EcuRoute> + '_ {
+        self.entries.iter()
+    }
 }
 
 #[cfg(test)]
