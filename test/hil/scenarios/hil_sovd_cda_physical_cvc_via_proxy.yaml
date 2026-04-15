@@ -1,0 +1,72 @@
+name: "SOVD GET VIN from physical CVC via CAN-to-DoIP proxy"
+id: "HIL-SOVD-001"
+description: >
+  End-to-end: test client -> CDA (upstream Eclipse OpenSOVD) ->
+  CAN-to-DoIP proxy on Pi (per ADR-0004) -> physical CVC over CAN
+  ISO-TP -> CVC Dcm 0x22 0xF190 handler (Phase 1 firmware) -> reverse
+  path -> JSON response at http://localhost:20002/sovd/v1/components/cvc/data/vin.
+
+  This is the first full-stack HIL scenario for the CAN-to-DoIP proxy.
+  It depends on Phase 1 Line B firmware being flashed on the target
+  CVC so 0x22 0xF190 actually answers — without Phase 1, the proxy
+  itself still forwards correctly but the ECU is silent and the
+  scenario fails with a 504-style timeout from CDA. See phase-2-hil-
+  capture/2026-04-15-can0-cvc-live-smoke.log for the current (pre-
+  Phase 1) timeout baseline.
+
+verifies:
+  - "FR-5.2"       # DoIP reachability to physical CVC via proxy
+  - "SWR-CVC-030"  # CVC Dcm DID table includes 0xF190
+asil: "QM"
+aspice: "SWE.6"
+iso_reference: "ISO 26262 Part 4, Section 7; ISO 13400-2"
+timeout_sec: 60
+requires_mqtt: false
+
+prerequisites:
+  - proxy_running_on_pi
+  - cvc_powered_and_flashed_with_phase1_dcm
+  - cda_running_on_laptop
+  - ecu_sim_stopped  # port 13400 on Pi cannot be shared
+
+setup:
+  - action: wait_state
+    state: RUN
+    timeout: 20
+    description: "Wait for CVC to reach RUN state"
+  - action: shell
+    cmd: "ssh taktflow-pi@192.168.0.197 'sudo systemctl stop ecu-sim.service 2>/dev/null || true'"
+    description: "Release DoIP port 13400 on the Pi"
+  - action: shell
+    cmd: "ssh taktflow-pi@192.168.0.197 'sudo systemctl restart can-to-doip-proxy.service'"
+    description: "Start the proxy"
+
+steps:
+  - action: http_get
+    url: "http://localhost:20002/sovd/v1/components/cvc/data/vin"
+    expect_status: 200
+    expect_schema: "sovd_interfaces::spec::DataResponse"
+    timeout_ms: 3000
+    description: "Query CVC VIN through CDA which talks DoIP to the proxy"
+
+verdicts:
+  - type: http_response_field
+    field: "value"
+    matches: "^[A-Z0-9_]{17}$"
+    description: "17-byte VIN string (ISO 3779)"
+  - type: can_message
+    can_id: 0x7E0
+    description: "Proxy forwarded a request to CVC on 0x7E0"
+  - type: can_message
+    can_id: 0x7E8
+    description: "Physical CVC answered on 0x7E8"
+
+teardown:
+  - action: shell
+    cmd: "ssh taktflow-pi@192.168.0.197 'sudo systemctl stop can-to-doip-proxy.service'"
+    description: "Stop proxy"
+  - action: shell
+    cmd: "ssh taktflow-pi@192.168.0.197 'sudo systemctl start ecu-sim.service 2>/dev/null || true'"
+    description: "Restart ecu-sim for other Line A scenarios"
+  - action: reset
+    description: "HIL bench reset"
