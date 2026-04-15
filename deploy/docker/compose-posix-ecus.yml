@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Taktflow Systems
+#
+# Phase 4 Line B D4 — Docker Compose skeleton for the POSIX ECU fleet
+#
+# Runs the three POSIX ECU images (cvc/fzc/rzc) as long-lived
+# containers that share the host's vcan0 interface. This is the
+# simplest deployable pattern because:
+#
+#   * Bridge networks in docker-compose cannot create vcan interfaces;
+#     vcan is a kernel module that must be loaded in the host
+#     namespace before the containers start.
+#   * Host networking lets all three containers attach to the same
+#     vcan0 with no extra privileges, matching the way the POSIX
+#     builds already behave on the Pi bench.
+#   * The CAN-to-DoIP proxy from Phase 2 Line B also runs on the same
+#     host and shares vcan0 through `network_mode: host`; D5 wires it
+#     up without touching the compose file.
+#
+# Prerequisite: the host must have vcan0 already up, e.g.
+#   sudo modprobe vcan
+#   sudo ip link add dev vcan0 type vcan
+#   sudo ip link set up vcan0
+#
+# The CVC identity config path is passed via env var so no VIN string
+# appears in this compose file. The regression scanner in tests/phase4/
+# enforces that rule.
+
+services:
+  cvc:
+    build:
+      context: ../..
+      dockerfile: firmware/ecu/cvc/Dockerfile
+    image: taktflow/cvc-posix:phase4
+    network_mode: host
+    environment:
+      CAN_INTERFACE: vcan0
+      CVC_IDENTITY_CONFIG: /opt/taktflow/cvc/cfg/cvc_identity.toml
+    restart: unless-stopped
+
+  fzc:
+    build:
+      context: ../..
+      dockerfile: firmware/ecu/fzc/Dockerfile
+    image: taktflow/fzc-posix:phase4
+    network_mode: host
+    environment:
+      CAN_INTERFACE: vcan0
+    restart: unless-stopped
+
+  rzc:
+    build:
+      context: ../..
+      dockerfile: firmware/ecu/rzc/Dockerfile
+    image: taktflow/rzc-posix:phase4
+    network_mode: host
+    environment:
+      CAN_INTERFACE: vcan0
+    restart: unless-stopped

@@ -12,6 +12,7 @@
 #include "Dcm.h"
 #include "Cvc_Cfg.h"
 #include "Cvc_DcmPlatform.h"
+#include "Cvc_Identity.h"
 #include "Dcm_PlatformStatus.h"
 
 /* ==================================================================
@@ -25,23 +26,29 @@ extern uint8 Swc_VehicleState_GetState(void);
  * ================================================================== */
 
 /**
- * @brief  Read DID 0xF190 — ECU Identifier
+ * @brief  Read DID 0xF190 — Vehicle Identification Number (VIN)
+ *
+ * Returns the 17-byte VIN string loaded from `cvc_identity.toml` via
+ * Cvc_Identity_Init*() at boot. Phase 4 Line B D2 replaced the former
+ * 4-byte "ECU ID" semantic here because ISO 14229 assigns F190 to VIN
+ * and SWR-CVC-030 requires a CVC VIN response.
+ *
  * @param  Data    Output buffer
- * @param  Length  Buffer length (expected: 4)
- * @return E_OK always
+ * @param  Length  Buffer length (expected: CVC_IDENTITY_VIN_LEN = 17)
+ * @return E_OK on success, E_NOT_OK on null pointer, short buffer, or
+ *         if the identity store has not been initialised.
  */
-static Std_ReturnType Dcm_ReadDid_EcuId(uint8* Data, uint8 Length)
+static Std_ReturnType Dcm_ReadDid_Vin(uint8* Data, uint8 Length)
 {
-    if ((Data == NULL_PTR) || (Length < 4u))
+    if (Data == NULL_PTR)
     {
         return E_NOT_OK;
     }
-    /* CVC ECU ID: "CVC1" */
-    Data[0] = (uint8)'C';
-    Data[1] = (uint8)'V';
-    Data[2] = (uint8)'C';
-    Data[3] = (uint8)'1';
-    return E_OK;
+    if (Length < (uint8)CVC_IDENTITY_VIN_LEN)
+    {
+        return E_NOT_OK;
+    }
+    return Cvc_Identity_GetVin(Data, Length);
 }
 
 /**
@@ -120,7 +127,10 @@ static Std_ReturnType Dcm_ReadDid_PlatformStatus(uint8* Data, uint8 Length)
 
 static const Dcm_DidTableType cvc_did_table[] = {
     /* DID,                    ReadFunc,                   DataLength */
-    { 0xF190u,                 Dcm_ReadDid_EcuId,         4u },   /* ECU Identifier         */
+    /* ISO 3779 fixes VIN length at 17 chars. Decimal literal required
+     * so the odx-gen Dcm_Cfg parser regex resolves DataLength without
+     * having to expand the CVC_IDENTITY_VIN_LEN symbol. */
+    { 0xF190u,                 Dcm_ReadDid_Vin,           17u }, /* VIN */
     { 0xF191u,                 Dcm_ReadDid_HwVer,         3u },   /* Hardware Version       */
     { 0xF195u,                 Dcm_ReadDid_SwVer,         3u },   /* Software Version       */
     { 0xF010u,                 Dcm_ReadDid_State,         1u },   /* Vehicle State          */
@@ -128,6 +138,12 @@ static const Dcm_DidTableType cvc_did_table[] = {
 };
 
 #define CVC_DCM_DID_COUNT  (sizeof(cvc_did_table) / sizeof(cvc_did_table[0]))
+
+/* Compile-time guard: the F190 literal length must match the VIN length
+ * exposed by the identity module. If ISO 3779 ever changes the VIN
+ * length the fix is in one place and this assertion flags the rest. */
+typedef char cvc_vin_length_matches_identity_module[
+    (CVC_IDENTITY_VIN_LEN == 17u) ? 1 : -1];
 
 /* ==================================================================
  * Aggregate DCM Configuration

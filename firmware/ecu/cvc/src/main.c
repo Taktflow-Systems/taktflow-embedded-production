@@ -19,6 +19,9 @@
 #ifdef SIL_DIAG
 #include <stdio.h>
 #endif
+#ifdef PLATFORM_POSIX
+#include <stdlib.h>   /* getenv for CVC_IDENTITY_CONFIG lookup */
+#endif
 
 /* ==================================================================
  * BSW Module Headers
@@ -56,6 +59,7 @@
 #include "Swc_Heartbeat.h"
 #include "Swc_Dashboard.h"
 #include "Swc_CvcCom.h"
+#include "Cvc_Identity.h"
 
 /* ==================================================================
  * Det-based debug tracing (replaces DBG_LOG macro)
@@ -414,6 +418,23 @@ int main(void)
     SchM_TimingInit();
     WdgM_Init(&wdgm_config);
     BswM_Init(&bswm_config);
+
+    /* Phase 4 Line B D2: load VIN + ECU name from cvc_identity.toml so
+     * the F190 DID handler can return the VIN without any hardcoded
+     * string in firmware sources. Path override via env var on POSIX;
+     * compile-time default for target builds. */
+    {
+#ifdef PLATFORM_POSIX
+        const char* id_path = getenv("CVC_IDENTITY_CONFIG");
+        if (id_path == NULL_PTR) {
+            id_path = "firmware/ecu/cvc/cfg/cvc_identity.toml";
+        }
+#else
+        const char* id_path = "cvc_identity.toml";
+#endif
+        (void)Cvc_Identity_InitFromFile(id_path);
+    }
+
     Dcm_Init(&cvc_dcm_config);
     Spi_Init(&spi_config);
     Adc_Init(&adc_config);

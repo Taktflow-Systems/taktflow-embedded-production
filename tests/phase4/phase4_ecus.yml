@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Taktflow Systems
+#
+# Phase 4 Line B — list of ECUs that must ship a POSIX Dockerfile and
+# join the docker-compose demo fleet. ECU names must match the TARGET
+# values accepted by firmware/platform/posix/Makefile.posix.
+#
+# This is the single source of truth for the phase-4 scope list. Tests
+# under tests/phase4/ read it; the Dockerfile generator (future work)
+# may also read it. No test or source code may hardcode these names.
+posix_dockerized_ecus:
+  - cvc
+  - fzc
+  - rzc

@@ -138,3 +138,4 @@ int main(void)
 
 #include "../src/Cvc_DcmPlatform.c"
 #include "../cfg/Dcm_Cfg_Cvc.c"
+#include "../cfg/Cvc_Identity.c"

@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Taktflow Systems
+#
+# CVC identity config — loaded at boot by Cvc_Identity_InitFromFile().
+# Phase 4 Line B D2. The F190 DID handler reads the VIN from this file.
+# No C source in firmware/ecu/cvc/ may inline any of these values; the
+# hardcoded-literal regression test enforces that rule.
+#
+# VIN must be exactly 17 characters and conform to ISO 3779 (the format
+# checker is intentionally lenient in the firmware parser; strict VIN
+# validation is the tester's job).
+
+vin      = "TAKTFLWCVC0000001"
+ecu_name = "cvc"
