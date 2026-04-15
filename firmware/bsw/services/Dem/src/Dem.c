@@ -64,13 +64,66 @@ typedef struct {
     uint32  occurrenceCounter;
 } Dem_EventDataType;
 
+typedef struct {
+    boolean         active;
+    uint8           statusMask;
+    boolean         reportSupportedOnly;
+    Dem_EventIdType nextEventId;
+} Dem_FilterStateType;
+
 static Dem_EventDataType dem_events[DEM_MAX_EVENTS];
+static Dem_FilterStateType dem_filter;
 
 /* ECU source ID for DTC broadcast (set via Dem_SetEcuId, default 0x00) */
 static uint8 dem_ecu_id;
 
 /* CanIf TX PDU ID for DTC broadcast (set via Dem_SetBroadcastPduId) */
 static PduIdType dem_broadcast_pdu_id;
+
+static void dem_clear_event(Dem_EventIdType EventId)
+{
+    dem_events[EventId].debounceCounter   = 0;
+    dem_events[EventId].statusByte        = 0u;
+    dem_events[EventId].occurrenceCounter = 0u;
+    dem_broadcast_occ[EventId]            = 0u;
+}
+
+static Std_ReturnType dem_persist_events_to_nvm(void)
+{
+    uint8 nvm_wr[NVM_BLOCK_SIZE];
+
+    (void)memset(nvm_wr, 0u, sizeof(nvm_wr));
+    (void)memcpy(nvm_wr, dem_events, sizeof(dem_events));
+    return NvM_WriteBlock(DEM_NVM_BLOCK_ID, (const void*)nvm_wr);
+}
+
+static boolean dem_filter_match_event(Dem_EventIdType EventId, uint8* StatusPtr)
+{
+    uint8 status;
+
+    if (dem_dtc_codes[EventId] == 0u) {
+        return FALSE;
+    }
+
+    status = dem_events[EventId].statusByte;
+
+    if (dem_filter.reportSupportedOnly == FALSE) {
+        if (status == 0u) {
+            return FALSE;
+        }
+
+        if ((dem_filter.statusMask != 0u) &&
+            ((status & dem_filter.statusMask) == 0u)) {
+            return FALSE;
+        }
+    }
+
+    if (StatusPtr != NULL_PTR) {
+        *StatusPtr = status;
+    }
+
+    return TRUE;
+}
 
 /* ---- API Implementation ---- */
 
@@ -87,6 +140,10 @@ void Dem_Init(const void* ConfigPtr)
     }
     dem_ecu_id = 0u;
     dem_broadcast_pdu_id = 0xFFFFu;  /* Unconfigured sentinel */
+    dem_filter.active = FALSE;
+    dem_filter.statusMask = 0u;
+    dem_filter.reportSupportedOnly = FALSE;
+    dem_filter.nextEventId = 0u;
 
     /* Restore occurrence counters from NvM (persistence across power cycles).
      * NVM_BLOCK_SIZE (1024) exceeds sizeof(dem_events) (~224 bytes).
@@ -213,14 +270,118 @@ Std_ReturnType Dem_ClearAllDTCs(void)
 
     SchM_Enter_Dem_DEM_EXCLUSIVE_AREA_0();
     for (i = 0u; i < DEM_MAX_EVENTS; i++) {
-        dem_events[i].debounceCounter   = 0;
-        dem_events[i].statusByte        = 0u;
-        dem_events[i].occurrenceCounter = 0u;
-        dem_broadcast_occ[i]            = 0u;
+        dem_clear_event(i);
     }
     SchM_Exit_Dem_DEM_EXCLUSIVE_AREA_0();
 
     return E_OK;
+}
+
+Dem_ClearDtcResultType Dem_ClearDTC(uint32 Selector)
+{
+    Dem_EventIdType event_id;
+    boolean matched = FALSE;
+
+    SchM_Enter_Dem_DEM_EXCLUSIVE_AREA_0();
+    if (Selector == 0xFFFFFFu) {
+        for (event_id = 0u; event_id < DEM_MAX_EVENTS; event_id++) {
+            dem_clear_event(event_id);
+        }
+        matched = TRUE;
+    } else {
+        for (event_id = 0u; event_id < DEM_MAX_EVENTS; event_id++) {
+            if (dem_dtc_codes[event_id] == Selector) {
+                dem_clear_event(event_id);
+                matched = TRUE;
+            }
+        }
+    }
+    SchM_Exit_Dem_DEM_EXCLUSIVE_AREA_0();
+
+    if (matched == FALSE) {
+        return DEM_CLEAR_DTC_INVALID_SELECTOR;
+    }
+
+    if (dem_persist_events_to_nvm() != E_OK) {
+        return DEM_CLEAR_DTC_NVM_FAILED;
+    }
+
+    return DEM_CLEAR_DTC_OK;
+}
+
+Std_ReturnType Dem_SetDTCFilter(uint8 StatusMask, boolean ReportSupportedOnly)
+{
+    SchM_Enter_Dem_DEM_EXCLUSIVE_AREA_0();
+    dem_filter.active = TRUE;
+    dem_filter.statusMask = StatusMask;
+    dem_filter.reportSupportedOnly = ReportSupportedOnly;
+    dem_filter.nextEventId = 0u;
+    SchM_Exit_Dem_DEM_EXCLUSIVE_AREA_0();
+
+    return E_OK;
+}
+
+Std_ReturnType Dem_GetNumberOfFilteredDTC(uint16* CountPtr)
+{
+    Dem_EventIdType event_id;
+    uint16 count = 0u;
+
+    if (CountPtr == NULL_PTR) {
+        Det_ReportError(DET_MODULE_DEM, 0u,
+                        DEM_API_GET_NUMBER_OF_FILTERED_DTC,
+                        DET_E_PARAM_POINTER);
+        return E_NOT_OK;
+    }
+
+    if (dem_filter.active == FALSE) {
+        Det_ReportError(DET_MODULE_DEM, 0u,
+                        DEM_API_GET_NUMBER_OF_FILTERED_DTC,
+                        DET_E_PARAM_VALUE);
+        return E_NOT_OK;
+    }
+
+    SchM_Enter_Dem_DEM_EXCLUSIVE_AREA_0();
+    for (event_id = 0u; event_id < DEM_MAX_EVENTS; event_id++) {
+        if (dem_filter_match_event(event_id, NULL_PTR) == TRUE) {
+            count++;
+        }
+    }
+    SchM_Exit_Dem_DEM_EXCLUSIVE_AREA_0();
+
+    *CountPtr = count;
+    return E_OK;
+}
+
+Std_ReturnType Dem_GetNextFilteredDTC(uint32* DtcPtr, uint8* StatusPtr)
+{
+    Dem_EventIdType event_id;
+
+    if ((DtcPtr == NULL_PTR) || (StatusPtr == NULL_PTR)) {
+        Det_ReportError(DET_MODULE_DEM, 0u,
+                        DEM_API_GET_NEXT_FILTERED_DTC,
+                        DET_E_PARAM_POINTER);
+        return E_NOT_OK;
+    }
+
+    if (dem_filter.active == FALSE) {
+        Det_ReportError(DET_MODULE_DEM, 0u,
+                        DEM_API_GET_NEXT_FILTERED_DTC,
+                        DET_E_PARAM_VALUE);
+        return E_NOT_OK;
+    }
+
+    SchM_Enter_Dem_DEM_EXCLUSIVE_AREA_0();
+    for (event_id = dem_filter.nextEventId; event_id < DEM_MAX_EVENTS; event_id++) {
+        if (dem_filter_match_event(event_id, StatusPtr) == TRUE) {
+            *DtcPtr = dem_dtc_codes[event_id];
+            dem_filter.nextEventId = (Dem_EventIdType)(event_id + 1u);
+            SchM_Exit_Dem_DEM_EXCLUSIVE_AREA_0();
+            return E_OK;
+        }
+    }
+    SchM_Exit_Dem_DEM_EXCLUSIVE_AREA_0();
+
+    return E_NOT_OK;
 }
 
 /* ==================================================================
@@ -337,12 +498,7 @@ void Dem_MainFunction(void)
             /* Persist to NvM (outside critical section).
              * Use temp buffer to avoid writing adjacent BSS into NvM
              * (NVM_BLOCK_SIZE > sizeof(dem_events)). */
-            {
-                uint8 nvm_wr[NVM_BLOCK_SIZE];
-                (void)memset(nvm_wr, 0u, sizeof(nvm_wr));
-                (void)memcpy(nvm_wr, dem_events, sizeof(dem_events));
-                (void)NvM_WriteBlock(DEM_NVM_BLOCK_ID, (const void*)nvm_wr);
-            }
+            (void)dem_persist_events_to_nvm();
         } else {
             SchM_Exit_Dem_DEM_EXCLUSIVE_AREA_0();
         }

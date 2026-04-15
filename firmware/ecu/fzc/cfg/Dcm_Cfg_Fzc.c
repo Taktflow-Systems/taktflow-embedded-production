@@ -10,7 +10,11 @@
  * @copyright Taktflow Systems 2026
  */
 #include "Dcm.h"
+#include "Dcm_PlatformStatus.h"
+#include "Dcm_RoutineIds.h"
 #include "Fzc_Cfg.h"
+#include "Fzc_DcmPlatform.h"
+#include "Fzc_Routine_BrakeCheck.h"
 
 /* ==================================================================
  * Forward declarations for RTE signal reads
@@ -194,23 +198,52 @@ static Std_ReturnType Dcm_ReadDid_LidarZone(uint8* Data, uint8 Length)
     return E_OK;
 }
 
+/**
+ * @brief  Read DID 0xF018 - Platform Status
+ * @param  Data    Output buffer
+ * @param  Length  Buffer length (expected: 1)
+ * @return E_OK on success, E_NOT_OK if helper rejects the request
+ */
+static Std_ReturnType Dcm_ReadDid_PlatformStatus(uint8* Data, uint8 Length)
+{
+    if ((Data == NULL_PTR) || (Length < 1u))
+    {
+        return E_NOT_OK;
+    }
+
+    return Fzc_DcmPlatform_GetStatus(&Data[0]);
+}
+
 /* ==================================================================
  * DID Table
  * ================================================================== */
 
 static const Dcm_DidTableType fzc_did_table[] = {
-    /* DID,     ReadFunc,                  DataLength */
-    { 0xF190u, Dcm_ReadDid_EcuId,         4u },   /* ECU Identifier         */
-    { 0xF191u, Dcm_ReadDid_HwVer,         3u },   /* Hardware Version       */
-    { 0xF195u, Dcm_ReadDid_SwVer,         3u },   /* Software Version       */
-    { 0xF020u, Dcm_ReadDid_SteerAngle,    2u },   /* Steering Angle         */
-    { 0xF021u, Dcm_ReadDid_SteerFault,    1u },   /* Steering Fault         */
-    { 0xF022u, Dcm_ReadDid_BrakePos,      1u },   /* Brake Position         */
-    { 0xF023u, Dcm_ReadDid_LidarDist,     2u },   /* Lidar Distance         */
-    { 0xF024u, Dcm_ReadDid_LidarZone,     1u },   /* Lidar Zone             */
+    /* DID,                    ReadFunc,                   DataLength */
+    { 0xF190u,                 Dcm_ReadDid_EcuId,         4u },   /* ECU Identifier         */
+    { 0xF191u,                 Dcm_ReadDid_HwVer,         3u },   /* Hardware Version       */
+    { 0xF195u,                 Dcm_ReadDid_SwVer,         3u },   /* Software Version       */
+    { DCM_DID_PLATFORM_STATUS, Dcm_ReadDid_PlatformStatus, 1u },  /* Platform Status        */
+    { 0xF020u,                 Dcm_ReadDid_SteerAngle,    2u },   /* Steering Angle         */
+    { 0xF021u,                 Dcm_ReadDid_SteerFault,    1u },   /* Steering Fault         */
+    { 0xF022u,                 Dcm_ReadDid_BrakePos,      1u },   /* Brake Position         */
+    { 0xF023u,                 Dcm_ReadDid_LidarDist,     2u },   /* Lidar Distance         */
+    { 0xF024u,                 Dcm_ReadDid_LidarZone,     1u },   /* Lidar Zone             */
 };
 
 #define FZC_DCM_DID_COUNT  (sizeof(fzc_did_table) / sizeof(fzc_did_table[0]))
+
+static const Dcm_RoutineEntryType fzc_routine_table[] = {
+    {
+        DCM_ROUTINE_ID_BRAKE_CHECK,
+        Fzc_Routine_BrakeCheck_CheckStart,
+        Fzc_Routine_BrakeCheck_Start,
+        Fzc_Routine_BrakeCheck_Stop,
+        Fzc_Routine_BrakeCheck_Results
+    },
+};
+
+#define FZC_DCM_ROUTINE_COUNT  (sizeof(fzc_routine_table) / sizeof(fzc_routine_table[0]))
 
 /* ==================================================================
  * Aggregate DCM Configuration
@@ -221,4 +254,6 @@ const Dcm_ConfigType fzc_dcm_config = {
     .DidCount    = (uint8)FZC_DCM_DID_COUNT,
     .TxPduId     = FZC_COM_TX_UDS_RESP_FZC,  /* UDS response via CanTp → CanIf → 0x7E9 */
     .S3TimeoutMs = 5000u,
+    .RoutineTable = fzc_routine_table,
+    .RoutineCount = (uint8)FZC_DCM_ROUTINE_COUNT,
 };

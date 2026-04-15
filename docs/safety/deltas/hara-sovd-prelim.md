@@ -64,15 +64,23 @@ Safety-relevant deltas:
 ## 5. Preliminary controls to carry into Phase 1
 
 - Gate `0x14` and `0x31` behind authenticated security access and an explicit service session.
+- Define a shared platform-status DID for routine gating:
+  - `0xF018 bit0` `stationary`
+  - `0xF018 bit1` `brake_secured`
+  - `0xF018 bit2` `service_session`
+  - `0xF018 bit3` `service_mode_enabled`
+- On the current platform, derive `brake_secured` from brake position `>= 90 %` because there is
+  no dedicated park-brake signal in this checkout.
 - Add hard precondition checks inside each handler:
   - vehicle speed zero
-  - torque request zero
+  - brake secured
+  - service session active
   - actuator command path inhibited
-  - no active drive state
 - Keep routine control fail-safe:
   - bounded execution time
   - watchdog-aware abort path
   - no persistent actuator enable on transport loss
+- Keep the initial `0x31` ECU handlers non-actuating until the full HARA delta is signed off.
 - Make DTC clear auditable:
   - who cleared
   - when cleared
@@ -83,7 +91,9 @@ Safety-relevant deltas:
 ## 6. Phase 1 open questions for the full safety review
 
 - What ECU is the authoritative SOVD entry point, and how are service permissions partitioned by ECU?
-- Can any `0x31` routine physically actuate motor or brake hardware with the vehicle not mechanically secured?
+- Are the `stationary < 50 RPM` and `brake_secured >= 90 %` thresholds acceptable as the platform
+  interpretation of `SR-3.1` and `SR-3.2`, or do they need calibration/safety tightening?
+- Can any future `0x31` routine physically actuate motor or brake hardware with the vehicle not mechanically secured?
 - Should `0x14` be limited to a small DTC group, or blocked entirely, until selective clear exists in DEM?
 - How will the system prove that `0x19` output is complete when generic DEM currently lacks filter APIs,
   operation-cycle semantics, and freeze-frame support?

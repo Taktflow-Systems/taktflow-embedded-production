@@ -192,6 +192,7 @@ services:
     environment:
       - CAN_INTERFACE=vcan0
       - ECU_NAME=bcm
+      - DOIP_BIND_IP=127.0.0.5
       - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
     healthcheck:
       test: ["CMD-SHELL", "ip link show vcan0 2>/dev/null | grep -q UP || ip link show can0 2>/dev/null | grep -q UP"]
@@ -219,6 +220,7 @@ services:
     environment:
       - CAN_INTERFACE=vcan0
       - ECU_NAME=icu
+      - DOIP_BIND_IP=127.0.0.6
       - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
     stdin_open: true
     tty: true
@@ -248,6 +250,7 @@ services:
     environment:
       - CAN_INTERFACE=vcan0
       - ECU_NAME=tcu
+      - DOIP_BIND_IP=127.0.0.4
       - SIL_TIME_SCALE=${SIL_TIME_SCALE:-1}
     healthcheck:
       test: ["CMD-SHELL", "ip link show vcan0 2>/dev/null | grep -q UP || ip link show can0 2>/dev/null | grep -q UP"]

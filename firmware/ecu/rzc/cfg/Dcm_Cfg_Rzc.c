@@ -10,7 +10,11 @@
  * @copyright Taktflow Systems 2026
  */
 #include "Dcm.h"
+#include "Dcm_PlatformStatus.h"
+#include "Dcm_RoutineIds.h"
 #include "Rzc_Cfg.h"
+#include "Rzc_DcmPlatform.h"
+#include "Rzc_Routine_MotorSelfTest.h"
 
 /* ==================================================================
  * Forward declarations for RTE signal reads
@@ -249,25 +253,54 @@ static Std_ReturnType Dcm_ReadDid_AcsZeroOffset(uint8* Data, uint8 Length)
     return E_OK;
 }
 
+/**
+ * @brief  Read DID 0xF018 - Platform Status
+ * @param  Data    Output buffer
+ * @param  Length  Buffer length (expected: 1)
+ * @return E_OK on success, E_NOT_OK if helper rejects the request
+ */
+static Std_ReturnType Dcm_ReadDid_PlatformStatus(uint8* Data, uint8 Length)
+{
+    if ((Data == NULL_PTR) || (Length < 1u))
+    {
+        return E_NOT_OK;
+    }
+
+    return Rzc_DcmPlatform_GetStatus(&Data[0]);
+}
+
 /* ==================================================================
  * DID Table
  * ================================================================== */
 
 static const Dcm_DidTableType rzc_did_table[] = {
-    /* DID,     ReadFunc,                    DataLength */
-    { 0xF190u, Dcm_ReadDid_EcuId,           4u },   /* ECU Identifier         */
-    { 0xF191u, Dcm_ReadDid_HwVer,           3u },   /* Hardware Version       */
-    { 0xF195u, Dcm_ReadDid_SwVer,           3u },   /* Software Version       */
-    { 0xF030u, Dcm_ReadDid_MotorCurrent,    2u },   /* Motor Current mA       */
-    { 0xF031u, Dcm_ReadDid_MotorTemp,       2u },   /* Motor Temp deci-C      */
-    { 0xF032u, Dcm_ReadDid_MotorSpeed,      2u },   /* Motor Speed RPM        */
-    { 0xF033u, Dcm_ReadDid_BatteryVoltage,  2u },   /* Battery Voltage mV     */
-    { 0xF034u, Dcm_ReadDid_TorqueEcho,      1u },   /* Torque Echo %          */
-    { 0xF035u, Dcm_ReadDid_Derating,        1u },   /* Derating %             */
-    { 0xF036u, Dcm_ReadDid_AcsZeroOffset,   2u },   /* ACS Zero Offset        */
+    /* DID,                    ReadFunc,                     DataLength */
+    { 0xF190u,                 Dcm_ReadDid_EcuId,            4u },   /* ECU Identifier         */
+    { 0xF191u,                 Dcm_ReadDid_HwVer,            3u },   /* Hardware Version       */
+    { 0xF195u,                 Dcm_ReadDid_SwVer,            3u },   /* Software Version       */
+    { DCM_DID_PLATFORM_STATUS, Dcm_ReadDid_PlatformStatus,   1u },   /* Platform Status        */
+    { 0xF030u,                 Dcm_ReadDid_MotorCurrent,     2u },   /* Motor Current mA       */
+    { 0xF031u,                 Dcm_ReadDid_MotorTemp,        2u },   /* Motor Temp deci-C      */
+    { 0xF032u,                 Dcm_ReadDid_MotorSpeed,       2u },   /* Motor Speed RPM        */
+    { 0xF033u,                 Dcm_ReadDid_BatteryVoltage,   2u },   /* Battery Voltage mV     */
+    { 0xF034u,                 Dcm_ReadDid_TorqueEcho,       1u },   /* Torque Echo %          */
+    { 0xF035u,                 Dcm_ReadDid_Derating,         1u },   /* Derating %             */
+    { 0xF036u,                 Dcm_ReadDid_AcsZeroOffset,    2u },   /* ACS Zero Offset        */
 };
 
 #define RZC_DCM_DID_COUNT  (sizeof(rzc_did_table) / sizeof(rzc_did_table[0]))
+
+static const Dcm_RoutineEntryType rzc_routine_table[] = {
+    {
+        DCM_ROUTINE_ID_MOTOR_SELF_TEST,
+        Rzc_Routine_MotorSelfTest_CheckStart,
+        Rzc_Routine_MotorSelfTest_Start,
+        Rzc_Routine_MotorSelfTest_Stop,
+        Rzc_Routine_MotorSelfTest_Results
+    },
+};
+
+#define RZC_DCM_ROUTINE_COUNT  (sizeof(rzc_routine_table) / sizeof(rzc_routine_table[0]))
 
 /* ==================================================================
  * Aggregate DCM Configuration
@@ -278,4 +311,6 @@ const Dcm_ConfigType rzc_dcm_config = {
     .DidCount    = (uint8)RZC_DCM_DID_COUNT,
     .TxPduId     = RZC_COM_TX_UDS_RESP_RZC,  /* UDS response via CanIf → 0x7EA */
     .S3TimeoutMs = 5000u,
+    .RoutineTable = rzc_routine_table,
+    .RoutineCount = (uint8)RZC_DCM_ROUTINE_COUNT,
 };

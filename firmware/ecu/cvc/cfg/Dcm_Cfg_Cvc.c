@@ -11,6 +11,8 @@
  */
 #include "Dcm.h"
 #include "Cvc_Cfg.h"
+#include "Cvc_DcmPlatform.h"
+#include "Dcm_PlatformStatus.h"
 
 /* ==================================================================
  * Forward declarations for state query
@@ -96,16 +98,33 @@ static Std_ReturnType Dcm_ReadDid_State(uint8* Data, uint8 Length)
     return E_OK;
 }
 
+/**
+ * @brief  Read DID 0xF018 - Platform Status
+ * @param  Data    Output buffer
+ * @param  Length  Buffer length (expected: 1)
+ * @return E_OK on success, E_NOT_OK if helper rejects the request
+ */
+static Std_ReturnType Dcm_ReadDid_PlatformStatus(uint8* Data, uint8 Length)
+{
+    if ((Data == NULL_PTR) || (Length < 1u))
+    {
+        return E_NOT_OK;
+    }
+
+    return Cvc_DcmPlatform_GetStatus(&Data[0]);
+}
+
 /* ==================================================================
  * DID Table
  * ================================================================== */
 
 static const Dcm_DidTableType cvc_did_table[] = {
-    /* DID,     ReadFunc,          DataLength */
-    { 0xF190u, Dcm_ReadDid_EcuId, 4u },   /* ECU Identifier         */
-    { 0xF191u, Dcm_ReadDid_HwVer, 3u },   /* Hardware Version       */
-    { 0xF195u, Dcm_ReadDid_SwVer, 3u },   /* Software Version       */
-    { 0xF010u, Dcm_ReadDid_State, 1u },   /* Vehicle State          */
+    /* DID,                    ReadFunc,                   DataLength */
+    { 0xF190u,                 Dcm_ReadDid_EcuId,         4u },   /* ECU Identifier         */
+    { 0xF191u,                 Dcm_ReadDid_HwVer,         3u },   /* Hardware Version       */
+    { 0xF195u,                 Dcm_ReadDid_SwVer,         3u },   /* Software Version       */
+    { 0xF010u,                 Dcm_ReadDid_State,         1u },   /* Vehicle State          */
+    { DCM_DID_PLATFORM_STATUS, Dcm_ReadDid_PlatformStatus, 1u },  /* Platform Status        */
 };
 
 #define CVC_DCM_DID_COUNT  (sizeof(cvc_did_table) / sizeof(cvc_did_table[0]))
@@ -115,8 +134,10 @@ static const Dcm_DidTableType cvc_did_table[] = {
  * ================================================================== */
 
 const Dcm_ConfigType cvc_dcm_config = {
-    .DidTable    = cvc_did_table,
-    .DidCount    = (uint8)CVC_DCM_DID_COUNT,
-    .TxPduId     = CVC_COM_TX_UDS_RSP,
-    .S3TimeoutMs = 5000u,
+    .DidTable     = cvc_did_table,
+    .DidCount     = (uint8)CVC_DCM_DID_COUNT,
+    .TxPduId      = CVC_COM_TX_UDS_RSP,
+    .S3TimeoutMs  = 5000u,
+    .RoutineTable = NULL_PTR,
+    .RoutineCount = 0u,
 };

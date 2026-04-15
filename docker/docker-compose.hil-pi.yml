@@ -80,6 +80,7 @@ services:
     environment:
       - CAN_INTERFACE=can0
       - ECU_NAME=bcm
+      - DOIP_BIND_IP=127.0.0.5
     healthcheck:
       test: ["CMD-SHELL", "ip link show can0 2>/dev/null | grep -q UP"]
       interval: 30s
@@ -100,6 +101,7 @@ services:
     environment:
       - CAN_INTERFACE=can0
       - ECU_NAME=icu
+      - DOIP_BIND_IP=127.0.0.6
     healthcheck:
       test: ["CMD-SHELL", "ip link show can0 2>/dev/null | grep -q UP"]
       interval: 30s
@@ -120,6 +122,7 @@ services:
     environment:
       - CAN_INTERFACE=can0
       - ECU_NAME=tcu
+      - DOIP_BIND_IP=127.0.0.4
     healthcheck:
       test: ["CMD-SHELL", "ip link show can0 2>/dev/null | grep -q UP"]
       interval: 30s

@@ -82,12 +82,17 @@
 #define DCM_API_INIT                    0x00u
 #define DCM_API_MAIN_FUNCTION           0x01u
 #define DCM_API_RX_INDICATION           0x02u
+#define DCM_API_DISPATCH_REQUEST        0x03u
 
 /* Dem API IDs */
 #define DEM_API_INIT                    0x00u
 #define DEM_API_REPORT_ERROR_STATUS     0x01u
 #define DEM_API_MAIN_FUNCTION           0x02u
 #define DEM_API_SET_ECU_ID              0x03u
+#define DEM_API_SET_DTC_FILTER          0x04u
+#define DEM_API_GET_NUMBER_OF_FILTERED_DTC 0x05u
+#define DEM_API_GET_NEXT_FILTERED_DTC   0x06u
+#define DEM_API_CLEAR_DTC               0x07u
 
 /* WdgM API IDs */
 #define WDGM_API_INIT                   0x00u

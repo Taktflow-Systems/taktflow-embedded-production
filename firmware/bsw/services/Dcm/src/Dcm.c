@@ -19,6 +19,9 @@
  * @copyright Taktflow Systems 2026
  */
 #include "Dcm.h"
+#include "Dcm_ClearDtc.h"
+#include "Dcm_ReadDtcInfo.h"
+#include "Dcm_RoutineControl.h"
 #include "Det.h"
 
 #include <string.h>  /* memcpy */
@@ -36,6 +39,17 @@ static boolean        dcm_request_pending;
 /* Response buffer */
 static uint8   dcm_tx_buf[DCM_TX_BUF_SIZE];
 
+typedef enum {
+    DCM_RESPONSE_MODE_TRANSPORT = 0u,
+    DCM_RESPONSE_MODE_CAPTURE   = 1u
+} Dcm_ResponseModeType;
+
+static Dcm_ResponseModeType dcm_response_mode = DCM_RESPONSE_MODE_TRANSPORT;
+static uint8*               dcm_capture_buf = NULL_PTR;
+static PduLengthType        dcm_capture_buf_size = 0u;
+static PduLengthType*       dcm_capture_length_ptr = NULL_PTR;
+static Std_ReturnType       dcm_capture_result = E_OK;
+
 /* Session state */
 static Dcm_SessionType dcm_current_session;
 static uint16          dcm_s3_timer_ms;
@@ -45,6 +59,9 @@ static boolean dcm_security_unlocked;
 static uint8   dcm_security_seed[DCM_SECURITY_SEED_LEN];
 static boolean dcm_seed_active;
 static uint8   dcm_security_fail_count;
+
+/* RoutineControl runtime state */
+static Dcm_RoutineStateType dcm_routine_states[DCM_MAX_ROUTINES];
 
 /* SecurityAccess XOR secret (placeholder — real crypto for STM32 later) */
 static const uint8 dcm_security_secret[DCM_SECURITY_SEED_LEN] = {
@@ -62,8 +79,11 @@ static void dcm_reset_s3_timer(void);
 static void dcm_process_request(const uint8* data, PduLengthType length);
 static void dcm_handle_session_control(const uint8* data, PduLengthType length);
 static void dcm_handle_ecu_reset(const uint8* data, PduLengthType length);
+static void dcm_handle_clear_dtc(const uint8* data, PduLengthType length);
+static void dcm_handle_read_dtc_info(const uint8* data, PduLengthType length);
 static void dcm_handle_read_did(const uint8* data, PduLengthType length);
 static void dcm_handle_security_access(const uint8* data, PduLengthType length);
+static void dcm_handle_routine_control(const uint8* data, PduLengthType length);
 static void dcm_handle_tester_present(const uint8* data, PduLengthType length);
 
 /* ---- Private Helpers ---- */
@@ -82,6 +102,19 @@ static void dcm_send_response(const uint8* data, PduLengthType length)
     PduInfoType pdu_info;
 
     if ((data == NULL_PTR) || (length == 0u)) {
+        return;
+    }
+
+    if (dcm_response_mode == DCM_RESPONSE_MODE_CAPTURE) {
+        if ((dcm_capture_buf == NULL_PTR) || (dcm_capture_length_ptr == NULL_PTR) ||
+            (length > dcm_capture_buf_size)) {
+            dcm_capture_result = E_NOT_OK;
+            return;
+        }
+
+        (void)memcpy(dcm_capture_buf, data, length);
+        *dcm_capture_length_ptr = length;
+        dcm_capture_result = E_OK;
         return;
     }
 
@@ -213,6 +246,82 @@ static void dcm_handle_read_did(const uint8* data, PduLengthType length)
     }
 
     dcm_send_nrc(DCM_SID_READ_DID, DCM_NRC_REQUEST_OUT_OF_RANGE);
+}
+
+static void dcm_handle_read_dtc_info(const uint8* data, PduLengthType length)
+{
+    PduLengthType response_length = 0u;
+    uint8 nrc = DCM_NRC_REQUEST_OUT_OF_RANGE;
+
+    if (Dcm_ReadDtcInfo_Process(data, length, dcm_tx_buf, DCM_TX_BUF_SIZE,
+                                &response_length, &nrc) == E_OK) {
+        dcm_send_response(dcm_tx_buf, response_length);
+    } else {
+        dcm_send_nrc(DCM_SID_READ_DTC_INFO, nrc);
+    }
+}
+
+static void dcm_handle_clear_dtc(const uint8* data, PduLengthType length)
+{
+    PduLengthType response_length = 0u;
+    uint8 nrc = DCM_NRC_REQUEST_OUT_OF_RANGE;
+
+    if (length != 4u) {
+        dcm_send_nrc(DCM_SID_CLEAR_DTC, DCM_NRC_INCORRECT_MSG_LENGTH);
+        return;
+    }
+
+    if (dcm_current_session != DCM_EXTENDED_SESSION) {
+        dcm_send_nrc(DCM_SID_CLEAR_DTC, DCM_NRC_CONDITIONS_NOT_CORRECT);
+        return;
+    }
+
+    if (dcm_security_unlocked == FALSE) {
+        dcm_send_nrc(DCM_SID_CLEAR_DTC, DCM_NRC_SECURITY_ACCESS_DENIED);
+        return;
+    }
+
+    if (Dcm_ClearDtc_Process(data, length, dcm_tx_buf, DCM_TX_BUF_SIZE,
+                             &response_length, &nrc) == E_OK) {
+        dcm_send_response(dcm_tx_buf, response_length);
+    } else {
+        dcm_send_nrc(DCM_SID_CLEAR_DTC, nrc);
+    }
+}
+
+static void dcm_handle_routine_control(const uint8* data, PduLengthType length)
+{
+    PduLengthType response_length = 0u;
+    uint8 nrc = DCM_NRC_REQUEST_OUT_OF_RANGE;
+
+    if (length < 4u) {
+        dcm_send_nrc(DCM_SID_ROUTINE_CONTROL, DCM_NRC_INCORRECT_MSG_LENGTH);
+        return;
+    }
+
+    if (dcm_current_session != DCM_EXTENDED_SESSION) {
+        dcm_send_nrc(DCM_SID_ROUTINE_CONTROL, DCM_NRC_CONDITIONS_NOT_CORRECT);
+        return;
+    }
+
+    if (dcm_security_unlocked == FALSE) {
+        dcm_send_nrc(DCM_SID_ROUTINE_CONTROL, DCM_NRC_SECURITY_ACCESS_DENIED);
+        return;
+    }
+
+    if (Dcm_RoutineControl_Process(dcm_config->RoutineTable,
+                                   dcm_config->RoutineCount,
+                                   dcm_routine_states,
+                                   data,
+                                   length,
+                                   dcm_tx_buf,
+                                   DCM_TX_BUF_SIZE,
+                                   &response_length,
+                                   &nrc) == E_OK) {
+        dcm_send_response(dcm_tx_buf, response_length);
+    } else {
+        dcm_send_nrc(DCM_SID_ROUTINE_CONTROL, nrc);
+    }
 }
 
 static void dcm_handle_security_access(const uint8* data, PduLengthType length)
@@ -354,12 +463,24 @@ static void dcm_process_request(const uint8* data, PduLengthType length)
         dcm_handle_ecu_reset(data, length);
         break;
 
+    case DCM_SID_CLEAR_DTC:
+        dcm_handle_clear_dtc(data, length);
+        break;
+
+    case DCM_SID_READ_DTC_INFO:
+        dcm_handle_read_dtc_info(data, length);
+        break;
+
     case DCM_SID_READ_DID:
         dcm_handle_read_did(data, length);
         break;
 
     case DCM_SID_SECURITY_ACCESS:
         dcm_handle_security_access(data, length);
+        break;
+
+    case DCM_SID_ROUTINE_CONTROL:
+        dcm_handle_routine_control(data, length);
         break;
 
     case DCM_SID_TESTER_PRESENT:
@@ -383,10 +504,19 @@ void Dcm_Init(const Dcm_ConfigType* ConfigPtr)
         return;
     }
 
+    if ((ConfigPtr->RoutineCount > DCM_MAX_ROUTINES) ||
+        ((ConfigPtr->RoutineCount > 0u) && (ConfigPtr->RoutineTable == NULL_PTR))) {
+        Det_ReportError(DET_MODULE_DCM, 0u, DCM_API_INIT, DET_E_PARAM_VALUE);
+        dcm_initialized = FALSE;
+        dcm_config = NULL_PTR;
+        return;
+    }
+
     dcm_config = ConfigPtr;
 
     (void)memset(dcm_rx_buf, 0, sizeof(dcm_rx_buf));
     (void)memset(dcm_tx_buf, 0, sizeof(dcm_tx_buf));
+    (void)memset(dcm_routine_states, 0, sizeof(dcm_routine_states));
 
     dcm_rx_len           = 0u;
     dcm_request_pending  = FALSE;
@@ -459,6 +589,50 @@ void Dcm_TpRxIndication(PduIdType RxPduId, const PduInfoType* PduInfoPtr,
 
     /* Delegate to standard RX path */
     Dcm_RxIndication(RxPduId, PduInfoPtr);
+}
+
+Std_ReturnType Dcm_DispatchRequest(const uint8* RequestData,
+                                   PduLengthType RequestLength,
+                                   uint8* ResponseData,
+                                   PduLengthType ResponseBufSize,
+                                   PduLengthType* ResponseLength)
+{
+    if ((dcm_initialized == FALSE) || (dcm_config == NULL_PTR)) {
+        Det_ReportError(DET_MODULE_DCM, 0u, DCM_API_DISPATCH_REQUEST, DET_E_UNINIT);
+        return E_NOT_OK;
+    }
+
+    if ((RequestData == NULL_PTR) || (ResponseData == NULL_PTR) || (ResponseLength == NULL_PTR)) {
+        Det_ReportError(DET_MODULE_DCM, 0u, DCM_API_DISPATCH_REQUEST, DET_E_PARAM_POINTER);
+        return E_NOT_OK;
+    }
+
+    if ((RequestLength == 0u) || (RequestLength > DCM_TX_BUF_SIZE) ||
+        (ResponseBufSize == 0u) || (ResponseBufSize > DCM_TX_BUF_SIZE)) {
+        Det_ReportError(DET_MODULE_DCM, 0u, DCM_API_DISPATCH_REQUEST, DET_E_PARAM_VALUE);
+        return E_NOT_OK;
+    }
+
+    if (dcm_request_pending == TRUE) {
+        return E_NOT_OK;
+    }
+
+    *ResponseLength = 0u;
+
+    dcm_response_mode = DCM_RESPONSE_MODE_CAPTURE;
+    dcm_capture_buf = ResponseData;
+    dcm_capture_buf_size = ResponseBufSize;
+    dcm_capture_length_ptr = ResponseLength;
+    dcm_capture_result = E_OK;
+
+    dcm_process_request(RequestData, RequestLength);
+
+    dcm_response_mode = DCM_RESPONSE_MODE_TRANSPORT;
+    dcm_capture_buf = NULL_PTR;
+    dcm_capture_buf_size = 0u;
+    dcm_capture_length_ptr = NULL_PTR;
+
+    return dcm_capture_result;
 }
 
 Dcm_SessionType Dcm_GetCurrentSession(void)

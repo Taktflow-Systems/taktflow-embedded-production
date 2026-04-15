@@ -25,6 +25,7 @@
 #define DEM_STATUS_TEST_FAILED          0x01u
 #define DEM_STATUS_PENDING_DTC          0x04u
 #define DEM_STATUS_CONFIRMED_DTC        0x08u
+#define DEM_STATUS_AVAILABILITY_MASK    0x0Du
 
 /* ---- Types ---- */
 
@@ -35,6 +36,12 @@ typedef enum {
     DEM_EVENT_STATUS_FAILED = 1u
 } Dem_EventStatusType;
 
+typedef enum {
+    DEM_CLEAR_DTC_OK = 0u,
+    DEM_CLEAR_DTC_INVALID_SELECTOR = 1u,
+    DEM_CLEAR_DTC_NVM_FAILED = 2u
+} Dem_ClearDtcResultType;
+
 /* ---- API Functions ---- */
 
 void           Dem_Init(const void* ConfigPtr);
@@ -43,6 +50,10 @@ void           Dem_ReportErrorStatus(Dem_EventIdType EventId,
 Std_ReturnType Dem_GetEventStatus(Dem_EventIdType EventId, uint8* StatusPtr);
 Std_ReturnType Dem_GetOccurrenceCounter(Dem_EventIdType EventId, uint32* CountPtr);
 Std_ReturnType Dem_ClearAllDTCs(void);
+Dem_ClearDtcResultType Dem_ClearDTC(uint32 Selector);
+Std_ReturnType Dem_SetDTCFilter(uint8 StatusMask, boolean ReportSupportedOnly);
+Std_ReturnType Dem_GetNumberOfFilteredDTC(uint16* CountPtr);
+Std_ReturnType Dem_GetNextFilteredDTC(uint32* DtcPtr, uint8* StatusPtr);
 
 /**
  * @brief  Periodic DTC broadcast function

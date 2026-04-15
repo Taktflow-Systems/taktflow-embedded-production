@@ -28,8 +28,10 @@
 #include "CanIf.h"
 #include "PduR.h"
 #include "Com.h"
+#include "Dcm.h"
 #include "Dem.h"
 #include "Rte.h"
+#include "DoIp_Posix.h"
 
 /* ==================================================================
  * SWC Headers
@@ -43,6 +45,7 @@
 
 /* POSIX headers for simulated ECU */
 #include <signal.h>
+#include <stdio.h>
 #include <unistd.h>
 
 /* ==================================================================
@@ -108,6 +111,14 @@ void Bcm_ComBridge_10ms(void)
 
 extern const Rte_ConfigType  bcm_rte_config;
 extern const Com_ConfigType  bcm_com_config;
+extern const Dcm_ConfigType  bcm_dcm_config;
+
+static const DoIp_Posix_ConfigType bcm_doip_config = {
+    .LogicalAddress = 0x0005u,
+    .Vin = { 'T', 'A', 'K', 'T', 'F', 'L', 'O', 'W', '0', '0', '0', '0', '0', '0', '0', '0', '1' },
+    .Eid = { 'B', 'C', 'M', '0', '0', '1' },
+    .Gid = { 'T', 'F', 'P', 'O', 'S', 'X' },
+};
 
 /* ==================================================================
  * Static Configuration Constants
@@ -211,7 +222,12 @@ int main(void)
     PduR_Init(&bcm_pdur_config);
     Com_Init(&bcm_com_config);
     Dem_Init(NULL_PTR);
+    Dcm_Init(&bcm_dcm_config);
     Rte_Init(&bcm_rte_config);
+
+    if (DoIp_Posix_Init(&bcm_doip_config) != E_OK) {
+        (void)fprintf(stderr, "[BCM] DoIP init failed\n");
+    }
 
     /* ---- Step 3: SWC initialization ---- */
     (void)BCM_CAN_Init();
@@ -253,11 +269,19 @@ int main(void)
         /* BSW CAN processing: transmit queued frames */
         Com_MainFunction_Tx();
         Can_MainFunction_Write();
+
+        for (uint8 diag_tick = 0u;
+             diag_tick < (BCM_RTE_PERIOD_MS / DCM_MAIN_CYCLE_MS);
+             diag_tick++) {
+            Dcm_MainFunction();
+            DoIp_Posix_MainFunction();
+        }
     }
     }
 
     /* ---- Step 6: Graceful shutdown ---- */
     (void)Can_SetControllerMode(0u, CAN_CS_STOPPED);
+    DoIp_Posix_Deinit();
 
     return 0;
 }

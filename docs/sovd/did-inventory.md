@@ -6,12 +6,12 @@ This inventory is sourced from ECU cfg files in this checkout, per the Line B Da
 
 Planned target in `WORKING-LINES.md`: about `16 DIDs x 7 ECUs`.
 
-Actual checkout result: `30 cfg-backed DIDs across 4 ECUs`.
+Actual checkout result: `39 cfg-backed DIDs across 6 ECUs`.
 
 Reason for the gap:
 
-- `CVC`, `FZC`, `RZC`, and `TCU` have `Dcm_Cfg_<Ecu>.c` files.
-- `BCM`, `ICU`, and `SC` do not have `Dcm_Cfg_<Ecu>.c` files in this checkout.
+- `CVC`, `FZC`, `RZC`, `TCU`, `BCM`, and `ICU` now have `Dcm_Cfg_<Ecu>.c`
+  files in this checkout.
 - `SC` is also called out elsewhere in the repo as a bare-metal safety controller outside the
   generic AUTOSAR BSW DCM path.
 
@@ -19,12 +19,12 @@ Reason for the gap:
 
 | ECU | Cfg source | Status | Notes |
 |-----|------------|--------|-------|
-| CVC | `firmware/ecu/cvc/cfg/Dcm_Cfg_Cvc.c` | present | 4 generic BSW DIDs |
-| FZC | `firmware/ecu/fzc/cfg/Dcm_Cfg_Fzc.c` | present | 8 generic BSW DIDs |
-| RZC | `firmware/ecu/rzc/cfg/Dcm_Cfg_Rzc.c` | present | 10 generic BSW DIDs |
+| CVC | `firmware/ecu/cvc/cfg/Dcm_Cfg_Cvc.c` | present | 5 generic BSW DIDs |
+| FZC | `firmware/ecu/fzc/cfg/Dcm_Cfg_Fzc.c` | present | 9 generic BSW DIDs |
+| RZC | `firmware/ecu/rzc/cfg/Dcm_Cfg_Rzc.c` | present | 11 generic BSW DIDs |
 | TCU | `firmware/ecu/tcu/cfg/Dcm_Cfg_Tcu.c` | present | 8 DIDs; local `Swc_UdsServer` still owns most request dispatch |
-| BCM | none found | missing | no `Dcm_Cfg_Bcm.c` in this checkout |
-| ICU | none found | missing | no `Dcm_Cfg_Icu.c` in this checkout |
+| BCM | `firmware/ecu/bcm/cfg/Dcm_Cfg_Bcm.c` | present | 3 minimal generic BSW DIDs for DoIP reachability |
+| ICU | `firmware/ecu/icu/cfg/Dcm_Cfg_Icu.c` | present | 3 minimal generic BSW DIDs for DoIP reachability |
 | SC | none found | missing | no `Dcm_Cfg_Sc.c`; SC is outside generic BSW DCM path |
 
 ## Discovered cfg-backed DIDs
@@ -32,9 +32,11 @@ Reason for the gap:
 | ECU | DID | Name | Data type | Length | Source SWC or signal |
 |-----|-----|------|-----------|--------|----------------------|
 | CVC | `0xF010` | Vehicle State | `u8 enum` | 1 | `Swc_VehicleState_GetState` |
+| CVC | `0xF018` | Platform Status | `u8 flags` | 1 | `Cvc_DcmPlatform_GetStatus` |
 | CVC | `0xF190` | ECU Identifier | `ASCII[4]` | 4 | static cfg callback |
 | CVC | `0xF191` | Hardware Version | `u8[3]` | 3 | static cfg callback |
 | CVC | `0xF195` | Software Version | `u8[3]` | 3 | static cfg callback |
+| FZC | `0xF018` | Platform Status | `u8 flags` | 1 | `Fzc_DcmPlatform_GetStatus` |
 | FZC | `0xF020` | Steering Angle | `s16 be` | 2 | `RTE:FZC_SIG_STEER_ANGLE` |
 | FZC | `0xF021` | Steering Fault | `u8 flags` | 1 | `RTE:FZC_SIG_STEER_FAULT` |
 | FZC | `0xF022` | Brake Position | `u8` | 1 | `RTE:FZC_SIG_BRAKE_POS` |
@@ -43,6 +45,7 @@ Reason for the gap:
 | FZC | `0xF190` | ECU Identifier | `ASCII[4]` | 4 | static cfg callback |
 | FZC | `0xF191` | Hardware Version | `u8[3]` | 3 | static cfg callback |
 | FZC | `0xF195` | Software Version | `u8[3]` | 3 | static cfg callback |
+| RZC | `0xF018` | Platform Status | `u8 flags` | 1 | `Rzc_DcmPlatform_GetStatus` |
 | RZC | `0xF030` | Motor Current | `u16 be mA` | 2 | `RTE:RZC_SIG_CURRENT_MA` |
 | RZC | `0xF031` | Motor Temperature | `s16 be deci-C` | 2 | `RTE:RZC_SIG_TEMP1_DC` |
 | RZC | `0xF032` | Motor Speed | `u16 be RPM` | 2 | `RTE:RZC_SIG_MOTOR_SPEED` |
@@ -61,6 +64,12 @@ Reason for the gap:
 | TCU | `0xF190` | VIN | `ASCII[17]` | 17 | `Dcm_ReadDid_Vin` |
 | TCU | `0xF191` | Hardware Version | `ASCII or bytes[5]` | 5 | `Dcm_ReadDid_HwVersion` |
 | TCU | `0xF195` | Software Version | `ASCII or bytes[5]` | 5 | `Dcm_ReadDid_SwVersion` |
+| BCM | `0xF190` | ECU Identifier | `ASCII[4]` | 4 | static cfg callback |
+| BCM | `0xF191` | Hardware Version | `u8[3]` | 3 | static cfg callback |
+| BCM | `0xF195` | Software Version | `u8[3]` | 3 | static cfg callback |
+| ICU | `0xF190` | ECU Identifier | `ASCII[4]` | 4 | static cfg callback |
+| ICU | `0xF191` | Hardware Version | `u8[3]` | 3 | static cfg callback |
+| ICU | `0xF195` | Software Version | `u8[3]` | 3 | static cfg callback |
 
 ## Notes for Phase 1
 
@@ -69,3 +78,8 @@ Reason for the gap:
 - `FZC` local `Swc_FzcDcm.h` names `0xF021..0xF023` differently from `Dcm_Cfg_Fzc.c`.
   For generic BSW work, treat the cfg file as source of truth.
 - `RZC DID 0xF036` is explicitly a placeholder until a dedicated zero-offset signal is exposed.
+- `0xF018` is now shared across `CVC`, `FZC`, and `RZC` with the same bit layout:
+  `stationary`, `brake_secured`, `service_session`, `service_mode_enabled`.
+- `BCM` and `ICU` only expose the three generic identity DIDs in this slice.
+  They exist to make the POSIX DoIP path testable without inventing CAN-only
+  diagnostic data for those ECUs.

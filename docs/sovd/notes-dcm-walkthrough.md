@@ -5,9 +5,20 @@
 This is the Phase 0 cheat sheet for the generic BSW DCM in `firmware/bsw/services/Dcm/`.
 It is the Phase 1 insertion point for new generic handlers for `0x19`, `0x14`, and `0x31`.
 
-Important repo reality: this checkout does not have a generated SID table, `Dcm_DispatchRequest()`,
-or `Dcm_ServiceTable.c`. Service dispatch is a hand-written `switch` inside
+Important repo reality: this checkout still does not have a generated SID table
+or `Dcm_ServiceTable.c`. Service dispatch remains a hand-written `switch` inside
 `firmware/bsw/services/Dcm/src/Dcm.c`.
+
+Phase 1 Line B added one generic transport seam:
+
+- `Dcm_DispatchRequest()` now exists in `Dcm.c`
+- it reuses the same service handlers as the CAN path
+- it captures the response bytes directly instead of transmitting via
+  `PduR` / `CanTp`
+
+That means CAN still enters through `Dcm_RxIndication()` plus
+`Dcm_MainFunction()`, while DoIP can call straight into the same DCM service
+logic without inventing a second diagnostic dispatcher.
 
 ## Request path
 
@@ -21,6 +32,16 @@ or `Dcm_ServiceTable.c`. Service dispatch is a hand-written `switch` inside
    `dcm_request_pending = TRUE`.
 6. `Dcm_MainFunction()` notices the pending flag and calls `dcm_process_request(dcm_rx_buf, dcm_rx_len)`.
 
+Direct transport path added in Phase 1:
+
+1. a non-CAN transport such as `DoIp_Posix.c` builds a full UDS payload
+2. it calls `Dcm_DispatchRequest(request, request_len, response, response_buf_size, &response_len)`
+3. `Dcm_DispatchRequest()` temporarily switches `dcm_send_response()` into
+   capture mode
+4. it calls the same internal `dcm_process_request()` used by `Dcm_MainFunction()`
+5. positive or negative response bytes are copied into the caller buffer
+6. the caller owns the final transport framing
+
 ## Dispatch pattern in this checkout
 
 - `dcm_process_request(const uint8* data, PduLengthType length)` reads `sid = data[0]`.
@@ -29,8 +50,11 @@ or `Dcm_ServiceTable.c`. Service dispatch is a hand-written `switch` inside
 - Supported generic BSW SIDs today are:
   - `0x10` DiagnosticSessionControl
   - `0x11` ECUReset
+  - `0x14` ClearDiagnosticInformation
+  - `0x19` ReadDTCInformation
   - `0x22` ReadDataByIdentifier
   - `0x27` SecurityAccess
+  - `0x31` RoutineControl
   - `0x3E` TesterPresent
 - Any unknown SID falls through to `dcm_send_nrc(sid, DCM_NRC_SERVICE_NOT_SUPPORTED)`.
 
@@ -102,19 +126,18 @@ The ECU-owned cfg files `firmware/ecu/*/cfg/Dcm_Cfg_<Ecu>.c` provide:
 - Positive response SID is always `request_sid + 0x40`.
 - Negative response is always `[0x7F, request_sid, nrc]`.
 - `dcm_send_response()` uses:
-  - `PduR_DcmTransmit()` when response length is `<= 7`
-  - `CanTp_Transmit()` when response length is `> 7`
+  - caller-buffer capture when `Dcm_DispatchRequest()` enabled capture mode
+  - `PduR_DcmTransmit()` when response length is `<= 7` on the CAN path
+  - `CanTp_Transmit()` when response length is `> 7` on the CAN path
 - NRCs defined in generic `Dcm.h` are:
   - `0x11` serviceNotSupported
   - `0x12` subFunctionNotSupported
   - `0x13` incorrectMessageLengthOrInvalidFormat
+  - `0x22` conditionsNotCorrect
   - `0x31` requestOutOfRange
   - `0x33` securityAccessDenied
   - `0x35` invalidKey
   - `0x36` exceededNumberOfAttempts
-
-Gap to note: generic `Dcm.h` does not define NRC `0x22` ConditionsNotCorrect, even though
-some ECU-local diagnostic stacks in this repo do use it.
 
 ## Session and security state already present
 

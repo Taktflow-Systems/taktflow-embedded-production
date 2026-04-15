@@ -106,6 +106,9 @@ BSW_SRCS = \
     $(BSW)/ecual/IoHwAb/src/IoHwAb_Posix.c \
     $(BSW)/services/Com/src/Com.c \
     $(BSW)/services/Dcm/src/Dcm.c \
+    $(BSW)/services/Dcm/src/Dcm_ReadDtcInfo.c \
+    $(BSW)/services/Dcm/src/Dcm_ClearDtc.c \
+    $(BSW)/services/Dcm/src/Dcm_RoutineControl.c \
     $(BSW)/services/Dem/src/Dem.c \
     $(BSW)/services/E2E/src/E2E.c \
     $(BSW)/services/E2E/src/E2E_Sm.c \
@@ -141,6 +144,10 @@ BSW_SRCS = \
     $(BSW)/os/bootstrap/src/Os_TaskMap.c \
     $(BSW)/os/bootstrap/port/src/Os_Port_TaskBinding.c \
     $(PLAT)/src/Os_Port_Posix.c
+
+ifneq ($(filter $(TARGET),bcm icu tcu),)
+  BSW_SRCS += $(PLAT)/src/DoIp_Posix.c
+endif
 
 ifeq ($(TARGET),fzc)
   BSW_SRCS += $(BSW)/mcal/Uart/src/Uart.c $(PLAT)/src/Uart_Posix.c
