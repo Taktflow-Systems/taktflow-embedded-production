@@ -10,5 +10,5 @@
 # checker is intentionally lenient in the firmware parser; strict VIN
 # validation is the tester's job).
 
-vin      = "TAKTFLOWCVC000001"
+vin      = "TAKTFLWCVC0000001"
 ecu_name = "cvc"
