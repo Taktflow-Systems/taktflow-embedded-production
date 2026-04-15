@@ -136,6 +136,12 @@ CFLAGS += -I$(CUBEMX_DIR)/Drivers/BSP/STM32G4xx_Nucleo
 CFLAGS += -I$(CMSIS_DIR)/Device/ST/STM32G4xx/Include
 CFLAGS += -I$(CMSIS_DIR)/Include
 
+# Phase 5 follow-up: extension hook for outer wrappers (e.g. Makefile.arm
+# uses this to inject an include path for the generated cvc_identity_data.h
+# blob and define EMBED_CVC_IDENTITY=1). EXTRA_CFLAGS is empty by default
+# so this is a no-op for direct callers of Makefile.stm32.
+CFLAGS += $(EXTRA_CFLAGS)
+
 # --- Linker flags ---
 LDFLAGS  = $(MCU_FLAGS)
 LDFLAGS += -T$(LDSCRIPT)
