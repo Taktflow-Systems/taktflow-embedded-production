@@ -20,7 +20,8 @@
 #   - SAE J2012 "Diagnostic Trouble Code Definitions"
 #   - https://www.obd-codes.com (public OBD-II reference listing)
 
-version: "1.0"
+version: "1.0.0"
+source: "ISO 15031-6 generic OBD-II P-codes (authored 2026-04-14)"
 standard: "ISO 15031-6 / SAE J2012"
 dtcs:
   - { code: "P0100", category: powertrain, description: "Mass or Volume Air Flow Circuit Malfunction" }
