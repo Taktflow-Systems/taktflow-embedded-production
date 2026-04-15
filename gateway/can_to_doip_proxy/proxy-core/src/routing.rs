@@ -53,10 +53,14 @@ impl RoutingTable {
         let mut seen = std::collections::HashSet::new();
         for e in &root.ecu {
             if e.can_request_id > 0x7FF {
-                return Err(RoutingTableError::CanIdOutOfRange { id: e.can_request_id });
+                return Err(RoutingTableError::CanIdOutOfRange {
+                    id: e.can_request_id,
+                });
             }
             if e.can_response_id > 0x7FF {
-                return Err(RoutingTableError::CanIdOutOfRange { id: e.can_response_id });
+                return Err(RoutingTableError::CanIdOutOfRange {
+                    id: e.can_response_id,
+                });
             }
             if !seen.insert(e.doip_logical_address) {
                 return Err(RoutingTableError::DuplicateLogicalAddress {

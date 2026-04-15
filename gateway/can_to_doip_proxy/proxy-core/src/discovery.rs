@@ -59,10 +59,16 @@ pub fn vehicle_announcement_payloads(table: &RoutingTable) -> Vec<Vec<u8>> {
             let take = core::cmp::min(vin_bytes.len(), 17);
             let (vin_slot, rest) = payload.split_at_mut(17);
             let (head, _) = vin_slot.split_at_mut(take);
-            head.copy_from_slice(&vin_bytes[..take]);
+            let (vin_src, _) = vin_bytes.split_at(take);
+            head.copy_from_slice(vin_src);
             let (addr_slot, rest) = rest.split_at_mut(2);
-            addr_slot[0] = ((e.doip_logical_address >> 8) & 0xFF) as u8;
-            addr_slot[1] = (e.doip_logical_address & 0xFF) as u8;
+            let (hi, lo_slot) = addr_slot.split_at_mut(1);
+            if let Some(hi0) = hi.first_mut() {
+                *hi0 = ((e.doip_logical_address >> 8) & 0xFF) as u8;
+            }
+            if let Some(lo0) = lo_slot.first_mut() {
+                *lo0 = (e.doip_logical_address & 0xFF) as u8;
+            }
             // EID (6) + GID (6) left as zeros; action (1) = 0.
             let _ = rest;
             payload

@@ -41,11 +41,20 @@ pub fn parse_routing_activation_request(
     payload: &[u8],
 ) -> Result<RoutingActivationRequest, MessageError> {
     if payload.len() < 7 {
-        return Err(MessageError::Short { got: payload.len(), need: 7 });
+        return Err(MessageError::Short {
+            got: payload.len(),
+            need: 7,
+        });
     }
-    let b0 = *payload.first().ok_or(MessageError::Short { got: 0, need: 7 })?;
-    let b1 = *payload.get(1).ok_or(MessageError::Short { got: 1, need: 7 })?;
-    let t = *payload.get(2).ok_or(MessageError::Short { got: 2, need: 7 })?;
+    let b0 = *payload
+        .first()
+        .ok_or(MessageError::Short { got: 0, need: 7 })?;
+    let b1 = *payload
+        .get(1)
+        .ok_or(MessageError::Short { got: 1, need: 7 })?;
+    let t = *payload
+        .get(2)
+        .ok_or(MessageError::Short { got: 2, need: 7 })?;
     Ok(RoutingActivationRequest {
         source_address: be16(b0, b1),
         activation_type: t,
@@ -75,12 +84,23 @@ pub fn build_routing_activation_response(
 /// Returns [`MessageError::Short`] if less than 5 bytes.
 pub fn parse_diagnostic_message(payload: &[u8]) -> Result<DiagnosticMessage<'_>, MessageError> {
     if payload.len() < 5 {
-        return Err(MessageError::Short { got: payload.len(), need: 5 });
+        return Err(MessageError::Short {
+            got: payload.len(),
+            need: 5,
+        });
     }
-    let b0 = *payload.first().ok_or(MessageError::Short { got: 0, need: 5 })?;
-    let b1 = *payload.get(1).ok_or(MessageError::Short { got: 1, need: 5 })?;
-    let b2 = *payload.get(2).ok_or(MessageError::Short { got: 2, need: 5 })?;
-    let b3 = *payload.get(3).ok_or(MessageError::Short { got: 3, need: 5 })?;
+    let b0 = *payload
+        .first()
+        .ok_or(MessageError::Short { got: 0, need: 5 })?;
+    let b1 = *payload
+        .get(1)
+        .ok_or(MessageError::Short { got: 1, need: 5 })?;
+    let b2 = *payload
+        .get(2)
+        .ok_or(MessageError::Short { got: 2, need: 5 })?;
+    let b3 = *payload
+        .get(3)
+        .ok_or(MessageError::Short { got: 3, need: 5 })?;
     let (_, rest) = payload.split_at(4);
     Ok(DiagnosticMessage {
         source_address: be16(b0, b1),
@@ -91,12 +111,8 @@ pub fn parse_diagnostic_message(payload: &[u8]) -> Result<DiagnosticMessage<'_>,
 
 /// Build a diagnostic-message payload.
 #[must_use]
-pub fn build_diagnostic_message(
-    source_address: u16,
-    target_address: u16,
-    uds: &[u8],
-) -> Vec<u8> {
-    let mut out = Vec::with_capacity(4_usize.saturating_add(uds.len()));
+pub fn build_diagnostic_message(source_address: u16, target_address: u16, uds: &[u8]) -> Vec<u8> {
+    let mut out = Vec::with_capacity(4usize.saturating_add(uds.len()));
     out.push(((source_address >> 8) & 0xFF) as u8);
     out.push((source_address & 0xFF) as u8);
     out.push(((target_address >> 8) & 0xFF) as u8);
@@ -110,8 +126,7 @@ mod tests {
     use super::*;
 
     const ROUTING_ACTIVATION_REQ: [u8; 7] = [0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-    const ROUTING_ACTIVATION_RSP: [u8; 9] =
-        [0x0E, 0x00, 0x00, 0x01, 0x10, 0x00, 0x00, 0x00, 0x00];
+    const ROUTING_ACTIVATION_RSP: [u8; 9] = [0x0E, 0x00, 0x00, 0x01, 0x10, 0x00, 0x00, 0x00, 0x00];
     const DIAG_MSG_PAYLOAD: [u8; 7] = [0x0E, 0x00, 0x00, 0x01, 0x22, 0xF1, 0x90];
 
     #[test]

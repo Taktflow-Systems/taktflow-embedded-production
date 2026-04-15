@@ -125,7 +125,7 @@ impl Reassembler {
 
     fn handle_single(&mut self, frame: &[u8], pci: u8) -> Result<Option<Vec<u8>>, IsoTpError> {
         let len = (pci & 0x0F) as usize;
-        if len > 7 || frame.len() < 1_usize.saturating_add(len) {
+        if len > 7 || frame.len() < 1usize.saturating_add(len) {
             return Err(IsoTpError::ShortFrame { got: frame.len() });
         }
         let (_, tail) = frame.split_at(1);
@@ -142,7 +142,10 @@ impl Reassembler {
         let len_lo = u16::from(*frame.get(1).ok_or(IsoTpError::ShortFrame { got: 1 })?);
         let total = ((len_hi << 8) | len_lo) as usize;
         if total > MAX_PDU_LEN {
-            return Err(IsoTpError::PayloadTooLarge { got: total, max: MAX_PDU_LEN });
+            return Err(IsoTpError::PayloadTooLarge {
+                got: total,
+                max: MAX_PDU_LEN,
+            });
         }
         self.expected_total = Some(total);
         self.next_sn = 1;
@@ -155,11 +158,7 @@ impl Reassembler {
         Ok(None)
     }
 
-    fn handle_consecutive(
-        &mut self,
-        frame: &[u8],
-        pci: u8,
-    ) -> Result<Option<Vec<u8>>, IsoTpError> {
+    fn handle_consecutive(&mut self, frame: &[u8], pci: u8) -> Result<Option<Vec<u8>>, IsoTpError> {
         let total = self
             .expected_total
             .ok_or(IsoTpError::UnexpectedConsecutiveFrame)?;

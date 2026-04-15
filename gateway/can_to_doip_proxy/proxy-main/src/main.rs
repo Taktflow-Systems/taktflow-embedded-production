@@ -13,21 +13,22 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use clap::Parser;
 use figment::{
-    providers::{Env, Format, Toml},
     Figment,
+    providers::{Env, Format, Toml},
 };
 use serde::Deserialize;
 use tokio::net::TcpListener;
 use tracing::{info, warn};
 
 use proxy_can::socket::CanInterface;
-use proxy_core::{
-    should_respond_to_broadcast, translate_request, DiscoveryMode, RoutingTable,
-};
-use proxy_doip::server::{serve, DoipHandler};
+use proxy_core::{DiscoveryMode, RoutingTable, should_respond_to_broadcast, translate_request};
+use proxy_doip::server::{DoipHandler, serve};
 
 #[derive(Debug, Parser)]
-#[command(name = "opensovd-can-to-doip-proxy", about = "DoIP <-> CAN ISO-TP proxy")]
+#[command(
+    name = "opensovd-can-to-doip-proxy",
+    about = "DoIP <-> CAN ISO-TP proxy"
+)]
 struct Cli {
     /// Path to the TOML config file.
     #[arg(long, default_value = "/etc/opensovd/proxy.toml")]
@@ -107,7 +108,11 @@ impl DoipHandler for CanProxyHandler {
             }
         };
         // Send the UDS bytes as ISO-TP on the CAN request ID.
-        if let Err(err) = self.can.send_isotp(req.can_request_id, &req.uds_payload).await {
+        if let Err(err) = self
+            .can
+            .send_isotp(req.can_request_id, &req.uds_payload)
+            .await
+        {
             warn!(?err, can_id = req.can_request_id, "send_isotp failed");
             return None;
         }
@@ -157,9 +162,7 @@ async fn main() -> Result<()> {
         anyhow::bail!("routing table is empty — nothing to proxy");
     }
 
-    let listen_addr = cli
-        .listen_address
-        .unwrap_or(raw.listen_address);
+    let listen_addr = cli.listen_address.unwrap_or(raw.listen_address);
     let listen_port = cli.listen_port.unwrap_or(raw.listen_port);
     let can_iface = cli.can_interface.unwrap_or(raw.can_interface);
     let _ = raw.ecu; // consume to silence dead_code
@@ -183,10 +186,9 @@ async fn main() -> Result<()> {
     let shutdown = async {
         #[cfg(unix)]
         {
-            let mut sigterm = tokio::signal::unix::signal(
-                tokio::signal::unix::SignalKind::terminate(),
-            )
-            .expect("sigterm handler");
+            let mut sigterm =
+                tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+                    .expect("sigterm handler");
             sigterm.recv().await;
         }
         #[cfg(not(unix))]

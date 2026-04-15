@@ -15,9 +15,9 @@
 
 use std::time::Duration;
 
-use proxy_can::isotp::{encode as isotp_encode, Reassembler};
+use proxy_can::isotp::{Reassembler, encode as isotp_encode};
 use proxy_can::socket::CanInterface;
-use proxy_doip::frame::{decode_header, encode_frame, PayloadType};
+use proxy_doip::frame::{PayloadType, decode_header, encode_frame};
 use proxy_doip::message_types::ACTIVATION_OK;
 
 #[tokio::test]
@@ -57,7 +57,10 @@ async fn vcan_round_trip_requires_vcan0() {
     // also spinning up the DoIP server — that path is covered by the
     // proxy-doip unit test plus this one together.
     vcan.send_isotp(0x7E0, &[0x22, 0xF1, 0x90]).await.unwrap();
-    let rx = vcan.recv_isotp(0x7E8, Duration::from_secs(2)).await.unwrap();
+    let rx = vcan
+        .recv_isotp(0x7E8, Duration::from_secs(2))
+        .await
+        .unwrap();
     assert_eq!(rx[0], 0x62);
     assert_eq!(&rx[1..3], &[0xF1, 0x90]);
     assert_eq!(&rx[3..], b"TAKTFLOW_CVC_0001");

@@ -12,10 +12,10 @@ use async_trait::async_trait;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 
-use crate::frame::{decode_header, encode_frame, FrameError, Header, PayloadType, HEADER_LEN};
+use crate::frame::{FrameError, HEADER_LEN, Header, PayloadType, decode_header, encode_frame};
 use crate::message_types::{
-    build_diagnostic_message, build_routing_activation_response, parse_diagnostic_message,
-    parse_routing_activation_request, ACTIVATION_OK,
+    ACTIVATION_OK, build_diagnostic_message, build_routing_activation_response,
+    parse_diagnostic_message, parse_routing_activation_request,
 };
 
 /// Abstract handler the server calls for each decoded DoIP frame.
@@ -63,10 +63,7 @@ pub async fn serve_one(listener: TcpListener, handler: SharedHandler) -> Result<
 ///
 /// # Errors
 /// Propagates any I/O error from accept().
-pub async fn serve(
-    listener: TcpListener,
-    handler: SharedHandler,
-) -> Result<(), ServerError> {
+pub async fn serve(listener: TcpListener, handler: SharedHandler) -> Result<(), ServerError> {
     loop {
         let (stream, peer) = listener.accept().await?;
         tracing::info!(%peer, "doip client connected");
@@ -79,10 +76,7 @@ pub async fn serve(
     }
 }
 
-async fn handle_client(
-    mut stream: TcpStream,
-    handler: SharedHandler,
-) -> Result<(), ServerError> {
+async fn handle_client(mut stream: TcpStream, handler: SharedHandler) -> Result<(), ServerError> {
     let mut header_buf = [0u8; HEADER_LEN];
     loop {
         match stream.read_exact(&mut header_buf).await {
@@ -132,7 +126,7 @@ async fn dispatch(
                 // diagnostic message. Many CDA clients accept the
                 // response without the ack, but the spec requires it.
                 let ack_body = {
-                    let mut buf = Vec::with_capacity(5_usize.saturating_add(req.uds.len()));
+                    let mut buf = Vec::with_capacity(5usize.saturating_add(req.uds.len()));
                     buf.extend_from_slice(&(req.source_address.to_be_bytes()));
                     buf.extend_from_slice(&(req.target_address.to_be_bytes()));
                     buf.push(0x00);
@@ -178,12 +172,7 @@ mod tests {
         async fn on_routing_activation(&self, _src: u16) -> Option<u16> {
             Some(0x0001)
         }
-        async fn on_diagnostic_message(
-            &self,
-            _src: u16,
-            _tgt: u16,
-            uds: &[u8],
-        ) -> Option<Vec<u8>> {
+        async fn on_diagnostic_message(&self, _src: u16, _tgt: u16, uds: &[u8]) -> Option<Vec<u8>> {
             let mut out = vec![0x40 | uds[0]];
             out.extend_from_slice(&uds[1..]);
             Some(out)

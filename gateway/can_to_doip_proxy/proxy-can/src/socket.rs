@@ -9,7 +9,7 @@
 use core::time::Duration;
 
 #[cfg(target_os = "linux")]
-use crate::isotp::{encode, Reassembler, CAN_DLC};
+use crate::isotp::{CAN_DLC, Reassembler, encode};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CanError {
@@ -45,7 +45,8 @@ impl CanInterface {
     pub fn open(name: &str) -> Result<Self, CanError> {
         use socketcan::Socket;
         let sock = socketcan::CanSocket::open(name).map_err(|e| CanError::Io(e.to_string()))?;
-        sock.set_nonblocking(true).map_err(|e| CanError::Io(e.to_string()))?;
+        sock.set_nonblocking(true)
+            .map_err(|e| CanError::Io(e.to_string()))?;
         Ok(Self {
             name: name.to_string(),
             sock: tokio::sync::Mutex::new(sock),
@@ -54,7 +55,10 @@ impl CanInterface {
 
     #[cfg(not(target_os = "linux"))]
     pub fn open(name: &str) -> Result<Self, CanError> {
-        tracing::warn!(iface = name, "CanInterface::open called on non-linux host (stub)");
+        tracing::warn!(
+            iface = name,
+            "CanInterface::open called on non-linux host (stub)"
+        );
         Err(CanError::UnsupportedPlatform)
     }
 
@@ -71,7 +75,7 @@ impl CanInterface {
     /// failures; [`CanError::UnsupportedPlatform`] off-Linux.
     #[cfg(target_os = "linux")]
     pub async fn send_isotp(&self, can_id: u32, payload: &[u8]) -> Result<(), CanError> {
-        use socketcan::{EmbeddedFrame, Frame, StandardId};
+        use socketcan::{EmbeddedFrame, StandardId};
         let frames = encode(payload)?;
         let id = StandardId::new(can_id as u16).ok_or_else(|| {
             CanError::Io(format!("can_id 0x{can_id:x} out of 11-bit standard range"))
@@ -97,11 +101,7 @@ impl CanInterface {
     /// Returns [`CanError::Timeout`] on deadline, [`CanError::Io`] on
     /// socket error, or [`CanError::IsoTp`] on reassembly failure.
     #[cfg(target_os = "linux")]
-    pub async fn recv_isotp(
-        &self,
-        can_id: u32,
-        timeout: Duration,
-    ) -> Result<Vec<u8>, CanError> {
+    pub async fn recv_isotp(&self, can_id: u32, timeout: Duration) -> Result<Vec<u8>, CanError> {
         use socketcan::{EmbeddedFrame, Frame};
         let deadline = tokio::time::Instant::now() + timeout;
         let mut r = Reassembler::new();
@@ -138,11 +138,7 @@ impl CanInterface {
     }
 
     #[cfg(not(target_os = "linux"))]
-    pub async fn recv_isotp(
-        &self,
-        can_id: u32,
-        _timeout: Duration,
-    ) -> Result<Vec<u8>, CanError> {
+    pub async fn recv_isotp(&self, can_id: u32, _timeout: Duration) -> Result<Vec<u8>, CanError> {
         Err(CanError::Timeout { id: can_id })
     }
 }

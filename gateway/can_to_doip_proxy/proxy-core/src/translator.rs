@@ -40,9 +40,12 @@ pub fn translate_request(
     if uds.is_empty() {
         return Err(TranslateError::EmptyPayload);
     }
-    let route: &EcuRoute = table
-        .by_logical_address(target_address)
-        .ok_or(TranslateError::UnknownTarget { addr: target_address })?;
+    let route: &EcuRoute =
+        table
+            .by_logical_address(target_address)
+            .ok_or(TranslateError::UnknownTarget {
+                addr: target_address,
+            })?;
     Ok(TranslatedRequest {
         can_request_id: route.can_request_id,
         can_response_id: route.can_response_id,
@@ -90,7 +93,10 @@ can_response_id = 0x7E9
     #[test]
     fn unknown_target_rejected() {
         let err = translate_request(&table(), 0x0E00, 0x00FF, &[0x22, 0xF1, 0x90]).unwrap_err();
-        assert!(matches!(err, TranslateError::UnknownTarget { addr: 0x00FF }));
+        assert!(matches!(
+            err,
+            TranslateError::UnknownTarget { addr: 0x00FF }
+        ));
     }
 
     #[test]

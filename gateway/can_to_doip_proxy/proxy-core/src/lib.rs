@@ -5,13 +5,21 @@
 // Pure logic, no I/O. See ADR-0004 and ADR-0010.
 
 #![forbid(unsafe_code)]
+#![cfg_attr(
+    test,
+    allow(
+        clippy::indexing_slicing,
+        clippy::unwrap_used,
+        clippy::arithmetic_side_effects
+    )
+)]
 
 pub mod discovery;
 pub mod routing;
 pub mod translator;
 
 pub use discovery::{
-    should_respond_to_broadcast, should_use_static, vehicle_announcement_payloads, DiscoveryMode,
+    DiscoveryMode, should_respond_to_broadcast, should_use_static, vehicle_announcement_payloads,
 };
 pub use routing::{EcuRoute, RoutingTable, RoutingTableError};
-pub use translator::{translate_request, TranslateError, TranslatedRequest};
+pub use translator::{TranslateError, TranslatedRequest, translate_request};

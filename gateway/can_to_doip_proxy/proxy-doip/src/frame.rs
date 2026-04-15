@@ -103,16 +103,18 @@ impl fmt::Display for Header {
 }
 
 fn take(buf: &[u8], idx: usize) -> Result<u8, FrameError> {
-    buf.get(idx)
-        .copied()
-        .ok_or(FrameError::ShortHeader { got: buf.len(), need: HEADER_LEN })
+    buf.get(idx).copied().ok_or(FrameError::ShortHeader {
+        got: buf.len(),
+        need: HEADER_LEN,
+    })
 }
 
 fn put(out: &mut [u8], idx: usize, value: u8) -> Result<(), FrameError> {
     let have = out.len();
-    let slot = out
-        .get_mut(idx)
-        .ok_or(FrameError::OutputBufferTooSmall { need: HEADER_LEN, have })?;
+    let slot = out.get_mut(idx).ok_or(FrameError::OutputBufferTooSmall {
+        need: HEADER_LEN,
+        have,
+    })?;
     *slot = value;
     Ok(())
 }
@@ -123,19 +125,27 @@ fn put(out: &mut [u8], idx: usize, value: u8) -> Result<(), FrameError> {
 /// Returns [`FrameError`] on short buffer, bad version, or unknown payload.
 pub fn decode_header(buf: &[u8]) -> Result<Header, FrameError> {
     if buf.len() < HEADER_LEN {
-        return Err(FrameError::ShortHeader { got: buf.len(), need: HEADER_LEN });
+        return Err(FrameError::ShortHeader {
+            got: buf.len(),
+            need: HEADER_LEN,
+        });
     }
     let v = take(buf, 0)?;
     if v != PROTOCOL_VERSION {
-        return Err(FrameError::BadProtocolVersion { got: v, expected: PROTOCOL_VERSION });
+        return Err(FrameError::BadProtocolVersion {
+            got: v,
+            expected: PROTOCOL_VERSION,
+        });
     }
     let vi = take(buf, 1)?;
     if vi != PROTOCOL_VERSION_INV {
-        return Err(FrameError::BadProtocolInverse { got: vi, expected: PROTOCOL_VERSION_INV });
+        return Err(FrameError::BadProtocolInverse {
+            got: vi,
+            expected: PROTOCOL_VERSION_INV,
+        });
     }
     let raw = (u16::from(take(buf, 2)?) << 8) | u16::from(take(buf, 3)?);
-    let payload_type =
-        PayloadType::from_u16(raw).ok_or(FrameError::UnknownPayloadType { raw })?;
+    let payload_type = PayloadType::from_u16(raw).ok_or(FrameError::UnknownPayloadType { raw })?;
     let payload_length = (u32::from(take(buf, 4)?) << 24)
         | (u32::from(take(buf, 5)?) << 16)
         | (u32::from(take(buf, 6)?) << 8)
@@ -146,7 +156,10 @@ pub fn decode_header(buf: &[u8]) -> Result<Header, FrameError> {
             max: MAX_PAYLOAD_LEN,
         });
     }
-    Ok(Header { payload_type, payload_length })
+    Ok(Header {
+        payload_type,
+        payload_length,
+    })
 }
 
 /// Encode a DoIP header into the first 8 bytes of `out`.
@@ -155,7 +168,10 @@ pub fn decode_header(buf: &[u8]) -> Result<Header, FrameError> {
 /// Returns [`FrameError::OutputBufferTooSmall`] if `out.len() < 8`.
 pub fn encode_header(header: Header, out: &mut [u8]) -> Result<(), FrameError> {
     if out.len() < HEADER_LEN {
-        return Err(FrameError::OutputBufferTooSmall { need: HEADER_LEN, have: out.len() });
+        return Err(FrameError::OutputBufferTooSmall {
+            need: HEADER_LEN,
+            have: out.len(),
+        });
     }
     let pt = header.payload_type.as_u16();
     let len = header.payload_length;
@@ -175,10 +191,7 @@ pub fn encode_header(header: Header, out: &mut [u8]) -> Result<(), FrameError> {
 /// # Errors
 /// Returns [`FrameError::PayloadTooLarge`] if the payload exceeds
 /// [`MAX_PAYLOAD_LEN`].
-pub fn encode_frame(
-    payload_type: PayloadType,
-    payload: &[u8],
-) -> Result<Vec<u8>, FrameError> {
+pub fn encode_frame(payload_type: PayloadType, payload: &[u8]) -> Result<Vec<u8>, FrameError> {
     if payload.len() > MAX_PAYLOAD_LEN {
         return Err(FrameError::PayloadTooLarge {
             got: payload.len() as u32,
@@ -292,7 +305,10 @@ mod tests {
     fn unknown_payload_type_rejected() {
         let buf: [u8; 8] = [0x02, 0xFD, 0xAB, 0xCD, 0x00, 0x00, 0x00, 0x00];
         let err = decode_header(&buf).unwrap_err();
-        assert!(matches!(err, FrameError::UnknownPayloadType { raw: 0xABCD }));
+        assert!(matches!(
+            err,
+            FrameError::UnknownPayloadType { raw: 0xABCD }
+        ));
     }
 
     #[test]
