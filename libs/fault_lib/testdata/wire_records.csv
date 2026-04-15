@@ -18,5 +18,5 @@
 component,id,severity_code,timestamp_ms,meta_json
 cvc,1,2,100,
 bcm,65537,4,1700000000000,{"k":"v"}
-icu,255,3,4200,{"unicode":"\u00e9"}
+icu,255,3,4200,{"unicode":"é"}
 tcu,4294967295,1,18446744073709551615,

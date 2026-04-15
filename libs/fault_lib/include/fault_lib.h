@@ -82,6 +82,20 @@ typedef uint64_t fault_lib_timestamp_t;
  * length-prefixed blob that the Rust side will re-parse via
  * serde_json. If `json` is NULL or `len` is 0, the record is
  * serialized as Option::None on the wire.
+ *
+ * IMPORTANT — byte-compatibility contract:
+ *   The caller MUST supply a canonical JSON text, i.e. exactly what
+ *   `serde_json::to_string` would emit from a Value tree. In
+ *   practice this means: no unicode-escape sequences (write raw
+ *   UTF-8 bytes for non-ASCII characters), no extra whitespace,
+ *   keys in insertion order. The Rust `fault-sink-unix` codec
+ *   parses meta via `serde_json::from_str` and re-serialises via
+ *   `serde_json::to_string` on the wire (see ADR-0017); any
+ *   non-canonical input from the C side produces different bytes
+ *   than the Rust side would have produced for the same Value,
+ *   which the interop test catches. If a future embedded caller
+ *   needs escape-sequence output, Phase 4+ must add a C-side JSON
+ *   canonicaliser — the shim does not do this today.
  */
 typedef struct fault_lib_meta_s {
     const char *json;
