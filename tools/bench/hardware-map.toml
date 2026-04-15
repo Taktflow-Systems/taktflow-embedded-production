@@ -1,0 +1,117 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Taktflow Systems
+#
+# Physical bench hardware map for the Taktflow Eclipse OpenSOVD work.
+#
+# Maps logical ECU names (cvc, fzc, rzc, tcu) to the physical debug
+# probes currently connected to the Windows development host. The
+# ST-LINK **serial** is the stable identifier — COM port numbers can
+# change when USB enumeration order shifts between reboots, but the
+# serial is burned into the probe. Tooling that wants to flash or
+# attach to a specific board should look up the probe by `stlink_serial`
+# and re-resolve the current COM port at runtime.
+#
+# Rule: all physical flashing / HIL / ST-LINK / XDS110 bookkeeping
+# lives in this one file. Do not scatter COM port references around
+# the repo — import this file instead.
+#
+# As of 2026-04-15, no ARM firmware image has been flashed to any of
+# these boards. Phase 1..4 Line B work targeted POSIX builds only
+# (cvc/fzc/rzc as Docker containers on vcan0). Phase 5 Line B will
+# be the first time the embedded firmware actually runs on real STM32
+# hardware via ST-LINK. Until that happens the `cvc` assignment below
+# is arbitrary — whichever probe is listed as `cvc` is the one that
+# will get the first CVC firmware image when Phase 5 starts.
+
+[host.windows]
+name = "Windows dev machine"
+role = "primary bench host"
+notes = "Runs the autonomous workers, holds the ST-LINK probes and the XDS110, runs the native opensovd-cda.exe"
+
+# ----------------------------------------------------------------------
+# ST-LINK probes (STM32 boards)
+# ----------------------------------------------------------------------
+
+[[stlink]]
+logical_ecu = "cvc"
+stlink_serial = "001A00363235510B37333439"
+com_port = "COM3"
+usb_location = "002d.0000.0003.002.002.000.000.000.000"
+assigned_on = "2026-04-15"
+assigned_by = "Claude autonomous session (operator-delegated choice; POSIX-only work so far, assignment is bookkeeping)"
+flashed_image = "none"
+target_mcu = "TBD — resolve on first `st-info --probe` at Phase 5 D1"
+notes = "First CVC hardware image will be flashed here. Pair this entry with the same CVC POSIX container config in deploy/docker/compose-posix-ecus.yml and the same CVC Dcm_Cfg / cvc_identity.toml fixtures."
+
+[[stlink]]
+logical_ecu = "unassigned-1"
+stlink_serial = "0027003C3235510B37333439"
+com_port = "COM7"
+usb_location = "002d.0000.0003.002.003.000.000.000.000"
+assigned_on = "2026-04-15"
+flashed_image = "none"
+target_mcu = "TBD"
+notes = "Reserved for fzc or rzc assignment in Phase 5 when a second STM32 board is first flashed"
+
+[[stlink]]
+logical_ecu = "unassigned-2"
+stlink_serial = "0049002D3235510C37333439"
+com_port = "COM8"
+usb_location = "002d.0000.0003.002.001.000.000.000.000"
+assigned_on = "2026-04-15"
+flashed_image = "none"
+target_mcu = "TBD"
+notes = "Reserved for fzc or rzc assignment in Phase 5"
+
+# ----------------------------------------------------------------------
+# XDS110 probe (TI TMS570 / AURIX)
+# ----------------------------------------------------------------------
+
+[[xds110]]
+logical_ecu = "tcu"
+com_port_main = "COM12"  # Auxiliary Data Port per device description
+com_port_uart = "COM11"  # Application/User UART
+assigned_on = "2026-04-15"
+flashed_image = "none"
+target_mcu = "TMS570 family (to be resolved via TI XDS110 probe info)"
+notes = "TI debug probe. Not an ST-LINK — uses Code Composer Studio / UniFlash. TCU assignment follows the master plan TMS570 role."
+
+# ----------------------------------------------------------------------
+# Other bench peripherals on the Windows host
+# ----------------------------------------------------------------------
+
+[[bench_peripheral]]
+name = "USB-SERIAL CH340"
+com_port = "COM17"
+role = "unknown / unassigned"
+notes = "Generic USB-to-serial adapter. Not yet tied to a board. Identify before using."
+
+# ----------------------------------------------------------------------
+# Linux bench (Raspberry Pi)
+# ----------------------------------------------------------------------
+
+[host.pi]
+name = "Raspberry Pi bench host"
+ssh_target = "taktflow-pi@192.168.0.197"
+role = "bench-resident services and real-CAN gateway"
+notes = "Hosts ecu-sim via systemd (Phase 2/3/4 Line A bench), has its own ST-LINK/V2.1 + Geschwister Schneider USB-CAN (can0) + Taktflow scoreHSM. Not a primary flashing host — physical STM32 flashing is done from the Windows PC via the probes listed above."
+
+[pi.probes]
+can_interface = "can0"
+can_adapter = "OpenMoko Geschwister Schneider (GS_USB)"
+stlink_attached = true
+stlink_note = "One ST-LINK/V2.1 is physically connected to the Pi as well. Purpose TBD; probably a fourth STM32 or a scoreHSM debug attachment. Do NOT confuse it with the three probes on the Windows host above — the serial differs. Resolve when Phase 5 needs it."
+
+[pi.scorehsm]
+usb_vid_pid = "f055:4853"
+vendor = "Taktflow-Systems"
+product = "scoreHSM"
+role = "Hardware Security Module reference implementation (separate repo at H:\\scorehsm)"
+
+# ----------------------------------------------------------------------
+# Change log (append-only)
+# ----------------------------------------------------------------------
+# 2026-04-15  Initial file. CVC -> ST-LINK serial 001A00363235510B37333439
+#             (currently COM3). Other assignments TBD. No ARM firmware
+#             has been flashed to any probe yet — Phase 1..4 Line B
+#             targeted POSIX only.
