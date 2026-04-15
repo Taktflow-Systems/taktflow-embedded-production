@@ -48,7 +48,8 @@ SHARED_LIB := $(BUILD_DIR)/libfaultlib.so
 
 TEST_SRCS := \
     $(FAULT_LIB)/tests/test_postcard_c.c \
-    $(FAULT_LIB)/tests/test_wire_fault_record.c
+    $(FAULT_LIB)/tests/test_wire_fault_record.c \
+    $(FAULT_LIB)/tests/test_send_retry_adr0018.c
 TEST_BINS := $(patsubst $(FAULT_LIB)/tests/%.c,$(TEST_DIR)/%,$(TEST_SRCS))
 
 .PHONY: all test clean
