@@ -77,11 +77,13 @@ $(TEST_DIR)/%: $(FAULT_LIB)/tests/%.c $(LIB_OBJS) $(UNITY_SRC) | $(TEST_DIR)
 
 test: $(STATIC_LIB) $(TEST_BINS)
 	@echo "=== Running fault_lib C unit tests ==="
-	@pass=0; fail=0; total=0; \
+	@cd $(ROOT) && pass=0; fail=0; total=0; \
 	for t in $(TEST_BINS); do \
 	    total=$$((total + 1)); \
-	    echo "--- $$t ---"; \
-	    if ./$$t; then pass=$$((pass + 1)); else fail=$$((fail + 1)); fi; \
+	    real="$$t"; \
+	    if [ ! -x "$$real" ] && [ -x "$${real}.exe" ]; then real="$${real}.exe"; fi; \
+	    echo "--- $$real ---"; \
+	    if "$$real"; then pass=$$((pass + 1)); else fail=$$((fail + 1)); fi; \
 	done; \
 	echo "=== fault_lib tests: $$pass/$$total passed ==="; \
 	if [ $$fail -ne 0 ]; then exit 1; fi

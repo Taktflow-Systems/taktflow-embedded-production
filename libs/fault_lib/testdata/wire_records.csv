@@ -1,0 +1,22 @@
+#
+# wire_records.csv - test vectors for WireFaultRecord round-trip tests
+#
+# This is the ONLY place concrete fault codes, severities, component
+# names, timestamps, and meta payloads live in the fault_lib test tree.
+# No C source file under libs/fault_lib/ may hardcode any of these
+# values - the hardcoded-literal regression test
+# (tools/odx-gen/tests/test_no_hardcoded_in_fault_lib.py) enforces
+# this at every CI run.
+#
+# Columns:
+#   component      - ComponentId string, max 64 bytes
+#   id             - u32 fault id, decimal
+#   severity_code  - numeric severity (1=Fatal 2=Error 3=Warning 4=Info)
+#   timestamp_ms   - u64 milliseconds
+#   meta_json      - empty for None, otherwise inline JSON text
+#
+component,id,severity_code,timestamp_ms,meta_json
+cvc,1,2,100,
+bcm,65537,4,1700000000000,{"k":"v"}
+icu,255,3,4200,{"unicode":"\u00e9"}
+tcu,4294967295,1,18446744073709551615,
