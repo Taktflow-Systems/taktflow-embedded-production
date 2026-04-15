@@ -25,6 +25,7 @@ proxy-core = { path = "proxy-core" }
 proxy-doip = { path = "proxy-doip" }
 proxy-can  = { path = "proxy-can" }
 
+async-trait = "0.1"
 thiserror   = "2.0"
 serde       = { version = "1.0", features = ["derive"] }
 serde_json  = "1.0"

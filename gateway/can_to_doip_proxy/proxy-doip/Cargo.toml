@@ -11,10 +11,14 @@ repository.workspace = true
 
 [dependencies]
 proxy-core.workspace = true
+async-trait.workspace = true
 thiserror.workspace = true
 bytes.workspace = true
 tokio.workspace = true
 tracing.workspace = true
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "io-util", "time", "sync"] }
 
 [lints]
 workspace = true
