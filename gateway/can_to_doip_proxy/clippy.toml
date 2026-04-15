@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Taktflow Systems
+#
+# Mirrored from opensovd-core per ADR-0006.
+
+too-many-lines-threshold = 130
+allow-unwrap-in-tests = true

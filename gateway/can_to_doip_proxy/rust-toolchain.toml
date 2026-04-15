@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Taktflow Systems
+#
+# Pinned to match opensovd-core per ADR-0006. Upgrade in lock-step.
+
+[toolchain]
+channel = "1.88.0"
+components = ["clippy", "rustfmt"]

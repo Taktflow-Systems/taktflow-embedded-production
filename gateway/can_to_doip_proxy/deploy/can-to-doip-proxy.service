@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Taktflow Systems
+#
+# systemd unit for the Taktflow CAN-to-DoIP proxy on the Raspberry Pi.
+# Drop at /etc/systemd/system/can-to-doip-proxy.service and enable via
+# `sudo systemctl enable --now can-to-doip-proxy.service`.
+
+[Unit]
+Description=Taktflow CAN-to-DoIP Proxy
+Documentation=https://github.com/Taktflow-Systems/taktflow-embedded-production
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/opensovd-can-to-doip-proxy --config-file /etc/opensovd/proxy.toml
+Restart=on-failure
+RestartSec=5
+User=taktflow-pi
+Environment=RUST_LOG=info
+
+# Hardening (non-exhaustive — full hardening is a follow-up).
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/log/opensovd
+AmbientCapabilities=CAP_NET_RAW CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target

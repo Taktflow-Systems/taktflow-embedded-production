@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Taktflow Systems
+#
+# Mirrored from opensovd-core per ADR-0006. Targets reflect where the
+# proxy actually runs (Pi aarch64, laptop x86_64) plus macOS aarch64 for
+# developer ergonomics.
+
+[graph]
+targets = [
+  "aarch64-unknown-linux-gnu",
+  "x86_64-unknown-linux-gnu",
+  "aarch64-apple-darwin",
+]
+
+all-features = false
+no-default-features = false
+
+[advisories]
+yanked = "deny"
+
+[licenses]
+allow = [
+  "Apache-2.0",
+  "MIT",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Unicode-3.0",
+  "Zlib",
+]
+confidence-threshold = 0.8
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[sources]
+unknown-registry = "warn"
+unknown-git = "warn"
