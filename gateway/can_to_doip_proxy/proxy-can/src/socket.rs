@@ -145,7 +145,7 @@ impl CanInterface {
     /// Receive an ISO-TP PDU on `resp_id`, transmitting a `FlowControl`
     /// frame on `req_id` as soon as a `FirstFrame` arrives. This is the
     /// spec-compliant receiver path: ISO 15765-2 §6.7.3 requires the
-    /// receiver to send FC (0x30 CTS, BS=0, `STmin`=0) within N_Br of
+    /// receiver to send FC (0x30 CTS, BS=0, `STmin`=0) within `N_Br` of
     /// receiving the FF, otherwise the sender stalls and the transaction
     /// aborts.
     ///
