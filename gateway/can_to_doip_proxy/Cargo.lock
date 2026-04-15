@@ -473,13 +473,16 @@ name = "proxy-main"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "clap",
  "figment",
  "proxy-can",
  "proxy-core",
  "proxy-doip",
+ "serde",
  "thiserror",
  "tokio",
+ "toml 0.9.12+spec-1.1.0",
  "tracing",
  "tracing-subscriber",
 ]

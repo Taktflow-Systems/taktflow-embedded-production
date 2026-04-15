@@ -24,6 +24,9 @@ clap.workspace = true
 figment.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
+async-trait.workspace = true
+serde.workspace = true
+toml.workspace = true
 
 [lints]
 workspace = true

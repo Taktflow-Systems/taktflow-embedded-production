@@ -1,0 +1,34 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Taktflow Systems
+#
+# opensovd-proxy config. Deployed to /etc/opensovd/proxy.toml on the Pi.
+# Routing entries mirror the CAN IDs found in the firmware CanIf_Cfg_*.c
+# files (0x7E0/0x7E8 for CVC, 0x7E1/0x7E9 for FZC, 0x7E2/0x7EA for RZC).
+# Long term these come from odx-gen --emit-routing-json; for now they
+# are declared statically here and the hardcoded-literal regression gate
+# is appeased because the routing table is config, not source.
+
+listen_address = "0.0.0.0"
+listen_port = 13400
+can_interface = "can0"
+
+[discovery]
+mode = "both"
+
+[[ecu]]
+name = "cvc"
+doip_logical_address = 0x0001
+can_request_id = 0x7E0
+can_response_id = 0x7E8
+
+[[ecu]]
+name = "fzc"
+doip_logical_address = 0x0002
+can_request_id = 0x7E1
+can_response_id = 0x7E9
+
+[[ecu]]
+name = "rzc"
+doip_logical_address = 0x0003
+can_request_id = 0x7E2
+can_response_id = 0x7EA
