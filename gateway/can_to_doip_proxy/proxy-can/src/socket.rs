@@ -9,7 +9,7 @@
 use core::time::Duration;
 
 #[cfg(target_os = "linux")]
-use crate::isotp::{CAN_DLC, Reassembler, encode};
+use crate::isotp::{CAN_DLC, Reassembler, ReassemblerEvent, encode};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CanError {
@@ -140,6 +140,105 @@ impl CanInterface {
     #[cfg(not(target_os = "linux"))]
     pub async fn recv_isotp(&self, can_id: u32, _timeout: Duration) -> Result<Vec<u8>, CanError> {
         Err(CanError::Timeout { id: can_id })
+    }
+
+    /// Receive an ISO-TP PDU on `resp_id`, transmitting a `FlowControl`
+    /// frame on `req_id` as soon as a `FirstFrame` arrives. This is the
+    /// spec-compliant receiver path: ISO 15765-2 §6.7.3 requires the
+    /// receiver to send FC (0x30 CTS, BS=0, `STmin`=0) within `N_Br` of
+    /// receiving the FF, otherwise the sender stalls and the transaction
+    /// aborts.
+    ///
+    /// The legacy [`CanInterface::recv_isotp`] is retained for the
+    /// existing vcan0 unit harness (which uses a sender that does not
+    /// wait for FC), but all production call sites should use this one.
+    ///
+    /// # Errors
+    /// Returns [`CanError::Timeout`] on deadline, [`CanError::Io`] on
+    /// socket error, or [`CanError::IsoTp`] on reassembly failure.
+    #[cfg(target_os = "linux")]
+    pub async fn recv_isotp_with_flow_control(
+        &self,
+        req_id: u32,
+        resp_id: u32,
+        timeout: Duration,
+    ) -> Result<Vec<u8>, CanError> {
+        use socketcan::{EmbeddedFrame, Frame, StandardId};
+        let deadline = tokio::time::Instant::now() + timeout;
+        let mut r = Reassembler::new();
+        let fc_id_u16 = u16::try_from(req_id).map_err(|_| {
+            CanError::Io(format!("req_id 0x{req_id:x} out of 11-bit standard range"))
+        })?;
+        let fc_id = StandardId::new(fc_id_u16).ok_or_else(|| {
+            CanError::Io(format!("req_id 0x{req_id:x} out of 11-bit standard range"))
+        })?;
+        loop {
+            if tokio::time::Instant::now() >= deadline {
+                return Err(CanError::Timeout { id: resp_id });
+            }
+            let guard = self.sock.lock().await;
+            let mut idle = false;
+            let event = match socketcan::Socket::read_frame(&*guard) {
+                Ok(frame) => {
+                    if frame.raw_id() == resp_id {
+                        let data = frame.data();
+                        let mut padded = [0u8; CAN_DLC];
+                        let take = core::cmp::min(data.len(), CAN_DLC);
+                        let (head, _) = padded.split_at_mut(take);
+                        let (src, _) = data.split_at(take);
+                        head.copy_from_slice(src);
+                        Some(r.push_event(&padded)?)
+                    } else {
+                        None
+                    }
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                    idle = true;
+                    None
+                }
+                Err(e) => {
+                    drop(guard);
+                    return Err(CanError::Io(e.to_string()));
+                }
+            };
+            // Drive any required FC send while still holding the socket
+            // guard, so a second concurrent request cannot interleave
+            // between a FirstFrame and its FlowControl.
+            if let Some(ReassemblerEvent::SendFlowControl { frame: fc_bytes }) = event.as_ref() {
+                let fc_frame = socketcan::CanDataFrame::new(fc_id, fc_bytes)
+                    .ok_or_else(|| CanError::Io("failed to build FC frame".into()))?;
+                socketcan::Socket::write_frame(&*guard, &fc_frame)
+                    .map_err(|e| CanError::Io(e.to_string()))?;
+                tracing::debug!(
+                    req_id = format_args!("0x{req_id:x}"),
+                    resp_id = format_args!("0x{resp_id:x}"),
+                    "ISO-TP FlowControl transmitted after FirstFrame"
+                );
+            }
+            drop(guard);
+            if let Some(ReassemblerEvent::Complete(pdu)) = event {
+                return Ok(pdu);
+            }
+            // Only yield when the socket is idle. On a busy bus with
+            // hundreds of unrelated periodic frames per second, sleeping
+            // after every read starves the receive loop and delays the
+            // FC by ~720 ms (observed live on the POSIX compose fleet).
+            if idle {
+                tokio::time::sleep(Duration::from_millis(2)).await;
+            } else {
+                tokio::task::yield_now().await;
+            }
+        }
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    pub async fn recv_isotp_with_flow_control(
+        &self,
+        _req_id: u32,
+        resp_id: u32,
+        _timeout: Duration,
+    ) -> Result<Vec<u8>, CanError> {
+        Err(CanError::Timeout { id: resp_id })
     }
 }
 
