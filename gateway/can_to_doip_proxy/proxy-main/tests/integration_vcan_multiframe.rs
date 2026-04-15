@@ -35,7 +35,7 @@ fn vcan_gate() -> Option<&'static str> {
     None
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn vcan_multiframe_round_trip_requires_flow_control() {
     if let Some(reason) = vcan_gate() {
         eprintln!("SKIP vcan0 multi-frame test: {reason}");
@@ -61,9 +61,12 @@ async fn vcan_multiframe_round_trip_requires_flow_control() {
     let frames = isotp_encode(&payload).expect("isotp encode");
     assert!(frames.len() >= 3, "need multi-frame payload for this test");
 
-    // ECU writer task: send FF only, then wait for FC from the proxy,
-    // then send the CFs. Mirrors what a spec-compliant ECU does.
-    let ecu_task = tokio::spawn(async move {
+    // ECU writer thread: send FF only, then wait for FC from the proxy,
+    // then send the CFs. Mirrors what a spec-compliant ECU does. We use
+    // std::thread instead of tokio::spawn so the synchronous socketcan
+    // read_frame / thread::sleep calls do not starve the tokio runtime
+    // that is driving the tester's async receive loop.
+    let ecu_task = std::thread::spawn(move || {
         use socketcan::{EmbeddedFrame, Frame, Socket, StandardId};
         // Use a raw handle under the hood via send_isotp_raw_frame.
         let ecu_raw = open_raw_socketcan("vcan0").expect("ecu raw");
@@ -157,7 +160,7 @@ async fn vcan_multiframe_round_trip_requires_flow_control() {
         assert_eq!(*b, FC_PAD_BYTE);
     }
 
-    ecu_task.await.expect("ecu task");
+    ecu_task.join().expect("ecu thread join");
 }
 
 // Small helper to open a raw socketcan handle. The public CanInterface
