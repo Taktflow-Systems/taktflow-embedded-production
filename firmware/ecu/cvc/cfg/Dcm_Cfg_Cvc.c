@@ -130,7 +130,7 @@ static const Dcm_DidTableType cvc_did_table[] = {
     /* ISO 3779 fixes VIN length at 17 chars. Decimal literal required
      * so the odx-gen Dcm_Cfg parser regex resolves DataLength without
      * having to expand the CVC_IDENTITY_VIN_LEN symbol. */
-    { 0xF190u,                 Dcm_ReadDid_Vin,           17u }, /* VIN (ISO 14229 F190) */
+    { 0xF190u,                 Dcm_ReadDid_Vin,           17u }, /* VIN */
     { 0xF191u,                 Dcm_ReadDid_HwVer,         3u },   /* Hardware Version       */
     { 0xF195u,                 Dcm_ReadDid_SwVer,         3u },   /* Software Version       */
     { 0xF010u,                 Dcm_ReadDid_State,         1u },   /* Vehicle State          */
