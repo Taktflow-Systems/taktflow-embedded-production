@@ -36,6 +36,7 @@ _SCANNED_FILES: list[Path] = [
     _PKG_ROOT / "parsers" / "dbc.py",
     _PKG_ROOT / "build_from_dbc.py",
     _PKG_ROOT / "iso_15031_6_dtcs.py",
+    _PKG_ROOT / "schemas" / "dtc_catalog.py",
 ]
 
 
