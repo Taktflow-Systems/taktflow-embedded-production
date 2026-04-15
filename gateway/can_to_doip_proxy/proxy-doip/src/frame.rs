@@ -218,6 +218,8 @@ pub fn encode_frame(payload_type: PayloadType, payload: &[u8]) -> Result<Vec<u8>
 }
 
 #[cfg(test)]
+#[allow(deprecated)] // Phase 5 D4: module is self-deprecated; inline tests
+// still exercise the byte-compat contract until the full codec cutover.
 mod tests {
     use super::*;
 

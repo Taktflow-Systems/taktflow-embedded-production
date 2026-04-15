@@ -4,6 +4,15 @@
 // DoIP TCP server. One-client-at-a-time is sufficient for MVP (CDA opens a
 // single long-lived connection per ECU target); serve_many is left as a
 // follow-up noted in the handoff.
+//
+// Phase 5 Line B D4: this module still calls the legacy `frame::*` and
+// `message_types::*` APIs on purpose — the PR #9 ISO-TP FlowControl
+// integration + DoipHandler trait live here, and the migration to
+// `codec::DoipCodec` via Framed<TcpStream, DoipCodec> is tracked as a
+// follow-up so it can get its own focused review. Until then the
+// deprecation warnings are locally allow-listed; byte-compat with the
+// new codec is proven by tests/doip_codec_byte_compat.rs.
+#![allow(deprecated)]
 
 use std::net::SocketAddr;
 use std::sync::Arc;

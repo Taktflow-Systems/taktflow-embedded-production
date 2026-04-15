@@ -122,6 +122,8 @@ pub fn build_diagnostic_message(source_address: u16, target_address: u16, uds: &
 }
 
 #[cfg(test)]
+#[allow(deprecated)] // Phase 5 D4: module is self-deprecated; inline tests
+// still exercise the byte-compat contract until the full codec cutover.
 mod tests {
     use super::*;
 

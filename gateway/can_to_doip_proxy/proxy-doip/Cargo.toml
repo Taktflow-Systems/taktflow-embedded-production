@@ -17,6 +17,21 @@ bytes.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 
+# Phase 5 Line B D4 — theswiftfox upstream CDA-pinned forks. Pinned by
+# git rev per the Phase 5 Line B prompt (upstream CDA pins 0dba319 /
+# bdeab8c). Added as a PARTIAL migration: the byte-compat gate in
+# tests/doip_codec_byte_compat.rs proves the new encoder produces the
+# same bytes as the hand-rolled frame.rs for every fixture frame, and
+# proxy-doip now re-exports the upstream codec types via the `codec`
+# module. The production server.rs encode/decode loop still uses the
+# hand-rolled path (and the PR #9 ISO-TP FlowControl integration is
+# untouched) — the full cutover of server.rs to Framed<DoipCodec>
+# is tracked as a Phase 5+ follow-up so it can land with its own
+# dedicated review.
+doip-codec = { git = "https://github.com/theswiftfox/doip-codec.git", rev = "0dba319" }
+doip-definitions = { git = "https://github.com/theswiftfox/doip-definitions.git", rev = "bdeab8c" }
+tokio-util = { version = "0.7", features = ["codec"] }
+
 [dev-dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "io-util", "time", "sync"] }
 
