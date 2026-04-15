@@ -142,10 +142,10 @@ impl CanInterface {
         Err(CanError::Timeout { id: can_id })
     }
 
-    /// Receive an ISO-TP PDU on `resp_id`, transmitting a FlowControl
-    /// frame on `req_id` as soon as a FirstFrame arrives. This is the
+    /// Receive an ISO-TP PDU on `resp_id`, transmitting a `FlowControl`
+    /// frame on `req_id` as soon as a `FirstFrame` arrives. This is the
     /// spec-compliant receiver path: ISO 15765-2 §6.7.3 requires the
-    /// receiver to send FC (0x30 CTS, BS=0, STmin=0) within N_Br of
+    /// receiver to send FC (0x30 CTS, BS=0, `STmin`=0) within N_Br of
     /// receiving the FF, otherwise the sender stalls and the transaction
     /// aborts.
     ///
@@ -166,7 +166,10 @@ impl CanInterface {
         use socketcan::{EmbeddedFrame, Frame, StandardId};
         let deadline = tokio::time::Instant::now() + timeout;
         let mut r = Reassembler::new();
-        let fc_id = StandardId::new(req_id as u16).ok_or_else(|| {
+        let fc_id_u16 = u16::try_from(req_id).map_err(|_| {
+            CanError::Io(format!("req_id 0x{req_id:x} out of 11-bit standard range"))
+        })?;
+        let fc_id = StandardId::new(fc_id_u16).ok_or_else(|| {
             CanError::Io(format!("req_id 0x{req_id:x} out of 11-bit standard range"))
         })?;
         loop {
@@ -182,7 +185,8 @@ impl CanInterface {
                         let mut padded = [0u8; CAN_DLC];
                         let take = core::cmp::min(data.len(), CAN_DLC);
                         let (head, _) = padded.split_at_mut(take);
-                        head.copy_from_slice(&data[..take]);
+                        let (src, _) = data.split_at(take);
+                        head.copy_from_slice(src);
                         Some(r.push_event(&padded)?)
                     } else {
                         None

@@ -111,21 +111,21 @@ pub fn encode(payload: &[u8]) -> Result<Vec<[u8; CAN_DLC]>, IsoTpError> {
 
 /// Event emitted by [`Reassembler::push_event`]. This is the richer API
 /// the socket layer drives: it needs to know when to transmit a
-/// FlowControl back onto the bus, which the legacy `Option<Vec<u8>>`
+/// `FlowControl` back onto the bus, which the legacy `Option<Vec<u8>>`
 /// return type could not express.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ReassemblerEvent {
     /// Frame accepted but the PDU is not yet complete.
     NeedMore,
-    /// FirstFrame received; caller must transmit `frame` on the request
-    /// CAN ID (e.g. 0x7E0 for CVC) per ISO 15765-2 §6.7.3.
+    /// `FirstFrame` received; caller must transmit `frame` on the request
+    /// `CAN` ID (e.g. 0x7E0 for CVC) per ISO 15765-2 §6.7.3.
     SendFlowControl { frame: [u8; CAN_DLC] },
     /// PDU fully reassembled.
     Complete(Vec<u8>),
 }
 
-/// Build the 8-byte FlowControl frame the reassembler hands back to the
-/// caller when a FirstFrame arrives. Kept free-standing so `proxy-main`
+/// Build the 8-byte `FlowControl` frame the reassembler hands back to the
+/// caller when a `FirstFrame` arrives. Kept free-standing so `proxy-main`
 /// tests and the socket layer can reference the same constants.
 #[must_use]
 pub fn build_flow_control_frame() -> [u8; CAN_DLC] {
@@ -140,8 +140,8 @@ pub fn build_flow_control_frame() -> [u8; CAN_DLC] {
 /// when the message is complete, that call returns `Ok(Some(bytes))`.
 ///
 /// The richer event-based driver is [`Reassembler::push_event`], which the
-/// socket layer uses to know when to transmit a FlowControl back on the
-/// request CAN ID after receiving a FirstFrame (ISO 15765-2 §6.7.3).
+/// socket layer uses to know when to transmit a `FlowControl` back on the
+/// request `CAN` ID after receiving a `FirstFrame` (ISO 15765-2 §6.7.3).
 #[derive(Debug, Default)]
 pub struct Reassembler {
     expected_total: Option<usize>,
@@ -175,7 +175,7 @@ impl Reassembler {
 
     /// Event-based variant of [`Reassembler::push`]. Returns a
     /// [`ReassemblerEvent`] so the caller knows whether it must emit a
-    /// FlowControl frame back on the request CAN ID
+    /// `FlowControl` frame back on the request `CAN` ID
     /// (ISO 15765-2 §6.7.3).
     ///
     /// # Errors
@@ -402,7 +402,7 @@ mod tests {
     #[test]
     fn event_api_handles_sequence_number_wrap_past_0x2f() {
         // Need payload > 6 + 15*7 = 111 bytes so SN wraps past 0x2F to 0x20.
-        let payload: Vec<u8> = (0..140).map(|i| i as u8).collect();
+        let payload: Vec<u8> = (0u8..140).collect();
         let frames = encode(&payload).unwrap();
 
         let mut r = Reassembler::new();
