@@ -260,4 +260,96 @@ mod tests {
         bad[0] = 0x25;
         assert!(r.push(&bad).is_err());
     }
+
+    // D1 — ISO 15765-2 §6.7.3: receiver SHALL emit FlowControl after FF.
+    // These tests drive the new event-based push API on Reassembler.
+
+    #[test]
+    fn first_frame_emits_flow_control_event_with_cts_bs0_stmin0() {
+        // 20-byte UDS response: 0x62 F1 90 + 17-byte VIN
+        let mut payload = vec![0x62u8, 0xF1, 0x90];
+        payload.extend_from_slice(b"TAKTFLWCVC0000017");
+        assert_eq!(payload.len(), 20);
+        let frames = encode(&payload).unwrap();
+        // First frame shape: 10 14 62 F1 90 54 41 4B
+        assert_eq!(frames[0][0], 0x10);
+        assert_eq!(frames[0][1], 0x14);
+
+        let mut r = Reassembler::new();
+        let ev = r.push_event(&frames[0]).unwrap();
+        match ev {
+            ReassemblerEvent::SendFlowControl { frame } => {
+                // ISO 15765-2 §6.5.5: N_PCI=0x30 (CTS), BS=0x00, STmin=0x00
+                assert_eq!(frame[0], 0x30, "FC PCI should be 0x30 (CTS)");
+                assert_eq!(frame[1], 0x00, "BS should be 0 (unlimited)");
+                assert_eq!(frame[2], 0x00, "STmin should be 0");
+                // Padding bytes 3..8 should be the configured pad byte.
+                for (i, b) in frame.iter().enumerate().skip(3) {
+                    assert_eq!(*b, FC_PAD_BYTE, "FC frame byte {i} should be pad");
+                }
+            }
+            other => panic!("expected SendFlowControl event, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn multi_frame_reassembly_via_event_api_round_trip_20_bytes() {
+        let mut payload = vec![0x62u8, 0xF1, 0x90];
+        payload.extend_from_slice(b"TAKTFLWCVC0000017");
+        let frames = encode(&payload).unwrap();
+        assert_eq!(frames.len(), 4); // FF + 3 CF for 20 bytes
+
+        let mut r = Reassembler::new();
+        let ff_ev = r.push_event(&frames[0]).unwrap();
+        assert!(matches!(ff_ev, ReassemblerEvent::SendFlowControl { .. }));
+
+        // CF #1 (SN=1), CF #2 (SN=2): still need more
+        let ev1 = r.push_event(&frames[1]).unwrap();
+        assert!(matches!(ev1, ReassemblerEvent::NeedMore));
+        let ev2 = r.push_event(&frames[2]).unwrap();
+        assert!(matches!(ev2, ReassemblerEvent::NeedMore));
+        // CF #3 (SN=3): completes the PDU
+        let ev3 = r.push_event(&frames[3]).unwrap();
+        match ev3 {
+            ReassemblerEvent::Complete(pdu) => assert_eq!(pdu, payload),
+            other => panic!("expected Complete, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn event_api_handles_sequence_number_wrap_past_0x2f() {
+        // Need payload > 6 + 15*7 = 111 bytes so SN wraps past 0x2F to 0x20.
+        let payload: Vec<u8> = (0..140).map(|i| i as u8).collect();
+        let frames = encode(&payload).unwrap();
+
+        let mut r = Reassembler::new();
+        let first_ev = r.push_event(&frames[0]).unwrap();
+        assert!(matches!(first_ev, ReassemblerEvent::SendFlowControl { .. }));
+        let mut completed: Option<Vec<u8>> = None;
+        for f in &frames[1..] {
+            match r.push_event(f).unwrap() {
+                ReassemblerEvent::NeedMore => {}
+                ReassemblerEvent::Complete(pdu) => {
+                    completed = Some(pdu);
+                    break;
+                }
+                ReassemblerEvent::SendFlowControl { .. } => {
+                    panic!("unexpected FC during CF stream")
+                }
+            }
+        }
+        assert_eq!(completed, Some(payload));
+    }
+
+    #[test]
+    fn event_api_single_frame_completes_without_flow_control() {
+        let frame = [0x03u8, 0x22, 0xF1, 0x90, 0x00, 0x00, 0x00, 0x00];
+        let mut r = Reassembler::new();
+        match r.push_event(&frame).unwrap() {
+            ReassemblerEvent::Complete(pdu) => {
+                assert_eq!(pdu, vec![0x22, 0xF1, 0x90]);
+            }
+            other => panic!("expected Complete, got {other:?}"),
+        }
+    }
 }
