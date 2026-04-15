@@ -169,8 +169,8 @@ async fn vcan_multiframe_round_trip_requires_flow_control() {
 // underlying crate.
 fn open_raw_socketcan(iface: &str) -> std::io::Result<socketcan::CanSocket> {
     use socketcan::Socket;
-    let sock = socketcan::CanSocket::open(iface)
-        .map_err(|e| std::io::Error::other(e.to_string()))?;
+    let sock =
+        socketcan::CanSocket::open(iface).map_err(|e| std::io::Error::other(e.to_string()))?;
     sock.set_nonblocking(true)?;
     Ok(sock)
 }
