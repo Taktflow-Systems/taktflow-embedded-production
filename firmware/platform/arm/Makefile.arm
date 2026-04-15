@@ -42,6 +42,36 @@ OUT_DIR = build/$(TARGET)-arm
 OUT_ELF = $(OUT_DIR)/$(TARGET)_firmware.elf
 OUT_BIN = $(OUT_DIR)/$(TARGET)_firmware.bin
 
+# --- Phase 5 follow-up: embed identity TOML into flash for ARM builds ---
+#
+# The ARM target has no filesystem so it cannot fopen() cvc_identity.toml
+# at runtime. embed_identity.py converts the TOML file into a header that
+# defines a const byte array (cvc_identity_toml_data) and length. main.c
+# picks up the header on the !PLATFORM_POSIX path and feeds the array to
+# Cvc_Identity_InitFromBuffer() during BSW init so the F190 Dcm handler
+# can return the VIN at runtime. No VIN literal lives in any C source —
+# the header is generated under build/ and the byte array contains hex
+# bytes only, so the hardcoded-VIN regression scanner stays green.
+#
+# Currently CVC is the only target with an identity TOML; FZC and RZC
+# fall back to the no-op behaviour (the variable EMBED_IDENTITY_TOML
+# stays empty and the EXTRA_CFLAGS hook is unused). When FZC/RZC need
+# their own identity later, give them a TOML and they will pick up the
+# same hook automatically.
+EMBED_IDENTITY_TOML_cvc = firmware/ecu/cvc/cfg/cvc_identity.toml
+EMBED_IDENTITY_TOML     = $(EMBED_IDENTITY_TOML_$(TARGET))
+GEN_DIR                 = $(OUT_DIR)/generated
+GEN_IDENTITY_HEADER     = $(GEN_DIR)/cvc_identity_data.h
+EMBED_SCRIPT            = firmware/platform/arm/embed_identity.py
+
+# Forward EXTRA_CFLAGS to the inner Makefile.stm32 so the generated
+# header dir is on the include path and the embed feature is enabled.
+ifneq ($(EMBED_IDENTITY_TOML),)
+  EXTRA_CFLAGS = -I$(abspath $(GEN_DIR)) -DEMBED_CVC_IDENTITY=1
+else
+  EXTRA_CFLAGS =
+endif
+
 .PHONY: all clean size
 
 all: $(OUT_ELF)
@@ -50,11 +80,27 @@ all: $(OUT_ELF)
 $(OUT_DIR):
 	mkdir -p $(OUT_DIR)
 
+$(GEN_DIR): | $(OUT_DIR)
+	mkdir -p $(GEN_DIR)
+
+# Generate the embedded identity header from the source TOML. The
+# header is rebuilt whenever the TOML or the generator script changes.
+$(GEN_IDENTITY_HEADER): $(EMBED_IDENTITY_TOML) $(EMBED_SCRIPT) | $(GEN_DIR)
+	python $(EMBED_SCRIPT) $(EMBED_IDENTITY_TOML) $(GEN_IDENTITY_HEADER)
+	@echo "=== Generated $(GEN_IDENTITY_HEADER) from $(EMBED_IDENTITY_TOML) ==="
+
+# Targets without an identity TOML skip the codegen step.
+ifneq ($(EMBED_IDENTITY_TOML),)
+GEN_DEPS = $(GEN_IDENTITY_HEADER)
+else
+GEN_DEPS =
+endif
+
 # Delegate to Makefile.stm32 then copy the artefacts to the Phase 5
 # canonical location. We intentionally copy (not symlink) so the Phase 5
 # path is stable even after `make -f Makefile.stm32 clean`.
-$(OUT_ELF): | $(OUT_DIR)
-	$(MAKE) -f $(INNER_MAKEFILE) TARGET=$(TARGET)
+$(OUT_ELF): $(GEN_DEPS) | $(OUT_DIR)
+	$(MAKE) -f $(INNER_MAKEFILE) TARGET=$(TARGET) EXTRA_CFLAGS="$(EXTRA_CFLAGS)"
 	cp $(INNER_ELF) $(OUT_ELF)
 	cp $(INNER_BIN) $(OUT_BIN)
 

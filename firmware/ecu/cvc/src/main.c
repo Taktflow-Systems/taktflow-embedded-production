@@ -61,6 +61,14 @@
 #include "Swc_CvcCom.h"
 #include "Cvc_Identity.h"
 
+/* Phase 5 Line B follow-up: on bare-metal ARM the cvc_identity.toml
+ * contents are embedded into flash by firmware/platform/arm/embed_identity.py
+ * via Makefile.arm. The generated header lives under build/cvc-arm/generated/
+ * and is reachable through EXTRA_CFLAGS=-I... pushed by Makefile.arm. */
+#if !defined(PLATFORM_POSIX) && defined(EMBED_CVC_IDENTITY)
+#  include "cvc_identity_data.h"
+#endif
+
 /* ==================================================================
  * Det-based debug tracing (replaces DBG_LOG macro)
  * ================================================================== */
@@ -419,20 +427,39 @@ int main(void)
     WdgM_Init(&wdgm_config);
     BswM_Init(&bswm_config);
 
-    /* Phase 4 Line B D2: load VIN + ECU name from cvc_identity.toml so
-     * the F190 DID handler can return the VIN without any hardcoded
-     * string in firmware sources. Path override via env var on POSIX;
-     * compile-time default for target builds. */
+    /* Phase 4 Line B D2 + Phase 5 Line B follow-up: load VIN + ECU name
+     * from cvc_identity.toml so the F190 DID handler can return the VIN
+     * without any hardcoded string in firmware sources.
+     *
+     *   - POSIX  : open the file from disk (CVC_IDENTITY_CONFIG env var
+     *              overrides the default path).
+     *   - ARM    : the file is embedded into flash as a const byte array
+     *              by firmware/platform/arm/embed_identity.py at build
+     *              time; main.c feeds that array to the buffer-init
+     *              entry point. Without this branch the bare-metal build
+     *              would call fopen() against newlib nosys, get NULL, and
+     *              leave the identity store uninitialised — which made
+     *              UDS 22 F190 reply with NRC 0x31 on the live STM32G474
+     *              board after the first PR #12 flash. */
     {
 #ifdef PLATFORM_POSIX
         const char* id_path = getenv("CVC_IDENTITY_CONFIG");
         if (id_path == NULL_PTR) {
             id_path = "firmware/ecu/cvc/cfg/cvc_identity.toml";
         }
-#else
-        const char* id_path = "cvc_identity.toml";
-#endif
         (void)Cvc_Identity_InitFromFile(id_path);
+#elif defined(EMBED_CVC_IDENTITY)
+        (void)Cvc_Identity_InitFromBuffer(
+            (const char*)cvc_identity_toml_data,
+            (size_t)cvc_identity_toml_len);
+#else
+        /* TODO:POST-BETA — non-CVC ARM targets that need an identity
+         * blob should set EMBED_CVC_IDENTITY (or a sibling define) and
+         * generate their own header. For now the call is a no-op so
+         * F190 returns E_NOT_OK and the operator sees NRC 0x31, which
+         * is the same loud failure mode as a missing config file. */
+        (void)Cvc_Identity_InitFromFile("cvc_identity.toml");
+#endif
     }
 
     Dcm_Init(&cvc_dcm_config);
