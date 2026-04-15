@@ -42,32 +42,44 @@ OUT_DIR = build/$(TARGET)-arm
 OUT_ELF = $(OUT_DIR)/$(TARGET)_firmware.elf
 OUT_BIN = $(OUT_DIR)/$(TARGET)_firmware.bin
 
-# --- Phase 5 follow-up: embed identity TOML into flash for ARM builds ---
+# --- Phase 5 Line B — embed identity TOML into flash for ARM builds ---
 #
-# The ARM target has no filesystem so it cannot fopen() cvc_identity.toml
+# The ARM target has no filesystem so it cannot fopen() <ecu>_identity.toml
 # at runtime. embed_identity.py converts the TOML file into a header that
-# defines a const byte array (cvc_identity_toml_data) and length. main.c
-# picks up the header on the !PLATFORM_POSIX path and feeds the array to
-# Cvc_Identity_InitFromBuffer() during BSW init so the F190 Dcm handler
+# defines a const byte array (<ns>_toml_data) and length. main.c picks up
+# the header on the !PLATFORM_POSIX path and feeds the array to
+# <Ecu>_Identity_InitFromBuffer() during BSW init so the F190 Dcm handler
 # can return the VIN at runtime. No VIN literal lives in any C source —
 # the header is generated under build/ and the byte array contains hex
 # bytes only, so the hardcoded-VIN regression scanner stays green.
 #
-# Currently CVC is the only target with an identity TOML; FZC and RZC
-# fall back to the no-op behaviour (the variable EMBED_IDENTITY_TOML
-# stays empty and the EXTRA_CFLAGS hook is unused). When FZC/RZC need
-# their own identity later, give them a TOML and they will pick up the
-# same hook automatically.
+# Per-target wiring. Each ECU gets its own TOML + symbol namespace so
+# that the identity modules live in parallel without stepping on each
+# other's include guards. The CVC namespace stays `cvc_identity` so that
+# pre-D7 call sites keep working bit-identically.
 EMBED_IDENTITY_TOML_cvc = firmware/ecu/cvc/cfg/cvc_identity.toml
+EMBED_IDENTITY_TOML_fzc = firmware/ecu/fzc/cfg/fzc_identity.toml
+EMBED_IDENTITY_TOML_rzc = firmware/ecu/rzc/cfg/rzc_identity.toml
 EMBED_IDENTITY_TOML     = $(EMBED_IDENTITY_TOML_$(TARGET))
-GEN_DIR                 = $(OUT_DIR)/generated
-GEN_IDENTITY_HEADER     = $(GEN_DIR)/cvc_identity_data.h
-EMBED_SCRIPT            = firmware/platform/arm/embed_identity.py
+
+EMBED_IDENTITY_NS_cvc   = cvc_identity
+EMBED_IDENTITY_NS_fzc   = fzc_identity
+EMBED_IDENTITY_NS_rzc   = rzc_identity
+EMBED_IDENTITY_NS       = $(EMBED_IDENTITY_NS_$(TARGET))
+
+EMBED_IDENTITY_CFLAG_cvc = -DEMBED_CVC_IDENTITY=1
+EMBED_IDENTITY_CFLAG_fzc = -DEMBED_FZC_IDENTITY=1
+EMBED_IDENTITY_CFLAG_rzc = -DEMBED_RZC_IDENTITY=1
+EMBED_IDENTITY_CFLAG     = $(EMBED_IDENTITY_CFLAG_$(TARGET))
+
+GEN_DIR             = $(OUT_DIR)/generated
+GEN_IDENTITY_HEADER = $(GEN_DIR)/$(EMBED_IDENTITY_NS)_data.h
+EMBED_SCRIPT        = firmware/platform/arm/embed_identity.py
 
 # Forward EXTRA_CFLAGS to the inner Makefile.stm32 so the generated
 # header dir is on the include path and the embed feature is enabled.
 ifneq ($(EMBED_IDENTITY_TOML),)
-  EXTRA_CFLAGS = -I$(abspath $(GEN_DIR)) -DEMBED_CVC_IDENTITY=1
+  EXTRA_CFLAGS = -I$(abspath $(GEN_DIR)) $(EMBED_IDENTITY_CFLAG)
 else
   EXTRA_CFLAGS =
 endif
@@ -85,9 +97,11 @@ $(GEN_DIR): | $(OUT_DIR)
 
 # Generate the embedded identity header from the source TOML. The
 # header is rebuilt whenever the TOML or the generator script changes.
+# --namespace keeps the CVC symbol names exactly as before so CVC's
+# pre-D7 ELF stays bit-identical.
 $(GEN_IDENTITY_HEADER): $(EMBED_IDENTITY_TOML) $(EMBED_SCRIPT) | $(GEN_DIR)
-	python $(EMBED_SCRIPT) $(EMBED_IDENTITY_TOML) $(GEN_IDENTITY_HEADER)
-	@echo "=== Generated $(GEN_IDENTITY_HEADER) from $(EMBED_IDENTITY_TOML) ==="
+	python $(EMBED_SCRIPT) $(EMBED_IDENTITY_TOML) $(GEN_IDENTITY_HEADER) --namespace $(EMBED_IDENTITY_NS)
+	@echo "=== Generated $(GEN_IDENTITY_HEADER) from $(EMBED_IDENTITY_TOML) (ns=$(EMBED_IDENTITY_NS)) ==="
 
 # Targets without an identity TOML skip the codegen step.
 ifneq ($(EMBED_IDENTITY_TOML),)

@@ -45,26 +45,28 @@ target_mcu_resolved_on = "2026-04-15 via st-info --probe --connect-under-reset f
 notes = "First CVC hardware image will be flashed here. Pair this entry with the same CVC POSIX container config in deploy/docker/compose-posix-ecus.yml and the same CVC Dcm_Cfg / cvc_identity.toml fixtures. MCU family resolved to G474/G484 — plan ARM Makefile + HAL around this."
 
 [[stlink]]
-logical_ecu = "unassigned-1"
+logical_ecu = "fzc"
 stlink_serial = "0027003C3235510B37333439"
 com_port = "COM7"
 usb_location = "002d.0000.0003.002.003.000.000.000.000"
 assigned_on = "2026-04-15"
+assigned_by = "Phase 5 Line B D7 autonomous session — chose the nearest unassigned probe to match the FZC container layout in deploy/docker/compose-posix-ecus.yml"
 flashed_image = "none"
 target_mcu = "STM32G47x/G48x (chipid 0x469, same family as CVC)"
 target_mcu_resolved_on = "2026-04-15"
-notes = "Reserved for fzc or rzc assignment in Phase 5. Same MCU family as CVC — firmware image reuse is straightforward, only identity/config differs."
+notes = "FZC assignment landed as part of Phase 5 Line B D7 — firmware/ecu/fzc/src/main.c now embeds fzc_identity.toml in flash via Makefile.arm and answers UDS 22 F190 with the VIN from that file. First FZC hardware image will be flashed here by the operator; `cargo xtask flash-fzc --dry-run` resolves this serial at runtime."
 
 [[stlink]]
-logical_ecu = "unassigned-2"
+logical_ecu = "rzc"
 stlink_serial = "0049002D3235510C37333439"
 com_port = "COM8"
 usb_location = "002d.0000.0003.002.001.000.000.000.000"
 assigned_on = "2026-04-15"
+assigned_by = "Phase 5 Line B D7 autonomous session — chose the remaining unassigned probe to match the RZC container layout in deploy/docker/compose-posix-ecus.yml"
 flashed_image = "none"
 target_mcu = "STM32G47x/G48x (chipid 0x469, same family as CVC)"
 target_mcu_resolved_on = "2026-04-15"
-notes = "Reserved for fzc or rzc assignment in Phase 5. Same MCU family as CVC."
+notes = "RZC assignment landed as part of Phase 5 Line B D7. Same MCU family as CVC/FZC. `cargo xtask flash-rzc --dry-run` resolves this serial at runtime via tools/bench/hardware-map.toml."
 
 # ----------------------------------------------------------------------
 # XDS110 probe (TI TMS570 / AURIX)

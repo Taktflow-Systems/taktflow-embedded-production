@@ -27,6 +27,18 @@
  */
 #include "Std_Types.h"
 #include "Rzc_Cfg.h"
+#include "Rzc_Identity.h"
+#ifdef PLATFORM_POSIX
+#include <stdlib.h>   /* getenv for RZC_IDENTITY_CONFIG lookup */
+#endif
+
+/* Phase 5 Line B D7: on bare-metal ARM the rzc_identity.toml contents
+ * are embedded into flash by firmware/platform/arm/embed_identity.py via
+ * Makefile.arm. The generated header lives under build/rzc-arm/generated/
+ * and is reachable through EXTRA_CFLAGS=-I... pushed by Makefile.arm. */
+#if !defined(PLATFORM_POSIX) && defined(EMBED_RZC_IDENTITY)
+#  include "rzc_identity_data.h"
+#endif
 
 /* ==================================================================
  * BSW Module Headers (MISRA 20.1: all #includes before any code)
@@ -360,6 +372,27 @@ int main(void)
     WdgM_Init(&wdgm_config);
     BswM_Init(&bswm_config);
     CanTp_Init(&rzc_cantp_config);
+
+    /* Phase 5 Line B D7: load VIN + ECU name from rzc_identity.toml so
+     * the F190 DID handler can return the VIN without any hardcoded
+     * string in firmware sources. Mirrors the CVC pattern validated
+     * live in PR #13. */
+    {
+#ifdef PLATFORM_POSIX
+        const char* id_path = getenv("RZC_IDENTITY_CONFIG");
+        if (id_path == NULL_PTR) {
+            id_path = "firmware/ecu/rzc/cfg/rzc_identity.toml";
+        }
+        (void)Rzc_Identity_InitFromFile(id_path);
+#elif defined(EMBED_RZC_IDENTITY)
+        (void)Rzc_Identity_InitFromBuffer(
+            (const char*)rzc_identity_toml_data,
+            (size_t)rzc_identity_toml_len);
+#else
+        (void)Rzc_Identity_InitFromFile("rzc_identity.toml");
+#endif
+    }
+
     Dcm_Init(&rzc_dcm_config);
     Adc_Init(&adc_config);
     IoHwAb_Init(&iohwab_config);

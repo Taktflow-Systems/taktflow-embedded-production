@@ -28,6 +28,8 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CVC_IDENTITY_CONFIG = REPO_ROOT / "firmware" / "ecu" / "cvc" / "cfg" / "cvc_identity.toml"
+FZC_IDENTITY_CONFIG = REPO_ROOT / "firmware" / "ecu" / "fzc" / "cfg" / "fzc_identity.toml"
+RZC_IDENTITY_CONFIG = REPO_ROOT / "firmware" / "ecu" / "rzc" / "cfg" / "rzc_identity.toml"
 DCM_CFG_CVC = REPO_ROOT / "firmware" / "ecu" / "cvc" / "cfg" / "Dcm_Cfg_Cvc.c"
 
 # File extensions we scan for hardcoded literals.
@@ -39,8 +41,13 @@ DOCKERFILE_NAMES = {"Dockerfile"}
 # either the source of truth or test regression fixtures that parse
 # DIDs as part of their job.
 EXCLUDED_PATHS = {
-    # The VIN lives here by design.
-    REPO_ROOT / "firmware" / "ecu" / "cvc" / "cfg" / "cvc_identity.toml",
+    # VIN source-of-truth files per ECU. Phase 5 Line B D7 added FZC
+    # and RZC alongside the original CVC one. These are the only places
+    # in the tree that are allowed to carry a 17-char VIN literal —
+    # anywhere else and the test below fails.
+    CVC_IDENTITY_CONFIG,
+    FZC_IDENTITY_CONFIG,
+    RZC_IDENTITY_CONFIG,
     # The DID table is the source of truth for DID hex literals.
     DCM_CFG_CVC,
     # Sibling ECU Dcm_Cfg files — they also hold legitimate DID hex
@@ -70,9 +77,9 @@ _VIN_SHAPE_SEARCH = re.compile(r"\b[A-HJ-NPR-Z0-9]{17}\b")
 _VIN_SHAPE_EXACT = re.compile(r"^[A-HJ-NPR-Z0-9]{17}$")
 
 
-def _load_vin_from_config() -> str:
-    """Extract the VIN value from cvc_identity.toml."""
-    text = CVC_IDENTITY_CONFIG.read_text(encoding="utf-8")
+def _load_vin_from(path: Path) -> str:
+    """Extract the VIN value from a <ecu>_identity.toml file."""
+    text = path.read_text(encoding="utf-8")
     for line in text.splitlines():
         s = line.strip()
         if s.startswith("#") or not s:
@@ -80,7 +87,23 @@ def _load_vin_from_config() -> str:
         m = re.match(r'^vin\s*=\s*"(?P<v>[^"]+)"\s*$', s)
         if m:
             return m.group("v")
-    pytest.fail("vin key not found in cvc_identity.toml")
+    pytest.fail(f"vin key not found in {path}")
+
+
+def _load_vin_from_config() -> str:
+    """Backwards-compat accessor for the CVC VIN."""
+    return _load_vin_from(CVC_IDENTITY_CONFIG)
+
+
+def _load_all_known_vins() -> list[str]:
+    """Return the list of all known-legitimate VINs from the three per-ECU
+    identity toml files. Used by scan rules to enforce that no scanned
+    firmware source inlines ANY of them."""
+    return [
+        _load_vin_from(CVC_IDENTITY_CONFIG),
+        _load_vin_from(FZC_IDENTITY_CONFIG),
+        _load_vin_from(RZC_IDENTITY_CONFIG),
+    ]
 
 
 def _iter_scanned_files():
@@ -107,26 +130,28 @@ def _iter_scanned_files():
 
 
 def test_vin_loaded_from_config() -> None:
-    vin = _load_vin_from_config()
-    assert len(vin) == 17
-    assert _VIN_SHAPE_EXACT.match(vin) is not None, (
-        f"VIN in config does not match ISO 3779 shape: {vin!r}"
-    )
+    """All three ECU identity tomls must carry a valid ISO-3779 VIN."""
+    for vin in _load_all_known_vins():
+        assert len(vin) == 17
+        assert _VIN_SHAPE_EXACT.match(vin) is not None, (
+            f"VIN in config does not match ISO 3779 shape: {vin!r}"
+        )
 
 
 def test_no_inline_vin_literal_in_phase4_sources() -> None:
-    """Every scanned file must be free of the exact VIN string."""
-    vin = _load_vin_from_config()
-    offenders: list[tuple[Path, int]] = []
+    """Every scanned file must be free of every known VIN string."""
+    vins = _load_all_known_vins()
+    offenders: list[tuple[Path, str, int]] = []
     for p in _iter_scanned_files():
         try:
             text = p.read_text(encoding="utf-8")
         except (UnicodeDecodeError, OSError):
             continue
-        if vin in text:
-            offenders.append((p, text.count(vin)))
+        for vin in vins:
+            if vin in text:
+                offenders.append((p, vin, text.count(vin)))
     assert not offenders, (
-        f"inline VIN literal {vin!r} found in scanned files: {offenders}"
+        f"inline VIN literal found in scanned files: {offenders}"
     )
 
 
