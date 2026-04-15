@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Taktflow Systems
+#
+# FZC identity config — loaded at boot by Fzc_Identity_InitFromFile().
+# Phase 5 Line B D7. The F190 DID handler reads the VIN from this file.
+# No C source in firmware/ecu/fzc/ may inline any of these values; the
+# hardcoded-literal regression test enforces that rule.
+#
+# VIN must be exactly 17 characters and conform to ISO 3779 (the format
+# checker is intentionally lenient in the firmware parser; strict VIN
+# validation is the tester's job).
+
+vin      = "TAKTFLWFZC0000001"
+ecu_name = "fzc"
