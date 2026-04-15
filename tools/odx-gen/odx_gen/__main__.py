@@ -1,11 +1,12 @@
 """odx-gen CLI.
 
 Examples:
-    python -m odx_gen --list             # discover ECUs and print
-    python -m odx_gen cvc                 # build firmware/ecu/cvc/odx/cvc.pdx
-    python -m odx_gen cvc --dry-run       # extract model and print as JSON
-    python -m odx_gen --all               # build PDX for every discovered ECU
-    python -m odx_gen cvc -o out.pdx      # custom output path
+    python -m odx_gen --list                       # discover ECUs and print
+    python -m odx_gen cvc                          # build firmware/ecu/cvc/odx/cvc.pdx
+    python -m odx_gen cvc --dry-run                # extract model and print as JSON
+    python -m odx_gen --all                        # build PDX for every discovered ECU
+    python -m odx_gen cvc -o out.pdx               # custom output path
+    python -m odx_gen validate-dtc-catalog FILE    # validate a DTC catalog YAML
 """
 
 from __future__ import annotations
@@ -14,10 +15,6 @@ import argparse
 import json
 import sys
 from pathlib import Path
-
-from .build_pdx import write_pdx
-from .discover import discover_ecus, find_repo_root
-from .extract import extract_ecu
 
 
 def _default_output_path(repo_root: Path, ecu: str) -> Path:
@@ -28,7 +25,74 @@ def _model_to_json(model) -> str:
     return json.dumps(model.to_dict(), indent=2, default=str)
 
 
+def _cmd_validate_dtc_catalog(argv: list[str]) -> int:
+    """Validate a DTC catalog YAML/JSON against the schema.
+
+    Usage: python -m odx_gen validate-dtc-catalog <path>
+
+    Exit codes:
+        0  - file exists and validates
+        2  - usage error (missing path, no such file, bad arg shape)
+        3  - file fails schema validation
+    """
+    parser = argparse.ArgumentParser(
+        prog="odx-gen validate-dtc-catalog",
+        description=(
+            "Validate a DTC catalog YAML/JSON against the odx-gen "
+            "DTC catalog JSON Schema."
+        ),
+    )
+    parser.add_argument(
+        "path",
+        type=Path,
+        help="Path to a DTC catalog YAML or JSON file.",
+    )
+    try:
+        args = parser.parse_args(argv)
+    except SystemExit as exc:
+        # argparse already wrote usage to stderr; just return code 2
+        return int(exc.code) if isinstance(exc.code, int) else 2
+
+    # Defer the import so this subcommand has no odxtools dependency.
+    from .schemas.dtc_catalog import (
+        DtcCatalogValidationError,
+        load_dtc_catalog,
+    )
+
+    try:
+        catalog = load_dtc_catalog(args.path)
+    except FileNotFoundError as exc:
+        print(f"error: DTC catalog not found: {exc}", file=sys.stderr)
+        return 2
+    except DtcCatalogValidationError as exc:
+        print(f"error: invalid DTC catalog at {args.path}:", file=sys.stderr)
+        for line in exc.errors or [str(exc)]:
+            print(f"  - {line}", file=sys.stderr)
+        return 3
+
+    print(
+        f"OK: {args.path} is a valid DTC catalog "
+        f"(version={catalog.version!r}, source={catalog.source!r}, "
+        f"{len(catalog.entries)} entries)"
+    )
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+
+    # Early dispatch: subcommand-style entries that should NOT require
+    # odxtools or any of the firmware-extraction stack.
+    if argv and argv[0] == "validate-dtc-catalog":
+        return _cmd_validate_dtc_catalog(argv[1:])
+
+    # Lazy import: keep the firmware-extraction stack out of the
+    # import path for lightweight subcommands.
+    from .build_pdx import write_pdx
+    from .discover import discover_ecus, find_repo_root
+    from .extract import extract_ecu
+
     parser = argparse.ArgumentParser(
         prog="odx-gen",
         description="Generate ODX PDX files from Taktflow firmware C sources",
