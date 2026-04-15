@@ -1,0 +1,23 @@
+[package]
+name = "taktflow-xtask"
+version = "0.1.0"
+edition = "2021"
+description = "Phase 5 Line B operator tooling — flash-cvc / flash-fzc / flash-rzc scaffolding."
+license = "Apache-2.0"
+publish = false
+
+[[bin]]
+name = "xtask"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+toml = "0.8"
+serde = { version = "1.0", features = ["derive"] }
+anyhow = "1.0"
+
+[workspace]
+# Stand-alone workspace so tools/xtask does not pull the proxy-doip
+# workspace (which is a separate Cargo workspace under
+# gateway/can_to_doip_proxy/). Keeping xtask isolated also means
+# operator flashing tooling never gets blocked on proxy build breakage.

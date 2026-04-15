@@ -88,8 +88,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_validate_dtc_catalog(argv[1:])
 
     # Lazy import: keep the firmware-extraction stack out of the
-    # import path for lightweight subcommands.
-    from .build_pdx import write_pdx
+    # import path for lightweight subcommands, and keep odxtools out
+    # entirely for the --emit=mdd code path (which does not need PDX).
     from .discover import discover_ecus, find_repo_root
     from .extract import extract_ecu
 
@@ -118,12 +118,25 @@ def main(argv: list[str] | None = None) -> int:
         help="Print the parsed EcuDiagnosticModel as JSON; do not write a PDX.",
     )
     parser.add_argument(
+        "--emit",
+        choices=("pdx", "mdd"),
+        default="pdx",
+        help=(
+            "Output format. 'pdx' (default) writes a PDX via odxtools. "
+            "'mdd' writes a build/mdd/<ecu>.mdd FlatBuffers-compatible "
+            "MDD file tracking the upstream Eclipse OpenSOVD CDA "
+            "cda-database schema (Phase 5 Line B D5, STUB mode until "
+            "flatc is wired in)."
+        ),
+    )
+    parser.add_argument(
         "-o",
         "--output",
         type=Path,
         default=None,
-        help="Output PDX path (single ECU only). Default: "
-             "firmware/ecu/<ecu>/odx/<ecu>.pdx",
+        help="Output path (single ECU only). Default: "
+             "firmware/ecu/<ecu>/odx/<ecu>.pdx (pdx mode) or "
+             "build/mdd/<ecu>.mdd (mdd mode)",
     )
     parser.add_argument(
         "--repo-root",
@@ -165,6 +178,13 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"=== {ecu} ===")
                     print(_model_to_json(model))
                     continue
+                if args.emit == "mdd":
+                    from .build_mdd import write_mdd
+                    out = repo_root / "build" / "mdd" / f"{ecu}.mdd"
+                    write_mdd(model, out, repo_root)
+                    print(f"{ecu}: wrote {out} ({out.stat().st_size} bytes, MDD stub)")
+                    continue
+                from .build_pdx import write_pdx
                 out = _default_output_path(repo_root, ecu)
                 write_pdx(model, out)
                 print(f"{ecu}: wrote {out} ({out.stat().st_size} bytes)")
@@ -198,6 +218,16 @@ def main(argv: list[str] | None = None) -> int:
         print(_model_to_json(model))
         return 0
 
+    if args.emit == "mdd":
+        from .build_mdd import write_mdd
+        out = args.output or (repo_root / "build" / "mdd" / f"{args.ecu}.mdd")
+        write_mdd(model, out, repo_root)
+        print(f"wrote {out} ({out.stat().st_size} bytes, MDD stub)")
+        if model.unresolved_todos:
+            print(f"({len(model.unresolved_todos)} TODOs in model)")
+        return 0
+
+    from .build_pdx import write_pdx
     out = args.output or _default_output_path(repo_root, args.ecu)
     write_pdx(model, out)
     print(f"wrote {out} ({out.stat().st_size} bytes)")

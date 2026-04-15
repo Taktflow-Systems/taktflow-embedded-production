@@ -19,6 +19,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 
 #include "wire_fault_record.h"
 
@@ -40,6 +41,39 @@
 /* One static socket fd, one process, one connection. */
 static int g_fd = -1;
 #endif
+
+/* --- ADR-0018 bounded retry configuration -------------------------------
+ *
+ * Phase 5 Line B D6 — extend ADR-0018 ("never hard fail") to the C-side
+ * Fault Library send path. When send() returns EAGAIN or EWOULDBLOCK
+ * (the socket is momentarily not writable, most common cause: the
+ * fault-sink-unix receiver on the Pi gateway is draining a burst), the
+ * shim must NOT drop the fault record. It must retry up to
+ * FAULT_LIB_SEND_RETRY_MAX times with FAULT_LIB_SEND_RETRY_BACKOFF_US
+ * microseconds of backoff between attempts, then finally report
+ * FAULT_LIB_ERR_WRITE only if still failing.
+ *
+ * Bounds are small on purpose: embedded callers cannot block
+ * indefinitely from inside an ASIL Dem reaction. 3 attempts x 1 ms is
+ * at most 2 ms of extra latency per report under pathological
+ * backpressure.
+ */
+#ifndef FAULT_LIB_SEND_RETRY_MAX
+#define FAULT_LIB_SEND_RETRY_MAX 3
+#endif
+
+#ifndef FAULT_LIB_SEND_RETRY_BACKOFF_US
+#define FAULT_LIB_SEND_RETRY_BACKOFF_US 1000
+#endif
+
+/* The retry helper is declared unconditionally (including on Windows
+ * where the real transport is stubbed) so that the D6 unit test can
+ * link against it and inject a mock send() function pointer, proving
+ * the EAGAIN retry behaviour on every build host. */
+typedef long (*fault_lib_send_fn)(int fd, const void *buf, size_t len, void *ctx);
+
+int fault_lib_send_with_retry(int fd, const uint8_t *buf, size_t len,
+                              fault_lib_send_fn sender, void *ctx);
 
 /* Encode buffer sized for MAX_FRAME_LEN plus prefix plus a margin for
  * postcard headers (varint lengths). Allocating on stack in report() is
@@ -87,16 +121,67 @@ int fault_lib_init(const char *socket_path)
 #endif
 }
 
-#if !defined(FAULT_LIB_TRANSPORT_STUBBED)
-static int send_all(int fd, const uint8_t *buf, size_t len)
+/* Portable bounded-retry send loop used by fault_lib_report and by the
+ * D6 unit test. `sender` is a function pointer so the test can inject
+ * a mock that returns EAGAIN the first N-1 calls and then succeeds.
+ *
+ * Contract (ADR-0018 bounded retry):
+ *   * EINTR   -> retry immediately, no backoff
+ *   * EAGAIN / EWOULDBLOCK -> retry up to FAULT_LIB_SEND_RETRY_MAX
+ *     times per chunk with FAULT_LIB_SEND_RETRY_BACKOFF_US us backoff
+ *   * any other -1 -> FAULT_LIB_ERR_WRITE (fail fast, non-transient)
+ *   * 0 return -> peer closed, FAULT_LIB_ERR_WRITE
+ *   * partial success counts: the retry budget is per-chunk, so a
+ *     long frame with multiple partial writes can still make progress.
+ */
+int fault_lib_send_with_retry(int fd, const uint8_t *buf, size_t len,
+                              fault_lib_send_fn sender, void *ctx)
 {
     size_t sent = 0U;
+    if ((sender == NULL) || ((buf == NULL) && (len > 0U))) {
+        return FAULT_LIB_ERR_INVAL;
+    }
     while (sent < len) {
-        ssize_t n = send(fd, &buf[sent], len - sent, 0);
-        if (n < 0) {
+        int eagain_retries = 0;
+        long n;
+        for (;;) {
+            n = sender(fd, &buf[sent], len - sent, ctx);
+            if (n >= 0) {
+                break;
+            }
             if (errno == EINTR) {
+                /* non-counted: signal interrupts do not burn the budget */
                 continue;
             }
+#if defined(EAGAIN) || defined(EWOULDBLOCK)
+            if (
+#if defined(EAGAIN)
+                (errno == EAGAIN)
+#else
+                0
+#endif
+#if defined(EWOULDBLOCK) && (!defined(EAGAIN) || (EWOULDBLOCK != EAGAIN))
+                || (errno == EWOULDBLOCK)
+#endif
+            ) {
+                if (eagain_retries < FAULT_LIB_SEND_RETRY_MAX) {
+                    eagain_retries++;
+#if !defined(_WIN32)
+                    {
+                        struct timespec ts;
+                        ts.tv_sec  = 0;
+                        ts.tv_nsec = (long)FAULT_LIB_SEND_RETRY_BACKOFF_US * 1000L;
+                        (void)nanosleep(&ts, NULL);
+                    }
+#endif
+                    continue;
+                }
+                /* Budget exhausted — ADR-0018 says we try hard but
+                 * we are still bounded. Report as write error so
+                 * the caller can decide whether to re-queue. */
+                return FAULT_LIB_ERR_WRITE;
+            }
+#endif
             return FAULT_LIB_ERR_WRITE;
         }
         if (n == 0) {
@@ -105,6 +190,18 @@ static int send_all(int fd, const uint8_t *buf, size_t len)
         sent += (size_t)n;
     }
     return FAULT_LIB_OK;
+}
+
+#if !defined(FAULT_LIB_TRANSPORT_STUBBED)
+static long real_send(int fd, const void *buf, size_t len, void *ctx)
+{
+    (void)ctx;
+    return (long)send(fd, buf, len, 0);
+}
+
+static int send_all(int fd, const uint8_t *buf, size_t len)
+{
+    return fault_lib_send_with_retry(fd, buf, len, real_send, NULL);
 }
 #endif
 

@@ -75,3 +75,7 @@ firmware/lib/x-cube-azrtos-g4-full/
 # SCORE HSM (separate repo with its own .git)
 scorehsm/
 gateway/taktflow.dbc.bak
+
+# Phase 5 xtask build artefacts (stand-alone crate, not in proxy workspace)
+tools/xtask/target/
+tools/xtask/Cargo.lock
