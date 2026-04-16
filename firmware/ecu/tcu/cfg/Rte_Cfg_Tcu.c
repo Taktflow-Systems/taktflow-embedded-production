@@ -15,9 +15,6 @@
  * Forward declarations for SWC runnables
  * ================================================================== */
 
-extern void Swc_DtcStore_Init(void);
-extern void Swc_Obd2Pids_Init(void);
-extern void Swc_UdsServer_Init(void);
 
 /* ==================================================================
  * Signal Configuration Table

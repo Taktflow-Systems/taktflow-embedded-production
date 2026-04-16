@@ -10,7 +10,7 @@
 # Counterpart: docker-compose.dev.yml — SIL (Software-in-the-Loop) — VPS
 #
 # Network topology:
-#   Pi (192.168.0.195)  ←── LAN UDP ──→  Windows PC (192.168.0.158, Godot)
+#   Pi (192.0.2.11)  ←── LAN UDP ──→  Windows PC (192.0.2.30, Godot)
 #
 # Usage:
 #   docker compose -f docker-compose.gil.yml up --build -d
@@ -18,7 +18,7 @@
 #
 # Prerequisites:
 #   - vcan kernel module: sudo modprobe vcan
-#   - Godot 4.6 running on Windows PC (192.168.0.158)
+#   - Godot 4.6 running on Windows PC (192.0.2.30)
 #   - AWS certs in ./certs/ (for cloud-connector, optional)
 # =============================================================================
 
@@ -278,7 +278,7 @@ services:
         condition: service_started
     environment:
       - CAN_INTERFACE=vcan1
-      - GODOT_HOST=${GODOT_HOST:-192.168.0.105}
+      - GODOT_HOST=${GODOT_HOST:-192.0.2.20}
       - BRIDGE_CARS=1
       - BRIDGE_RATE=100
       - BRIDGE_VCAN_START=0

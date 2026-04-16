@@ -821,6 +821,7 @@ class ArxmlReader:
             # Runnable scheduling — override ARXML runnables or create from sidecar
             if "runnables" in ecu_data:
                 runnable_overrides = ecu_data["runnables"]
+                self._validate_can_mainfunction_schedule(ecu_name, runnable_overrides)
                 # Try to override existing ARXML-defined runnables
                 found_names = set()
                 for swc in ecu.swcs:
@@ -865,6 +866,42 @@ class ArxmlReader:
         if global_pdu_e2e_map and self.config.e2e_source == "sidecar":
             for ecu in ecus.values():
                 self._apply_pdu_e2e_map(ecu, global_pdu_e2e_map)
+
+    def _validate_can_mainfunction_schedule(self, ecu_name: str, runnable_overrides: dict) -> None:
+        """Reject sidecar schedules that forget the CAN TX queue drain."""
+        if not isinstance(runnable_overrides, dict):
+            raise ArxmlReadError(
+                f"ECU '{ecu_name}' sidecar runnables must be a mapping"
+            )
+
+        has_can_schedule = any(
+            name in runnable_overrides
+            for name in ("Can_MainFunction_Read", "Can_MainFunction_BusOff")
+        )
+        if not has_can_schedule:
+            return
+
+        if "Can_MainFunction_Write" not in runnable_overrides:
+            raise ArxmlReadError(
+                f"ECU '{ecu_name}' sidecar runnables schedule CAN polling but omit "
+                "Can_MainFunction_Write; queued CAN frames would never drain"
+            )
+
+        busoff = runnable_overrides.get("Can_MainFunction_BusOff")
+        write = runnable_overrides.get("Can_MainFunction_Write", {})
+        if not isinstance(write, dict):
+            raise ArxmlReadError(
+                f"ECU '{ecu_name}' Can_MainFunction_Write override must be a mapping"
+            )
+
+        if isinstance(busoff, dict):
+            write_priority = int(write.get("priority", 0))
+            busoff_priority = int(busoff.get("priority", 0))
+            if write_priority < busoff_priority:
+                raise ArxmlReadError(
+                    f"ECU '{ecu_name}' schedules Can_MainFunction_Write below "
+                    "Can_MainFunction_BusOff; queued CAN frames must not lag bus-off polling"
+                )
 
     # ------------------------------------------------------------------
     # E2E data ID mapping

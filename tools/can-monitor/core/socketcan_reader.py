@@ -112,7 +112,7 @@ class RemoteCanReader(threading.Thread):
         python3 can_bridge.py --channel vcan0 --port 9876
 
     Then connect from this reader:
-        reader = RemoteCanReader("192.168.0.158", 9876)
+        reader = RemoteCanReader("192.0.2.30", 9876)
     """
 
     def __init__(self, host, port=9876, out_queue=None):

@@ -85,6 +85,10 @@ Std_ReturnType Main_Hw_UartLidarTest(void);
 /** @brief CAN TX diagnostic (RZC only) */
 void Main_Hw_CanTxDiagTest(void);
 
+/** @brief Periodic direct FDCAN probe for HIL physical-path triage (RZC only)
+ *  @param tick_us  Current system tick in microseconds */
+void Main_Hw_RunCanPhysicalProbe(uint32 tick_us);
+
 /** @brief BTS7960 motor driver GPIO test (RZC only) */
 Std_ReturnType Main_Hw_Bts7960GpioTest(void);
 

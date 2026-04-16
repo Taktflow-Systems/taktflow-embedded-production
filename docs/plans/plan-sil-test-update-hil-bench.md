@@ -15,9 +15,9 @@
 
 ## How to Start the SIL
 
-### QNX Pi (192.168.0.197, user: qnxuser)
+### QNX Pi (192.0.2.10, user: qnxuser)
 ```bash
-ssh qnxuser@192.168.0.197
+ssh bench-qnx@192.0.2.10
 # Kill any leftovers
 slay -f -s SIGKILL cvc_qnx fzc_qnx rzc_qnx sc_qnx python3 2>/dev/null
 sleep 2
@@ -31,11 +31,11 @@ sleep 1
 python3 /tmp/can_bridge_qnx.py &
 ```
 
-### Laptop (192.168.0.158, user: an-dao)
+### Laptop (192.0.2.30, user: an-dao)
 ```bash
-ssh an-dao@192.168.0.158
+ssh operator@192.0.2.30
 # Ensure eno1 has IP for QNX Pi network
-sudo ip addr add 192.168.137.100/24 dev eno1 2>/dev/null
+sudo ip addr add 198.51.100.100/24 dev eno1 2>/dev/null
 # Start relay (QNX → vcan0)
 nohup python3 -u ~/tcp_to_vcan.py > /tmp/relay.log 2>&1 &
 # Start Docker QM ECUs
@@ -104,7 +104,7 @@ Run CAN gateway on laptop: PCAN-USB → MQTT → Netcup VPS → dashboard.
 |-------|----------|-------|
 | QNX bridge port changes (TIME_WAIT) | LOW | Use port 9879, or wait 60s after kill |
 | Duplicate ECU processes on QNX | LOW | Use `slay -f -s SIGKILL` to clean |
-| Laptop eno1 IP resets on reboot | LOW | `sudo ip addr add 192.168.137.100/24 dev eno1` |
+| Laptop eno1 IP resets on reboot | LOW | `sudo ip addr add 198.51.100.100/24 dev eno1` |
 | SIL tests use MQTT for fault inject | MEDIUM | MQTT broker running in Docker |
 | Docker ECU entrypoint needs LF endings | FIXED | Already committed |
 
@@ -112,8 +112,8 @@ Run CAN gateway on laptop: PCAN-USB → MQTT → Netcup VPS → dashboard.
 
 | Service | Host | Port |
 |---------|------|------|
-| QNX CAN bridge | 192.168.0.197 | 9879 |
-| Laptop CAN bridge | 192.168.0.158 | 9876 |
+| QNX CAN bridge | 192.0.2.10 | 9879 |
+| Laptop CAN bridge | 192.0.2.30 | 9876 |
 | MQTT broker | localhost (laptop) | 1883 |
-| CAN monitor (QNX) | 192.168.0.197 | 9879 |
-| CAN monitor (laptop) | 192.168.0.158 | 9876 |
+| CAN monitor (QNX) | 192.0.2.10 | 9879 |
+| CAN monitor (laptop) | 192.0.2.30 | 9876 |

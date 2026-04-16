@@ -79,3 +79,6 @@ gateway/taktflow.dbc.bak
 # Phase 5 xtask build artefacts (stand-alone crate, not in proxy workspace)
 tools/xtask/target/
 tools/xtask/Cargo.lock
+
+# Public repo uses a sanitized bench map; keep real bench identities local-only.
+tools/bench/hardware-map.local.toml

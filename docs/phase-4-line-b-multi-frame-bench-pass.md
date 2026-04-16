@@ -1,7 +1,7 @@
 # Phase 4 Line B — Multi-frame ISO-TP bench pass evidence
 
 **Date:** 2026-04-15
-**Bench:** Linux laptop `an-dao@192.168.0.158` (Ubuntu 6.17.0-20, vcan0)
+**Bench:** Linux laptop `operator@192.0.2.30` (Ubuntu 6.17.0-20, vcan0)
 **Branch:** `auto/line-b/proxy-can-isotp-fc-fix-2026-04-15`
 **Gate:** D4 live verification of the proxy-can FlowControl fix
 

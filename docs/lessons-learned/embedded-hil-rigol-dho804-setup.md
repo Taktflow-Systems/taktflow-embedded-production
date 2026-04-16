@@ -4,7 +4,7 @@
 
 **Context**: Trying to connect Rigol DHO804 to PC for automated SCPI queries (VCC monitoring, CAN signal capture) during SC transceiver debugging.
 
-**Mistake**: Spent 30+ minutes trying every LAN configuration (DHCP, static IP on 192.168.0.x, 192.168.137.x, 169.254.x.x) through the Tenda switch and direct cable. Scope showed "Connected" but PC could never ping it. Windows Firewall rules added, ICS subnet tried — nothing worked.
+**Mistake**: Spent 30+ minutes trying every LAN configuration (DHCP, static IP on 192.0.2.x, 198.51.100.x, 169.254.x.x) through the Tenda switch and direct cable. Scope showed "Connected" but PC could never ping it. Windows Firewall rules added, ICS subnet tried — nothing worked.
 
 **Fix**: Connected via **USB** instead. Rigol Ultra Sigma (already installed) provides the USB-TMC driver. NI-VISA backend in pyvisa finds it immediately:
 ```
@@ -24,11 +24,11 @@ print(scope.query('*IDN?'))
 
 **Network topology** (for reference):
 ```
-PC (192.168.0.105 WiFi) ── Router ── Range Extender
-PC (192.168.1.1 Ethernet) ── Tenda SG105 ── Laptop, Pi
+PC (192.0.2.20 WiFi) ── Router ── Range Extender
+PC (203.0.113.1 Ethernet) ── Tenda SG105 ── Laptop, Pi
 PC (USB) ── Rigol DHO804  ← this works
 ```
-The Ethernet adapter changes IP between 192.168.137.1 (ICS mode) and 192.168.1.1 depending on Windows sharing state. Unreliable for scope connection.
+The Ethernet adapter changes IP between 198.51.100.1 (ICS mode) and 203.0.113.1 depending on Windows sharing state. Unreliable for scope connection.
 
 **Principle**: When LAN doesn't work on a bench instrument, try USB first. USB-TMC is simpler (no IP config, no firewall, no subnet matching). LAN is only needed for remote/headless access. For a scope sitting next to the PC, USB is the right choice.
 

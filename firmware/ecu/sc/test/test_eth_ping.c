@@ -9,7 +9,7 @@
  *
  *          Build:  make -f firmware/platform/tms570/Makefile.tms570 eth-ping
  *          Flash:  make -f firmware/platform/tms570/Makefile.tms570 flash-eth-ping
- *          Test:   ping 192.168.1.200
+ *          Test:   ping 203.0.113.200
  *
  * @note    GIOA[3]=PHY_PWRDOWN (LOW=normal, HIGH=powerdown) — schematic pin 7
  *          GIOA[4]=PHY_RESET_N (HIGH=release, LOW=reset) — schematic pin 29
@@ -48,7 +48,7 @@ void canErrorNotification(void *node, uint32 notification) { (void)node; (void)n
  * Network Configuration
  * ================================================================ */
 
-/* TMS570 static IP: 192.168.1.200 */
+/* TMS570 static IP: 203.0.113.200 */
 static const uint8 g_my_ip[4]  = { 192U, 168U, 1U, 200U };
 
 /* MAC address — locally administered, unique on bench */

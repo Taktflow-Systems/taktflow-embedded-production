@@ -294,22 +294,22 @@ $(BIN): $(ELF)
 
 # --- Compile C sources ---
 $(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
-	@mkdir -p $(dir $@)
+	@python -c "from pathlib import Path; Path(r'$(dir $@)').mkdir(parents=True, exist_ok=True)"
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # --- Assemble startup (.s lowercase) ---
 $(BUILD_DIR)/%.o: %.s | $(BUILD_DIR)
-	@mkdir -p $(dir $@)
+	@python -c "from pathlib import Path; Path(r'$(dir $@)').mkdir(parents=True, exist_ok=True)"
 	$(AS) $(MCU_FLAGS) -c $< -o $@
 
 # --- Assemble ThreadX port (.S uppercase, needs preprocessor) ---
 $(BUILD_DIR)/%.o: %.S | $(BUILD_DIR)
-	@mkdir -p $(dir $@)
+	@python -c "from pathlib import Path; Path(r'$(dir $@)').mkdir(parents=True, exist_ok=True)"
 	$(AS) $(MCU_FLAGS) $(CFLAGS) -c $< -o $@
 
 # --- Build directory ---
 $(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
+	python -c "from pathlib import Path; Path(r'$(BUILD_DIR)').mkdir(parents=True, exist_ok=True)"
 
 # --- Flash via OpenOCD ---
 flash: $(BIN)
@@ -339,5 +339,5 @@ size: $(ELF)
 
 # --- Clean ---
 clean:
-	rm -rf $(BUILD_DIR)
+	python -c "import shutil; shutil.rmtree(r'$(BUILD_DIR)', ignore_errors=True)"
 	@echo "=== Cleaned STM32 build directory ==="

@@ -12,7 +12,7 @@ Default CAN checks:
 Usage:
   python scripts/reset_4ecus.py
   python scripts/reset_4ecus.py --can-port COM13 --verify-seconds 15
-  python scripts/reset_4ecus.py --cvc COM7 --fzc COM3 --rzc COM8 --sc COM11
+  python scripts/reset_4ecus.py --cvc COM3 --fzc COM7 --rzc COM8 --sc COM11
 """
 
 import argparse
@@ -21,9 +21,15 @@ import sys
 import threading
 import time
 from collections import defaultdict
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 import serial
 import serial.tools.list_ports
+from tools.bench.hardware_map import resolve_stlink_probe
 
 FRAME_SIZE = 20
 
@@ -33,6 +39,17 @@ EXPECTED_IDS = {
     "rzc": 0x012,
     "sc": 0x013,
 }
+
+
+def hardware_map_port(logical_ecu: str):
+    try:
+        row = resolve_stlink_probe(logical_ecu)
+    except Exception:
+        return None
+    port = row.get("com_port")
+    if not port:
+        return None
+    return str(port)
 
 
 def com_sort_key(port_name: str) -> int:
@@ -217,9 +234,9 @@ def main():
     stlink, xds_app, ch340, all_ports = find_ports()
 
     # Auto-map ports if not explicitly provided.
-    cvc = args.cvc or (stlink[0] if len(stlink) >= 1 else None)
-    fzc = args.fzc or (stlink[1] if len(stlink) >= 2 else None)
-    rzc = args.rzc or (stlink[2] if len(stlink) >= 3 else None)
+    cvc = args.cvc or hardware_map_port("cvc") or (stlink[0] if len(stlink) >= 1 else None)
+    fzc = args.fzc or hardware_map_port("fzc") or (stlink[1] if len(stlink) >= 2 else None)
+    rzc = args.rzc or hardware_map_port("rzc") or (stlink[2] if len(stlink) >= 3 else None)
     sc = args.sc or (xds_app[0] if len(xds_app) >= 1 else None)
     can_port = args.can_port or (ch340[0] if len(ch340) >= 1 else "COM13")
 

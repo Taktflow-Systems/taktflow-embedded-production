@@ -48,7 +48,7 @@ make -f test/integration/Makefile test
 | SC  | TMS570LC4357 (LAUNCHXL2) | `firmware/Makefile.tms570` / `firmware/sc/Makefile` | tiarmclang v4.0.4 (CCS 20.4.1) | DSLite |
 | BCM, ICU, TCU | — (Docker/Linux) | `firmware/Makefile.posix` | gcc (host) | Docker Compose |
 
-**Build host**: Always cross-compile STM32/TMS570 on the **x86\_64 laptop** (`an-dao@192.168.0.158`).
+**Build host**: Always cross-compile STM32/TMS570 on the **x86\_64 laptop** (`operator@192.0.2.30`).
 Never build S-CORE natively on the Pi.
 
 ---
@@ -141,8 +141,8 @@ make -f firmware/Makefile.tms570 flash
 ./scripts/hil-plant-sim.sh stop
 
 # Deploy updated plant-sim to Pi
-scp -o StrictHostKeyChecking=no gateway/plant_sim/simulator.py an-dao@<PI_IP>:~/plant_sim/
-ssh an-dao@<PI_IP> "sudo systemctl restart taktflow-plant-sim"
+scp -o StrictHostKeyChecking=no gateway/plant_sim/simulator.py operator@<PI_IP>:~/plant_sim/
+ssh operator@<PI_IP> "sudo systemctl restart taktflow-plant-sim"
 ```
 
 ---

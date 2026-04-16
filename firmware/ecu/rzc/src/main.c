@@ -460,6 +460,10 @@ int main(void)
 
         tick_us = Main_Hw_GetTick();
 
+#ifdef PLATFORM_HIL
+        Main_Hw_RunCanPhysicalProbe(tick_us);
+#endif
+
         /* 1ms task: RTE scheduler (dispatches runnables internally)
          * Main_Hw_GetTick() returns microseconds; 1ms = 1000us */
         if ((tick_us - last_1ms_us) >= 1000u)

@@ -15,26 +15,16 @@
  * Forward declarations for SWC runnables
  * ================================================================== */
 
-extern void Swc_CanMonitor_Init(void);
 extern void Can_MainFunction_Read(void);
 extern void Com_MainFunction_Rx(void);
-extern void Com_MainFunction_Tx(void);
-extern void Can_MainFunction_BusOff(void);
-extern void Swc_CvcCom_Init(void);
-extern void Swc_CvcDcm_Init(void);
-extern void Swc_Dashboard_MainFunction(void);
-extern void Swc_Dashboard_Init(void);
 extern void Swc_EStop_MainFunction(void);
-extern void Swc_EStop_Init(void);
-extern void Swc_Heartbeat_MainFunction(void);
-extern void Swc_Heartbeat_Init(void);
-extern void Swc_Nvm_Init(void);
 extern void Swc_Pedal_MainFunction(void);
-extern void Swc_Pedal_Init(void);
-extern void Swc_Scheduler_Init(void);
 extern void Swc_VehicleState_MainFunction(void);
-extern void Swc_VehicleState_Init(void);
-extern void Swc_Watchdog_Init(void);
+extern void Swc_Heartbeat_MainFunction(void);
+extern void Swc_Dashboard_MainFunction(void);
+extern void Com_MainFunction_Tx(void);
+extern void Can_MainFunction_Write(void);
+extern void Can_MainFunction_BusOff(void);
 
 /* ==================================================================
  * Signal Configuration Table
@@ -259,6 +249,7 @@ static const Rte_RunnableConfigType cvc_runnable_config[] = {
     { Swc_Heartbeat_MainFunction,                 50u,     4u, 0x03u },
     { Swc_Dashboard_MainFunction,                 10u,     3u, 0x04u },
     { Com_MainFunction_Tx,                        10u,     2u, 0xFFu },
+    { Can_MainFunction_Write,                      1u,     1u, 0xFFu },
     { Can_MainFunction_BusOff,                    10u,     1u, 0xFFu },
 };
 

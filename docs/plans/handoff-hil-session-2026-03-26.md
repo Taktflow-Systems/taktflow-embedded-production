@@ -16,7 +16,7 @@
 Bug fix: `test_hil_battery.py` missing `CAN_MOTOR_STATUS` import.
 
 ### Pi as vECU Station
-Moved vECU station from laptop to Pi (192.168.0.197):
+Moved vECU station from laptop to Pi (192.0.2.10):
 
 | File | Purpose |
 |------|---------|
@@ -93,13 +93,13 @@ Pi setup: Docker installed, `hil-venv` at `~/hil-venv`, system mosquitto on port
    ```
    After running each test, rsync updated results back:
    ```bash
-   rsync -avz test/hil/results/ taktflow-pi@192.168.0.197:~/taktflow-embedded-production/test/hil/results/
+   rsync -avz test/hil/results/ bench-pi@192.0.2.10:~/taktflow-embedded-production/test/hil/results/
    ```
 
 3. **Rsync test code to Pi** (new platform tests not yet synced after SC fix):
    ```bash
    cd h:/VS-Taktflow-Systems/taktflow-embedded-production
-   rsync -avz ./ taktflow-pi@192.168.0.197:/home/taktflow-pi/taktflow-embedded-production/ \
+   rsync -avz ./ bench-pi@192.0.2.10:/home/taktflow-pi/taktflow-embedded-production/ \
      --exclude '.git' --exclude 'build/' --exclude '__pycache__' --exclude '.claude/'
    ```
 

@@ -22,6 +22,19 @@
 #include "Can.h"
 #include "Rte.h"
 
+#define RZC_CAN_PHYSICAL_PROBE_ID         0x612u
+#define RZC_CAN_PHYSICAL_PROBE_PERIOD_US  1000000u
+#define RZC_CAN_PHYSICAL_PROBE_SETTLE_MS  2u
+
+volatile uint32 g_can_hw_probe_count = 0u;
+volatile uint32 g_can_hw_probe_ok_count = 0u;
+volatile uint32 g_can_hw_probe_last_ret = 0u;
+volatile uint32 g_can_hw_probe_last_tick_us = 0u;
+volatile uint32 g_can_hw_probe_last_seq = 0u;
+volatile uint32 g_can_hw_probe_last_txfqs = 0u;
+volatile uint32 g_can_hw_probe_last_psr = 0u;
+volatile uint32 g_can_hw_probe_last_ecr = 0u;
+
 /* ==================================================================
  * Error Handler — required by CubeMX HAL_FDCAN_MspInit()
  * ================================================================== */
@@ -438,21 +451,100 @@ void Main_Hw_DebugPrintStatus(uint32 tick_us)
     Dbg_PrintU32((uint32)Main_Hw_GetCanHalState());
     Dbg_Uart_Print(" TXbusy=");
     Dbg_PrintU32(g_can_tx_busy_count);
+    Dbg_Uart_Print(" HWprobe=");
+    Dbg_PrintU32(g_can_hw_probe_ok_count);
+    Dbg_Uart_Print("/");
+    Dbg_PrintU32(g_can_hw_probe_count);
+    Dbg_Uart_Print(" ProbeRet=");
+    Dbg_PrintU32(g_can_hw_probe_last_ret);
     Dbg_Uart_Print("\r\n");
 }
 
 /**
  * @brief  Init-time CAN TX diagnostic test — sends test frame and dumps diag
  */
+/**
+ * @brief  Send one direct FDCAN probe frame and snapshot controller state
+ * @param  tick_us     Current system tick in microseconds
+ * @param  wait_settle TRUE to wait briefly so TX FIFO drain can be observed
+ * @return E_OK if the frame was enqueued, E_NOT_OK if the TX path rejected it
+ */
+static Std_ReturnType Main_Hw_SendCanPhysicalProbe(uint32 tick_us, boolean wait_settle)
+{
+    static uint8 probe_seq = 0u;
+    uint8 tec = 0u;
+    uint8 rec = 0u;
+    uint8 probe_data[8];
+    Std_ReturnType tx_result;
+
+    (void)Can_GetErrorCounters(0u, &tec, &rec);
+
+    probe_data[0] = (uint8)'R';
+    probe_data[1] = (uint8)'Z';
+    probe_data[2] = (uint8)'C';
+    probe_data[3] = (uint8)0xA5u;
+    probe_data[4] = probe_seq;
+    probe_data[5] = Main_Hw_GetCanHalState();
+    probe_data[6] = tec;
+    probe_data[7] = rec;
+
+    tx_result = Can_Hw_Transmit((Can_IdType)RZC_CAN_PHYSICAL_PROBE_ID, probe_data, 8u);
+
+    g_can_hw_probe_count++;
+    g_can_hw_probe_last_ret = (uint32)tx_result;
+    g_can_hw_probe_last_tick_us = tick_us;
+    g_can_hw_probe_last_seq = probe_seq;
+
+    if (wait_settle == TRUE)
+    {
+        uint32 start_ms = HAL_GetTick();
+        while ((HAL_GetTick() - start_ms) < RZC_CAN_PHYSICAL_PROBE_SETTLE_MS)
+        {
+            /* Allow the controller to attempt transmission before snapshot. */
+        }
+    }
+
+    g_can_hw_probe_last_txfqs = FDCAN1->TXFQS;
+    g_can_hw_probe_last_psr = FDCAN1->PSR;
+    g_can_hw_probe_last_ecr = FDCAN1->ECR;
+
+    if (tx_result == E_OK)
+    {
+        g_can_hw_probe_ok_count++;
+    }
+
+    probe_seq++;
+    return tx_result;
+}
+
+/**
+ * @brief  Init-time CAN TX diagnostic test â€” bypasses Can_Write()
+ */
 void Main_Hw_CanTxDiagTest(void)
 {
-    uint8 test_data[8] = {0xDE, 0xAD, 0xBE, 0xEF, 0x03, 0x00, 0x00, 0x00};
-    Can_PduType test_pdu;
-    test_pdu.id     = 0x012u;
-    test_pdu.length = 8u;
-    test_pdu.sdu    = test_data;
-    Can_ReturnType tx_result = Can_Write(0u, &test_pdu);
-    Dbg_Uart_Print("CAN TX test: ");
-    Dbg_Uart_Print((tx_result == CAN_OK) ? "OK\r\n" : "FAIL\r\n");
+    Std_ReturnType tx_result = Main_Hw_SendCanPhysicalProbe(Main_Hw_GetTick(), TRUE);
+    Dbg_Uart_Print("CAN HW probe: ");
+    Dbg_Uart_Print((tx_result == E_OK) ? "OK\r\n" : "FAIL\r\n");
     Main_Hw_DumpCanDiag();
+}
+
+/**
+ * @brief  Periodic direct FDCAN probe for HIL physical-path triage
+ * @param  tick_us  Current system tick in microseconds
+ */
+void Main_Hw_RunCanPhysicalProbe(uint32 tick_us)
+{
+#ifdef PLATFORM_HIL
+    static uint32 last_probe_us = 0u;
+
+    if ((tick_us - last_probe_us) < RZC_CAN_PHYSICAL_PROBE_PERIOD_US)
+    {
+        return;
+    }
+
+    last_probe_us = tick_us;
+    (void)Main_Hw_SendCanPhysicalProbe(tick_us, FALSE);
+#else
+    (void)tick_us;
+#endif
 }

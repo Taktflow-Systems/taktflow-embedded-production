@@ -17,7 +17,6 @@
 
 extern void Swc_Dashboard_50ms(void);
 extern void Swc_DtcDisplay_50ms(void);
-extern void Swc_DtcDisplay_Init(void);
 
 /* ==================================================================
  * Signal Configuration Table

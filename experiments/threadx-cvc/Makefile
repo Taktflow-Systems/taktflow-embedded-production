@@ -142,7 +142,7 @@ size: $(ELF)
 
 flash: $(ELF)
 	"C:\Program Files (x86)\STMicroelectronics\STM32Cube\STM32CubeProgrammer\bin\STM32_Programmer_CLI.exe" \
-		--connect port=SWD sn=001A00363235510B37333439 --download $(ELF) --verify --start
+		--connect port=SWD sn=STLINK-CVC-PLACEHOLDER --download $(ELF) --verify --start
 
 clean:
 	rm -rf $(BUILD)

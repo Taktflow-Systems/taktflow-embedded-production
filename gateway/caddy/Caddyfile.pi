@@ -1,5 +1,5 @@
 # Raspberry Pi HIL edge gateway — serves dashboard + APIs locally
-# Access at http://192.168.0.195 from local network
+# Access at http://192.0.2.11 from local network
 
 :80 {
     header {

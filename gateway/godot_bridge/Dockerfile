@@ -21,7 +21,7 @@ COPY gateway/godot_bridge/bridge.py /app/bridge.py
 RUN useradd -r -s /usr/sbin/nologin appuser && chown -R appuser /app
 
 ENV CAN_INTERFACE=can0
-ENV GODOT_HOST=192.168.0.158
+ENV GODOT_HOST=192.0.2.30
 ENV BRIDGE_CARS=1
 ENV BRIDGE_RATE=100
 ENV BRIDGE_VCAN_START=0

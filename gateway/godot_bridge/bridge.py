@@ -124,7 +124,7 @@ class CarBridge:
     def __init__(self, car_index: int, can_interface: str,
                  godot_sensor_port: int, godot_actuator_port: int,
                  spi_pedal_port: int, use_can: bool = True,
-                 godot_host: str = "192.168.0.105"):
+                 godot_host: str = "192.0.2.20"):
         self.car_index = car_index
         self.can_interface = can_interface
         self.use_can = use_can and HAS_CAN
@@ -386,7 +386,7 @@ class StandaloneEcho:
     This lets the car actually drive in Godot without the full ECU stack."""
 
     def __init__(self, car_index: int, sensor_port: int, actuator_port: int,
-                 godot_host: str = "192.168.0.105"):
+                 godot_host: str = "192.0.2.20"):
         self.car_index = car_index
         self.sensor_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sensor_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -463,7 +463,7 @@ def main():
     parser.add_argument("--rate", type=int, default=100, help="Bridge tick rate in Hz")
     parser.add_argument("--vcan-start", type=int, default=0, help="Starting vcan index (default 0 for GIL/Pi)")
     parser.add_argument("--godot-host", type=str,
-                        default=os.environ.get("GODOT_HOST", "192.168.0.105"),
+                        default=os.environ.get("GODOT_HOST", "192.0.2.20"),
                         help="Godot machine IP address")
     args = parser.parse_args()
 

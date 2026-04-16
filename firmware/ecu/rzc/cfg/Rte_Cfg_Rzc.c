@@ -15,30 +15,19 @@
  * Forward declarations for SWC runnables
  * ================================================================== */
 
-extern void Swc_Battery_MainFunction(void);
-extern void Swc_Battery_Init(void);
+extern void Swc_CurrentMonitor_MainFunction(void);
+extern void Swc_Encoder_MainFunction(void);
+extern void Swc_Motor_MainFunction(void);
 extern void Can_MainFunction_Read(void);
 extern void Com_MainFunction_Rx(void);
-extern void Com_MainFunction_Tx(void);
-extern void Can_MainFunction_BusOff(void);
-extern void Swc_CurrentMonitor_MainFunction(void);
-extern void Swc_CurrentMonitor_Init(void);
-extern void Swc_Encoder_MainFunction(void);
-extern void Swc_Encoder_Init(void);
-extern void Swc_Heartbeat_MainFunction(void);
-extern void Swc_Motor_MainFunction(void);
-extern void Swc_Motor_Init(void);
-extern void Swc_RzcCom_Init(void);
-extern void Swc_RzcDcm_Init(void);
-extern void Swc_RzcNvm_Init(void);
-extern void Swc_RzcSafety_MainFunction(void);
-extern void Swc_RzcSafety_Init(void);
-extern void Swc_RzcScheduler_Init(void);
-extern void Swc_RzcSelfTest_Init(void);
 extern void Swc_RzcSensorFeeder_MainFunction(void);
-extern void Swc_RzcSensorFeeder_Init(void);
+extern void Swc_Battery_MainFunction(void);
+extern void Com_MainFunction_Tx(void);
 extern void Swc_TempMonitor_MainFunction(void);
-extern void Swc_TempMonitor_Init(void);
+extern void Swc_Heartbeat_MainFunction(void);
+extern void Can_MainFunction_Write(void);
+extern void Can_MainFunction_BusOff(void);
+extern void Swc_RzcSafety_MainFunction(void);
 
 /* ==================================================================
  * Signal Configuration Table
@@ -265,6 +254,7 @@ static const Rte_RunnableConfigType rzc_runnable_config[] = {
     { Com_MainFunction_Tx,                        10u,     4u, 0xFFu },
     { Swc_TempMonitor_MainFunction,              100u,     4u, 0x03u },
     { Swc_Heartbeat_MainFunction,                 50u,     3u, 0x05u },
+    { Can_MainFunction_Write,                      1u,     2u, 0xFFu },
     { Can_MainFunction_BusOff,                    10u,     2u, 0xFFu },
     { Swc_RzcSafety_MainFunction,                100u,     2u, 0x06u },
 };

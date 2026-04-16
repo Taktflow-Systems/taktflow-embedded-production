@@ -24,7 +24,7 @@ Usage:
 Press Ctrl+C to stop when the ECU is back on the bus.
 
 Requires: python-can (pip install python-can)
-Run on the laptop (192.168.0.158) with gs_usb can0 up.
+Run on the laptop (192.0.2.30) with gs_usb can0 up.
 
 @aspice     SWE.6 — Software Qualification Testing (HIL support tooling)
 """

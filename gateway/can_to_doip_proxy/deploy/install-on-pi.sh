@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: 2026 Taktflow Systems
 #
 # Deploy the can-to-doip-proxy to the Raspberry Pi bench. Assumes SSH is
-# configured per the HIL-bench README (taktflow-pi@192.168.0.197, no
+# configured per the HIL-bench README (bench-pi@192.0.2.10, no
 # jump host, key-based auth). Builds the binary on the current host
 # (relying on cargo-zigbuild or a native linux/aarch64 toolchain), rsyncs
 # it across, and enables the systemd unit.
@@ -12,11 +12,11 @@
 #   cd gateway/can_to_doip_proxy
 #   ./deploy/install-on-pi.sh [pi_user@pi_host]
 #
-# Defaults: taktflow-pi@192.168.0.197
+# Defaults: bench-pi@192.0.2.10
 
 set -euo pipefail
 
-TARGET="${1:-taktflow-pi@192.168.0.197}"
+TARGET="${1:-bench-pi@192.0.2.10}"
 PROXY_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROXY_ROOT"
 

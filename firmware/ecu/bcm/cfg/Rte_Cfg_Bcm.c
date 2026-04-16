@@ -16,11 +16,8 @@
  * ================================================================== */
 
 extern void Swc_DoorLock_100ms(void);
-extern void Swc_DoorLock_Init(void);
 extern void Swc_Indicators_10ms(void);
-extern void Swc_Indicators_Init(void);
 extern void Swc_Lights_10ms(void);
-extern void Swc_Lights_Init(void);
 
 /* ==================================================================
  * Signal Configuration Table

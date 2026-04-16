@@ -11,8 +11,8 @@
 # Requires: arm-none-eabi-gcc, st-flash (stlink-tools)
 #
 # Board serial mapping (set via env or --serial):
-#   STLINK_CVC=001A00363235510B37333439
-#   STLINK_FZC=0027003C3235510B37333439
+#   STLINK_CVC=STLINK-CVC-PLACEHOLDER
+#   STLINK_FZC=STLINK-FZC-PLACEHOLDER
 #   STLINK_RZC=<third board serial>
 
 set -euo pipefail

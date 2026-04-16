@@ -6,10 +6,8 @@
  * Forward declarations for SWC runnables
  * ================================================================== */
 
-{% for swc in ecu.swcs %}
-{% for r in swc.runnables %}
+{% for r in sorted_runnables %}
 extern void {{ r.name }}(void);
-{% endfor %}
 {% endfor %}
 
 /* ==================================================================

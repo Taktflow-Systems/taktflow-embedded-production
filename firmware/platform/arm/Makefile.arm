@@ -78,6 +78,10 @@ EMBED_SCRIPT        = firmware/platform/arm/embed_identity.py
 
 # Forward EXTRA_CFLAGS to the inner Makefile.stm32 so the generated
 # header dir is on the include path and the embed feature is enabled.
+# The Phase 5 ARM wrapper is always a HIL bench build, so it must also
+# force `HIL=1` into the inner make. That enables `-DPLATFORM_HIL`,
+# which skips bare-board self-tests and applies the bench CAN-start
+# timing used by the physical CVC/FZC/RZC bring-up.
 ifneq ($(EMBED_IDENTITY_TOML),)
   EXTRA_CFLAGS = -I$(abspath $(GEN_DIR)) $(EMBED_IDENTITY_CFLAG)
 else
@@ -90,10 +94,10 @@ all: $(OUT_ELF)
 	@echo "=== Phase 5 ARM build complete: $(OUT_ELF) ==="
 
 $(OUT_DIR):
-	mkdir -p $(OUT_DIR)
+	python -c "from pathlib import Path; Path(r'$(OUT_DIR)').mkdir(parents=True, exist_ok=True)"
 
 $(GEN_DIR): | $(OUT_DIR)
-	mkdir -p $(GEN_DIR)
+	python -c "from pathlib import Path; Path(r'$(GEN_DIR)').mkdir(parents=True, exist_ok=True)"
 
 # Generate the embedded identity header from the source TOML. The
 # header is rebuilt whenever the TOML or the generator script changes.
@@ -114,14 +118,14 @@ endif
 # canonical location. We intentionally copy (not symlink) so the Phase 5
 # path is stable even after `make -f Makefile.stm32 clean`.
 $(OUT_ELF): $(GEN_DEPS) | $(OUT_DIR)
-	$(MAKE) -f $(INNER_MAKEFILE) TARGET=$(TARGET) EXTRA_CFLAGS="$(EXTRA_CFLAGS)"
-	cp $(INNER_ELF) $(OUT_ELF)
-	cp $(INNER_BIN) $(OUT_BIN)
+	$(MAKE) -f $(INNER_MAKEFILE) TARGET=$(TARGET) HIL=1 EXTRA_CFLAGS="$(EXTRA_CFLAGS)"
+	python -c "import shutil; shutil.copyfile(r'$(INNER_ELF)', r'$(OUT_ELF)')"
+	python -c "import shutil; shutil.copyfile(r'$(INNER_BIN)', r'$(OUT_BIN)')"
 
 size: $(OUT_ELF)
-	$(MAKE) -f $(INNER_MAKEFILE) TARGET=$(TARGET) size
+	$(MAKE) -f $(INNER_MAKEFILE) TARGET=$(TARGET) HIL=1 size
 
 clean:
 	$(MAKE) -f $(INNER_MAKEFILE) TARGET=$(TARGET) clean
-	rm -rf $(OUT_DIR)
+	python -c "import shutil; shutil.rmtree(r'$(OUT_DIR)', ignore_errors=True)"
 	@echo "=== Phase 5 ARM build directory cleaned ==="

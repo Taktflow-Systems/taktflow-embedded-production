@@ -9,7 +9,7 @@ import threading
 import time
 import can
 
-QNX_HOST = os.environ.get("QNX_HOST", "192.168.0.197")
+QNX_HOST = os.environ.get("QNX_HOST", "192.0.2.10")
 QNX_PORT = int(os.environ.get("QNX_PORT", "9877"))
 VCAN = os.environ.get("CAN_INTERFACE", "vcan0")
 TCP_FRAME = 21

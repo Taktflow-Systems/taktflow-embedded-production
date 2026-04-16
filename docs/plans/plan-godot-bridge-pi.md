@@ -10,7 +10,7 @@ Two distinct simulation systems — never mix terminology:
 
 | | **SIL** (Software-in-the-Loop) | **GIL** (Godot-in-the-Loop) |
 |---|---|---|
-| **Host** | VPS (Netcup, `sil.taktflow-systems.com`) | Raspberry Pi (`192.168.0.195`) |
+| **Host** | VPS (Netcup, `sil.taktflow-systems.com`) | Raspberry Pi (`192.0.2.11`) |
 | **Compose file** | `docker-compose.dev.yml` | `docker-compose.gil.yml` |
 | **Physics source** | `plant-sim` (autonomous Python) | `godot-bridge` (CAN↔UDP relay to Godot) |
 | **CAN interface** | `vcan0` (virtual) | `can0` (physical, Waveshare HAT) |
@@ -18,7 +18,7 @@ Two distinct simulation systems — never mix terminology:
 | **Network** | Loopback (host mode) | LAN UDP to Windows PC |
 | **cloud-connector** | No | Yes (AWS IoT Core) |
 | **can-setup** | Creates vcan0 | Not needed (physical can0) |
-| **Domain** | `sil.taktflow-systems.com` | `192.168.0.195` (LAN only) |
+| **Domain** | `sil.taktflow-systems.com` | `192.0.2.11` (LAN only) |
 | **Old compose (retired)** | — | `docker-compose.pi.yml` (3 vECUs + plant-sim) |
 
 ## Context
@@ -26,13 +26,13 @@ Two distinct simulation systems — never mix terminology:
 - VPS runs full SIL: 7 vECUs + plant-sim + gateway services on `vcan0`
 - Pi previously ran: 3 vECUs (BCM/ICU/TCU) + plant-sim on `can0` (old `docker-compose.pi.yml`)
 - `taktflow-vehicle-sim/bridge/bridge.py` implements CAN↔UDP relay for Godot
-- Pi and Windows PC on same LAN (~1ms latency): Pi=`192.168.0.195`, PC=`192.168.0.158`
+- Pi and Windows PC on same LAN (~1ms latency): Pi=`192.0.2.11`, PC=`192.0.2.30`
 - Godot IS the plant-sim — it provides full vehicle physics (motor, battery, steering, brake, lidar) via VehicleBody3D, relayed through the bridge
 
 ## Architecture
 
 ```
-Windows PC (192.168.0.158)          Raspberry Pi (192.168.0.195)
+Windows PC (192.0.2.30)          Raspberry Pi (192.0.2.11)
 ┌─────────────────────┐             ┌──────────────────────────────┐
 │  Godot 4.6          │   UDP       │  godot-bridge (bridge.py)    │
 │  - 3D rendering     │◄──5002──►  │  - CAN↔UDP relay             │
@@ -67,7 +67,7 @@ Pedal and steering are user input in Godot (keyboard/controller) — CVC reads t
 1. Created `gateway/godot_bridge/Dockerfile` — Python 3.11-slim, installs `python-can`, `cantools`
 2. Copied `bridge.py` from `taktflow-vehicle-sim/bridge/`, adapted for GIL:
    - Reads `CAN_INTERFACE` env var (default `can0`) for single-car mode
-   - `GODOT_HOST` env var (default `192.168.0.158`)
+   - `GODOT_HOST` env var (default `192.0.2.30`)
    - SPI pedal port starts at 9100 (not 9101)
    - Docker restart points to `docker-compose.gil.yml`
    - All log prefixes: `[godot-bridge]`
@@ -82,11 +82,11 @@ New file `docker/docker-compose.gil.yml` — full stack:
 - `cloud-connector` for AWS IoT Core
 - NvM volumes for CVC, FZC, RZC
 - No `can-setup` service (physical can0)
-- `GODOT_HOST` configurable via env var (default `192.168.0.158`)
+- `GODOT_HOST` configurable via env var (default `192.0.2.30`)
 
 ### Phase 3: Update Godot config — DONE
 
-1. `udp_client.gd`: `BRIDGE_HOST = "192.168.0.195"` — already correct
+1. `udp_client.gd`: `BRIDGE_HOST = "192.0.2.11"` — already correct
 2. `fault_panel.gd`: Fixed port mismatch `8092` → `8091` (matches fault-inject service)
 3. UDP ports: TX=5001, RX=5002 — match bridge config
 

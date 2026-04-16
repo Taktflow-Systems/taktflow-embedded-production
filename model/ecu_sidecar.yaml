@@ -125,6 +125,10 @@ ecus:
         period_ms: 10
         priority: 2
         wdgm_se_id: 0xFF
+      Can_MainFunction_Write:
+        period_ms: 1
+        priority: 1
+        wdgm_se_id: 0xFF
       Can_MainFunction_BusOff:
         period_ms: 10
         priority: 1
@@ -264,6 +268,10 @@ ecus:
       Com_MainFunction_Tx:
         period_ms: 10
         priority: 2
+        wdgm_se_id: 0xFF
+      Can_MainFunction_Write:
+        period_ms: 1
+        priority: 1
         wdgm_se_id: 0xFF
       Can_MainFunction_BusOff:
         period_ms: 10
@@ -406,6 +414,10 @@ ecus:
         period_ms: 50
         priority: 3
         wdgm_se_id: 5
+      Can_MainFunction_Write:
+        period_ms: 1
+        priority: 2
+        wdgm_se_id: 0xFF
       Can_MainFunction_BusOff:
         period_ms: 10
         priority: 2

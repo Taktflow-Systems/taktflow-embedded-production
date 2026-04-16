@@ -15,29 +15,19 @@
  * Forward declarations for SWC runnables
  * ================================================================== */
 
-extern void Swc_Brake_MainFunction(void);
-extern void Swc_Brake_Init(void);
 extern void Can_MainFunction_Read(void);
 extern void Com_MainFunction_Rx(void);
-extern void Com_MainFunction_Tx(void);
-extern void Can_MainFunction_BusOff(void);
-extern void Swc_Buzzer_MainFunction(void);
-extern void Swc_Buzzer_Init(void);
-extern void Swc_FzcCanMonitor_Check(void);
-extern void Swc_FzcCanMonitor_Init(void);
-extern void Swc_FzcCom_Init(void);
-extern void Swc_FzcDcm_Init(void);
-extern void Swc_FzcNvm_Init(void);
-extern void Swc_FzcSafety_MainFunction(void);
-extern void Swc_FzcSafety_Init(void);
-extern void Swc_FzcScheduler_Init(void);
 extern void Swc_FzcSensorFeeder_MainFunction(void);
-extern void Swc_FzcSensorFeeder_Init(void);
-extern void Swc_Heartbeat_MainFunction(void);
-extern void Swc_Lidar_MainFunction(void);
-extern void Swc_Lidar_Init(void);
 extern void Swc_Steering_MainFunction(void);
-extern void Swc_Steering_Init(void);
+extern void Swc_Brake_MainFunction(void);
+extern void Swc_Lidar_MainFunction(void);
+extern void Swc_Heartbeat_MainFunction(void);
+extern void Swc_FzcSafety_MainFunction(void);
+extern void Swc_Buzzer_MainFunction(void);
+extern void Swc_FzcCanMonitor_Check(void);
+extern void Com_MainFunction_Tx(void);
+extern void Can_MainFunction_Write(void);
+extern void Can_MainFunction_BusOff(void);
 
 /* ==================================================================
  * Signal Configuration Table
@@ -265,6 +255,7 @@ static const Rte_RunnableConfigType fzc_runnable_config[] = {
     { Swc_Buzzer_MainFunction,                    10u,     5u, 0x05u },
     { Swc_FzcCanMonitor_Check,                    10u,     4u, 0xFFu },
     { Com_MainFunction_Tx,                        10u,     2u, 0xFFu },
+    { Can_MainFunction_Write,                      1u,     1u, 0xFFu },
     { Can_MainFunction_BusOff,                    10u,     1u, 0xFFu },
 };
 

@@ -11,7 +11,7 @@
 #   ./scripts/deploy/deploy-pi.sh --no-build       # sync only
 #
 # Prerequisites:
-#   - SSH access: ssh taktflow-pi@192.168.0.197
+#   - SSH access: ssh bench-pi@192.0.2.10
 #   - Docker + Docker Compose on Pi
 #   - USB-CAN adapter connected to Pi (shows up as can0)
 # =============================================================================
@@ -21,7 +21,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-PI_HOST="${PI_HOST:-taktflow-pi@192.168.0.197}"
+PI_HOST="${PI_HOST:-bench-pi@192.0.2.10}"
 PI_DIR="/home/taktflow-pi/taktflow-embedded-production"
 COMPOSE_FILE="docker/docker-compose.hil-pi.yml"
 BITRATE=500000

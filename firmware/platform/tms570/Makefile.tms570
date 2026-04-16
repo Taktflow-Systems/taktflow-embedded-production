@@ -228,7 +228,7 @@ ETH_PING_ELF = $(BUILD_DIR)/test_eth_ping.elf
 eth-ping: check-halcogen $(ETH_PING_ELF)
 	@echo "=== Built $(ETH_PING_ELF) (standalone Ethernet ping test) ==="
 	@echo "Flash: make -f firmware/platform/tms570/Makefile.tms570 flash-eth-ping"
-	@echo "Test:  ping 192.168.1.200"
+	@echo "Test:  ping 203.0.113.200"
 
 $(ETH_PING_ELF): $(ETH_PING_OBJ) $(HAL_ETH_OBJS) $(ASM_ETH_OBJS) $(ETH_STARTUP_OBJ) | $(BUILD_DIR)
 	$(CC) $(LDFLAGS) $^ $(LDSCRIPT) -o $@

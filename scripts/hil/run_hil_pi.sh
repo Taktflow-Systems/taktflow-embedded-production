@@ -12,7 +12,7 @@
 #   ./scripts/hil/run_hil_pi.sh --soak 120
 #
 # Usage (from PC):
-#   ssh taktflow-pi@192.168.0.197 'cd taktflow-embedded-production && ./scripts/hil/run_hil_pi.sh'
+#   ssh bench-pi@192.0.2.10 'cd taktflow-embedded-production && ./scripts/hil/run_hil_pi.sh'
 # =============================================================================
 
 set -euo pipefail

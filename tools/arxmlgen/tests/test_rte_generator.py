@@ -10,6 +10,27 @@ import re
 import pytest
 
 
+def _parse_runnable_entries(content):
+    match = re.search(
+        r"runnable_config\[\].*?=\s*\{(.*?)\};",
+        content,
+        re.DOTALL,
+    )
+    assert match, "runnable_config array not found"
+
+    entries = []
+    for entry in re.findall(r"\{([^}]+)\}", match.group(1)):
+        fields = [field.strip() for field in entry.strip().split(",")]
+        entries.append(
+            {
+                "name": fields[0],
+                "period_ms": int(fields[1].rstrip("u").strip()),
+                "priority": int(fields[2].rstrip("u").strip()),
+            }
+        )
+    return entries
+
+
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -177,7 +198,12 @@ class TestRteCfgRunnables:
         """Number of runnable entries must match model."""
         model = load_model
         bcm = model.ecus["bcm"]
-        expected = sum(len(s.runnables) for s in bcm.swcs)
+        expected = sum(
+            1
+            for swc in bcm.swcs
+            for r in swc.runnables
+            if (not r.is_init) and (r.period_ms > 0)
+        )
 
         match = re.search(
             r"runnable_config\[\].*?=\s*\{(.*?)\};",
@@ -249,6 +275,33 @@ class TestRteCfgRunnables:
         for func in externs:
             assert func in config_body, \
                 f"extern {func} declared but not in runnable_config"
+
+    def test_stm32_generated_schedulers_include_can_write(self, generated_files):
+        """CVC/FZC/RZC must schedule the CAN TX queue drain runnable."""
+        for ecu_name in ("cvc", "fzc", "rzc"):
+            content = generated_files[ecu_name]["Rte_Cfg.c"]
+            assert "extern void Can_MainFunction_Write(void);" in content
+
+            entries = _parse_runnable_entries(content)
+            by_name = {entry["name"]: entry for entry in entries}
+
+            assert "Can_MainFunction_Write" in by_name, \
+                f"{ecu_name}: Can_MainFunction_Write missing from runnable table"
+            assert by_name["Can_MainFunction_Write"]["period_ms"] == 1, \
+                f"{ecu_name}: Can_MainFunction_Write must run every 1 ms"
+
+    def test_stm32_can_write_is_not_scheduled_after_busoff(self, generated_files):
+        """If write and bus-off are due together, write must not lose priority."""
+        for ecu_name in ("cvc", "fzc", "rzc"):
+            entries = _parse_runnable_entries(generated_files[ecu_name]["Rte_Cfg.c"])
+            positions = {entry["name"]: idx for idx, entry in enumerate(entries)}
+            priorities = {entry["name"]: entry["priority"] for entry in entries}
+
+            assert priorities["Can_MainFunction_Write"] >= priorities["Can_MainFunction_BusOff"], \
+                f"{ecu_name}: Can_MainFunction_Write must not run below Can_MainFunction_BusOff"
+            if priorities["Can_MainFunction_Write"] == priorities["Can_MainFunction_BusOff"]:
+                assert positions["Can_MainFunction_Write"] < positions["Can_MainFunction_BusOff"], \
+                    f"{ecu_name}: equal-priority CAN write must appear before bus-off"
 
 
 # ===================================================================

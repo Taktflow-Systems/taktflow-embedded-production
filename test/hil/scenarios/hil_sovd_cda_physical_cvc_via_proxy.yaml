@@ -35,10 +35,10 @@ setup:
     timeout: 20
     description: "Wait for CVC to reach RUN state"
   - action: shell
-    cmd: "ssh taktflow-pi@192.168.0.197 'sudo systemctl stop ecu-sim.service 2>/dev/null || true'"
+    cmd: "ssh bench-pi@192.0.2.10 'sudo systemctl stop ecu-sim.service 2>/dev/null || true'"
     description: "Release DoIP port 13400 on the Pi"
   - action: shell
-    cmd: "ssh taktflow-pi@192.168.0.197 'sudo systemctl restart can-to-doip-proxy.service'"
+    cmd: "ssh bench-pi@192.0.2.10 'sudo systemctl restart can-to-doip-proxy.service'"
     description: "Start the proxy"
 
 steps:
@@ -63,10 +63,10 @@ verdicts:
 
 teardown:
   - action: shell
-    cmd: "ssh taktflow-pi@192.168.0.197 'sudo systemctl stop can-to-doip-proxy.service'"
+    cmd: "ssh bench-pi@192.0.2.10 'sudo systemctl stop can-to-doip-proxy.service'"
     description: "Stop proxy"
   - action: shell
-    cmd: "ssh taktflow-pi@192.168.0.197 'sudo systemctl start ecu-sim.service 2>/dev/null || true'"
+    cmd: "ssh bench-pi@192.0.2.10 'sudo systemctl start ecu-sim.service 2>/dev/null || true'"
     description: "Restart ecu-sim for other Line A scenarios"
   - action: reset
     description: "HIL bench reset"

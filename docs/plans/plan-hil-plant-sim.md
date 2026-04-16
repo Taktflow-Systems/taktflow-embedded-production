@@ -92,7 +92,7 @@ HIL has none of this. The 3 simulated ECUs (BCM, ICU, TCU) run on the Pi with `P
 
 **What**: Install Python packages required by plant-sim on the Raspberry Pi.
 
-**Commands on Pi** (192.168.0.195):
+**Commands on Pi** (192.0.2.11):
 ```bash
 pip3 install python-can cantools paho-mqtt
 ```

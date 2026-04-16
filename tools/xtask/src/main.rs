@@ -17,9 +17,9 @@
 //   2. Operator inspects output : matches expected serial / elf / port
 //   3. Operator runs manually   : cargo xtask flash-<ecu> --execute
 //
-// The ST-LINK serial is resolved at runtime from
-// tools/bench/hardware-map.toml. No serial is hard-coded in this file;
-// that is enforced by the tests/phase5/test_xtask_flash_*_dry_run.py
+// The ST-LINK serial is resolved at runtime from the checked-in public
+// template or from a local override map. No serial is hard-coded in this
+// file; that is enforced by the tests/phase5/test_xtask_flash_*_dry_run.py
 // test suite for each ECU.
 //
 // ADR cross-refs:
@@ -68,8 +68,20 @@ fn find_repo_root(start: &Path) -> Result<PathBuf> {
     }
 }
 
-fn load_hardware_map(repo_root: &Path) -> Result<HardwareMap> {
-    let path = repo_root.join("tools/bench/hardware-map.toml");
+fn default_hardware_map_path(repo_root: &Path) -> PathBuf {
+    if let Ok(path) = std::env::var("TAKTFLOW_HARDWARE_MAP") {
+        if !path.is_empty() {
+            return PathBuf::from(path);
+        }
+    }
+    let local = repo_root.join("tools/bench/hardware-map.local.toml");
+    if local.exists() {
+        return local;
+    }
+    repo_root.join("tools/bench/hardware-map.toml")
+}
+
+fn load_hardware_map(path: &Path) -> Result<HardwareMap> {
     let raw = std::fs::read_to_string(&path)
         .with_context(|| format!("reading {}", path.display()))?;
     let map: HardwareMap = toml::from_str(&raw)
@@ -218,20 +230,12 @@ fn run_flash(
     let effective_dry_run = !execute;
 
     let cwd = std::env::current_dir().context("getting cwd")?;
-    let repo_root = match &hardware_map_override {
-        Some(p) => p.parent().and_then(|p| p.parent()).and_then(|p| p.parent())
-            .map(|p| p.to_path_buf())
-            .unwrap_or_else(|| cwd.clone()),
-        None => find_repo_root(&cwd)?,
-    };
+    let repo_root = find_repo_root(&cwd)?;
+    let hardware_map_path = hardware_map_override
+        .clone()
+        .unwrap_or_else(|| default_hardware_map_path(&repo_root));
 
-    let map = if let Some(p) = hardware_map_override.as_ref() {
-        let raw = std::fs::read_to_string(p)
-            .with_context(|| format!("reading {}", p.display()))?;
-        toml::from_str::<HardwareMap>(&raw)?
-    } else {
-        load_hardware_map(&repo_root)?
-    };
+    let map = load_hardware_map(&hardware_map_path)?;
 
     let serial = resolve_stlink_serial(&map, target)?;
 
@@ -253,7 +257,7 @@ fn run_flash(
         eprintln!(
             "[xtask flash-{}] resolved via          : {}",
             target,
-            repo_root.join("tools/bench/hardware-map.toml").display()
+            hardware_map_path.display()
         );
         println!("{}", printed);
         eprintln!(

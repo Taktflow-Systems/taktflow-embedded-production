@@ -28,10 +28,16 @@ import sys
 import threading
 import time
 from datetime import datetime, timezone
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 import can
 import cantools
 import paho.mqtt.publish as mqtt_pub
+from tools.bench.hardware_map import resolve_stlink_serial
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -279,7 +285,7 @@ def precondition_all_ecus_healthy(bus, timeout=15.0):
             "C:/Program Files (x86)/STMicroelectronics/STM32Cube"
             "/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe"
         )
-        rzc_sn = "001A00363235510B37333439"
+        rzc_sn = resolve_stlink_serial("rzc", env=os.environ)
         reset_cmd = f'"{stcli}" -c port=SWD sn={rzc_sn} -rst'
         host = CVC_RESET_HOST  # same PC hosts all ST-LINK probes
         try:
@@ -377,14 +383,15 @@ def check_heartbeat_period(bus, can_id, expected_ms, duration=3.0):
 # ---------------------------------------------------------------------------
 
 # CVC reset via SSH to Windows PC (CubeProgrammer --start triggers MCU reset)
-# When running on Pi, set CVC_RESET_HOST=andao@192.168.0.105 to SSH to Windows PC.
+# When running on Pi, set CVC_RESET_HOST=operator@192.0.2.20 to SSH to the
+# private Windows bench host.
 # When running on Windows PC, leave CVC_RESET_HOST empty for local execution.
 CVC_RESET_HOST = os.environ.get("CVC_RESET_HOST", "")
 CVC_RESET_CMD = os.environ.get("CVC_RESET_CMD", "")
 
 # Auto-detect: if running on Linux (Pi) and no host set, default to Windows PC
 if not CVC_RESET_HOST and sys.platform == "linux":
-    CVC_RESET_HOST = os.environ.get("PC_HOST", "andao@192.168.0.105")
+    CVC_RESET_HOST = os.environ.get("PC_HOST", "operator@192.0.2.20")
 
 
 def reset_cvc_hardware():
@@ -399,7 +406,7 @@ def reset_cvc_hardware():
         stcli = os.environ.get("STCLI",
             "C:/Program Files (x86)/STMicroelectronics/STM32Cube/"
             "STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe")
-        sn = os.environ.get("CVC_SN", "0027003C3235510B37333439")
+        sn = resolve_stlink_serial("cvc", env=os.environ)
         cmd = f'"{stcli}" -c port=SWD sn={sn} mode=UR --start'
 
     host = CVC_RESET_HOST

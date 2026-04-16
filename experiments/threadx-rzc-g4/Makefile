@@ -267,7 +267,7 @@ size: $(BUILD)/$(TARGET).elf
 # Flash via STM32CubeProgrammer
 PROGRAMMER = "C:/Program Files (x86)/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe"
 flash: $(BUILD)/$(TARGET).elf
-	$(PROGRAMMER) --connect port=SWD sn=0049002D3235510C37333439 reset=HWrst --download $< --verify --start
+	$(PROGRAMMER) --connect port=SWD sn=STLINK-RZC-PLACEHOLDER reset=HWrst --download $< --verify --start
 
 # Clean — rm -rf build/ is sufficient now (no escaped paths)
 clean:
