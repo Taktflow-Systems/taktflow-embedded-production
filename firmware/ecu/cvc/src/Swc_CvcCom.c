@@ -228,8 +228,25 @@ void Swc_CvcCom_BridgeRxToRte(void)
 
     uint8  motor_fault_rzc_val = 0u;
 
-    /* Read fault signals from Com shadow buffers */
-    (void)Com_ReceiveSignal(CVC_COM_SIG_BRAKE_FAULT_FAULT_TYPE, &brake_fault_val);
+    /* Read fault signals from Com shadow buffers.
+     *
+     * Brake fault: read BOTH sources and OR them together.
+     *   - Brake_Status.BrakeFaultStatus (0x201, PERIODIC) — FZC's normal path,
+     *     populated by Com auto-pull on every RX.
+     *   - Brake_Fault.FaultType (0x210, DIRECT) — emergency event frame.
+     *     In SIL, 0x210 is never TXed, so this shadow stays 0.
+     * Taking the max preserves a non-zero fault from whichever path fires it
+     * instead of letting the always-zero 0x210 path overwrite the valid
+     * 0x201 value every 10ms (which caused CVC to see brake_fault flicker
+     * 1->0->1 and spuriously fire FAULT_CLEARED from DEGRADED to RUN).
+     */
+    {
+        uint8 bf_event = 0u;   /* from 0x210 (event frame) */
+        uint8 bf_status = 0u;  /* from 0x201 (periodic status) */
+        (void)Com_ReceiveSignal(CVC_COM_SIG_BRAKE_FAULT_FAULT_TYPE, &bf_event);
+        (void)Com_ReceiveSignal(CVC_COM_SIG_BRAKE_STATUS_BRAKE_FAULT_STATUS, &bf_status);
+        brake_fault_val = (bf_event != 0u) ? bf_event : bf_status;
+    }
     (void)Com_ReceiveSignal(CVC_COM_SIG_MOTOR_CUTOFF_REQ_REQUEST_TYPE, &motor_cutoff_val);
 #ifdef SIL_DIAG
     {
