@@ -26,6 +26,7 @@ extern void Swc_Buzzer_Init(void);
 extern void Swc_FzcCanMonitor_Check(void);
 extern void Swc_FzcCanMonitor_Init(void);
 extern void Swc_FzcCom_Init(void);
+extern void Swc_FzcCom_Receive(void);  /* TODO:CODEGEN wire via sidecar */
 extern void Swc_FzcDcm_Init(void);
 extern void Swc_FzcNvm_Init(void);
 extern void Swc_FzcSafety_MainFunction(void);
@@ -256,6 +257,7 @@ static const Rte_RunnableConfigType fzc_runnable_config[] = {
     /* func,                        periodMs, priority, seId */
     { Can_MainFunction_Read,                      10u,    14u, 0xFFu },
     { Com_MainFunction_Rx,                        10u,    13u, 0xFFu },
+    { Swc_FzcCom_Receive,                         10u,    12u, 0xFFu },  /* TODO:CODEGEN resets CanMon silence counter; without this, FZC spuriously declares BUS_OFF and forces brake=100 */
     { Swc_FzcSensorFeeder_MainFunction,           10u,    11u, 0xFFu },
     { Swc_Steering_MainFunction,                  10u,    10u, 0x00u },
     { Swc_Brake_MainFunction,                     10u,     9u, 0x01u },

@@ -376,6 +376,7 @@ services:
   # --- Caddy Reverse Proxy (auto-TLS) ---
   caddy:
     image: caddy:2
+    init: true  # tini reaps wget children spawned by healthcheck (prevents zombie accumulation)
     network_mode: host
     mem_limit: 128m
     cpus: 0.25
@@ -507,7 +508,7 @@ services:
       - DOCKER_HOST=tcp://127.0.0.1:2375
       - FAULT_API_KEY=${FAULT_API_KEY:-}
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8091/health')\""]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8091/api/fault/health')\""]
       interval: 30s
       timeout: 5s
       retries: 3
