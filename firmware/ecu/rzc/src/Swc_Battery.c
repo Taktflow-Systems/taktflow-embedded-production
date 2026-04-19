@@ -208,8 +208,13 @@ void Swc_Battery_MainFunction(void)
      * Step 5: Write RTE signals
      * ---------------------------------------------------------- */
     (void)Rte_Write(RZC_SIG_BATTERY_MV, (uint32)Batt_Voltage_mV);
+    /* NOTE: RZC_SIG_BATTERY_STATUS and RZC_SIG_BATTERY_SOC both alias to
+     * RZC_SIG_BATTERY_STATUS_LEVEL (slot 25 in Rzc_Cfg.h) — a codegen bug.
+     * Write STATUS (0-4 enum) LAST so Com auto-pull transmits the correct
+     * state code on CAN 0x303 Battery_Status_Level. If SOC is re-added as
+     * a CAN signal, it must map to its own slot.  TODO:CODEGEN */
     (void)Rte_Write(RZC_SIG_BATTERY_STATUS, (uint32)Batt_Status);
-    (void)Rte_Write(RZC_SIG_BATTERY_SOC, (uint32)Batt_Soc);
+    (void)Batt_Soc;  /* tracked locally for SOC monotonicity guard */
 
     /* CAN TX handled by Swc_RzcCom (reads RTE signals, sends via Com) */
 }
