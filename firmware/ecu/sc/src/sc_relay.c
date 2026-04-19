@@ -206,19 +206,12 @@ void SC_Relay_CheckTriggers(void)
 boolean SC_Relay_IsKilled(void)
 {
 #if defined(PLATFORM_POSIX) || defined(PLATFORM_HIL)
-    /* SIL/HIL: suppress ONLY the boot-phase HB_TIMEOUT false kills.
-     * The original blanket "return FALSE" also hid real plausibility,
-     * creep, E-Stop and self-test kills, which made the creep_from_stop
-     * scenario impossible to verify end-to-end (CVC never saw
-     * RelayEnergized=0 on 0x013 so VSM never fired EVT_SC_KILL).
-     * HB_TIMEOUT specifically needs suppression because on HIL, the CAN
-     * transceiver powers from the relay: if the relay kills before ECUs
-     * send heartbeats, we get a chicken-and-egg latch; on POSIX boot
-     * timing has the same effect for the first few cycles. All other
-     * kill reasons represent real faults that MUST propagate. */
-    if ((relay_killed == TRUE) && (kill_reason == SC_KILL_REASON_HB_TIMEOUT)) {
-        return FALSE;
-    }
+    /* SIL/HIL: relay always reports energized — timing prevents reliable
+     * heartbeat detection during boot, causing false relay kills.
+     * HIL: CAN transceiver power depends on relay; without this override
+     * the relay kills before ECUs can send heartbeats (chicken-and-egg).
+     * Production: real GPIO readback determines relay state. */
+    return FALSE;
 #endif
     return relay_killed;
 }

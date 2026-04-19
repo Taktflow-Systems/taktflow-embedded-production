@@ -91,17 +91,11 @@ class MqttPublisher:
 
             key = f"{msg_name}/{signal_name}"
 
-            # Rate-limit: skip if same signal published recently.
-            # DTC_Broadcast is exempt — each frame represents a distinct
-            # diagnostic event, not a repeated state value, and dropping
-            # a rare DTC because a different DTC happens to be spamming
-            # at >5 Hz (e.g. WATCHDOG_FAIL) makes the monitor blind to
-            # everything else.
-            if msg_name != DTC_MSG_NAME:
-                last_time = self._last_publish_time.get(key, 0.0)
-                if (now - last_time) < self._MIN_PUBLISH_INTERVAL:
-                    self._latest[key] = value
-                    continue
+            # Rate-limit: skip if same signal published recently
+            last_time = self._last_publish_time.get(key, 0.0)
+            if (now - last_time) < self._MIN_PUBLISH_INTERVAL:
+                self._latest[key] = value
+                continue
 
             topic = f"{TOPIC_PREFIX}/can/{msg_name}/{signal_name}"
             payload = str(value) if not isinstance(value, (dict, list)) else json.dumps(value)
