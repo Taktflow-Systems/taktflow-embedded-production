@@ -84,7 +84,7 @@ TEST_SPECS: list[TestSpec] = [
                     "Safety Goal SG-008: immediate halt on E-Stop activation. "
                     "HW target: 200ms. SIL budget: 2000ms (Docker scheduling overhead).",
         injection="CAN frame EStop_Command (0x010) with EStop_Active=1",
-        observe_sec=3.0,
+        observe_sec=5.5,
         verdicts=[
             VerdictCheck(
                 description="Vehicle enters SAFE_STOP within 2000ms (SIL)",
@@ -92,6 +92,15 @@ TEST_SPECS: list[TestSpec] = [
                 expected="SAFE_STOP",
                 value=4,       # SAFE_STOP enum
                 timeout_ms=2000,
+            ),
+            VerdictCheck(
+                description="DTC 0xE101 broadcast",
+                check_type="dtc",
+                expected="DTC 0xE101 received",
+                value=0xE101,
+                # CVC_DTC_ESTOP_ACTIVATED maps to UDS code 0xE101 and is
+                # reported by Swc_EStop on the first activation edge.
+                timeout_ms=5500,
             ),
         ],
     ),
