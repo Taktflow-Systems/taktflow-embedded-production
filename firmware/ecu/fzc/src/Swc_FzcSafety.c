@@ -134,12 +134,20 @@ void Swc_FzcSafety_MainFunction(void)
         fault_mask |= FZC_FAULT_LIDAR;
     }
 
-    /* Check CAN RX signal quality — stale commands from CVC = comm fault */
-    if (Com_GetRxPduQuality(FZC_COM_RX_STEER_COMMAND) == COM_SIGNAL_QUALITY_TIMED_OUT) {
-        fault_mask |= FZC_FAULT_CAN_BUS_OFF;
-    }
-    if (Com_GetRxPduQuality(FZC_COM_RX_BRAKE_COMMAND) == COM_SIGNAL_QUALITY_TIMED_OUT) {
-        fault_mask |= FZC_FAULT_CAN_BUS_OFF;
+    /* Check CAN RX signal quality — stale commands from CVC = comm fault.
+     * Suppress during boot grace: CVC boots LAST in the SIL reset sequence,
+     * so FZC's RX is legitimately TIMED_OUT during the first Safety_GraceCounter
+     * cycles.  If we let bus-off latch here, Heartbeat TX is suppressed, CVC
+     * never sees FZC heartbeat, never reaches RUN, never sends STEER/BRAKE
+     * commands — deadlock.  Grace counter runs out ~2s after FZC boot, long
+     * enough for CVC to come up and start transmitting. */
+    if (Safety_GraceCounter == 0u) {
+        if (Com_GetRxPduQuality(FZC_COM_RX_STEER_COMMAND) == COM_SIGNAL_QUALITY_TIMED_OUT) {
+            fault_mask |= FZC_FAULT_CAN_BUS_OFF;
+        }
+        if (Com_GetRxPduQuality(FZC_COM_RX_BRAKE_COMMAND) == COM_SIGNAL_QUALITY_TIMED_OUT) {
+            fault_mask |= FZC_FAULT_CAN_BUS_OFF;
+        }
     }
 
     /* Self-test fault only if self-test has actually completed */
