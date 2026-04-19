@@ -97,9 +97,11 @@ class MQTTVerdictMonitor:
 
             elif msg_name == "DTC_Broadcast" and sig_name in ("Number", "DTC_Number"):
                 dtc = self._int(payload)
+                if dtc and dtc not in self.dtcs_seen:
+                    log.info("[MON] DTC first-seen 0x%04X at t=%.3f", dtc, now)
                 if dtc:
                     self.dtcs_seen.add(dtc)
-                    self._dtc_ts[dtc] = now
+                    self._dtc_ts.setdefault(dtc, now)
 
             elif msg_name == "Steering_Status" and sig_name == "SteerFaultStatus":
                 val = self._int(payload)
@@ -139,7 +141,7 @@ class MQTTVerdictMonitor:
                 dtc_num = int(dtc_str, 16) if isinstance(dtc_str, str) and dtc_str.startswith("0x") else int(dtc_str)
                 if dtc_num:
                     self.dtcs_seen.add(dtc_num)
-                    self._dtc_ts[dtc_num] = now
+                    self._dtc_ts.setdefault(dtc_num, now)
             except (json.JSONDecodeError, TypeError, ValueError):
                 pass
 
