@@ -95,7 +95,7 @@ class MQTTVerdictMonitor:
                     self.vehicle_state = new_state
                     self._state_change_ts[new_state] = now
 
-            elif msg_name == "DTC_Broadcast" and sig_name == "DTC_Number":
+            elif msg_name == "DTC_Broadcast" and sig_name in ("Number", "DTC_Number"):
                 dtc = self._int(payload)
                 if dtc:
                     self.dtcs_seen.add(dtc)
