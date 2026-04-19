@@ -98,9 +98,12 @@ TEST_SPECS: list[TestSpec] = [
                 check_type="dtc",
                 expected="DTC 0xE101 received",
                 value=0xE101,
-                # CVC_DTC_ESTOP_ACTIVATED maps to UDS code 0xE101 and is
-                # reported by Swc_EStop on the first activation edge.
-                timeout_ms=5500,
+                # CVC_DTC_ESTOP_ACTIVATED maps to UDS code 0xE101. Swc_EStop
+                # re-reports FAILED every cycle so DEM saturates the 3-cycle
+                # debounce ~30ms after the edge, but the 0x500 broadcast +
+                # gateway + monitor pipeline lands at ~5.5s under Docker
+                # scheduling (observed 5540ms).
+                timeout_ms=6000,
             ),
         ],
     ),
@@ -174,24 +177,24 @@ TEST_SPECS: list[TestSpec] = [
         injection="CAN frame Battery_Status (0x400) with BatteryVoltage=9V (<10V threshold)",
         # Drain profile in scenarios.battery_low runs 7.5s end-to-end; DTC
         # broadcast lands after drain reaches DISABLE_LOW + RZC 4-sample
-        # average + DEM confirm/broadcast. Observed 7871..15051ms across
-        # runs as suite length (and system load) varies — budget 20s to
+        # average + DEM confirm/broadcast. Observed 7871..20110ms across
+        # runs as suite length (and system load) varies — budget 25s to
         # stop flaking on the slow end.
-        observe_sec=20.0,
+        observe_sec=25.0,
         verdicts=[
             VerdictCheck(
                 description="DTC 0xE401 broadcast",
                 check_type="dtc",
                 expected="DTC 0xE401 received",
                 value=0xE401,
-                timeout_ms=20000,
+                timeout_ms=25000,
             ),
             VerdictCheck(
                 description="Vehicle enters DEGRADED, LIMP, or SAFE_STOP (battery drain cascades)",
                 check_type="vehicle_state",
                 expected="DEGRADED, LIMP, or SAFE_STOP",
                 value=[2, 3, 4],  # DEGRADED=2, LIMP=3, or SAFE_STOP=4 (continuous drain cascades)
-                timeout_ms=20000,
+                timeout_ms=25000,
             ),
         ],
     ),
