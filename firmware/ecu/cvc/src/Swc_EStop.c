@@ -107,9 +107,15 @@ void Swc_EStop_MainFunction(void)
         }
     }
 
-    /* --- 3. Cyclic broadcast while latched — via RTE → Swc_CvcCom bridge */
+    /* --- 3. Cyclic broadcast while latched — via RTE → Swc_CvcCom bridge.
+     * Also re-report the DTC each cycle: DEM has a 3-cycle FAIL threshold
+     * before it sets CONFIRMED and broadcasts on 0x500, so a single
+     * edge-report would leave debounceCounter at 1 forever and the DTC
+     * would never reach the gateway. */
     if (active == TRUE) {
         (void)Rte_Write(CVC_SIG_ESTOP_ACTIVE, 1u);
+        Dem_ReportErrorStatus(CVC_DTC_ESTOP_ACTIVATED,
+                              DEM_EVENT_STATUS_FAILED);
     }
 }
 
