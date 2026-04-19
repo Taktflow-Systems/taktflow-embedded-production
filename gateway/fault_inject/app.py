@@ -282,10 +282,24 @@ app.add_middleware(
 
 
 def _trigger_scenario(name: str):
-    """Trigger a scenario by name (used by test runner)."""
+    """Trigger a scenario by name (used by the test runner).
+
+    Mirrors the idle-cruise gating that the HTTP trigger does. Without
+    this, the test runner fires scenarios without pausing cruise, so
+    cruise keeps pushing its 60% pedal into the SPI stub during the
+    scenario's observation window — the scenario's clear / 100% / zero
+    pedal gets overwritten on the very next cruise tick.
+    """
+    global _idle_paused, _idle_paused_until
     entry = SCENARIOS.get(name)
-    if entry:
+    if not entry:
+        return
+    _idle_paused = True
+    try:
         entry["fn"]()
+    finally:
+        _idle_paused_until = time.time() + SCENARIO_POST_PAUSE_SEC
+        _idle_paused = False
 
 
 @app.on_event("startup")
