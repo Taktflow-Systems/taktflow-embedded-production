@@ -120,11 +120,13 @@ void Swc_CvcCom_TransmitSchedule(uint32 currentTimeMs)
         if (faultSig == CVC_COMM_TIMEOUT) { faultMask |= 0x80u; }
         txBuf[3] = faultMask;
 
-        /* Byte 4: Torque limit (scaled from 0-1000 RTE to 0-100%) */
+        /* Byte 4: Torque limit (0-100% direct — Swc_Pedal now scales
+         * CVC_SIG_TORQUE_REQUEST to the 8-bit percentage before writing). */
         {
             uint32 torque = 0u;
             (void)Rte_Read(CVC_SIG_TORQUE_REQUEST, &torque);
-            txBuf[4] = (uint8)(torque / 10u);
+            if (torque > 100u) { torque = 100u; }
+            txBuf[4] = (uint8)torque;
         }
 
         /* Write FaultMask to RTE for other consumers */
@@ -193,13 +195,20 @@ void Swc_CvcCom_TransmitSchedule(uint32 currentTimeMs)
         (void)Com_SendSignal(CVC_COM_SIG_BODY_CONTROL_CMD_DOOR_LOCK_CMD, &door_lock);
     }
 
-    /* Bridge Torque Request — read from RTE, send via Com */
+    /* Bridge Torque Request — read from RTE, send via Com.
+     * Swc_Pedal already writes the scaled 0..100 percentage to the RTE
+     * slot, and Com auto-pulls from that slot on TX, so we just forward
+     * the value explicitly as a belt-and-suspenders for cycles where
+     * the auto-pull might run before Rte_Write in the same tick. */
     {
         uint32 torque_val = 0u;
-        uint16 tx_torque;
+        uint8  tx_torque_pct;
         (void)Rte_Read(CVC_SIG_TORQUE_REQUEST, &torque_val);
-        tx_torque = (uint16)torque_val;
-        (void)Com_SendSignal(CVC_COM_SIG_TORQUE_REQUEST_COMMAND_PCT, &tx_torque);
+        if (torque_val > 100u) {
+            torque_val = 100u;
+        }
+        tx_torque_pct = (uint8)torque_val;
+        (void)Com_SendSignal(CVC_COM_SIG_TORQUE_REQUEST_COMMAND_PCT, &tx_torque_pct);
     }
 }
 
