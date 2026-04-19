@@ -15,9 +15,9 @@
 
 ## How to Start the SIL
 
-### QNX Pi (192.168.0.197, user: qnxuser)
+### Pi (192.168.0.197, user: taktflow-pi; Ubuntu 24.04 as of 2026-04-19 — this doc is a historical plan from 2026-03-21 that referenced the older QNX image)
 ```bash
-ssh qnxuser@192.168.0.197
+ssh taktflow-pi@192.168.0.197
 # Kill any leftovers
 slay -f -s SIGKILL cvc_qnx fzc_qnx rzc_qnx sc_qnx python3 2>/dev/null
 sleep 2
