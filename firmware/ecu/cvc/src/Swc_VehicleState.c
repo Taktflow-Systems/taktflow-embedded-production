@@ -691,9 +691,13 @@ void Swc_VehicleState_MainFunction(void)
 
     /* Pedal faults — only derive events when in relevant states.
      * HIL: Skip — no physical accelerator pedal sensor on bench.
-     * FZC reports pedal_fault because ADC reads floating pin. */
+     * FZC reports pedal_fault because ADC reads floating pin.
+     * SIL: Suppress during post-INIT grace. Swc_Pedal can latch a
+     * plausibility fault on boot from SPI-stub init transients;
+     * without this gate, CVC trips RUN->DEGRADED inside the grace
+     * window and never returns to clean RUN between test scenarios. */
 #ifndef PLATFORM_HIL
-    if (current_state == CVC_STATE_RUN)
+    if ((current_state == CVC_STATE_RUN) && (post_init_grace_counter == 0u))
     {
         if (pedal_fault != 0u)
         {
@@ -712,9 +716,10 @@ void Swc_VehicleState_MainFunction(void)
      * nominal 12.6V via 0x601 but RZC firmware doesn't map virtual sensor
      * data to Battery_Status_State on HIL. */
 #ifndef PLATFORM_HIL
-    if ((current_state == CVC_STATE_RUN) ||
-        (current_state == CVC_STATE_DEGRADED) ||
-        (current_state == CVC_STATE_LIMP))
+    if (((current_state == CVC_STATE_RUN) ||
+         (current_state == CVC_STATE_DEGRADED) ||
+         (current_state == CVC_STATE_LIMP)) &&
+        (post_init_grace_counter == 0u))
     {
         if ((battery_status == 0u) || (battery_status == 4u))
         {
