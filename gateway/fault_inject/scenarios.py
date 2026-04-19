@@ -478,10 +478,10 @@ def creep_from_stop() -> str:
     """
     if _mqtt_client is None:
         return "Creep from stop: MQTT client not available"
-    # Explicitly clear any pedal override from the idle cruise loop so
-    # CVC commands torque=0. Without this, a mid-ramp cruise pedal
-    # (e.g. 40%) is still latched in the SPI stub, CVC sends non-zero
-    # torque, SC's creep guard reads torque_pct != 0 and never fires.
+    # Safety belt: clear any lingering pedal override (from idle cruise
+    # demo mode) so CVC commands torque=0 and SC's creep guard sees the
+    # correct torque=0 + current>500mA combination. No-op when cruise
+    # is off (default) but harmless either way.
     clear_pedal_override()
     _scaled_sleep(0.1)
     # Inject 1000mA motor current via plant-sim (simulates FET short)

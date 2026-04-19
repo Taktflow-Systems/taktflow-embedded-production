@@ -149,6 +149,11 @@ def _idle_command_loop() -> None:
     # 60% duty maps to ~2400 RPM -> ~17 km/h with the ws_bridge
     # wheel/gear factor (0.15 m radius, 8:1). Tuned by observation.
     IDLE_CRUISE_PCT = float(os.environ.get("IDLE_CRUISE_PCT", "60"))
+    # Default OFF so test scenarios see a quiet pedal. Set
+    # IDLE_CRUISE_ENABLE=1 in the compose env to run the demo cruise
+    # loop in-between tests. If off, the loop still opens the bus and
+    # keeps the daemon alive; it just never sends pedal overrides.
+    IDLE_CRUISE_ENABLE = os.environ.get("IDLE_CRUISE_ENABLE", "0") == "1"
     PHASE_RAMP_UP_SEC   = 2.0
     PHASE_HOLD_SEC      = 6.0
     PHASE_RAMP_DOWN_SEC = 2.0
@@ -179,7 +184,7 @@ def _idle_command_loop() -> None:
                 )
 
             post_scenario_pause = now < _idle_paused_until
-            if _idle_paused or remote_locked or post_scenario_pause:
+            if (not IDLE_CRUISE_ENABLE) or _idle_paused or remote_locked or post_scenario_pause:
                 # Just stop sending pedal updates — do NOT clear the
                 # override. Scenarios like runaway_accel set their own
                 # SPI pedal value (100%) and the test then observes the
