@@ -19,9 +19,12 @@
 /** @brief  Brake fault debounce: 50 cycles = 500ms (CAN feedback jitter) */
 #define FZC_BRAKE_FAULT_DEBOUNCE         50u
 
-/** @brief  Post-INIT grace: 500 × 10ms = 5s (startup transient absorption) */
+/** @brief  Post-INIT grace: 1500 × 10ms = 15s (startup transient absorption).
+ *          Must exceed the SIL reset boot fan-out: FZC t=0, SC t=+3s,
+ *          CVC t=+6s, then CVC's own post-INIT grace (10s) before STEER/BRAKE
+ *          commands flow. 15s gives comfortable margin on shared-CPU VPS. */
 #ifndef FZC_POST_INIT_GRACE_CYCLES
-  #define FZC_POST_INIT_GRACE_CYCLES     500u
+  #define FZC_POST_INIT_GRACE_CYCLES     1500u
 #endif
 
 #endif /* FZC_CFG_PLATFORM_H */
