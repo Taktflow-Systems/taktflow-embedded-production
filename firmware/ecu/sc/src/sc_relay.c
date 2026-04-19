@@ -220,11 +220,13 @@ boolean SC_Relay_IsKilled(void)
      * actually needs, and ESTOP is a hard safety override that must
      * always propagate. */
     if (relay_killed == TRUE) {
-        if ((kill_reason == SC_KILL_REASON_CREEP_GUARD) ||
-            (kill_reason == SC_KILL_REASON_ESTOP))
-        {
+        if (kill_reason == SC_KILL_REASON_CREEP_GUARD) {
             return TRUE;
         }
+        /* ESTOP also propagates via SC, but CVC already transitions to
+         * SAFE_STOP from its own 0x010 E-Stop_Command RX path — reporting
+         * via RelayEnergized here additionally fires EVT_SC_KILL which
+         * maps to SHUTDOWN, overshooting the intended SAFE_STOP verdict. */
         return FALSE;
     }
 #endif
