@@ -266,7 +266,13 @@ static uint8 fault_confirm_count[4];
 #define CVC_FAULT_IDX_MOTOR_RZC      3u
 #define CVC_FAULT_CONFIRM_COUNT      4u
 
-#define CVC_FAULT_COM_BRAKE         CVC_COM_SIG_BRAKE_FAULT_FAULT_TYPE       /**< 103u */
+/* Fresh-read confirmation source for brake fault.
+ * In SIL, FZC only transmits 0x210 Brake_Fault when something actually goes
+ * wrong (COM_TX_MODE_DIRECT); the steady-state fault indication lives on
+ * 0x201 Brake_Status.BrakeFaultStatus (PERIODIC). If we confirm against the
+ * 0x210 shadow it stays 0 forever and the fault never gets confirmed even
+ * when the bridge has correctly written brake_fault=1 into RTE from 0x201. */
+#define CVC_FAULT_COM_BRAKE         CVC_COM_SIG_BRAKE_STATUS_BRAKE_FAULT_STATUS
 #define CVC_FAULT_COM_MOTOR_CUTOFF  CVC_COM_SIG_MOTOR_CUTOFF_REQ_REQUEST_TYPE /**< 109u */
 #define CVC_FAULT_COM_STEERING      0xFFu /**< Not bridged via Com             */
 
@@ -691,9 +697,13 @@ void Swc_VehicleState_MainFunction(void)
 
     /* Pedal faults — only derive events when in relevant states.
      * HIL: Skip — no physical accelerator pedal sensor on bench.
-     * FZC reports pedal_fault because ADC reads floating pin. */
+     * FZC reports pedal_fault because ADC reads floating pin.
+     * SIL: Suppress during post-INIT grace. Swc_Pedal can latch a
+     * plausibility fault on boot from SPI-stub init transients;
+     * without this gate, CVC trips RUN->DEGRADED inside the grace
+     * window and never returns to clean RUN between test scenarios. */
 #ifndef PLATFORM_HIL
-    if (current_state == CVC_STATE_RUN)
+    if ((current_state == CVC_STATE_RUN) && (post_init_grace_counter == 0u))
     {
         if (pedal_fault != 0u)
         {
@@ -712,9 +722,10 @@ void Swc_VehicleState_MainFunction(void)
      * nominal 12.6V via 0x601 but RZC firmware doesn't map virtual sensor
      * data to Battery_Status_State on HIL. */
 #ifndef PLATFORM_HIL
-    if ((current_state == CVC_STATE_RUN) ||
-        (current_state == CVC_STATE_DEGRADED) ||
-        (current_state == CVC_STATE_LIMP))
+    if (((current_state == CVC_STATE_RUN) ||
+         (current_state == CVC_STATE_DEGRADED) ||
+         (current_state == CVC_STATE_LIMP)) &&
+        (post_init_grace_counter == 0u))
     {
         if ((battery_status == 0u) || (battery_status == 4u))
         {

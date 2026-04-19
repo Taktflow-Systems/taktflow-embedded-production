@@ -120,11 +120,13 @@ void Swc_CvcCom_TransmitSchedule(uint32 currentTimeMs)
         if (faultSig == CVC_COMM_TIMEOUT) { faultMask |= 0x80u; }
         txBuf[3] = faultMask;
 
-        /* Byte 4: Torque limit (scaled from 0-1000 RTE to 0-100%) */
+        /* Byte 4: Torque limit (0-100% direct — Swc_Pedal now scales
+         * CVC_SIG_TORQUE_REQUEST to the 8-bit percentage before writing). */
         {
             uint32 torque = 0u;
             (void)Rte_Read(CVC_SIG_TORQUE_REQUEST, &torque);
-            txBuf[4] = (uint8)(torque / 10u);
+            if (torque > 100u) { torque = 100u; }
+            txBuf[4] = (uint8)torque;
         }
 
         /* Write FaultMask to RTE for other consumers */
@@ -193,13 +195,20 @@ void Swc_CvcCom_TransmitSchedule(uint32 currentTimeMs)
         (void)Com_SendSignal(CVC_COM_SIG_BODY_CONTROL_CMD_DOOR_LOCK_CMD, &door_lock);
     }
 
-    /* Bridge Torque Request — read from RTE, send via Com */
+    /* Bridge Torque Request — read from RTE, send via Com.
+     * Swc_Pedal already writes the scaled 0..100 percentage to the RTE
+     * slot, and Com auto-pulls from that slot on TX, so we just forward
+     * the value explicitly as a belt-and-suspenders for cycles where
+     * the auto-pull might run before Rte_Write in the same tick. */
     {
         uint32 torque_val = 0u;
-        uint16 tx_torque;
+        uint8  tx_torque_pct;
         (void)Rte_Read(CVC_SIG_TORQUE_REQUEST, &torque_val);
-        tx_torque = (uint16)torque_val;
-        (void)Com_SendSignal(CVC_COM_SIG_TORQUE_REQUEST_COMMAND_PCT, &tx_torque);
+        if (torque_val > 100u) {
+            torque_val = 100u;
+        }
+        tx_torque_pct = (uint8)torque_val;
+        (void)Com_SendSignal(CVC_COM_SIG_TORQUE_REQUEST_COMMAND_PCT, &tx_torque_pct);
     }
 }
 
@@ -228,8 +237,25 @@ void Swc_CvcCom_BridgeRxToRte(void)
 
     uint8  motor_fault_rzc_val = 0u;
 
-    /* Read fault signals from Com shadow buffers */
-    (void)Com_ReceiveSignal(CVC_COM_SIG_BRAKE_FAULT_FAULT_TYPE, &brake_fault_val);
+    /* Read fault signals from Com shadow buffers.
+     *
+     * Brake fault: read BOTH sources and OR them together.
+     *   - Brake_Status.BrakeFaultStatus (0x201, PERIODIC) — FZC's normal path,
+     *     populated by Com auto-pull on every RX.
+     *   - Brake_Fault.FaultType (0x210, DIRECT) — emergency event frame.
+     *     In SIL, 0x210 is never TXed, so this shadow stays 0.
+     * Taking the max preserves a non-zero fault from whichever path fires it
+     * instead of letting the always-zero 0x210 path overwrite the valid
+     * 0x201 value every 10ms (which caused CVC to see brake_fault flicker
+     * 1->0->1 and spuriously fire FAULT_CLEARED from DEGRADED to RUN).
+     */
+    {
+        uint8 bf_event = 0u;   /* from 0x210 (event frame) */
+        uint8 bf_status = 0u;  /* from 0x201 (periodic status) */
+        (void)Com_ReceiveSignal(CVC_COM_SIG_BRAKE_FAULT_FAULT_TYPE, &bf_event);
+        (void)Com_ReceiveSignal(CVC_COM_SIG_BRAKE_STATUS_BRAKE_FAULT_STATUS, &bf_status);
+        brake_fault_val = (bf_event != 0u) ? bf_event : bf_status;
+    }
     (void)Com_ReceiveSignal(CVC_COM_SIG_MOTOR_CUTOFF_REQ_REQUEST_TYPE, &motor_cutoff_val);
 #ifdef SIL_DIAG
     {

@@ -378,6 +378,16 @@ int main(void)
     Dem_Init(NULL_PTR);
     Dem_SetEcuId(0x10u);                    /* CVC ECU ID for DTC broadcasts */
     Dem_SetBroadcastPduId(CVC_COM_TX_DTC);  /* CanIf TX for CAN 0x500 */
+    /* CVC-level DTC-to-UDS code mappings. Without these, Dem_MainFunction's
+     * broadcast loop skips the event (dtc_code==0). These are the faults CVC
+     * confirms from received zone-controller signals (_RX suffix) + its own
+     * locally-raised DTCs. */
+    Dem_SetDtcCode(CVC_DTC_BRAKE_FAULT_RX,    0x00E202u);
+    Dem_SetDtcCode(CVC_DTC_MOTOR_CUTOFF_RX,   0x00E203u);
+    Dem_SetDtcCode(CVC_DTC_STEERING_FAULT_RX, 0x00D002u);
+    Dem_SetDtcCode(CVC_DTC_BATT_UNDERVOLT,    0x00E401u);
+    Dem_SetDtcCode(CVC_DTC_ESTOP_ACTIVATED,   0x00E101u);
+    Dem_SetDtcCode(CVC_DTC_CREEP_FAULT,       0x00E204u);
     CanSM_Init(&cansm_config);
     FiM_Init(&cvc_fim_config);
     Xcp_Init(&cvc_xcp_config);

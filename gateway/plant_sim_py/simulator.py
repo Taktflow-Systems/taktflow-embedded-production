@@ -610,12 +610,18 @@ class PlantSimulator:
                 self._tx_fzc_virtual_sensors()
                 self._tx_rzc_virtual_sensors()
 
-                # Note: Motor status (0x300), motor current (0x301), motor
-                # temperature (0x302), and battery status (0x303) broadcasts
-                # removed — RZC firmware is the sole authority for these CAN
-                # IDs.  Plant-sim sends virtual sensor data (0x601) which the
-                # RZC sensor feeder injects into MCAL ADC stubs, so RZC SWCs
-                # read real physics values and transmit correct telemetry.
+                # Motor_Status (0x300) re-added at 20 Hz: RZC firmware is
+                # the nominal authority but its encoder count -> RPM chain
+                # loses the plant-sim virtual-sensor speed in this SIL
+                # build, so Motor_Status_MotorSpeed_RPM broadcasts as 0 and
+                # the UI speed gauge stays pinned. Plant-sim already owns
+                # the ground-truth physics RPM; TXing here makes the demo
+                # dashboard match reality while the RZC encoder-feeder wiring
+                # is fixed separately. Last frame on the bus wins on the
+                # gateway decoder side; if RZC ever starts reporting
+                # non-zero speed the two will agree.
+                if self._tick % 2 == 0:
+                    self._tx_motor_status()
 
                 # Every tick (10ms): DTC check — must be frequent enough
                 # to catch transient faults before physics model clears them

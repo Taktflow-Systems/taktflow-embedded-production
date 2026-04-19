@@ -356,6 +356,17 @@ def battery_low() -> str:
             plant_inject_voltage(_mqtt_client, v, soc)
             _scaled_sleep(0.1)
 
+        # Phase 4 (HOLD): keep voltage pinned below DISABLE_LOW for
+        # long enough that RZC's 4-sample average definitely settles
+        # below threshold AND DEM saturates its 3-cycle FAIL debounce.
+        # Without this hold, plant-sim can begin restoring nominal
+        # voltage before RZC's moving average has settled on the
+        # DISABLE_LOW plateau, so the DTC doesn't fire until much
+        # later (observed 12-22s post-scenario).
+        for i in range(20):   # 2.0 s @ 100 ms
+            plant_inject_voltage(_mqtt_client, 7000, 1)
+            _scaled_sleep(0.1)
+
         # DTC 0xE401 now sent by RZC firmware (Swc_Battery.c) when it
         # detects DISABLE_LOW status — no belt-and-suspenders needed.
     finally:
@@ -467,7 +478,12 @@ def creep_from_stop() -> str:
     """
     if _mqtt_client is None:
         return "Creep from stop: MQTT client not available"
-    # No pedal input — torque command stays at 0
+    # Safety belt: clear any lingering pedal override (from idle cruise
+    # demo mode) so CVC commands torque=0 and SC's creep guard sees the
+    # correct torque=0 + current>500mA combination. No-op when cruise
+    # is off (default) but harmless either way.
+    clear_pedal_override()
+    _scaled_sleep(0.1)
     # Inject 1000mA motor current via plant-sim (simulates FET short)
     plant_inject_creep_current(_mqtt_client, 1000.0)
     _scaled_sleep(0.5)  # allow plant-sim to process and SC to detect

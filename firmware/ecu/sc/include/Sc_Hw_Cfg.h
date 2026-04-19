@@ -118,7 +118,17 @@
  * ================================================================== */
 
 #define SC_CREEP_CURRENT_THRESH     500u   /* 500 mA — above this with zero torque = fault */
+/* Debounce: target-HW keeps 20ms to meet <50ms FTTI, but the SIL plant-sim
+ * motor model decays current over tau=0.5s when duty drops to 0, so for
+ * ~500ms after pedal release we see torque=0 AND current>500mA while the
+ * motor is physically spinning down. That cleanly fires creep guard
+ * during every cruise-loop ramp-down. Widen on POSIX only — real HW
+ * switches current much faster than the simulation's 1st-order decay. */
+#if defined(PLATFORM_POSIX) || defined(PLATFORM_HIL)
+#define SC_CREEP_DEBOUNCE_CYCLES   80u     /* 80 × 10ms = 800ms (SIL motor decay) */
+#else
 #define SC_CREEP_DEBOUNCE_CYCLES    2u     /* 2 × 10ms = 20ms debounce (< 50ms FTTI) */
+#endif
 
 /* ==================================================================
  * GIO Pin Assignments

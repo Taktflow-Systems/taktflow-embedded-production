@@ -18,6 +18,6 @@
  * They MUST be consistent across all translation units that include Rte.h.
  */
 #define RTE_MAX_SIGNALS    205u
-#define RTE_MAX_RUNNABLES  12u
+#define RTE_MAX_RUNNABLES  16u  /* TODO:CODEGEN bump by sidecar when Swc_FzcCom_Receive wired */
 
 #endif /* RTE_PBCFG_H */

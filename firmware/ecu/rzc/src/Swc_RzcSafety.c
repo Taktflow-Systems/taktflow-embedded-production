@@ -88,6 +88,7 @@ static uint8   Safety_Status;
 static uint8   Safety_CanLossLatched;     /* Once set, stays set until power cycle */
 static uint8   Safety_CanSilenceCounter;  /* Incremented each cycle, reset by NotifyCanRx */
 static uint16  Safety_CanErrWarnCounter;  /* Incremented while in error warning state */
+static uint8   Safety_WdgFailLatched;     /* Edge-report RZC_DTC_WATCHDOG_FAIL once per entry */
 
 /* ==================================================================
  * API: Swc_RzcSafety_Init
@@ -96,6 +97,7 @@ static uint16  Safety_CanErrWarnCounter;  /* Incremented while in error warning 
 void Swc_RzcSafety_Init(void)
 {
     Safety_WdiToggle         = 0u;
+    Safety_WdgFailLatched    = FALSE;
     Safety_Status            = SAFETY_STATUS_OK;
     Safety_CanLossLatched    = FALSE;
     Safety_CanSilenceCounter = 0u;
@@ -270,9 +272,18 @@ void Swc_RzcSafety_MainFunction(void)
         /* Toggle WDI pin */
         Safety_WdiToggle = (uint8)(Safety_WdiToggle ^ 1u);
         Dio_WriteChannel(RZC_SAFETY_WDI_CHANNEL, Safety_WdiToggle);
+        Safety_WdgFailLatched = FALSE;
     } else {
-        /* Do not feed watchdog -- will trigger HW reset */
-        Dem_ReportErrorStatus(RZC_DTC_WATCHDOG_FAIL, DEM_EVENT_STATUS_FAILED);
+        /* Do not feed watchdog -- will trigger HW reset.
+         * Report DTC once per edge: continuous reporting at 10ms produces a
+         * flood of 0x00E802 broadcasts on 0x500 (tens of Hz) that drown
+         * other DTCs in the MQTT rate-limiter on the gateway side. The
+         * watchdog fault is latched; a single edge report per fault entry
+         * is sufficient for diagnostics. */
+        if (Safety_WdgFailLatched == FALSE) {
+            Dem_ReportErrorStatus(RZC_DTC_WATCHDOG_FAIL, DEM_EVENT_STATUS_FAILED);
+            Safety_WdgFailLatched = TRUE;
+        }
         fault_mask |= RZC_FAULT_WATCHDOG;
     }
 

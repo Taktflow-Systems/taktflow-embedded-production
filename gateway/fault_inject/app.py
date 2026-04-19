@@ -47,6 +47,13 @@ _mqtt_client: paho_mqtt.Client | None = None
 
 # Idle command TX — paused during active fault scenarios
 _idle_paused = False
+# Unix timestamp until which cruise remains suppressed after a scenario
+# completes. Lets the observation window see the scenario's pedal input
+# without cruise overwriting it on the very next tick.
+_idle_paused_until = 0.0
+# Seconds to keep cruise paused after a scenario returns. Must exceed
+# the longest scenario observe_sec (battery_low = 30s).
+SCENARIO_POST_PAUSE_SEC = 35.0
 IDLE_CMD_INTERVAL = float(os.environ.get("IDLE_CMD_INTERVAL", "0.05"))  # 50ms
 
 # ---------------------------------------------------------------------------
@@ -118,23 +125,112 @@ def _lock_watchdog() -> None:
 
 
 def _idle_command_loop() -> None:
-    """Background thread: keep CAN bus handle alive.
+    """Background thread: keep CAN bus handle alive and drive an idle
+    cruise profile so the demo shows the vehicle moving.
 
-    CVC now sends steer/brake commands in all states (including INIT),
-    so the idle loop no longer needs to send them.  Kept as a skeleton
-    for future idle-time CAN needs and to maintain the bus handle.
+    Profile (paused while a scenario is active or when the control
+    lock is held by a remote client):
+      phase A (2.0s): ramp pedal 0% -> IDLE_CRUISE_PCT
+      phase B (6.0s): hold at IDLE_CRUISE_PCT  (~15-20 km/h)
+      phase C (2.0s): ramp back to 0%
+      phase D (2.0s): idle — vehicle coasts to stop
+      repeat
+
+    Driving both sensors through the SPI UDP override also stabilises
+    the otherwise jittering PedalPosition1 that was tripping CVC's
+    plausibility check every few seconds in idle.
     """
+    from .pedal_udp import (
+        send_pedal_override,
+        clear_pedal_override,
+        pedal_pct_to_angle,
+    )
+
+    # 60% duty maps to ~2400 RPM -> ~17 km/h with the ws_bridge
+    # wheel/gear factor (0.15 m radius, 8:1). Tuned by observation.
+    IDLE_CRUISE_PCT = float(os.environ.get("IDLE_CRUISE_PCT", "60"))
+    # Default OFF so test scenarios see a quiet pedal. Set
+    # IDLE_CRUISE_ENABLE=1 in the compose env to run the demo cruise
+    # loop in-between tests. If off, the loop still opens the bus and
+    # keeps the daemon alive; it just never sends pedal overrides.
+    IDLE_CRUISE_ENABLE = os.environ.get("IDLE_CRUISE_ENABLE", "0") == "1"
+    PHASE_RAMP_UP_SEC   = 2.0
+    PHASE_HOLD_SEC      = 6.0
+    PHASE_RAMP_DOWN_SEC = 2.0
+    PHASE_COAST_SEC     = 2.0
+    TICK = 0.1  # 10 Hz pedal updates
+
     bus = None
+    t_phase = 0.0
+    phase = "ramp_up"
+
+    def _send_pct(pct: float) -> None:
+        try:
+            send_pedal_override(pedal_pct_to_angle(pct))
+        except Exception as exc:  # noqa: BLE001
+            log.debug("Idle pedal send failed: %s", exc)
+
     while True:
         try:
-            if not _idle_paused:
-                if bus is None:
-                    bus = _get_bus()
-                    log.info("Idle command loop: CAN bus opened")
+            # Pause cruise while a scenario is running OR a remote user
+            # holds control (so manual pedal inputs from the UI aren't
+            # fought by this loop).
+            now = time.time()
+            with _lock_mu:
+                remote_locked = (
+                    _control_lock["client_id"] is not None
+                    and now < _control_lock["expires_at"]
+                    and _control_lock["client_id"] != "taktflow-fault-inject"
+                )
+
+            post_scenario_pause = now < _idle_paused_until
+            if (not IDLE_CRUISE_ENABLE) or _idle_paused or remote_locked or post_scenario_pause:
+                # Just stop sending pedal updates — do NOT clear the
+                # override. Scenarios like runaway_accel set their own
+                # SPI pedal value (100%) and the test then observes the
+                # vehicle's reaction for several seconds. Calling
+                # clear_pedal_override here wipes the scenario's pedal
+                # on the very next tick, so the observation window sees
+                # pedal=0 and the vehicle never leaves RUN.
+                phase = "ramp_up"
+                t_phase = 0.0
+                time.sleep(TICK)
+                continue
+
+            if bus is None:
+                bus = _get_bus()
+                log.info("Idle command loop: cruise profile started "
+                         "(cruise_pct=%.0f)", IDLE_CRUISE_PCT)
+
+            if phase == "ramp_up":
+                pct = IDLE_CRUISE_PCT * min(1.0, t_phase / PHASE_RAMP_UP_SEC)
+                _send_pct(pct)
+                if t_phase >= PHASE_RAMP_UP_SEC:
+                    phase, t_phase = "hold", 0.0
+                    continue
+            elif phase == "hold":
+                _send_pct(IDLE_CRUISE_PCT)
+                if t_phase >= PHASE_HOLD_SEC:
+                    phase, t_phase = "ramp_down", 0.0
+                    continue
+            elif phase == "ramp_down":
+                pct = IDLE_CRUISE_PCT * max(0.0, 1.0 - (t_phase / PHASE_RAMP_DOWN_SEC))
+                _send_pct(pct)
+                if t_phase >= PHASE_RAMP_DOWN_SEC:
+                    clear_pedal_override()
+                    phase, t_phase = "coast", 0.0
+                    continue
+            else:  # coast
+                # No UDP traffic — SPI stub leaves both sensors at 0.
+                if t_phase >= PHASE_COAST_SEC:
+                    phase, t_phase = "ramp_up", 0.0
+                    continue
+
+            t_phase += TICK
         except Exception as exc:
             log.warning("Idle command loop error: %s", exc)
             bus = None
-        time.sleep(IDLE_CMD_INTERVAL)
+        time.sleep(TICK)
 
 
 def _init_mqtt() -> paho_mqtt.Client:
@@ -191,10 +287,24 @@ app.add_middleware(
 
 
 def _trigger_scenario(name: str):
-    """Trigger a scenario by name (used by test runner)."""
+    """Trigger a scenario by name (used by the test runner).
+
+    Mirrors the idle-cruise gating that the HTTP trigger does. Without
+    this, the test runner fires scenarios without pausing cruise, so
+    cruise keeps pushing its 60% pedal into the SPI stub during the
+    scenario's observation window — the scenario's clear / 100% / zero
+    pedal gets overwritten on the very next cruise tick.
+    """
+    global _idle_paused, _idle_paused_until
     entry = SCENARIOS.get(name)
-    if entry:
+    if not entry:
+        return
+    _idle_paused = True
+    try:
         entry["fn"]()
+    finally:
+        _idle_paused_until = time.time() + SCENARIO_POST_PAUSE_SEC
+        _idle_paused = False
 
 
 @app.on_event("startup")
@@ -331,7 +441,7 @@ def trigger_scenario(name: str, request: Request):
             detail=f"Unknown scenario '{name}'.  "
                    f"Available: {', '.join(SCENARIOS.keys())}",
         )
-    global _idle_paused
+    global _idle_paused, _idle_paused_until
     _idle_paused = True
     log.info("Triggering scenario: %s (idle commands paused)", name)
     try:
@@ -343,8 +453,16 @@ def trigger_scenario(name: str, request: Request):
             detail=f"Scenario '{name}' failed: {exc}",
         ) from exc
     finally:
+        # Keep cruise suppressed for the observation window after the
+        # scenario returns. A scenario like runaway_accel does a single
+        # SPI pedal override at 100% and returns immediately; without
+        # this deferral, the cruise loop resumes on the next tick and
+        # overwrites the 100% with its 60% cruise target, so the test
+        # never observes the commanded torque -> no DEGRADED transition.
+        _idle_paused_until = time.time() + SCENARIO_POST_PAUSE_SEC
         _idle_paused = False
-    log.info("Scenario '%s' complete: %s (idle commands resumed)", name, result)
+    log.info("Scenario '%s' complete: %s (cruise resumes in %.1fs)",
+             name, result, SCENARIO_POST_PAUSE_SEC)
     return {"scenario": name, "result": result}
 
 
@@ -353,7 +471,7 @@ def reset_all(request: Request):
     """Power-cycle reset: restart ECU containers to clear all latched faults."""
     _check_api_key(request)
     _check_control_lock(request)
-    global _idle_paused
+    global _idle_paused, _idle_paused_until
     log.info("Power-cycle reset initiated")
     try:
         result = reset_scenario()
@@ -364,6 +482,7 @@ def reset_all(request: Request):
             detail=f"Reset failed: {exc}",
         ) from exc
     _idle_paused = False
+    _idle_paused_until = 0.0
     log.info("Reset complete: %s (idle commands resumed)", result)
     return {"result": result}
 
