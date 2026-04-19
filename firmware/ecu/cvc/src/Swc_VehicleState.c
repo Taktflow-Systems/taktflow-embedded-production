@@ -266,7 +266,13 @@ static uint8 fault_confirm_count[4];
 #define CVC_FAULT_IDX_MOTOR_RZC      3u
 #define CVC_FAULT_CONFIRM_COUNT      4u
 
-#define CVC_FAULT_COM_BRAKE         CVC_COM_SIG_BRAKE_FAULT_FAULT_TYPE       /**< 103u */
+/* Fresh-read confirmation source for brake fault.
+ * In SIL, FZC only transmits 0x210 Brake_Fault when something actually goes
+ * wrong (COM_TX_MODE_DIRECT); the steady-state fault indication lives on
+ * 0x201 Brake_Status.BrakeFaultStatus (PERIODIC). If we confirm against the
+ * 0x210 shadow it stays 0 forever and the fault never gets confirmed even
+ * when the bridge has correctly written brake_fault=1 into RTE from 0x201. */
+#define CVC_FAULT_COM_BRAKE         CVC_COM_SIG_BRAKE_STATUS_BRAKE_FAULT_STATUS
 #define CVC_FAULT_COM_MOTOR_CUTOFF  CVC_COM_SIG_MOTOR_CUTOFF_REQ_REQUEST_TYPE /**< 109u */
 #define CVC_FAULT_COM_STEERING      0xFFu /**< Not bridged via Com             */
 
