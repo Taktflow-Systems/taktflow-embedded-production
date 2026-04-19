@@ -476,6 +476,12 @@ void Swc_Pedal_MainFunction(void)
     (void)Rte_Write(CVC_SIG_PEDAL_POSITION, (uint32)Pedal_Position);
     (void)Rte_Write(CVC_SIG_PEDAL_FAULT, (uint32)Pedal_Fault);
     (void)Rte_Write(CVC_SIG_TORQUE_REQUEST, (uint32)torque);
+    /* Direction: 1=Forward when torque is being requested, 0=Neutral otherwise.
+     * Without this, plant-sim (and any downstream RZC direction check) sees
+     * direction=0 and keeps the motor disabled even with a valid torque
+     * command — the signal was configured in Com_Cfg but never written. */
+    (void)Rte_Write(CVC_SIG_TORQUE_REQUEST_DIRECTION,
+                    (uint32)((torque > 0u) ? 1u : 0u));
 
     /* Torque TX: Rte_Write above → Swc_CvcCom reads + sends via Com */
 
