@@ -206,12 +206,27 @@ void SC_Relay_CheckTriggers(void)
 boolean SC_Relay_IsKilled(void)
 {
 #if defined(PLATFORM_POSIX) || defined(PLATFORM_HIL)
-    /* SIL/HIL: relay always reports energized — timing prevents reliable
-     * heartbeat detection during boot, causing false relay kills.
-     * HIL: CAN transceiver power depends on relay; without this override
-     * the relay kills before ECUs can send heartbeats (chicken-and-egg).
-     * Production: real GPIO readback determines relay state. */
-    return FALSE;
+    /* SIL/HIL: only CREEP_GUARD and ESTOP kills propagate to CVC. Others
+     * (HB_TIMEOUT, PLAUSIBILITY, E2E_FAIL, BUSOFF, BUS_SILENCE, READBACK,
+     * SELFTEST, ESM) get suppressed because:
+     *   - HB_TIMEOUT: boot-phase false kills before CVC finishes INIT
+     *     (chicken-and-egg on HIL where relay powers the CAN transceiver).
+     *   - PLAUSIBILITY: plant-sim's motor model does not match SC's
+     *     lockstep expected-current lookup closely enough in fault
+     *     scenarios, so overcurrent/stall tests spuriously trip SC and
+     *     drive CVC to SHUTDOWN via EVT_SC_KILL instead of the intended
+     *     SAFE_STOP path.
+     * CREEP_GUARD is the only SC-only detection the scenario set
+     * actually needs, and ESTOP is a hard safety override that must
+     * always propagate. */
+    if (relay_killed == TRUE) {
+        if ((kill_reason == SC_KILL_REASON_CREEP_GUARD) ||
+            (kill_reason == SC_KILL_REASON_ESTOP))
+        {
+            return TRUE;
+        }
+        return FALSE;
+    }
 #endif
     return relay_killed;
 }

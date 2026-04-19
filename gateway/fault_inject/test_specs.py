@@ -199,7 +199,12 @@ TEST_SPECS: list[TestSpec] = [
                     "Safety Goal SG-002: prevent unintended motor reversal during forward motion.",
         injection="SPI pedal 80% + MQTT inject_stall + inject_overcurrent to plant-sim",
         post_run_settle_sec=10.0,
-        observe_sec=5.0,
+        # Widened from 5.0s / 5000ms: motor_reversal needs stall + overcurrent
+        # to both propagate through RZC's debounce + DEM confirmation + 0x500
+        # broadcast, which lands on 5.0-5.1s in SIL. A tighter budget turned
+        # this into a timing-flake that passed on the fast path and failed
+        # when Docker scheduling was busier (5037ms vs 5068ms).
+        observe_sec=6.0,
         verdicts=[
             VerdictCheck(
                 description="Vehicle enters SAFE_STOP",
@@ -213,7 +218,7 @@ TEST_SPECS: list[TestSpec] = [
                 check_type="dtc",
                 expected="DTC 0xE301 received",
                 value=0xE301,
-                timeout_ms=5000,
+                timeout_ms=6000,
             ),
         ],
     ),
@@ -233,10 +238,16 @@ TEST_SPECS: list[TestSpec] = [
         observe_sec=5.0,
         verdicts=[
             VerdictCheck(
-                description="Vehicle enters SAFE_STOP (SC creep guard → kill relay)",
+                description="Vehicle enters SAFE_STOP or SHUTDOWN (SC creep guard → kill relay)",
                 check_type="vehicle_state",
-                expected="SAFE_STOP",
-                value=4,       # SAFE_STOP enum
+                expected="SAFE_STOP or SHUTDOWN",
+                # CVC VSM maps EVT_SC_KILL → SHUTDOWN from every non-INIT
+                # state (TSR-035: SC kill is an external override that
+                # takes precedence). Accept either here because the test
+                # is asking "did the vehicle reach a safe, non-operational
+                # state because SC detected creep?" — SHUTDOWN is the
+                # strictly safer answer to that question.
+                value=[4, 5],  # SAFE_STOP or SHUTDOWN
                 timeout_ms=5000,
             ),
         ],
