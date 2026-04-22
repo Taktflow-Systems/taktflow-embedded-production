@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>rt-sched schedule audit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* ---- Layout + typography: minimalist, math-friendly ---------------- */
+  :root {
+    --fg: #1a1a1a;
+    --fg-dim: #555;
+    --bg: #fafafa;
+    --panel: #fff;
+    --line: #d6d6d6;
+    --accent: #1a4f8b;
+    --pass: #1d7a3a;
+    --fail: #b23030;
+    --warn: #9a6b00;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  body { padding: 24px; max-width: 1100px; margin: 0 auto; }
+  h1 { margin: 0 0 4px; font-size: 22px; font-weight: 600; }
+  h2 { margin: 24px 0 10px; font-size: 15px; font-weight: 600; color: var(--accent); letter-spacing: 0.02em; }
+  .sub { color: var(--fg-dim); margin-bottom: 24px; font-size: 13px; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .mono { font-family: var(--mono); }
+  .num  { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .pass { color: var(--pass); font-weight: 600; }
+  .fail { color: var(--fail); font-weight: 600; }
+  .warn { color: var(--warn); font-weight: 600; }
+  .dim  { color: var(--fg-dim); }
+
+  /* ---- Input + verdict header -------------------------------------- */
+  .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; gap: 16px; flex-wrap: wrap; }
+  .actions { display: flex; gap: 8px; align-items: center; }
+  .actions button, .actions label {
+    font: 13px/1 system-ui; padding: 6px 12px; border: 1px solid var(--line);
+    background: var(--panel); border-radius: 3px; cursor: pointer; color: var(--fg);
+  }
+  .actions button:hover, .actions label:hover { border-color: var(--accent); }
+  #file { display: none; }
+
+  textarea#json {
+    width: 100%; min-height: 120px; padding: 10px;
+    font: 12px/1.45 var(--mono);
+    border: 1px solid var(--line); border-radius: 3px;
+    background: #fcfcfc;
+  }
+  details summary { cursor: pointer; padding: 2px 0; color: var(--accent); }
+
+  .verdict-pill {
+    display: inline-block; padding: 4px 14px; border-radius: 16px;
+    font-weight: 600; font-size: 13px; letter-spacing: 0.04em;
+  }
+  .verdict-pill.ok   { background: #e4f2ea; color: var(--pass); }
+  .verdict-pill.fail { background: #f7e3e3; color: var(--fail); }
+
+  /* ---- Tables ------------------------------------------------------ */
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #ededed; }
+  th { color: var(--fg-dim); font-weight: 500; font-size: 12px; letter-spacing: 0.03em; text-transform: uppercase; }
+  tr:last-child td { border-bottom: none; }
+  td.n { text-align: right; font-family: var(--mono); }
+
+  /* ---- Context blocks --------------------------------------------- */
+  .ctx-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 8px; border-bottom: 1px solid var(--line); padding-bottom: 6px;
+  }
+  .ctx-title { font-weight: 600; font-size: 15px; }
+  .eq {
+    font-family: var(--mono); font-size: 13px; background: #f5f5f5;
+    padding: 10px 14px; border-left: 3px solid var(--accent); margin: 8px 0;
+    white-space: pre-wrap; line-height: 1.6;
+  }
+  .eq .tag { color: var(--fg-dim); }
+  .eq .result { font-weight: 600; }
+
+  /* ---- Utilization bars ------------------------------------------- */
+  .util-bar-track {
+    height: 14px; background: #ececec; border-radius: 2px; position: relative; overflow: hidden;
+    margin: 6px 0;
+  }
+  .util-bar-seg { height: 100%; display: inline-block; }
+  .seg-asil_d { background: #7a1f1f; }
+  .seg-asil_c { background: #a64a1a; }
+  .seg-asil_b { background: #b88500; }
+  .seg-asil_a { background: #2c8080; }
+  .seg-qm     { background: #a9a9a9; }
+  .util-bound-marker {
+    position: absolute; top: -2px; bottom: -2px; width: 2px; background: #000; opacity: 0.5;
+  }
+  .util-legend { font-size: 12px; color: var(--fg-dim); display: flex; gap: 14px; flex-wrap: wrap; }
+  .util-legend span::before {
+    content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 4px;
+    vertical-align: -1px; border-radius: 1px;
+  }
+  .util-legend .asil_d::before { background: #7a1f1f; }
+  .util-legend .asil_c::before { background: #a64a1a; }
+  .util-legend .asil_b::before { background: #b88500; }
+  .util-legend .asil_a::before { background: #2c8080; }
+  .util-legend .qm::before     { background: #a9a9a9; }
+
+  .banner-warn {
+    background: #fff6d8; border-left: 3px solid var(--warn); padding: 8px 14px; font-size: 13px;
+    margin: 8px 0;
+  }
+  .banner-fail {
+    background: #f9e7e7; border-left: 3px solid var(--fail); padding: 8px 14px; font-size: 13px;
+    margin: 8px 0;
+  }
+
+  /* ---- Theory panel ------------------------------------------------ */
+  .theory { font-size: 13px; color: var(--fg); }
+  .theory p { margin: 6px 0; }
+  .theory code { background: #eee; padding: 1px 4px; border-radius: 2px; font-size: 12px; }
+
+  .footer { color: var(--fg-dim); font-size: 12px; margin-top: 24px; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>rt-sched schedule audit</h1>
+<div class="sub">
+  Visual feasibility proof for a <span class="mono">libs/bsw/rtScheduling</span> manifest.
+  Paste the JSON dump below or load a file; every feasibility number is derived live so you
+  can see the Liu-Layland and hyperbolic bound math, not just the verdict.
+</div>
+
+<div class="panel">
+  <div class="header">
+    <div>
+      <div class="num dim" style="font-size:12px;">INPUT</div>
+      <strong>JSON from <code>rtSched::json::write_report</code></strong>
+    </div>
+    <div class="actions">
+      <button id="btn-analyze">Analyze</button>
+      <label for="file">Load file…</label>
+      <input type="file" id="file" accept=".json,application/json">
+      <button id="btn-sample">Load sample</button>
+      <button id="btn-divergence" title="Harmonic triplet at 90% utilization: L&amp;L/hyperbolic reject, RTA proves feasibility.">Load RTA divergence sample</button>
+    </div>
+  </div>
+  <textarea id="json" spellcheck="false"></textarea>
+  <div id="parse-error" class="fail" style="margin-top:6px;"></div>
+</div>
+
+<div id="out"></div>
+
+<details class="panel">
+  <summary><strong>Rate-monotonic theory reference</strong></summary>
+  <div class="theory">
+    <p>
+      <strong>Rate-monotonic (RM) scheduling.</strong> Tasks are preemptive, priorities are
+      static, a shorter period gets a higher priority. Tasks are assumed independent — no
+      blocking, no resource sharing. Deadlines are assumed equal to periods (implicit
+      deadlines).
+    </p>
+    <p>
+      <strong>Liu &amp; Layland (1973).</strong> For <code>n</code> periodic tasks scheduled
+      under RM, the task set is feasible if
+      <code>∑(C<sub>i</sub>/T<sub>i</sub>) ≤ n·(2<sup>1/n</sup> − 1)</code>.
+      This bound decreases from 1.000 at <code>n=1</code> towards
+      <code>ln(2) ≈ 0.693</code> as <code>n → ∞</code>. It is <em>sufficient</em>: passing the
+      bound proves feasibility; failing it is inconclusive.
+    </p>
+    <p>
+      <strong>Hyperbolic bound (Bini, Buttazzo, Buttazzo 2003).</strong> A tighter sufficient
+      test: <code>∏(u<sub>i</sub> + 1) ≤ 2</code> ⇔ feasible under RM. Still sufficient, not
+      necessary — both tests may fail on a task set that is actually feasible, in which case
+      response-time analysis is the next step.
+    </p>
+    <p>
+      <strong>Response-time analysis (Joseph-Pandya 1986).</strong> Exact test. For each task
+      <code>i</code>, iterate
+      <code>R<sub>i</sub><sup>n+1</sup> = C<sub>i</sub> + B<sub>i</sub> +
+      ∑<sub>j ∈ hp(i)</sub>⌈R<sub>i</sub><sup>n</sup>/T<sub>j</sub>⌉·C<sub>j</sub></code>
+      until fixed point, where <code>hp(i)</code> is the set of tasks with strictly shorter
+      periods on the same context (ties broken by declaration order). The task set is
+      feasible iff every <code>R<sub>i</sub> ≤ D<sub>i</sub></code>. This is the test to rely
+      on for ASIL-D evidence — both sufficient and necessary under the independent-task
+      model.
+    </p>
+    <p>
+      <strong>Freedom from interference (ISO 26262).</strong> When tasks of different
+      criticality levels share a context, the standard requires evidence that a lower-ASIL
+      task cannot impair a higher-ASIL one in time, memory, or resource usage. This tool
+      flags mixed-criticality contexts so you remember to check for timing protection
+      (MPU / timing monitor / freedom-from-interference argument).
+    </p>
+  </div>
+</details>
+
+<div class="footer">
+  rtScheduling experiment · Liu &amp; Layland 1973 · Bini, Buttazzo, Buttazzo 2003 ·
+  ISO 26262 freedom-from-interference
+</div>
+
+<script>
+// Embedded sample so the page renders immediately on first open. This is
+// the exact output of rtSched::json::write_report for a three-entity
+// reference manifest — kept in sync with gui/sample.json.
+const SAMPLE_JSON = `{
+  "schema": "rt-sched/1",
+  "verdict": "ok",
+  "verdict_sufficient": "ok",
+  "hyperperiod_us": 50000,
+  "entities": [
+    { "name": "safety_tick", "context": 1, "cycle_us": 5000, "wcet_us": 700,
+      "deadline_us": 5000, "phase_us": 0, "criticality": "asil_d",
+      "overrun": "safety", "priority_hint": 0, "blocking_us": 0,
+      "response_time_us": 700, "rta_feasible": true,
+      "stats": {"invocations":0,"overruns":0,"last_exec_us":0,"max_observed_us":0,"min_observed_us":0} },
+    { "name": "dcm_tick", "context": 2, "cycle_us": 10000, "wcet_us": 1500,
+      "deadline_us": 10000, "phase_us": 0, "criticality": "asil_b",
+      "overrun": "log_count", "priority_hint": 0, "blocking_us": 0,
+      "response_time_us": 1500, "rta_feasible": true,
+      "stats": {"invocations":0,"overruns":0,"last_exec_us":0,"max_observed_us":0,"min_observed_us":0} },
+    { "name": "com_tick", "context": 2, "cycle_us": 50000, "wcet_us": 3000,
+      "deadline_us": 50000, "phase_us": 0, "criticality": "qm",
+      "overrun": "ignore", "priority_hint": 0, "blocking_us": 0,
+      "response_time_us": 4500, "rta_feasible": true,
+      "stats": {"invocations":0,"overruns":0,"last_exec_us":0,"max_observed_us":0,"min_observed_us":0} }
+  ],
+  "contexts": [
+    { "id": 1, "n_tasks": 1, "utilization_ppm": 140000, "ll_bound_ppm": 1000000,
+      "ll_pass": true, "hyperbolic_product_ppm": 1140000, "hyperbolic_pass": true,
+      "rta_pass": true, "mixed_criticality": false,
+      "criticality_util_ppm": {"qm":0,"asil_a":0,"asil_b":0,"asil_c":0,"asil_d":140000} },
+    { "id": 2, "n_tasks": 2, "utilization_ppm": 210000, "ll_bound_ppm": 828427,
+      "ll_pass": true, "hyperbolic_product_ppm": 1219000, "hyperbolic_pass": true,
+      "rta_pass": true, "mixed_criticality": true,
+      "criticality_util_ppm": {"qm":60000,"asil_a":0,"asil_b":150000,"asil_c":0,"asil_d":0} }
+  ]
+}`;
+
+// ---- small helpers -----------------------------------------------------
+const $  = (sel) => document.querySelector(sel);
+const esc = (s) => String(s).replace(/[&<>"']/g,
+  c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#39;" }[c]));
+const ppmToPct = (ppm) => (ppm / 10000).toFixed(2) + "%";
+const ppmToFrac = (ppm, d = 4) => (ppm / 1_000_000).toFixed(d);
+const usFmt = (us) => us.toLocaleString() + " µs";
+
+// L&L bound U(n) = n·(2^(1/n) - 1). Computed fresh in JS for display
+// derivation; library's rounded ppm value is used for the verdict line.
+function llBoundExact(n) {
+  if (n <= 0) return 1.0;
+  return n * (Math.pow(2, 1 / n) - 1);
+}
+
+// ---- rendering --------------------------------------------------------
+function render(report) {
+  const out = $("#out");
+  out.innerHTML = "";
+
+  const verdictIsOk = report.verdict === "ok";
+  const vEl = document.createElement("div");
+  vEl.className = "panel";
+  vEl.innerHTML = `
+    <div class="header">
+      <div>
+        <div class="num dim" style="font-size:12px;">OVERALL VERDICT</div>
+        <span class="verdict-pill ${verdictIsOk ? "ok" : "fail"}">${esc(report.verdict.toUpperCase())}</span>
+        ${verdictIsOk ? "" : "<span class=\"fail\" style=\"margin-left:10px;\">schedule infeasible</span>"}
+      </div>
+      <div class="num dim">
+        schema <strong>${esc(report.schema)}</strong>
+        &nbsp;·&nbsp;
+        hyperperiod <strong>${usFmt(report.hyperperiod_us)}</strong>
+        &nbsp;·&nbsp;
+        ${report.entities.length} entities / ${report.contexts.length} contexts
+      </div>
+    </div>
+  `;
+  out.appendChild(vEl);
+
+  // Divergence note — if sufficient tests failed but exact RTA saved the
+  // schedule, say so up front. This is the pedagogical payoff.
+  if (report.verdict === "ok" && report.verdict_sufficient &&
+      report.verdict_sufficient !== "ok") {
+    const nEl = document.createElement("div");
+    nEl.className = "panel";
+    nEl.innerHTML = `
+      <div class="banner-warn">
+        <strong>Sufficient tests were inconclusive</strong> — Liu-Layland and/or the
+        hyperbolic bound rejected the schedule (<span class="mono">${esc(report.verdict_sufficient)}</span>).
+        Exact response-time analysis proves <code>R<sub>i</sub> ≤ D<sub>i</sub></code> for
+        every entity, establishing feasibility. This is the definitive ASIL-D result; the
+        sufficient bounds are shown below for context.
+      </div>
+    `;
+    out.appendChild(nEl);
+  }
+
+  // Entity table — adds an "R (µs)" column showing the exact worst-case
+  // response time computed by the library. RTA-infeasible entities appear
+  // in red; feasible ones in the standard number style.
+  const tEl = document.createElement("div");
+  tEl.className = "panel";
+  tEl.innerHTML = `
+    <h2>Manifest</h2>
+    <table>
+      <thead><tr>
+        <th>Entity</th><th>Ctx</th><th class="n">T (µs)</th><th class="n">C (µs)</th>
+        <th class="n">D (µs)</th><th class="n">R (µs)</th>
+        <th>Criticality</th><th>Overrun</th>
+      </tr></thead>
+      <tbody>
+        ${report.entities.map(e => `
+          <tr>
+            <td><strong>${esc(e.name)}</strong></td>
+            <td class="num">${e.context}</td>
+            <td class="n">${e.cycle_us}</td>
+            <td class="n">${e.wcet_us}</td>
+            <td class="n">${e.deadline_us}</td>
+            <td class="n ${e.rta_feasible ? "" : "fail"}">
+              ${e.rta_feasible ? e.response_time_us : "MISS"}
+            </td>
+            <td class="mono dim">${esc(e.criticality)}</td>
+            <td class="mono dim">${esc(e.overrun)}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+  out.appendChild(tEl);
+
+  // Per-context blocks
+  for (const ctx of report.contexts) {
+    out.appendChild(renderContext(ctx, report));
+  }
+}
+
+function renderContext(ctx, report) {
+  const entities = report.entities.filter(e => e.context === ctx.id);
+  const n = ctx.n_tasks;
+  const U = ctx.utilization_ppm / 1_000_000;
+  const llBoundFrac = llBoundExact(n);
+  const hypFrac = ctx.hyperbolic_product_ppm / 1_000_000;
+
+  // Utilization derivation: show "C1/T1 + C2/T2 = ..."
+  const fracTerms = entities.map(e => `${e.wcet_us}/${e.cycle_us}`).join(" + ");
+  const decTerms  = entities.map(e => (e.wcet_us / e.cycle_us).toFixed(4)).join(" + ");
+  const uDerivation =
+`U  =  ${fracTerms}
+   =  ${decTerms}
+   =  <span class="result">${U.toFixed(4)}  (${ppmToPct(ctx.utilization_ppm)})</span>`;
+
+  // L&L bound derivation. For n=1 the formula is trivial; for n≥2 show the
+  // power step explicitly so a reviewer sees where the number comes from.
+  const pow = Math.pow(2, 1 / n);
+  const llDerivation =
+`n = ${n} task${n === 1 ? "" : "s"}
+U(${n})  =  ${n} · (2^(1/${n}) − 1)
+       =  ${n} · (${pow.toFixed(4)} − 1)
+       =  ${n} · ${(pow - 1).toFixed(4)}
+       =  <span class="result">${llBoundFrac.toFixed(4)}  (${(llBoundFrac*100).toFixed(2)}%)</span>`;
+  const llVerdict = ctx.ll_pass
+    ? `<span class="pass">PASS</span> — ${U.toFixed(4)} ≤ ${llBoundFrac.toFixed(4)}, Liu-Layland sufficient.`
+    : `<span class="fail">FAIL</span> — ${U.toFixed(4)} &gt; ${llBoundFrac.toFixed(4)}. Inconclusive by L&amp;L; a response-time analysis could still prove feasibility.`;
+
+  // Hyperbolic product derivation.
+  const uI = entities.map(e => e.wcet_us / e.cycle_us);
+  const factorTerms = uI.map(u => `(${u.toFixed(4)} + 1)`).join(" · ");
+  const factorProds = uI.map(u => (u + 1).toFixed(4)).join(" · ");
+  const hypDerivation =
+`∏(uᵢ + 1)  =  ${factorTerms}
+          =  ${factorProds}
+          =  <span class="result">${hypFrac.toFixed(4)}</span>`;
+  const hypVerdict = ctx.hyperbolic_pass
+    ? `<span class="pass">PASS</span> — ${hypFrac.toFixed(4)} ≤ 2.0000, hyperbolic sufficient.`
+    : `<span class="fail">FAIL</span> — ${hypFrac.toFixed(4)} &gt; 2.0000.`;
+
+  // ASIL breakdown bar. We draw each slice proportional to ppm on a track
+  // whose full width represents 100% CPU. The L&L bound is overlaid as a
+  // small marker line.
+  const cu  = ctx.criticality_util_ppm;
+  const track100 = 1_000_000; // ppm representing 100% of the bar
+  const segs = [
+    ["asil_d", cu.asil_d], ["asil_c", cu.asil_c], ["asil_b", cu.asil_b],
+    ["asil_a", cu.asil_a], ["qm", cu.qm],
+  ].filter(([, v]) => v > 0);
+  const segsHtml = segs.map(([k, v]) =>
+    `<span class="util-bar-seg seg-${k}" style="width:${(v/track100)*100}%" title="${esc(k)}: ${ppmToPct(v)}"></span>`
+  ).join("");
+  const boundPct = (ctx.ll_bound_ppm / track100) * 100;
+  const boundMarker = `<span class="util-bound-marker" style="left:${boundPct}%" title="L&amp;L bound: ${ppmToPct(ctx.ll_bound_ppm)}"></span>`;
+
+  const legend = segs.length
+    ? `<div class="util-legend">${segs.map(([k, v]) => `<span class="${k}">${esc(k)} — ${ppmToPct(v)}</span>`).join("")}<span class="dim">black tick: L&amp;L bound</span></div>`
+    : `<div class="util-legend dim">(no entities on this context)</div>`;
+
+  // Mixed-criticality warning
+  const warnBlock = ctx.mixed_criticality
+    ? `<div class="banner-warn">
+         ⚠ <strong>Mixed criticality</strong> — this context runs entities of more than one
+         ASIL level. ISO 26262 requires freedom-from-interference evidence (timing protection,
+         MPU, or criticality-aware scheduler). Verify before sign-off.
+       </div>`
+    : "";
+
+  // RTA section — the authoritative test. Lists every entity with its
+  // exact worst-case response time compared to the deadline. This is the
+  // table that ASIL-D evidence references. When any entity declares a
+  // non-zero blocking term (PIP/PCP systems), a B column is added and
+  // the equation shown below is extended accordingly.
+  const anyBlocking = entities.some(e => (e.blocking_us || 0) > 0);
+  const rtaRows = entities.map(e => {
+    const ok = e.rta_feasible;
+    const bCell = anyBlocking
+      ? `<td class="n">${e.blocking_us || 0}</td>` : "";
+    return `
+      <tr>
+        <td><strong>${esc(e.name)}</strong></td>
+        <td class="n">${e.wcet_us}</td>
+        ${bCell}
+        <td class="n">${e.deadline_us}</td>
+        <td class="n">${ok ? e.response_time_us : "—"}</td>
+        <td>${ok
+          ? `<span class="pass">✓ R ≤ D</span>`
+          : `<span class="fail">✗ MISS (R &gt; D)</span>`}</td>
+      </tr>`;
+  }).join("");
+  const bHeader = anyBlocking ? '<th class="n">B (µs)</th>' : "";
+  const eqText = anyBlocking
+    ? `R = C + B + ∑<sub>hp(i)</sub>⌈R/T<sub>j</sub>⌉·C<sub>j</sub>`
+    : `R = C + ∑<sub>hp(i)</sub>⌈R/T<sub>j</sub>⌉·C<sub>j</sub>`;
+  const rtaBlock = `
+    <table style="margin-top:6px;">
+      <thead><tr>
+        <th>Entity</th><th class="n">C (µs)</th>${bHeader}<th class="n">D (µs)</th>
+        <th class="n">R (µs)</th><th>Verdict</th>
+      </tr></thead>
+      <tbody>${rtaRows}</tbody>
+    </table>
+    <div style="margin-top:8px;" class="dim">
+      Response times computed by fixed-point iteration of
+      <code>${eqText}</code>
+      inside the rtScheduling library. Exact under the
+      ${anyBlocking ? "blocking-aware" : "independent-task"} model.
+    </div>
+  `;
+  const rtaOverall = ctx.rta_pass
+    ? `<span class="pass">PASS</span> — every entity on this context has R<sub>i</sub> ≤ D<sub>i</sub>. Feasible under RM (exact).`
+    : `<span class="fail">FAIL</span> — at least one entity's worst-case response time exceeds its deadline. Schedule infeasible.`;
+
+  // Overall context verdict — driven by the exact RTA result, not the
+  // sufficient tests. A context where L&L fails but RTA passes is FEASIBLE.
+  const ctxPill = ctx.rta_pass
+    ? `<span class="verdict-pill ok">FEASIBLE</span>`
+    : `<span class="verdict-pill fail">INFEASIBLE</span>`;
+
+  const el = document.createElement("div");
+  el.className = "panel";
+  el.innerHTML = `
+    <div class="ctx-head">
+      <span class="ctx-title">Context ${ctx.id} — ${n} task${n === 1 ? "" : "s"}</span>
+      ${ctxPill}
+    </div>
+
+    <h2>Utilization</h2>
+    <div class="eq">${uDerivation}</div>
+
+    <div class="util-bar-track" title="ASIL breakdown; bar width = 100% CPU">
+      ${segsHtml}${boundMarker}
+    </div>
+    ${legend}
+
+    ${warnBlock}
+
+    <h2>Response-time analysis <span class="dim" style="font-weight:400;">(exact — authoritative)</span></h2>
+    ${rtaBlock}
+    <div style="margin-top:8px;">${rtaOverall}</div>
+
+    <h2>Liu &amp; Layland bound <span class="dim" style="font-weight:400;">(sufficient — reference)</span></h2>
+    <div class="eq">${llDerivation}</div>
+    <div>${llVerdict}</div>
+
+    <h2>Hyperbolic bound <span class="dim" style="font-weight:400;">(sufficient — reference)</span></h2>
+    <div class="eq">${hypDerivation}</div>
+    <div>${hypVerdict}</div>
+  `;
+  return el;
+}
+
+function renderError(msg) {
+  $("#out").innerHTML = "";
+  $("#parse-error").textContent = msg;
+}
+
+// ---- wiring ------------------------------------------------------------
+function analyze() {
+  const raw = $("#json").value.trim();
+  $("#parse-error").textContent = "";
+  if (!raw) { renderError("Paste a JSON report or load a file."); return; }
+  let obj;
+  try { obj = JSON.parse(raw); }
+  catch (e) { renderError("JSON parse error: " + e.message); return; }
+  if (!obj || obj.schema !== "rt-sched/1") {
+    renderError("Unexpected schema — expected \"rt-sched/1\", got " + JSON.stringify(obj && obj.schema));
+    return;
+  }
+  if (!Array.isArray(obj.entities) || !Array.isArray(obj.contexts)) {
+    renderError("Malformed report: missing entities or contexts array.");
+    return;
+  }
+  render(obj);
+}
+
+// Second sample embedded as a string so the button works offline (no fetch
+// call, no CORS issues for file://). Kept in sync with gui/sample-divergence.json.
+const DIVERGENCE_JSON = `{
+  "schema": "rt-sched/1",
+  "verdict": "ok",
+  "verdict_sufficient": "over_utilized",
+  "hyperperiod_us": 400,
+  "entities": [
+    { "name": "fast_ctrl", "context": 1, "cycle_us": 100, "wcet_us": 30,
+      "deadline_us": 100, "phase_us": 0, "criticality": "asil_d",
+      "overrun": "safety", "priority_hint": 0, "blocking_us": 0,
+      "response_time_us": 30, "rta_feasible": true,
+      "stats": {"invocations":0,"overruns":0,"last_exec_us":0,"max_observed_us":0,"min_observed_us":0} },
+    { "name": "med_ctrl", "context": 1, "cycle_us": 200, "wcet_us": 60,
+      "deadline_us": 200, "phase_us": 0, "criticality": "asil_b",
+      "overrun": "log_count", "priority_hint": 0, "blocking_us": 0,
+      "response_time_us": 90, "rta_feasible": true,
+      "stats": {"invocations":0,"overruns":0,"last_exec_us":0,"max_observed_us":0,"min_observed_us":0} },
+    { "name": "slow_ctrl", "context": 1, "cycle_us": 400, "wcet_us": 120,
+      "deadline_us": 400, "phase_us": 0, "criticality": "qm",
+      "overrun": "ignore", "priority_hint": 0, "blocking_us": 0,
+      "response_time_us": 360, "rta_feasible": true,
+      "stats": {"invocations":0,"overruns":0,"last_exec_us":0,"max_observed_us":0,"min_observed_us":0} }
+  ],
+  "contexts": [
+    { "id": 1, "n_tasks": 3, "utilization_ppm": 900000, "ll_bound_ppm": 779763,
+      "ll_pass": false, "hyperbolic_product_ppm": 2197000, "hyperbolic_pass": false,
+      "rta_pass": true, "mixed_criticality": true,
+      "criticality_util_ppm": {"qm":300000,"asil_a":0,"asil_b":300000,"asil_c":0,"asil_d":300000} }
+  ]
+}`;
+
+$("#btn-analyze").addEventListener("click", analyze);
+$("#btn-sample").addEventListener("click", () => { $("#json").value = SAMPLE_JSON; analyze(); });
+$("#btn-divergence").addEventListener("click", () => { $("#json").value = DIVERGENCE_JSON; analyze(); });
+$("#file").addEventListener("change", (ev) => {
+  const f = ev.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { $("#json").value = r.result; analyze(); };
+  r.readAsText(f);
+});
+// Auto-render the sample on first load so the page is not blank.
+$("#json").value = SAMPLE_JSON;
+analyze();
+</script>
+
+</body>
+</html>

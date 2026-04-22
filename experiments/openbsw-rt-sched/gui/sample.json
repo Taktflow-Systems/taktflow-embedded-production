@@ -1,0 +1,109 @@
+{
+    "schema": "rt-sched/1",
+    "verdict": "ok",
+    "verdict_sufficient": "ok",
+    "hyperperiod_us": 50000,
+    "entities": [
+        {
+            "name": "safety_tick",
+            "context": 1,
+            "cycle_us": 5000,
+            "wcet_us": 700,
+            "deadline_us": 5000,
+            "phase_us": 0,
+            "criticality": "asil_d",
+            "overrun": "safety",
+            "priority_hint": 0,
+            "blocking_us": 0,
+            "response_time_us": 700,
+            "rta_feasible": true,
+            "stats": {
+                "invocations": 0,
+                "overruns": 0,
+                "last_exec_us": 0,
+                "max_observed_us": 0,
+                "min_observed_us": 0
+            }
+        },
+        {
+            "name": "dcm_tick",
+            "context": 2,
+            "cycle_us": 10000,
+            "wcet_us": 1500,
+            "deadline_us": 10000,
+            "phase_us": 0,
+            "criticality": "asil_b",
+            "overrun": "log_count",
+            "priority_hint": 0,
+            "blocking_us": 0,
+            "response_time_us": 1500,
+            "rta_feasible": true,
+            "stats": {
+                "invocations": 0,
+                "overruns": 0,
+                "last_exec_us": 0,
+                "max_observed_us": 0,
+                "min_observed_us": 0
+            }
+        },
+        {
+            "name": "com_tick",
+            "context": 2,
+            "cycle_us": 50000,
+            "wcet_us": 3000,
+            "deadline_us": 50000,
+            "phase_us": 0,
+            "criticality": "qm",
+            "overrun": "ignore",
+            "priority_hint": 0,
+            "blocking_us": 0,
+            "response_time_us": 4500,
+            "rta_feasible": true,
+            "stats": {
+                "invocations": 0,
+                "overruns": 0,
+                "last_exec_us": 0,
+                "max_observed_us": 0,
+                "min_observed_us": 0
+            }
+        }
+    ],
+    "contexts": [
+        {
+            "id": 1,
+            "n_tasks": 1,
+            "utilization_ppm": 140000,
+            "ll_bound_ppm": 1000000,
+            "ll_pass": true,
+            "hyperbolic_product_ppm": 1140000,
+            "hyperbolic_pass": true,
+            "rta_pass": true,
+            "mixed_criticality": false,
+            "criticality_util_ppm": {
+                "qm": 0,
+                "asil_a": 0,
+                "asil_b": 0,
+                "asil_c": 0,
+                "asil_d": 140000
+            }
+        },
+        {
+            "id": 2,
+            "n_tasks": 2,
+            "utilization_ppm": 210000,
+            "ll_bound_ppm": 828427,
+            "ll_pass": true,
+            "hyperbolic_product_ppm": 1219000,
+            "hyperbolic_pass": true,
+            "rta_pass": true,
+            "mixed_criticality": true,
+            "criticality_util_ppm": {
+                "qm": 60000,
+                "asil_a": 0,
+                "asil_b": 150000,
+                "asil_c": 0,
+                "asil_d": 0
+            }
+        }
+    ]
+}

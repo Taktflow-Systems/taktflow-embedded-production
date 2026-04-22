@@ -1,0 +1,11 @@
+build/
+_deps/
+CMakeCache.txt
+CMakeFiles/
+CMakeUserPresets.json
+*.obj
+*.o
+*.a
+*.exe
+Testing/
+compile_commands.json

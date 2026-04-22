@@ -1,0 +1,91 @@
+{
+    "schema": "rt-sched/1",
+    "verdict": "ok",
+    "verdict_sufficient": "over_utilized",
+    "hyperperiod_us": 400,
+    "entities": [
+        {
+            "name": "fast_ctrl",
+            "context": 1,
+            "cycle_us": 100,
+            "wcet_us": 30,
+            "deadline_us": 100,
+            "phase_us": 0,
+            "criticality": "asil_d",
+            "overrun": "safety",
+            "priority_hint": 0,
+            "blocking_us": 0,
+            "response_time_us": 30,
+            "rta_feasible": true,
+            "stats": {
+                "invocations": 0,
+                "overruns": 0,
+                "last_exec_us": 0,
+                "max_observed_us": 0,
+                "min_observed_us": 0
+            }
+        },
+        {
+            "name": "med_ctrl",
+            "context": 1,
+            "cycle_us": 200,
+            "wcet_us": 60,
+            "deadline_us": 200,
+            "phase_us": 0,
+            "criticality": "asil_b",
+            "overrun": "log_count",
+            "priority_hint": 0,
+            "blocking_us": 0,
+            "response_time_us": 90,
+            "rta_feasible": true,
+            "stats": {
+                "invocations": 0,
+                "overruns": 0,
+                "last_exec_us": 0,
+                "max_observed_us": 0,
+                "min_observed_us": 0
+            }
+        },
+        {
+            "name": "slow_ctrl",
+            "context": 1,
+            "cycle_us": 400,
+            "wcet_us": 120,
+            "deadline_us": 400,
+            "phase_us": 0,
+            "criticality": "qm",
+            "overrun": "ignore",
+            "priority_hint": 0,
+            "blocking_us": 0,
+            "response_time_us": 360,
+            "rta_feasible": true,
+            "stats": {
+                "invocations": 0,
+                "overruns": 0,
+                "last_exec_us": 0,
+                "max_observed_us": 0,
+                "min_observed_us": 0
+            }
+        }
+    ],
+    "contexts": [
+        {
+            "id": 1,
+            "n_tasks": 3,
+            "utilization_ppm": 900000,
+            "ll_bound_ppm": 779763,
+            "ll_pass": false,
+            "hyperbolic_product_ppm": 2197000,
+            "hyperbolic_pass": false,
+            "rta_pass": true,
+            "mixed_criticality": true,
+            "criticality_util_ppm": {
+                "qm": 300000,
+                "asil_a": 0,
+                "asil_b": 300000,
+                "asil_c": 0,
+                "asil_d": 300000
+            }
+        }
+    ]
+}
