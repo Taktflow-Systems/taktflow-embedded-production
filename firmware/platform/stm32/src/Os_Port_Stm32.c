@@ -502,8 +502,8 @@ void Os_Port_Stm32_PendSvHandler(void)
         return;
     }
 
-    /* Simulate save: store current task's ActivePsp as SavedPsp */
-    Os_Port_Stm32_PendSvSaveContext(os_port_stm32_state.ActivePsp);
+    /* Simulate save: STMDB pushes r4-r11 + EXC_RETURN below the active PSP */
+    Os_Port_Stm32_PendSvSaveContext(os_port_stm32_get_saved_psp(os_port_stm32_state.ActivePsp));
 
     /* Resolve next task */
     next_psp = Os_Port_Stm32_PendSvGetNextContext();
@@ -511,7 +511,8 @@ void Os_Port_Stm32_PendSvHandler(void)
         return;
     }
 
-    Os_Port_Stm32_MarkPendSvComplete(next_psp);
+    /* Simulate restore: LDMIA pops the software frame before exception return */
+    Os_Port_Stm32_MarkPendSvComplete(os_port_stm32_get_restore_psp(next_psp));
 }
 
 void Os_Port_Stm32_SysTickHandler(void)

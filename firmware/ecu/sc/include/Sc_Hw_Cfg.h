@@ -32,6 +32,8 @@
 #define SC_CAN_ID_VEHICLE_STATE     0x100u   /* Vehicle_State (torque in byte 4) */
 #define SC_CAN_ID_MOTOR_CURRENT     0x301u   /* Motor_Current (RZC) */
 #define SC_CAN_ID_RELAY_STATUS      0x013u   /* SC_Relay_Status (SIL broadcast) */
+#define SC_CAN_ID_UDS_REQUEST       0x7E3u   /* HIL diagnostic request (Phase 5 SC alias) */
+#define SC_CAN_ID_UDS_RESPONSE      0x7EBu   /* HIL diagnostic response (Pi proxy route) */
 
 /* ==================================================================
  * CAN Mailbox Numbers (1-indexed, DCAN1 hardware)
@@ -295,6 +297,8 @@
  * ================================================================== */
 
 #define SC_MB_TX_STATUS              7u    /* DCAN1 mailbox 7: TX only, CAN ID 0x013 */
+#define SC_MB_UDS_REQUEST            8u    /* HIL-only RX mailbox for ISO-TP single-frame UDS */
+#define SC_MB_TX_UDS_RESPONSE        9u    /* HIL-only TX mailbox for ISO-TP single-frame UDS */
 
 /* ==================================================================
  * Torque Lookup Table Size

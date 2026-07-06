@@ -22,6 +22,39 @@ This folder contains project artifacts organized by Automotive SPICE process are
 - `system`, `software`, and `verification` files are the main technical specifications and evidence.
 - If you are new, start with the "Recommended Reading Path" below.
 
+## Process Coverage Snapshot
+
+Assessment date: 2026-07-06. This folder is strong as a draft ASPICE evidence
+package, but it is not yet a release assessment package.
+
+| Process Area | Current Evidence | Main Gap Before Release |
+|--------------|------------------|-------------------------|
+| SYS.1 | Stakeholder requirements exist and trace into system requirements. | Refresh traceability after current implementation/doc updates. |
+| SYS.2 | System requirements exist and are linked into safety requirements. | Resolve any remaining partial/test-only trace rows in generated matrices. |
+| SYS.3 | System architecture, interfaces, CAN topology, and CAN matrix exist. | Keep DBC/CAN matrix as the single communication source of truth and regenerate dependent evidence. |
+| SWE.1 | Software requirements exist per ECU/BSW and link to safety requirements. | Refresh stale path-level traces from earlier firmware layout. |
+| SWE.2 | Software, BSW, and vECU architecture documents exist. | Confirm architecture-to-test trace for changed SIL/gateway paths. |
+| SWE.3 | Implementation evidence exists in firmware and generated trace matrices. | Close generated matrix partial implementation rows or justify exclusions. |
+| SWE.4 | Unit plan/report are approved; recorded report shows all tests passing. | Attach current coverage/static-analysis artifacts; close MC/DC evidence. |
+| SWE.5 | Integration strategy, plan, and report exist with passing recorded tests. | Tie integration evidence to the current release baseline and SIL scenarios. |
+| SWE.6 | Verification plan and release notes exist as stubs. | Add SW qualification specification and report. |
+| SYS.4 | System integration report exists as a stub. | Add system integration plan/spec and fill physical/SIL interface results. |
+| SYS.5 | System verification report exists as a stub. | Add system verification plan/spec and link safety validation results. |
+| SUP.1 | QA plan exists and is now mapped to activities, criteria, and review gates. | Attach actual QA review records with findings and dispositions. |
+| SUP.8 | CM folder exists for configuration/change management evidence. | Attach baseline IDs to verification reports and release notes. |
+| HWE | Hardware engineering docs exist. | Complete quantitative hardware metrics and COTS tailoring rationale. |
+
+## Assessment Notes
+
+- Treat `docs/aspice/traceability/traceability-matrix.md` as the process-level
+  traceability snapshot and `docs/safety/verification/traceability-matrix.md`
+  as the safety-focused traceability snapshot.
+- Treat xIL evidence by level: SIL supports SWE.4/SWE.5/SWE.6, while physical
+  HIL is required for SYS.4/SYS.5 and ISO 26262 safety validation.
+- Do not claim release readiness from a passing SIL demo alone; require
+  scenario logs, build baselines, CAN traces, timing data, and independent
+  review records.
+
 ## Recommended Reading Path
 
 > Full interactive version: [docs/guides/reading-list.html](../guides/reading-list.html) (open in browser for checkboxes and progress tracking)

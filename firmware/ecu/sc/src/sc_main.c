@@ -29,6 +29,7 @@
 #include "sc_gio.h"
 #include "sc_monitoring.h"     /* SWR-SC-029/030: SC_Status broadcast (GAP-1/2) */
 #include "sc_state.h"         /* GAP-SC-006: authoritative state machine */
+#include "sc_uds_shim.h"
 
 /* SIL diagnostic logging — compile with -DSIL_DIAG to enable */
 #ifdef SIL_DIAG
@@ -156,6 +157,7 @@ int main(void)
     SC_Watchdog_Init();
     SC_Monitoring_Init();       /* SWR-SC-030: SC_Status TX init */
     SC_State_Init();            /* GAP-SC-006: state machine starts in INIT */
+    SC_UdsShim_Init();          /* HIL-only direct UDS shim for Phase 5 SC routing */
     /* ESM lockstep monitoring — define SC_ESM_ENABLED to activate.
      * WAIVER HIL-PF-008: Temporarily disabled because CCM-R5F (CPU lockstep
      * comparator) asserts a persistent ESM Group 2 error on the TMS570LC43x
@@ -209,6 +211,9 @@ int main(void)
 
         /* ---- Step 1: CAN Receive ---- */
         SC_CAN_Receive();
+
+        /* ---- Step 1a: HIL diagnostic shim ---- */
+        SC_UdsShim_Poll();
 
         /* ---- Step 2: Heartbeat Monitor ---- */
         SC_Heartbeat_Monitor();

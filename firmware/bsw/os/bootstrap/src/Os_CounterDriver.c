@@ -18,7 +18,7 @@
  */
 #include "Os_Internal.h"
 
-#if defined(PLATFORM_STM32) || defined(PLATFORM_TMS570)
+#if defined(PLATFORM_STM32) || defined(PLATFORM_STM32L5) || defined(PLATFORM_TMS570)
 #include "Os_Port_TaskBinding.h"
 #endif
 

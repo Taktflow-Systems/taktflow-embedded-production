@@ -228,6 +228,21 @@ class TelemetryState:
 # Global state
 state = TelemetryState()
 ws_clients: set[WebSocket] = set()
+last_broadcast_ts = 0.0
+last_broadcast_clients = 0
+broadcast_failures = 0
+last_broadcast_error = ""
+
+
+def _env_float(name: str, default: float) -> float:
+    try:
+        return float(os.environ.get(name, str(default)))
+    except ValueError:
+        log.warning("Invalid %s, using %.2f", name, default)
+        return default
+
+
+WS_SEND_TIMEOUT_SEC = _env_float("WS_SEND_TIMEOUT_SEC", 1.0)
 
 
 def _parse_float(val: str, default: float = 0.0) -> float:
@@ -634,26 +649,59 @@ async def telemetry_ws(websocket: WebSocket):
 @app.get("/health")
 async def health():
     """Health check endpoint."""
+    now = time.time()
+    last_age = None if last_broadcast_ts <= 0.0 else round(now - last_broadcast_ts, 3)
+    broadcast_stale = bool(ws_clients) and (
+        last_broadcast_ts <= 0.0 or (now - last_broadcast_ts) > max(2.0, WS_SEND_TIMEOUT_SEC * 2.0)
+    )
     return {
-        "status": "ok",
+        "status": "degraded" if broadcast_stale else "ok",
         "clients": len(ws_clients),
-        "uptime_sec": int(time.time() - state.start_time),
+        "uptime_sec": int(now - state.start_time),
+        "last_broadcast_age_sec": last_age,
+        "last_broadcast_clients": last_broadcast_clients,
+        "broadcast_failures": broadcast_failures,
+        "last_broadcast_error": last_broadcast_error,
     }
+
+
+async def _send_snapshot(ws: WebSocket, data: str) -> tuple[WebSocket, BaseException | None]:
+    """Send one snapshot with a hard timeout so one client cannot stall the loop."""
+    try:
+        await asyncio.wait_for(ws.send_text(data), timeout=WS_SEND_TIMEOUT_SEC)
+        return ws, None
+    except Exception as exc:
+        try:
+            await asyncio.wait_for(ws.close(code=1011), timeout=0.25)
+        except Exception:
+            pass
+        return ws, exc
 
 
 async def broadcast_loop():
     """Broadcast telemetry snapshot to all WebSocket clients at 4Hz."""
+    global last_broadcast_ts, last_broadcast_clients, broadcast_failures, last_broadcast_error
+
     while True:
         if ws_clients:
             snapshot = state.to_snapshot()
             data = json.dumps(snapshot)
+            clients = list(ws_clients)
             disconnected = set()
-            for ws in ws_clients:
-                try:
-                    await ws.send_text(data)
-                except Exception:
+            results = await asyncio.gather(*(_send_snapshot(ws, data) for ws in clients))
+
+            for ws, exc in results:
+                if exc is not None:
                     disconnected.add(ws)
-            ws_clients.difference_update(disconnected)
+                    broadcast_failures += 1
+                    last_broadcast_error = type(exc).__name__
+                    log.warning("Dropping stalled WebSocket client after %s", last_broadcast_error)
+
+            if disconnected:
+                ws_clients.difference_update(disconnected)
+
+            last_broadcast_ts = time.time()
+            last_broadcast_clients = len(clients) - len(disconnected)
 
         await asyncio.sleep(0.25)  # 4Hz — smooth for visual dashboard
 

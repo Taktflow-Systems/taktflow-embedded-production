@@ -5,7 +5,7 @@
  */
 #include "Os_Internal.h"
 
-#if defined(PLATFORM_STM32) || defined(PLATFORM_TMS570)
+#if defined(PLATFORM_STM32) || defined(PLATFORM_STM32L5) || defined(PLATFORM_TMS570)
 #include "Os_Port.h"
 #include "Os_Port_TaskBinding.h"
 #endif
@@ -774,7 +774,7 @@ StatusType Os_TestCompletePortDispatches(void)
 {
     StatusType status = E_OS_NOFUNC;
 
-#if defined(PLATFORM_STM32) || defined(PLATFORM_TMS570)
+#if defined(PLATFORM_STM32) || defined(PLATFORM_STM32L5) || defined(PLATFORM_TMS570)
     while (Os_Port_CompleteConfiguredDispatch() == E_OK) {
         status = E_OK;
     }
@@ -829,7 +829,7 @@ StatusType Os_TestInvokeIsrCat2(Os_TestIsrHandlerType Handler)
 #if defined(PLATFORM_TMS570)
     Os_Port_Tms570_IrqContextSave();
     Os_Port_Tms570_IrqNestingStart();
-#elif defined(PLATFORM_STM32)
+#elif defined(PLATFORM_STM32) || defined(PLATFORM_STM32L5)
     Os_PortEnterIsr2();
 #else
     Os_BootstrapEnterIsr2();
@@ -839,7 +839,7 @@ StatusType Os_TestInvokeIsrCat2(Os_TestIsrHandlerType Handler)
 #if defined(PLATFORM_TMS570)
     Os_Port_Tms570_IrqNestingEnd();
     Os_Port_Tms570_IrqContextRestore();
-#elif defined(PLATFORM_STM32)
+#elif defined(PLATFORM_STM32) || defined(PLATFORM_STM32L5)
     Os_PortExitIsr2();
 #else
     Os_BootstrapExitIsr2();

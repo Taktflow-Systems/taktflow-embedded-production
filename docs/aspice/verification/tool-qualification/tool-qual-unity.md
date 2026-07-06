@@ -31,7 +31,7 @@
 
 Unity is a lightweight, portable unit test framework for C. It provides assertion macros (`TEST_ASSERT_EQUAL`, `TEST_ASSERT_TRUE`, `TEST_ASSERT_EQUAL_HEX8`, `TEST_ASSERT_FLOAT_WITHIN`, etc.) and a test runner infrastructure (`UNITY_BEGIN`, `RUN_TEST`, `UNITY_END`) for organizing and executing test cases.
 
-Unity is vendored (committed directly to the repository) at `firmware/shared/bsw/test/unity/`. The vendored copy is a single-header, single-source implementation (~2,500 lines of C) with no external dependencies.
+Unity is vendored (committed directly to the repository) at `firmware/lib/vendor/unity/`. The vendored copy is a single-header, single-source implementation (~2,500 lines of C) with no external dependencies.
 
 In this project, Unity is used as the sole unit test execution framework for all firmware modules across all 7 ECUs (CVC, FZC, RZC, SC, BCM, ICU, TCU) and all 18+ BSW modules. Every `@verifies` tag in a test file relies on Unity's assertion macros to deliver a correct PASS/FAIL verdict.
 
@@ -110,7 +110,7 @@ Unity is NOT used for: mocking (manual mocks are used; CMock available if needed
 
 | # | Evidence Item | Location | Description |
 |---|--------------|----------|-------------|
-| E1 | Unity source code (vendored, reviewed) | `firmware/shared/bsw/test/unity/` | Complete Unity 2.6.0 source committed to repository. Code review confirmed assertion macros are straightforward comparisons. |
+| E1 | Unity source code (vendored, reviewed) | `firmware/lib/vendor/unity/` | Complete Unity 2.6.0 source committed to repository. Code review confirmed assertion macros are straightforward comparisons. |
 | E2 | Proven-in-use record | https://github.com/ThrowTheSwitch/Unity | Unity is the most widely used C unit test framework in embedded systems. Active development since 2007. >3,500 GitHub stars. Used by automotive, medical device, and aerospace companies. |
 | E3 | Unit test results | CI artifact: `test.yml` | All tests compiled and executed by CI on every commit. PASS/FAIL results recorded. |
 | E4 | Test count validation | CI output: `X Tests Y Failures Z Ignored` | Total test count verified against expected count in CI. |

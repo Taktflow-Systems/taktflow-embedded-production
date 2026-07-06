@@ -1,11 +1,11 @@
 ﻿---
 document_id: SP
 title: "Safety Plan"
-version: "1.0"
+version: "1.1"
 status: draft
 iso_26262_part: 2
 iso_26262_clause: "6"
-date: 2026-02-21
+date: 2026-07-06
 ---
 
 ## Human-in-the-Loop (HITL) Comment Lock
@@ -172,18 +172,20 @@ The following safety goals were derived from the HARA (document HARA v1.0) and a
 |-------|-------------|------|------------|------|
 | SG-001 | The system shall prevent unintended acceleration due to erroneous pedal sensor readings | D | SS-MOTOR-OFF | 50 ms |
 | SG-002 | The system shall prevent unintended loss of drive torque during vehicle operation | B | SS-CONTROLLED-STOP | 200 ms |
-| SG-003 | The system shall prevent unintended steering movement and ensure steering availability during turning manoeuvres | D | SS-STEER-CENTER | 100 ms |
+| SG-003 | The system shall prevent unintended steering movement and ensure steering availability during turning manoeuvres | D | SS-MOTOR-OFF | 100 ms |
 | SG-004 | The system shall prevent unintended loss of braking capability during braking operations | D | SS-MOTOR-OFF | 50 ms |
 | SG-005 | The system shall prevent unintended braking events during normal driving | A | SS-CONTROLLED-STOP | 200 ms |
 | SG-006 | The system shall ensure motor protection against overcurrent, overtemperature, and supply voltage excursion | A | SS-MOTOR-OFF | 500 ms |
 | SG-007 | The system shall ensure timely detection of obstacles by the distance sensing function | C | SS-CONTROLLED-STOP | 200 ms |
 | SG-008 | The system shall ensure availability of independent safety monitoring, emergency stop, and protection against unintended motor reversal | C | SS-SYSTEM-SHUTDOWN | 100 ms |
 
-**ASIL distribution**: 3x ASIL D, 2x ASIL C, 1x ASIL B, 2x ASIL A (8 safety goals total, derived from 15 hazardous events across 20 HARA entries).
+**ASIL distribution**: 3x ASIL D, 2x ASIL C, 1x ASIL B, 2x ASIL A (8 safety goals total, derived from 20 hazardous events).
 
 ## 5. Safety Activities per Project Phase
 
-The master plan defines 15 phases (Phase 0 through Phase 14). This section maps safety activities, work products, and confirmation measures to each phase. Safety activities are integrated into the project schedule — they are not a separate parallel track.
+The current master plan defines phases through Phase 18. This section maps safety activities, work products, and confirmation measures to the original safety-plan phases and adds the current physical-HIL closure point. Safety activities are integrated into the project schedule; they are not a separate parallel track.
+
+**2026-07-06 alignment note:** Phase 14 remains the demo/system-verification packaging milestone. Production-style safety closure requires Phase 18 physical hardware build and HIL evidence before the final safety case can be closed.
 
 ### 5.1 Phase 0: Project Setup and Architecture Docs
 
@@ -246,10 +248,10 @@ The master plan defines 15 phases (Phase 0 through Phase 14). This section maps 
 
 | Activity | ISO 26262 Reference | Work Products | Confirmation |
 |----------|---------------------|---------------|-------------|
-| Implement MCAL drivers (Can, Spi, Adc, Pwm, Dio, Gpt) | Part 6, Clause 8 | Source code (firmware/shared/bsw/mcal/) | Code review (I1), MISRA check |
-| Implement ECU Abstraction Layer (CanIf, PduR, IoHwAb) | Part 6, Clause 8 | Source code (firmware/shared/bsw/ecual/) | Code review (I1), MISRA check |
-| Implement BSW services (Com, Dcm, Dem, WdgM, BswM, E2E) | Part 6, Clause 8 | Source code (firmware/shared/bsw/services/) | Code review (I1), MISRA check |
-| Implement Runtime Environment (RTE) | Part 6, Clause 8 | Source code (firmware/shared/bsw/rte/) | Code review (I1), MISRA check |
+| Implement MCAL drivers (Can, Spi, Adc, Pwm, Dio, Gpt) | Part 6, Clause 8 | Source code (firmware/bsw/mcal/) | Code review (I1), MISRA check |
+| Implement ECU Abstraction Layer (CanIf, PduR, IoHwAb) | Part 6, Clause 8 | Source code (firmware/bsw/ecual/) | Code review (I1), MISRA check |
+| Implement BSW services (Com, Dcm, Dem, WdgM, BswM, E2E) | Part 6, Clause 8 | Source code (firmware/bsw/services/) | Code review (I1), MISRA check |
+| Implement Runtime Environment (RTE) | Part 6, Clause 8 | Source code (firmware/bsw/rte/) | Code review (I1), MISRA check |
 | Run static analysis (cppcheck + MISRA checker) on BSW | Part 6, 9.4 | Static analysis report | Walk-through (I0) |
 | Verify BSW against software architecture | Part 6, Clause 9 | Architecture compliance record | Walk-through (I1) |
 
@@ -257,7 +259,7 @@ The master plan defines 15 phases (Phase 0 through Phase 14). This section maps 
 
 | Activity | ISO 26262 Reference | Work Products | Confirmation |
 |----------|---------------------|---------------|-------------|
-| Implement CVC SWCs: Swc_Pedal, Swc_VehicleState, Swc_Dashboard, Swc_EStop, Swc_Heartbeat | Part 6, Clause 8 | Source code (firmware/cvc/src/) | Code review (I2 for ASIL D: Swc_Pedal, Swc_VehicleState, Swc_EStop) |
+| Implement CVC SWCs: Swc_Pedal, Swc_VehicleState, Swc_Dashboard, Swc_EStop, Swc_Heartbeat | Part 6, Clause 8 | Source code (firmware/ecu/cvc/src/) | Code review (I2 for ASIL D: Swc_Pedal, Swc_VehicleState, Swc_EStop) |
 | Implement dual pedal sensor plausibility check (SM-001) | Part 6, Clause 8 | Source code (Swc_Pedal.c) | Code review (I2), MISRA check |
 | Implement vehicle state machine (SM-022) | Part 6, Clause 8 | Source code (Swc_VehicleState.c) | Code review (I2) |
 | Implement E-stop broadcast (SM-023) | Part 6, Clause 8 | Source code (Swc_EStop.c) | Code review (I2) |
@@ -268,7 +270,7 @@ The master plan defines 15 phases (Phase 0 through Phase 14). This section maps 
 
 | Activity | ISO 26262 Reference | Work Products | Confirmation |
 |----------|---------------------|---------------|-------------|
-| Implement FZC SWCs: Swc_Steering, Swc_Brake, Swc_Lidar, Swc_FzcSafety, Swc_Heartbeat | Part 6, Clause 8 | Source code (firmware/fzc/src/) | Code review (I2 for ASIL D: Swc_Steering, Swc_Brake) |
+| Implement FZC SWCs: Swc_Steering, Swc_Brake, Swc_Lidar, Swc_FzcSafety, Swc_Heartbeat | Part 6, Clause 8 | Source code (firmware/ecu/fzc/src/) | Code review (I2 for ASIL D: Swc_Steering, Swc_Brake) |
 | Implement steering angle feedback monitoring (SM-008) | Part 6, Clause 8 | Source code (Swc_Steering.c) | Code review (I2), MISRA check |
 | Implement steering rate limiting (SM-009) and angle limits (SM-010) | Part 6, Clause 8 | Source code (Swc_Steering.c) | Code review (I2) |
 | Implement brake command monitoring (SM-011) and auto-brake on CAN timeout (SM-012) | Part 6, Clause 8 | Source code (Swc_Brake.c) | Code review (I2) |
@@ -279,7 +281,7 @@ The master plan defines 15 phases (Phase 0 through Phase 14). This section maps 
 
 | Activity | ISO 26262 Reference | Work Products | Confirmation |
 |----------|---------------------|---------------|-------------|
-| Implement RZC SWCs: Swc_Motor, Swc_CurrentMonitor, Swc_TempMonitor, Swc_Battery, Swc_RzcSafety, Swc_Heartbeat | Part 6, Clause 8 | Source code (firmware/rzc/src/) | Code review (I2 for ASIL D: Swc_Motor) |
+| Implement RZC SWCs: Swc_Motor, Swc_CurrentMonitor, Swc_TempMonitor, Swc_Battery, Swc_RzcSafety, Swc_Heartbeat | Part 6, Clause 8 | Source code (firmware/ecu/rzc/src/) | Code review (I2 for ASIL D: Swc_Motor) |
 | Implement motor current monitoring with overcurrent cutoff (SM-002) | Part 6, Clause 8 | Source code (Swc_CurrentMonitor.c) | Code review (I2), MISRA check |
 | Implement motor temperature derating (SM-015) and current limiting (SM-016) | Part 6, Clause 8 | Source code (Swc_TempMonitor.c, Swc_CurrentMonitor.c) | Code review (I1, ASIL A) |
 | Implement motor controller health monitoring (SM-006) | Part 6, Clause 8 | Source code (Swc_Motor.c) | Code review (I1, ASIL B) |
@@ -302,8 +304,8 @@ The master plan defines 15 phases (Phase 0 through Phase 14). This section maps 
 
 | Activity | ISO 26262 Reference | Work Products | Confirmation |
 |----------|---------------------|---------------|-------------|
-| Implement POSIX CAN MCAL abstraction (Can_Posix.c) | Part 6, Clause 8 | Source code (firmware/shared/bsw/mcal/Can_Posix.c) | Code review (I0, QM) |
-| Implement BCM, ICU, TCU application code | Part 6, Clause 8 | Source code (firmware/bcm/, firmware/icu/, firmware/tcu/) | Code review (I0, QM) |
+| Implement POSIX CAN MCAL abstraction (Can_Posix.c) | Part 6, Clause 8 | Source code (firmware/bsw/mcal/Can_Posix.c) | Code review (I0, QM) |
+| Implement BCM, ICU, TCU application code | Part 6, Clause 8 | Source code (firmware/ecu/bcm/, firmware/ecu/icu/, firmware/ecu/tcu/) | Code review (I0, QM) |
 | Verify CAN message compliance with CAN matrix | Part 4 | CAN message trace logs | Walk-through (I0) |
 
 **Note**: Simulated ECUs (BCM, ICU, TCU) are QM-rated. No safety-critical functions are allocated to simulated ECUs. Safety confirmation measures beyond I0 are not required.
@@ -407,11 +409,11 @@ This section lists all ISO 26262 work products produced by the project, mapped t
 |-------------|------------------|-------------|-------|----------|
 | Software Safety Requirements | 6-6 | SW Engineer | 3 | docs/safety/requirements/sw-safety-reqs.md |
 | Software Architecture | 6-7 | SW Engineer | 3 | docs/aspice/software/sw-architecture/ |
-| Source Code (BSW) | 6-8 | SW Engineer | 5 | firmware/shared/bsw/ |
-| Source Code (CVC SWCs) | 6-8 | SW Engineer | 6 | firmware/cvc/src/ |
-| Source Code (FZC SWCs) | 6-8 | SW Engineer | 7 | firmware/fzc/src/ |
-| Source Code (RZC SWCs) | 6-8 | SW Engineer | 8 | firmware/rzc/src/ |
-| Source Code (SC firmware) | 6-8 | SW Engineer | 9 | firmware/sc/src/ |
+| Source Code (BSW) | 6-8 | SW Engineer | 5 | firmware/bsw/ |
+| Source Code (CVC SWCs) | 6-8 | SW Engineer | 6 | firmware/ecu/cvc/src/ |
+| Source Code (FZC SWCs) | 6-8 | SW Engineer | 7 | firmware/ecu/fzc/src/ |
+| Source Code (RZC SWCs) | 6-8 | SW Engineer | 8 | firmware/ecu/rzc/src/ |
+| Source Code (SC firmware) | 6-8 | SW Engineer | 9 | firmware/ecu/sc/src/ |
 | Static Analysis Reports | 6-9.4 | SW Engineer | 5-9 | docs/aspice/verification/unit-test/static-analysis-report.md |
 | Unit Test Plans and Results | 6-9.4 | Test Engineer | 12 | docs/aspice/verification/unit-test/ |
 | Code Coverage Reports (MC/DC) | 6-9.4 | Test Engineer | 12 | docs/aspice/verification/unit-test/coverage-report.md |
@@ -579,7 +581,7 @@ The safety case follows the Goal Structuring Notation (GSN) approach per ISO 262
 |---------|---------|---------|-------|
 | Preliminary | Phase 1 complete (concept phase done) | HARA, safety goals, FSC, FSR. Argument: hazards are identified and safety mechanisms are conceptually defined. | 1 |
 | Interim | Phase 9 complete (all firmware implemented) | All requirements, architecture, source code, static analysis. Argument: safety mechanisms are implemented and architecturally sound. FMEA, DFA, hardware metrics included. | 9 |
-| Final | Phase 14 complete (all verification done) | All verification results (unit tests, xIL tests, HIL), coverage reports, traceability matrix. Argument: all safety goals are demonstrated as achieved through testing and analysis. | 14 |
+| Final | Phase 18 complete (physical HIL and validation done) | All verification results (unit tests, xIL tests, HIL), coverage reports, traceability matrix, confirmation records. Argument: all safety goals are demonstrated as achieved through testing and analysis. | 18 |
 
 ### 8.3 Safety Case Evidence Mapping
 
@@ -699,7 +701,7 @@ Configuration management follows the Git Flow branching strategy defined in the 
 | Design Baseline | Phase 4 complete | CAN matrix, HSI, pin mapping | v0.4.0 |
 | Implementation Baseline | Phase 9 complete | All firmware source code, BSW, SWC | v0.9.0 |
 | Verification Baseline | Phase 12 complete | All test results, coverage reports, static analysis | v0.12.0 |
-| Release Baseline | Phase 14 complete | Complete project (all work products, final safety case) | v1.0.0 |
+| Release Baseline | Phase 18 complete | Complete project (all work products, final safety case, HIL/system validation evidence) | v1.0.0 |
 
 ### 11.3 Change Impact Assessment
 
@@ -759,7 +761,8 @@ Per ISO 26262-2 Clause 5.4.4, a safety culture shall be established and maintain
 | 11 | Edge Gateway + Cloud + ML + SAP QM | 2.5 days | No safety milestone (out of safety scope). |
 | 12 | Verification: xIL + Unit Tests | 2 days | SM-12: All safety mechanisms verified. MC/DC coverage achieved. Traceability complete. |
 | 13 | HIL: Hardware Assembly + Integration | 1.5 days | SM-13: Safety chain validated on real hardware. FTTI compliance measured. |
-| 14 | Demo + Video + Portfolio Polish | 1.5 days | SM-14: Final Safety Case. Safety validation complete. Baseline v1.0.0 tagged. |
+| 14 | Demo + Video + Portfolio Polish | 1.5 days | SM-14: Conditional safety case, demo evidence package, and open validation gaps recorded. |
+| 18 | Physical Hardware Build + HIL Testing | Current master-plan phase | SM-18: Physical HIL evidence complete; final safety case closure review. |
 
 ### 13.2 Safety Gates
 
@@ -776,7 +779,8 @@ No phase transition occurs without the following gate criteria being met:
 | G7-G10 | Phase 6-9 to next | ECU firmware compiles, passes static analysis, safety mechanisms implemented per FSC. Code review complete at required independence level. |
 | G11 | Phase 12 to Phase 13 | All unit tests pass. MC/DC coverage targets met for ASIL D code. SIL scenarios pass. PIL completed for at least 1 ECU. Traceability matrix 100% complete (no gaps). |
 | G12 | Phase 13 to Phase 14 | HIL integration test passes. Safety chain validated. Fault injection tests pass. Timing validated against FTTI. No critical open issues. |
-| G13 | Phase 14 complete | All 16 demo scenarios pass. Final safety case compiled with complete evidence. Final traceability verified. Safety validation report approved. Baseline v1.0.0 tagged. |
+| G13 | Phase 14 complete | All 16 demo scenarios pass or are explicitly marked as non-release evidence. Safety case compiled as conditional. Final traceability gaps listed. Safety validation report updated. Demo baseline tagged if needed. |
+| G14 | Phase 18 complete | Physical HIL passes. FTTI timing measured on hardware. Final safety case closed with HIL/system validation evidence, regenerated traceability, and confirmation records. |
 
 ## 14. Residual Risk and Assumptions
 

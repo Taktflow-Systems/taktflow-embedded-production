@@ -1,0 +1,2 @@
+[console_scripts]
+odx-gen = odx_gen.__main__:main

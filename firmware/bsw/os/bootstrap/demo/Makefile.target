@@ -1,0 +1,209 @@
+# Physical-target demo builds for the OSEK bootstrap demo.
+#
+# Currently supported:
+#   make -f firmware/bsw/os/bootstrap/demo/Makefile.target stm32g474
+#   make -f firmware/bsw/os/bootstrap/demo/Makefile.target flash-stm32g474 STLINK_SERIAL=<g4-stlink-serial>
+#   make -f firmware/bsw/os/bootstrap/demo/Makefile.target stm32l5
+#   make -f firmware/bsw/os/bootstrap/demo/Makefile.target flash-stm32l5 STLINK_SERIAL=<l5-stlink-serial>
+#   make -f firmware/bsw/os/bootstrap/demo/Makefile.target verify-stm32l5-openocd STLINK_SERIAL=<l5-stlink-serial>
+#   make -f firmware/bsw/os/bootstrap/demo/Makefile.target tms570
+#   make -f firmware/bsw/os/bootstrap/demo/Makefile.target flash-tms570
+#   make -f firmware/bsw/os/bootstrap/demo/Makefile.target verify-tms570-xds
+#   make -f firmware/bsw/os/bootstrap/demo/Makefile.target clean
+
+THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+ROOT     := $(abspath $(THIS_DIR)/../../../../..)
+
+BOOT     := $(ROOT)/firmware/bsw/os/bootstrap
+DET      := $(ROOT)/firmware/bsw/services/Det
+STM32    := $(ROOT)/firmware/platform/stm32
+STM32L5  := $(ROOT)/firmware/platform/stm32l5
+TMS570   := $(ROOT)/firmware/platform/tms570
+CVC_CFG  := $(ROOT)/firmware/ecu/cvc/cfg
+SC_DIR   := $(ROOT)/firmware/ecu/sc
+HALC     := $(SC_DIR)/halcogen
+BUILD    := $(ROOT)/build/os-demo-target
+
+PREFIX   ?= arm-none-eabi-
+CC       := $(PREFIX)gcc
+CP       := $(PREFIX)objcopy
+SZ       := $(PREFIX)size
+NM       := $(PREFIX)nm
+PYTHON   ?= python
+OPENOCD  ?= openocd
+STLINK_SERIAL ?=
+TI_CGT_DIR ?= C:/ti/ccs2041/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS
+TI_CC    := $(TI_CGT_DIR)/bin/tiarmclang
+TI_SZ    := $(TI_CGT_DIR)/bin/tiarmsize
+DSLITE   ?= C:/ti/ccs2041/ccs/ccs_base/DebugServer/bin/DSLite.exe
+DSS      ?= C:/ti/ccs2041/ccs/ccs_base/scripting/bin/dss.bat
+
+STM32_MCU_FLAGS := -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
+STM32_CFLAGS := $(STM32_MCU_FLAGS) -Wall -Wextra -Werror -std=c99 -Og -g3 \
+                -DUNIT_TEST -DPLATFORM_STM32 -DSTM32G474xx \
+                -ffunction-sections -fdata-sections
+STM32_LDFLAGS := $(STM32_MCU_FLAGS) -T$(CVC_CFG)/STM32G474XX_FLASH.ld \
+                 -Wl,--gc-sections -Wl,-Map=$(BUILD)/stm32g474_osek_demo.map,--cref \
+                 --specs=nano.specs --specs=nosys.specs -lm
+
+STM32_INC := -I$(ROOT)/firmware/bsw/include \
+             -I$(BOOT)/include \
+             -I$(BOOT)/port/include \
+             -I$(BOOT)/src \
+             -I$(BOOT)/demo \
+             -I$(DET)/include \
+             -I$(STM32)/include \
+             -I$(CVC_CFG)/Drivers/CMSIS/Include \
+             -I$(CVC_CFG)/Drivers/CMSIS/Device/ST/STM32G4xx/Include
+
+KERNEL_SRC := $(wildcard $(BOOT)/src/*.c)
+STM32_SRC := \
+    $(CVC_CFG)/startup_stm32g474xx.s \
+    $(CVC_CFG)/Core/Src/system_stm32g4xx.c \
+    $(KERNEL_SRC) \
+    $(DET)/src/Det.c \
+    $(BOOT)/port/src/Os_Port_TaskBinding.c \
+    $(STM32)/src/Os_Port_Stm32.c \
+    $(BOOT)/demo/Os_Demo_App.c \
+    $(BOOT)/demo/target/Os_Demo_Target_PortStubs.c \
+    $(BOOT)/demo/target/Os_Demo_Stm32G474_Target.c
+
+STM32_ELF := $(BUILD)/stm32g474_osek_demo.elf
+STM32_BIN := $(BUILD)/stm32g474_osek_demo.bin
+
+STM32L5_MCU_FLAGS := -mcpu=cortex-m33 -mthumb -mfpu=fpv5-sp-d16 -mfloat-abi=hard
+STM32L5_CFLAGS := $(STM32L5_MCU_FLAGS) -Wall -Wextra -Werror -std=c99 -Og -g3 \
+                  -DUNIT_TEST -DPLATFORM_STM32L5 -DSTM32L552xx \
+                  -ffunction-sections -fdata-sections
+STM32L5_LDFLAGS := $(STM32L5_MCU_FLAGS) -T$(BOOT)/demo/target/STM32L552XX_FLASH.ld \
+                   -Wl,--gc-sections -Wl,-Map=$(BUILD)/stm32l5_osek_demo.map,--cref \
+                   --specs=nano.specs --specs=nosys.specs -lm
+
+STM32L5_INC := -I$(ROOT)/firmware/bsw/include \
+               -I$(BOOT)/include \
+               -I$(BOOT)/port/include \
+               -I$(BOOT)/src \
+               -I$(BOOT)/demo \
+               -I$(DET)/include \
+               -I$(STM32L5)/include
+
+STM32L5_SRC := \
+    $(BOOT)/demo/target/startup_stm32l5_demo.s \
+    $(KERNEL_SRC) \
+    $(DET)/src/Det.c \
+    $(BOOT)/port/src/Os_Port_TaskBinding.c \
+    $(STM32L5)/src/Os_Port_Stm32L5.c \
+    $(BOOT)/demo/Os_Demo_App.c \
+    $(BOOT)/demo/target/Os_Demo_Stm32L5_Target.c
+
+STM32L5_ELF := $(BUILD)/stm32l5_osek_demo.elf
+STM32L5_BIN := $(BUILD)/stm32l5_osek_demo.bin
+STM32L5_OPENOCD_VERIFY := $(BOOT)/demo/target/stm32l5_openocd_verify.py
+
+TMS570_MCU_FLAGS := -mcpu=cortex-r5 -marm -mfpu=vfpv3-d16 -mfloat-abi=hard -mbig-endian
+TMS570_CFLAGS := $(TMS570_MCU_FLAGS) -std=c99 -Wall -Wno-unused-parameter \
+                 -Wno-unused-variable -Wno-ti-macros -Wno-ti-pragmas \
+                 -DUNIT_TEST -DPLATFORM_TMS570 -DGIT_HASH=\"osekdemo\" \
+                 -D__rev=__builtin_bswap32 -ffunction-sections -fdata-sections
+TMS570_LDFLAGS := $(TMS570_MCU_FLAGS) -Wl,-m,$(BUILD)/tms570_osek_demo.map \
+                  -Wl,--rom_model -Wl,--be32
+
+TMS570_INC := -I$(ROOT)/firmware/bsw/include \
+              -I$(BOOT)/include \
+              -I$(BOOT)/port/include \
+              -I$(BOOT)/src \
+              -I$(BOOT)/demo \
+              -I$(DET)/include \
+              -I$(TMS570)/include \
+              -I$(SC_DIR)/include \
+              -I$(HALC)/include
+
+HALCOGEN_SRCS_ALL := $(wildcard $(HALC)/source/*.c)
+HALCOGEN_EXCLUDE := \
+    $(HALC)/source/HL_sys_main.c \
+    $(HALC)/source/HL_gio.c \
+    $(HALC)/source/HL_rti.c \
+    $(HALC)/source/HL_notification.c \
+    $(HALC)/source/HL_emif.c
+HALCOGEN_SRCS := $(filter-out $(HALCOGEN_EXCLUDE),$(HALCOGEN_SRCS_ALL))
+
+TMS570_SRC := \
+    $(SC_DIR)/src/sc_startup.S \
+    $(HALCOGEN_SRCS) \
+    $(KERNEL_SRC) \
+    $(DET)/src/Det.c \
+    $(BOOT)/port/src/Os_Port_TaskBinding.c \
+    $(TMS570)/src/Os_Port_Tms570.c \
+    $(TMS570)/src/sc_hw_tms570.c \
+    $(BOOT)/demo/Os_Demo_App.c \
+    $(BOOT)/demo/target/Os_Demo_Target_PortStubs.c \
+    $(BOOT)/demo/target/Os_Demo_Tms570_Target.c
+
+TMS570_ELF := $(BUILD)/tms570_osek_demo.elf
+TMS570_XDS_VERIFY := $(BOOT)/demo/target/tms570_xds_verify.js
+
+.PHONY: stm32g474 flash-stm32g474 size-stm32g474 stm32l5 flash-stm32l5 verify-stm32l5-openocd size-stm32l5 tms570 flash-tms570 verify-tms570-xds size-tms570 clean
+
+stm32g474: $(STM32_BIN)
+	@echo Built $(STM32_ELF)
+
+$(BUILD):
+	$(PYTHON) -c "import os, sys; os.makedirs(sys.argv[1], exist_ok=True)" "$@"
+
+$(STM32_ELF): $(STM32_SRC) | $(BUILD)
+	$(CC) $(STM32_CFLAGS) $(STM32_INC) $(STM32_SRC) $(STM32_LDFLAGS) -o $@
+
+$(STM32_BIN): $(STM32_ELF)
+	$(CP) -O binary $< $@
+
+ifeq ($(strip $(STLINK_SERIAL)),)
+STM32_OPENOCD_SERIAL_ARGS :=
+else
+STM32_OPENOCD_SERIAL_ARGS := -c "hla_serial $(STLINK_SERIAL)"
+endif
+
+flash-stm32g474: $(STM32_ELF)
+	$(OPENOCD) -f board/st_nucleo_g4.cfg $(STM32_OPENOCD_SERIAL_ARGS) \
+	  -c "program $(STM32_ELF) verify reset exit"
+
+size-stm32g474: $(STM32_ELF)
+	$(SZ) --format=berkeley $(STM32_ELF)
+
+stm32l5: $(STM32L5_BIN)
+	@echo Built $(STM32L5_ELF)
+
+$(STM32L5_ELF): $(STM32L5_SRC) | $(BUILD)
+	$(CC) $(STM32L5_CFLAGS) $(STM32L5_INC) $(STM32L5_SRC) $(STM32L5_LDFLAGS) -o $@
+
+$(STM32L5_BIN): $(STM32L5_ELF)
+	$(CP) -O binary $< $@
+
+flash-stm32l5: $(STM32L5_ELF)
+	$(OPENOCD) -f interface/stlink.cfg $(STM32_OPENOCD_SERIAL_ARGS) \
+	  -f target/stm32l5x.cfg \
+	  -c "program $(STM32L5_ELF) verify reset exit"
+
+verify-stm32l5-openocd: $(STM32L5_ELF)
+	@$(PYTHON) "$(STM32L5_OPENOCD_VERIFY)" "$(OPENOCD)" "$(NM)" "$(STM32L5_ELF)" "$(STLINK_SERIAL)"
+
+size-stm32l5: $(STM32L5_ELF)
+	$(SZ) --format=berkeley $(STM32L5_ELF)
+
+tms570: $(TMS570_ELF)
+	@echo Built $(TMS570_ELF)
+
+$(TMS570_ELF): $(TMS570_SRC) | $(BUILD)
+	$(TI_CC) $(TMS570_CFLAGS) $(TMS570_INC) $(TMS570_SRC) $(TMS570_LDFLAGS) \
+	  $(HALC)/source/HL_sys_link.cmd -o $@
+
+flash-tms570: $(TMS570_ELF)
+	"$(DSLITE)" load -c "$(SC_DIR)/TMS570LC43xx_XDS110.ccxml" -f "$(TMS570_ELF)"
+
+verify-tms570-xds: $(TMS570_ELF)
+	"$(DSS)" "$(TMS570_XDS_VERIFY)"
+
+size-tms570: $(TMS570_ELF)
+	$(TI_SZ) $(TMS570_ELF)
+
+clean:
+	$(PYTHON) -c "import shutil, sys; shutil.rmtree(sys.argv[1], ignore_errors=True)" "$(BUILD)"

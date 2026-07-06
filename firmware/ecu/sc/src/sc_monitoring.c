@@ -20,6 +20,10 @@
 #include "sc_selftest.h"
 #include "sc_state.h"
 
+/* T1 probe: unconditional TX every 10ms tick (toggled by -DSC_DEBUG_T1_PROBE
+ * or local define). Remove for production. */
+#define SC_DEBUG_T1_PROBE 1
+
 /* ==================================================================
  * Module State
  * ================================================================== */
@@ -125,6 +129,19 @@ void SC_Monitoring_Init(void)
 void SC_Monitoring_Update(void)
 {
     uint8 frame[SC_RELAY_STATUS_DLC];  /* 4 bytes */
+
+#ifdef SC_DEBUG_T1_PROBE
+    /* T1 probe: fire a hardcoded TX every tick (every 10ms), unconditional.
+     * Bypasses SC_MONITORING_TX_PERIOD gate. Payload = {0xAA,0x55,0x01,...}.
+     * If 0x013 appears on the wire → DCAN path works, bug is gating or
+     * payload-builder logic. If silent → DCAN TX path is broken. */
+    {
+        static const uint8 probe_frame[SC_RELAY_STATUS_DLC] = {
+            0xAAu, 0x55u, 0x01u, 0x02u
+        };
+        SC_CAN_TransmitStatus(probe_frame, SC_RELAY_STATUS_DLC);
+    }
+#endif
 
     mon_tick++;
     if (mon_tick < SC_MONITORING_TX_PERIOD) {

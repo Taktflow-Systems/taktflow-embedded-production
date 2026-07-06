@@ -126,7 +126,7 @@ gcov/lcov are NOT used for: MC/DC coverage measurement (addressed separately -- 
 | E2 | Manual coverage spot-check | Performed during Phase 1 coverage baseline | A function with a known untested branch (error handler path) was verified to appear as uncovered (<100% branch coverage) in the gcov/lcov report. Adding a test that exercises the branch increased the coverage, confirming correct instrumentation. |
 | E3 | Coverage HTML report | CI artifact: `combined-coverage` | Generated on every CI run. Annotated source code with per-line and per-branch coverage highlighting. |
 | E4 | Coverage summary | CI output: `test.yml` workflow log | Statement, branch, and function coverage percentages logged in CI for every build. |
-| E5 | Compiler flags (coverage instrumentation) | `firmware/Makefile.posix`, `firmware/shared/bsw/Makefile` | `--coverage` flag applied to coverage builds. `-O0` optimization level confirmed. |
+| E5 | Compiler flags (coverage instrumentation) | `firmware/Makefile.posix`, `firmware/bsw/Makefile` | `--coverage` flag applied to coverage builds. `-O0` optimization level confirmed. |
 | E6 | Known-untested-path check | Manual validation during Phase 1 | Injected a dead code path (unreachable `if` branch). gcov correctly reported it as 0% covered. Removing the dead code and re-running coverage returned to expected levels. |
 
 ## 7. Compensating Measures

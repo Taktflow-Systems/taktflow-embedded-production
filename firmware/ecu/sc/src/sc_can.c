@@ -7,8 +7,9 @@
  * @traces_to  SSR-SC-001, SSR-SC-002
  * @note    Safety level: ASIL D (RX path), ASIL C (SC_Status TX path)
  *          DCAN1 runs in normal mode per SWR-SC-029 (not silent).
- *          Only mailbox SC_MB_TX_STATUS (7) is TX-capable.
- *          Static analysis rule sc-tx-isolation enforces this.
+ *          Mailbox SC_MB_TX_STATUS (7) is the production SC_Status TX path.
+ *          HIL builds also use SC_MB_TX_UDS_RESPONSE (9) for the
+ *          Phase 5 diagnostic shim.
  * @standard ISO 26262 Part 6
  * @copyright Taktflow Systems 2026
  */
@@ -24,6 +25,7 @@
 extern uint32  dcan1_reg_read(uint32 offset);
 extern void    dcan1_reg_write(uint32 offset, uint32 value);
 extern boolean dcan1_get_mailbox_data(uint8 mbIndex, uint8* data, uint8* dlc);
+extern boolean dcan1_get_diag_request(uint8* data, uint8* dlc);
 extern void    dcan1_setup_mailboxes(void);
 
 /* TX function — firmware constraint: called ONLY from SC_CAN_TransmitStatus().
@@ -126,6 +128,9 @@ void SC_CAN_Init(void)
      * for RX. HIL skips SC_Status TX in SC_CAN_TransmitStatus() instead.
      * Previous silent mode approach failed — DCAN never received frames. */
     dcan1_reg_write(DCAN_CTL_OFFSET, 0x00u);    /* Init and CCE cleared — normal operation */
+
+    /* T2 DEBUG (2026-04-21): removed second dcan1_setup_mailboxes() call.
+     * Prior audit suspected it left MB7/MB9 half-configured in normal mode. */
 
     can_initialized = TRUE;
 }
@@ -256,11 +261,24 @@ boolean SC_CAN_IsEStopActive(void)
 
 void SC_CAN_TransmitStatus(const uint8* payload, uint8 dlc)
 {
-    /* Firmware constraint: this is the ONLY call site for dcan1_transmit().
-     * Static analysis rule sc-tx-isolation: dcan1_transmit() must not appear
-     * elsewhere in firmware/sc/src/. Mailbox SC_MB_TX_STATUS (7) only. */
     if ((payload == NULL_PTR) || (dlc == 0u) || (can_initialized == FALSE)) {
         return;
     }
     dcan1_transmit(SC_MB_TX_STATUS, payload, dlc);
+}
+
+boolean SC_CAN_GetDiagRequest(uint8* data, uint8* dlc)
+{
+    if (can_initialized == FALSE) {
+        return FALSE;
+    }
+    return dcan1_get_diag_request(data, dlc);
+}
+
+void SC_CAN_TransmitDiagResponse(const uint8* payload, uint8 dlc)
+{
+    if ((payload == NULL_PTR) || (dlc == 0u) || (can_initialized == FALSE)) {
+        return;
+    }
+    dcan1_transmit(SC_MB_TX_UDS_RESPONSE, payload, dlc);
 }

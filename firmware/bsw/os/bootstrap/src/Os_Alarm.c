@@ -5,7 +5,7 @@
  */
 #include "Os_Internal.h"
 
-#if defined(PLATFORM_STM32) || defined(PLATFORM_TMS570)
+#if defined(PLATFORM_STM32) || defined(PLATFORM_STM32L5) || defined(PLATFORM_TMS570)
 #include "Os_Port_TaskBinding.h"
 #endif
 
@@ -113,7 +113,7 @@ static StatusType os_bootstrap_complete_port_dispatches(void)
 {
     StatusType status = E_OS_NOFUNC;
 
-#if defined(PLATFORM_STM32) || defined(PLATFORM_TMS570)
+#if defined(PLATFORM_STM32) || defined(PLATFORM_STM32L5) || defined(PLATFORM_TMS570)
     while (Os_Port_CompleteConfiguredDispatch() == E_OK) {
         status = E_OK;
     }

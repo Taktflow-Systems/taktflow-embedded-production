@@ -1382,12 +1382,13 @@ void test_Os_get_task_state_reports_running_while_task_executes(void)
 }
 
 /**
- * @spec OSEK OS 2.2.3 §13.2
- * @requirement Schedule is meaningful only at the allowed call level.
- * @verify Calling Schedule from inside a running task is rejected in the
- *         current bootstrap with E_OS_CALLEVEL.
+ * @spec OSEK OS 2.2.3 section 13.2.3.4
+ * @requirement Schedule shall return E_OK on task level; for a
+ *              full-preemptive task it has no scheduling influence.
+ * @verify Calling Schedule from inside a full-preemptive running task returns
+ *         E_OK and does not invoke ErrorHook.
  */
-void test_Os_schedule_from_running_task_is_rejected_in_current_milestone(void)
+void test_Os_schedule_from_full_preemptive_task_is_noop(void)
 {
     const Os_TaskConfigType cfg[] = {
         { "Schedule", task_schedule, 2u, 1u, 0u, FALSE, FULL }
@@ -1401,8 +1402,8 @@ void test_Os_schedule_from_running_task_is_rejected_in_current_milestone(void)
     TEST_ASSERT_EQUAL(E_OK, Schedule());
     TEST_ASSERT_EQUAL_STRING("Y", execution_log);
     TEST_ASSERT_EQUAL_UINT8(1u, schedule_runs);
-    TEST_ASSERT_EQUAL(E_OS_CALLEVEL, schedule_status);
-    TEST_ASSERT_EQUAL(E_OS_CALLEVEL, error_hook_status);
+    TEST_ASSERT_EQUAL(E_OK, schedule_status);
+    TEST_ASSERT_EQUAL(E_OK, error_hook_status);
 }
 
 /**
@@ -2634,7 +2635,7 @@ int main(void)
     RUN_TEST(test_Os_activation_limit_is_enforced);
     RUN_TEST(test_Os_chain_task_queues_successor_after_current_completion);
     RUN_TEST(test_Os_get_task_state_reports_running_while_task_executes);
-    RUN_TEST(test_Os_schedule_from_running_task_is_rejected_in_current_milestone);
+    RUN_TEST(test_Os_schedule_from_full_preemptive_task_is_noop);
     RUN_TEST(test_Os_app_mode_mask_controls_autostart);
     RUN_TEST(test_Os_shutdown_hook_observes_shutdown_error);
     RUN_TEST(test_Os_application_object_ownership_and_access_follow_configuration);

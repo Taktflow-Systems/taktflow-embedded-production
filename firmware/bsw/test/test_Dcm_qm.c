@@ -55,6 +55,7 @@ Std_ReturnType CanTp_Transmit(PduIdType TxPduId, const PduInfoType* PduInfoPtr)
 
 static boolean mock_bswm_called;
 static uint8   mock_bswm_mode;
+static boolean mock_dem_clear_called;
 
 Std_ReturnType BswM_RequestMode(BswM_RequesterIdType RequesterId,
                                  BswM_ModeType RequestedMode)
@@ -62,6 +63,12 @@ Std_ReturnType BswM_RequestMode(BswM_RequesterIdType RequesterId,
     (void)RequesterId;
     mock_bswm_called = TRUE;
     mock_bswm_mode = (uint8)RequestedMode;
+    return E_OK;
+}
+
+Std_ReturnType Dem_ClearAllDTCs(void)
+{
+    mock_dem_clear_called = TRUE;
     return E_OK;
 }
 
@@ -116,6 +123,7 @@ void setUp(void)
 
     mock_bswm_called = FALSE;
     mock_bswm_mode   = 0xFFu;
+    mock_dem_clear_called = FALSE;
 
     test_config.DidTable     = test_did_table;
     test_config.DidCount     = 2u;
@@ -582,6 +590,39 @@ void test_Dcm_EcuReset_invalid_sub(void)
 }
 
 /* ==================================================================
+ * SWR-BSW-017: ClearDiagnosticInformation (SID 0x14)
+ * ================================================================== */
+
+/** @verifies SWR-BSW-017 — clear all DTCs */
+void test_Dcm_ClearDtc_all(void)
+{
+    uint8 req[] = {0x14u, 0xFFu, 0xFFu, 0xFFu};
+    PduInfoType pdu = { req, 4u };
+
+    Dcm_RxIndication(0u, &pdu);
+    Dcm_MainFunction();
+
+    TEST_ASSERT_TRUE(mock_dem_clear_called);
+    TEST_ASSERT_EQUAL_HEX8(0x54u, mock_tx_data[0]);
+    TEST_ASSERT_EQUAL_UINT8(1u, mock_tx_dlc);
+}
+
+/** @verifies SWR-BSW-017 — ClearDTC wrong length */
+void test_Dcm_ClearDtc_wrong_length(void)
+{
+    uint8 req[] = {0x14u, 0xFFu, 0xFFu};
+    PduInfoType pdu = { req, 3u };
+
+    Dcm_RxIndication(0u, &pdu);
+    Dcm_MainFunction();
+
+    TEST_ASSERT_FALSE(mock_dem_clear_called);
+    TEST_ASSERT_EQUAL_HEX8(0x7Fu, mock_tx_data[0]);
+    TEST_ASSERT_EQUAL_HEX8(0x14u, mock_tx_data[1]);
+    TEST_ASSERT_EQUAL_HEX8(0x13u, mock_tx_data[2]);
+}
+
+/* ==================================================================
  * SWR-BSW-017: SecurityAccess (SID 0x27)
  * ================================================================== */
 
@@ -807,6 +848,10 @@ int main(void)
     RUN_TEST(test_Dcm_EcuReset_hard);
     RUN_TEST(test_Dcm_EcuReset_soft);
     RUN_TEST(test_Dcm_EcuReset_invalid_sub);
+
+    /* ClearDiagnosticInformation */
+    RUN_TEST(test_Dcm_ClearDtc_all);
+    RUN_TEST(test_Dcm_ClearDtc_wrong_length);
 
     /* SecurityAccess */
     RUN_TEST(test_Dcm_SecurityAccess_default_session_rejected);

@@ -9,17 +9,20 @@
  * Implements UDS diagnostic services for physical ECUs:
  * - 0x10 DiagnosticSessionControl (Default + Extended sessions)
  * - 0x11 ECUReset (hard + soft reset via BswM)
+ * - 0x14 ClearDiagnosticInformation (clear all DTCs)
  * - 0x22 ReadDataByIdentifier (configurable DID table)
  * - 0x27 SecurityAccess (seed-key challenge, XOR placeholder)
  * - 0x3E TesterPresent (with suppress-positive-response support)
  *
- * Responses >7 bytes are routed through CanTp for multi-frame TX.
+ * All responses are routed through CanTp so ISO-TP framing is applied
+ * consistently for both single-frame and multi-frame UDS replies.
  *
  * @standard AUTOSAR_SWS_DiagnosticCommunicationManager, ISO 26262 Part 6
  * @copyright Taktflow Systems 2026
  */
 #include "Dcm.h"
 #include "Det.h"
+#include "Dem.h"
 
 #include <string.h>  /* memcpy */
 
@@ -62,6 +65,7 @@ static void dcm_reset_s3_timer(void);
 static void dcm_process_request(const uint8* data, PduLengthType length);
 static void dcm_handle_session_control(const uint8* data, PduLengthType length);
 static void dcm_handle_ecu_reset(const uint8* data, PduLengthType length);
+static void dcm_handle_clear_dtc(const uint8* data, PduLengthType length);
 static void dcm_handle_read_did(const uint8* data, PduLengthType length);
 static void dcm_handle_security_access(const uint8* data, PduLengthType length);
 static void dcm_handle_tester_present(const uint8* data, PduLengthType length);
@@ -75,7 +79,7 @@ static uint8 dcm_prng_next(void)
 }
 
 /**
- * @brief  Send a UDS response — routes through CanTp for >7 bytes
+ * @brief  Send a UDS response through CanTp so ISO-TP framing is always applied
  */
 static void dcm_send_response(const uint8* data, PduLengthType length)
 {
@@ -88,13 +92,7 @@ static void dcm_send_response(const uint8* data, PduLengthType length)
     pdu_info.SduDataPtr = (uint8*)data;  /* cast away const for AUTOSAR PduInfoType */
     pdu_info.SduLength  = length;
 
-    if (length > 7u) {
-        /* Multi-frame: route through CanTp for ISO-TP segmentation */
-        (void)CanTp_Transmit(dcm_config->TxPduId, &pdu_info);
-    } else {
-        /* Single-frame: direct PduR path */
-        (void)PduR_DcmTransmit(dcm_config->TxPduId, &pdu_info);
-    }
+    (void)CanTp_Transmit(dcm_config->TxPduId, &pdu_info);
 }
 
 static void dcm_send_nrc(uint8 sid, uint8 nrc)
@@ -174,6 +172,24 @@ static void dcm_handle_ecu_reset(const uint8* data, PduLengthType length)
         dcm_send_nrc(DCM_SID_ECU_RESET, DCM_NRC_SUBFUNCTION_NOT_SUPPORTED);
         break;
     }
+}
+
+static void dcm_handle_clear_dtc(const uint8* data, PduLengthType length)
+{
+    (void)data;
+
+    if (length < 4u) {
+        dcm_send_nrc(DCM_SID_CLEAR_DTC, DCM_NRC_INCORRECT_MSG_LENGTH);
+        return;
+    }
+
+    if (Dem_ClearAllDTCs() != E_OK) {
+        dcm_send_nrc(DCM_SID_CLEAR_DTC, DCM_NRC_REQUEST_OUT_OF_RANGE);
+        return;
+    }
+
+    dcm_tx_buf[0] = DCM_SID_CLEAR_DTC + DCM_POSITIVE_RESPONSE_OFFSET;
+    dcm_send_response(dcm_tx_buf, 1u);
 }
 
 static void dcm_handle_read_did(const uint8* data, PduLengthType length)
@@ -352,6 +368,10 @@ static void dcm_process_request(const uint8* data, PduLengthType length)
 
     case DCM_SID_ECU_RESET:
         dcm_handle_ecu_reset(data, length);
+        break;
+
+    case DCM_SID_CLEAR_DTC:
+        dcm_handle_clear_dtc(data, length);
         break;
 
     case DCM_SID_READ_DID:

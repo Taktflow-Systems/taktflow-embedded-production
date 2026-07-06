@@ -5,7 +5,7 @@
  */
 #include "Os_Internal.h"
 
-#if defined(PLATFORM_STM32) || defined(PLATFORM_TMS570)
+#if defined(PLATFORM_STM32) || defined(PLATFORM_STM32L5) || defined(PLATFORM_TMS570)
 #include "Os_Port_TaskBinding.h"
 #endif
 
@@ -15,7 +15,7 @@ uint8 os_preempted_task_depth = 0u;
 
 static void os_publish_port_dispatch(TaskType NextTask)
 {
-#if defined(PLATFORM_STM32) || defined(PLATFORM_TMS570)
+#if defined(PLATFORM_STM32) || defined(PLATFORM_STM32L5) || defined(PLATFORM_TMS570)
     Os_Port_ObserveConfiguredDispatch(NextTask);
 #else
     (void)NextTask;
@@ -24,7 +24,7 @@ static void os_publish_port_dispatch(TaskType NextTask)
 
 static void os_stage_port_dispatch(TaskType PreviousTask, TaskType NextTask)
 {
-#if defined(PLATFORM_STM32) || defined(PLATFORM_TMS570)
+#if defined(PLATFORM_STM32) || defined(PLATFORM_STM32L5) || defined(PLATFORM_TMS570)
     if (PreviousTask == INVALID_TASK) {
         Os_Port_SynchronizeConfiguredTask(NextTask);
     } else {
@@ -246,14 +246,15 @@ StatusType Schedule(void)
         return E_OS_CALLEVEL;
     }
 
-    if (os_is_preemptive_task(os_current_task) == TRUE) {
-        os_report_service_error(OS_DET_API_SCHEDULE, DET_E_PARAM_VALUE, E_OS_CALLEVEL);
-        return E_OS_CALLEVEL;
-    }
-
     if (os_tcb[os_current_task].ResourceCount != 0u) {
         os_report_service_error(OS_DET_API_SCHEDULE, DET_E_PARAM_VALUE, E_OS_RESOURCE);
         return E_OS_RESOURCE;
+    }
+
+    /* OSEK OS 2.2.3 section 13.2.3.4: Schedule has no influence on a
+     * full-preemptive running task, so it succeeds without rescheduling. */
+    if (os_is_preemptive_task(os_current_task) == TRUE) {
+        return E_OK;
     }
 
     next_task = os_select_next_ready_task();

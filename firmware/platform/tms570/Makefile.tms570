@@ -244,6 +244,8 @@ ETH_PING_SRC = $(SC_DIR)/test/test_eth_ping.c
 ETH_PING_OBJ = $(BUILD_DIR)/test_eth_ping.o
 ETH_SC_ETH_SRC = $(SC_DIR)/src/sc_eth.c
 ETH_SC_ETH_OBJ = $(BUILD_DIR)/eth/$(SC_DIR)/src/sc_eth.o
+ETH_SC_ETH_UDP_SRC = $(SC_DIR)/src/sc_eth_udp.c
+ETH_SC_ETH_UDP_OBJ = $(BUILD_DIR)/eth/$(SC_DIR)/src/sc_eth_udp.o
 ETH_PING_CFLAGS = $(HAL_CFLAGS) -DSC_ETH_ENABLE
 ETH_SC_ETH_CFLAGS = $(SC_CFLAGS) -DSC_ETH_ENABLE
 
@@ -262,7 +264,7 @@ eth-ping: check-halcogen $(ETH_PING_ELF)
 	@echo "Flash: make -f firmware/platform/tms570/Makefile.tms570 flash-eth-ping"
 	@echo "Test:  ping the board IP configured in test_eth_ping.c"
 
-$(ETH_PING_ELF): $(ETH_PING_OBJ) $(ETH_SC_ETH_OBJ) $(HAL_ETH_OBJS) $(ASM_ETH_OBJS) $(ETH_STARTUP_OBJ) | $(BUILD_DIR)
+$(ETH_PING_ELF): $(ETH_PING_OBJ) $(ETH_SC_ETH_OBJ) $(ETH_SC_ETH_UDP_OBJ) $(HAL_ETH_OBJS) $(ASM_ETH_OBJS) $(ETH_STARTUP_OBJ) | $(BUILD_DIR)
 	$(CC) $(LDFLAGS) $^ $(LDSCRIPT) -o $@
 
 $(ETH_PING_OBJ): $(ETH_PING_SRC) | $(BUILD_DIR)
@@ -270,6 +272,10 @@ $(ETH_PING_OBJ): $(ETH_PING_SRC) | $(BUILD_DIR)
 	$(CC) $(ETH_PING_CFLAGS) -c $< -o $@
 
 $(ETH_SC_ETH_OBJ): $(ETH_SC_ETH_SRC) | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(ETH_SC_ETH_CFLAGS) -c $< -o $@
+
+$(ETH_SC_ETH_UDP_OBJ): $(ETH_SC_ETH_UDP_SRC) | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
 	$(CC) $(ETH_SC_ETH_CFLAGS) -c $< -o $@
 

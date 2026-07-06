@@ -32,14 +32,14 @@ Define the unit test strategy, framework, coverage targets, and test methodology
 ## 2. Scope
 
 All firmware source files in:
-- `firmware/shared/bsw/` — 18 BSW modules (MCAL, ECUAL, Services, RTE)
-- `firmware/cvc/src/` — 6 CVC SWC modules
-- `firmware/fzc/src/` — 6 FZC SWC modules
-- `firmware/rzc/src/` — 7 RZC SWC modules
-- `firmware/sc/src/` — 9 SC modules
-- `firmware/bcm/src/` — 3 BCM SWC modules
-- `firmware/icu/src/` — 2 ICU SWC modules
-- `firmware/tcu/src/` — 3 TCU SWC modules
+- `firmware/bsw/` -- BSW modules (MCAL, ECUAL, Services, RTE)
+- `firmware/ecu/cvc/src/` -- 6 CVC SWC modules
+- `firmware/ecu/fzc/src/` -- 6 FZC SWC modules
+- `firmware/ecu/rzc/src/` -- 7 RZC SWC modules
+- `firmware/ecu/sc/src/` -- 9 SC modules
+- `firmware/ecu/bcm/src/` -- 3 BCM SWC modules
+- `firmware/ecu/icu/src/` -- 2 ICU SWC modules
+- `firmware/ecu/tcu/src/` -- 3 TCU SWC modules
 
 **Total**: 54 modules under test.
 
@@ -51,15 +51,15 @@ All firmware source files in:
 | Compiler | GCC (host, x86-64) | CI: Ubuntu `apt`; Local: 13.x/14.x |
 | Coverage | gcov + lcov | Companion to GCC version |
 | Static analysis | cppcheck + MISRA addon | CI: 2.13; Local: 2.17.1 |
-| Build system | GNU Make | `firmware/shared/bsw/Makefile`, `firmware/Makefile.posix` |
+| Build system | GNU Make | `firmware/bsw/Makefile`, `firmware/Makefile.posix` |
 
 ### Test Execution
 
 | Command | Scope |
 |---------|-------|
-| `make -C firmware/shared/bsw test` | BSW unit tests |
+| `make -C firmware/bsw test` | BSW unit tests |
 | `make -f firmware/Makefile.posix TARGET=<ecu> test` | Per-ECU SWC tests |
-| `make -C firmware/shared/bsw coverage` | BSW coverage report |
+| `make -C firmware/bsw coverage` | BSW coverage report |
 | `make -f firmware/Makefile.posix coverage-all` | Combined coverage (BSW + all ECUs) |
 
 ### Mock Strategy

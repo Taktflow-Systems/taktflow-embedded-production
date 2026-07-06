@@ -117,7 +117,7 @@ Level 5: Multi-ECU SIL
 |-----------|---------------|
 | Host platform | x86-64, POSIX (Linux/MinGW) |
 | Compiler | GCC (CI: Ubuntu apt; Local: 13.x/14.x) |
-| Test framework | Unity 2.6.0 (vendored in `firmware/shared/bsw/unity/`) |
+| Test framework | Unity 2.6.0 (vendored in `firmware/lib/vendor/unity/`) |
 | CAN hardware layer | Mocked via `Can_Write()` stub capturing TX frames |
 | HAL layer | Mocked: `Can_Hw_*`, `Dio_Hw_*`, `Dio_FlipChannel` stubs |
 | Build system | GNU Make, `test/integration/Makefile` |
@@ -410,7 +410,7 @@ All 15 SWR-BSW requirements relevant to inter-module interfaces are covered by a
 
 ## 11. Test Execution Procedure
 
-1. Ensure all unit tests pass: `make -C firmware/shared/bsw test`
+1. Ensure all unit tests pass: `make -C firmware/bsw test`
 2. Build integration tests: `make -C test/integration build`
 3. Execute integration test suite: `make -C test/integration test`
 4. Verify 60/60 tests PASS with 0 failures

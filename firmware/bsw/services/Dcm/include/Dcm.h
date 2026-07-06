@@ -24,6 +24,7 @@
 
 /* UDS Service IDs */
 #define DCM_SID_SESSION_CTRL    0x10u
+#define DCM_SID_CLEAR_DTC       0x14u
 #define DCM_SID_ECU_RESET       0x11u
 #define DCM_SID_READ_DID        0x22u
 #define DCM_SID_SECURITY_ACCESS 0x27u

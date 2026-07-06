@@ -3,9 +3,10 @@
  * @brief   DCAN1 listen-only CAN driver for Safety Controller
  * @date    2026-02-23
  *
- * @details Configures DCAN1 in silent mode (500 kbps), polls 6 mailboxes,
- *          validates E2E on received data, monitors bus silence and errors.
- *          SC never transmits on CAN.
+ * @details Configures DCAN1 (500 kbps), polls the safety mailboxes,
+ *          validates E2E on received data, monitors bus silence and errors,
+ *          and exposes the TX hooks used by SC_Status and the HIL-only
+ *          diagnostic shim.
  *
  * @safety_req SWR-SC-001, SWR-SC-002, SWR-SC-023
  * @traces_to  SSR-SC-001, SSR-SC-002
@@ -82,5 +83,27 @@ boolean SC_CAN_IsEStopActive(void);
  * @note   ASIL C — diagnostic TX path. Not on the ASIL D RX monitoring path.
  */
 void SC_CAN_TransmitStatus(const uint8* payload, uint8 dlc);
+
+/**
+ * @brief  Poll the HIL diagnostic request mailbox (CAN 0x7E3)
+ *
+ * Returns one raw CAN payload when a new ISO-TP frame arrived for the
+ * Phase 5 SC diagnostic alias. The caller owns ISO-TP parsing.
+ *
+ * @param  data  Output buffer (8 bytes minimum)
+ * @param  dlc   Output: received CAN DLC
+ * @return TRUE when a new diagnostic request was read
+ */
+boolean SC_CAN_GetDiagRequest(uint8* data, uint8* dlc);
+
+/**
+ * @brief  Transmit one raw CAN payload on the HIL diagnostic response mailbox
+ *
+ * Used by the minimal Phase 5 UDS shim to answer the Pi proxy on CAN 0x7EB.
+ *
+ * @param  payload  8-byte ISO-TP single-frame response buffer
+ * @param  dlc      CAN DLC to transmit
+ */
+void SC_CAN_TransmitDiagResponse(const uint8* payload, uint8 dlc);
 
 #endif /* SC_CAN_H */

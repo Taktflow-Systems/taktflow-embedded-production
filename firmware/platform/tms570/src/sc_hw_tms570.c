@@ -174,6 +174,9 @@ extern uint32 canTransmit(canBASE_t *node, uint32 messageBox, const uint8 *data)
 #define DCAN_IF1MCTL            0x10Cu
 #define DCAN_IF1DATA            0x110u
 #define DCAN_IF1DATB            0x114u
+#define DCAN_IF1CMD_BYTE        0x101u
+#define DCAN_IF1STAT_BYTE       0x102u
+#define DCAN_IF1NO_BYTE         0x103u
 
 /** DCAN IF2 command register offsets (from DCAN1_BASE) — used for RX */
 #define DCAN_IF2CMD             0x120u
@@ -182,6 +185,7 @@ extern uint32 canTransmit(canBASE_t *node, uint32 messageBox, const uint8 *data)
 #define DCAN_IF2MCTL            0x12Cu
 #define DCAN_IF2DATA            0x130u
 #define DCAN_IF2DATB            0x134u
+#define DCAN_IF2STAT_BYTE       0x122u
 
 /** IF command register bits — TMS570 big-endian: command byte is bits [23:16]
  *  (MISRA 12.2: use uint32 literal for shift) */
@@ -228,6 +232,20 @@ static void reg_write(uint32 base, uint32 offset, uint32 value)
 {
     /* cppcheck-suppress misra-c2012-11.4 */
     volatile uint32 *addr = (volatile uint32 *)(base + offset);
+    *addr = value;
+}
+
+static uint8 reg_read8(uint32 base, uint32 offset)
+{
+    /* cppcheck-suppress misra-c2012-11.4 */
+    volatile const uint8 *addr = (volatile const uint8 *)(base + offset);
+    return *addr;
+}
+
+static void reg_write8(uint32 base, uint32 offset, uint8 value)
+{
+    /* cppcheck-suppress misra-c2012-11.4 */
+    volatile uint8 *addr = (volatile uint8 *)(base + offset);
     *addr = value;
 }
 
@@ -497,7 +515,7 @@ void dcan1_reg_write(uint32 offset, uint32 value)
 static void dcan1_wait_if1_ready(void)
 {
     volatile uint32 timeout = 10000u;
-    while (((reg_read(DCAN1_BASE, DCAN_IF1CMD) & DCAN_IFCMD_BUSY) != 0u) &&
+    while (((uint32)(reg_read8(DCAN1_BASE, DCAN_IF1STAT_BYTE) & 0x80u) != 0u) &&
            (timeout > 0u)) {
         timeout--;
     }
@@ -542,43 +560,29 @@ static void dcan1_config_rx_mailbox(uint8 msg_num, uint16 can_id, uint8 dlc)
 }
 
 /**
- * @brief  Configure DCAN1 mailbox SC_MB_TX_STATUS (7) for transmission
+ * @brief  Configure one DCAN1 TX mailbox using the known-good loopback recipe
  *
- * Programs message object 7 as a TX-only mailbox for SC_Status (0x013).
- * Sets ARB with Dir=1 (TX), MsgVal=1, and standard CAN ID.
- * TxRqst is NOT set here — it is set per-frame in dcan1_transmit().
+ * The TMS570 LaunchPad was previously unreliable when the TX mailbox was
+ * configured through the 32-bit IF1 command word alone. The bring-up
+ * loopback test that uses HALCoGen's byte-oriented IF1CMD/IF1NO sequence is
+ * the known-good baseline, so this helper matches that setup.
  *
- * @param  msg_num  Hardware message object number (1-indexed), must be 7
- * @param  can_id   Standard 11-bit CAN ID for SC_Status (0x013)
- * @param  dlc      Data length code (4 for SC_Status)
+ * @param  msg_num  Hardware message object number (1-indexed)
+ * @param  can_id   Standard 11-bit CAN ID for the TX mailbox
+ * @param  dlc      Data length code configured for the mailbox
  */
 static void dcan1_config_tx_mailbox(uint8 msg_num, uint16 can_id, uint8 dlc)
 {
-    uint32 arb;
-    uint32 mctl;
-
     dcan1_wait_if1_ready();
 
-    /* No mask filtering for TX objects */
-    reg_write(DCAN1_BASE, DCAN_IF1MSK, 0xFFFFFFFFu);
-
-    /* ARB: standard ID in bits 28:18, MsgVal=1, Dir=1 (TX), Xtd=0 */
-    arb = ((uint32)can_id << 18u) | DCAN_ARB_MSGVAL | DCAN_ARB_DIR;
-    reg_write(DCAN1_BASE, DCAN_IF1ARB, arb);
-
-    /* MCTL: DLC, EOB=1 (bit 7). TxRqst cleared — frame not pending yet. */
-    mctl = ((uint32)dlc & 0x0Fu) | ((uint32)1u << 7u);
-    reg_write(DCAN1_BASE, DCAN_IF1MCTL, mctl);
-
-    /* Clear data registers — no payload yet */
-    reg_write(DCAN1_BASE, DCAN_IF1DATA, 0u);
-    reg_write(DCAN1_BASE, DCAN_IF1DATB, 0u);
-
-    /* Transfer IF1 → message object RAM: write all fields */
-    reg_write(DCAN1_BASE, DCAN_IF1CMD,
-              DCAN_IFCMD_WR | DCAN_IFCMD_MASK | DCAN_IFCMD_ARB |
-              DCAN_IFCMD_CONTROL | DCAN_IFCMD_DATAA | DCAN_IFCMD_DATAB |
-              ((uint32)msg_num & 0xFFu));
+    reg_write(DCAN1_BASE, DCAN_IF1MSK,
+              0xC0000000u | ((uint32)0x7FFu << 18u));
+    reg_write(DCAN1_BASE, DCAN_IF1ARB,
+              DCAN_ARB_MSGVAL | DCAN_ARB_DIR | ((uint32)can_id << 18u));
+    reg_write(DCAN1_BASE, DCAN_IF1MCTL,
+              0x00001000u | ((uint32)dlc & 0x0Fu));
+    reg_write8(DCAN1_BASE, DCAN_IF1CMD_BYTE, 0xF8u);
+    reg_write8(DCAN1_BASE, DCAN_IF1NO_BYTE, msg_num);
 
     dcan1_wait_if1_ready();
 }
@@ -597,6 +601,8 @@ static void dcan1_config_tx_mailbox(uint8 msg_num, uint16 can_id, uint8 dlc)
  *   MB5: VehicleState  (0x100) RX
  *   MB6: MotorCurrent  (0x301) RX
  *   MB7: SC_Status     (0x013) TX only (SWR-SC-030)
+ *   MB8: UDS request   (0x7E3) RX only in HIL builds
+ *   MB9: UDS response  (0x7EB) TX only in HIL builds
  */
 void dcan1_setup_mailboxes(void)
 {
@@ -606,7 +612,11 @@ void dcan1_setup_mailboxes(void)
     dcan1_config_rx_mailbox(SC_MB_RZC_HB,        SC_CAN_ID_RZC_HB,       SC_CAN_DLC);
     dcan1_config_rx_mailbox(SC_MB_VEHICLE_STATE,  SC_CAN_ID_VEHICLE_STATE, SC_CAN_DLC);
     dcan1_config_rx_mailbox(SC_MB_MOTOR_CURRENT,  SC_CAN_ID_MOTOR_CURRENT, SC_CAN_DLC);
-    dcan1_config_tx_mailbox(SC_MB_TX_STATUS,     SC_CAN_ID_RELAY_STATUS,  SC_CAN_DLC);
+    dcan1_config_tx_mailbox(SC_MB_TX_STATUS,     SC_CAN_ID_RELAY_STATUS,  SC_RELAY_STATUS_DLC);
+#ifdef PLATFORM_HIL
+    dcan1_config_rx_mailbox(SC_MB_UDS_REQUEST,   SC_CAN_ID_UDS_REQUEST,   SC_CAN_DLC);
+    dcan1_config_tx_mailbox(SC_MB_TX_UDS_RESPONSE, SC_CAN_ID_UDS_RESPONSE, SC_CAN_DLC);
+#endif
 }
 
 /**
@@ -618,7 +628,7 @@ void dcan1_setup_mailboxes(void)
 static void dcan1_wait_if2_ready(void)
 {
     volatile uint32 timeout = 10000u;
-    while (((reg_read(DCAN1_BASE, DCAN_IF2CMD) & DCAN_IFCMD_BUSY) != 0u) &&
+    while (((uint32)(reg_read8(DCAN1_BASE, DCAN_IF2STAT_BYTE) & 0x80u) != 0u) &&
            (timeout > 0u)) {
         timeout--;
     }
@@ -636,23 +646,16 @@ static void dcan1_wait_if2_ready(void)
  * @param  dlc      Output: data length code
  * @return TRUE if valid new data available, FALSE otherwise
  */
-boolean dcan1_get_mailbox_data(uint8 mbIndex, uint8* data, uint8* dlc)
+static boolean dcan1_read_message_object(uint32 msg_num, uint8* data, uint8* dlc)
 {
-    uint32 msg_num;
     uint32 mctl;
     uint32 data_a;
     uint32 data_b;
     uint8 msg_dlc;
 
-    if (mbIndex >= SC_MB_COUNT) {
-        return FALSE;
-    }
     if ((data == NULL_PTR) || (dlc == NULL_PTR)) {
         return FALSE;
     }
-
-    /* Message objects are 1-indexed in DCAN hardware */
-    msg_num = (uint32)mbIndex + 1u;
 
     /* Wait for IF2 to be available */
     dcan1_wait_if2_ready();
@@ -701,25 +704,57 @@ boolean dcan1_get_mailbox_data(uint8 mbIndex, uint8* data, uint8* dlc)
     return TRUE;
 }
 
+boolean dcan1_get_mailbox_data(uint8 mbIndex, uint8* data, uint8* dlc)
+{
+    if (mbIndex >= SC_MB_COUNT) {
+        return FALSE;
+    }
+    return dcan1_read_message_object((uint32)mbIndex + 1u, data, dlc);
+}
+
+boolean dcan1_get_diag_request(uint8* data, uint8* dlc)
+{
+    return dcan1_read_message_object((uint32)SC_MB_UDS_REQUEST, data, dlc);
+}
+
 /**
- * @brief  Transmit a CAN frame via DCAN1 message object SC_MB_TX_STATUS
+ * @brief  Transmit a CAN frame via one of the configured DCAN1 TX mailboxes
  *
- * Loads data into IF1 registers and sets TxRqst to trigger hardware
- * transmission on the pre-configured mailbox 7 (SC_Status, CAN ID 0x013).
+ * Uses HALCoGen's canTransmit() after the mailbox has been configured by
+ * dcan1_config_tx_mailbox().
  *
- * @param  mbIndex  Mailbox index — must be SC_MB_TX_STATUS (7)
+ * @param  mbIndex  Mailbox index — SC_MB_TX_STATUS or SC_MB_TX_UDS_RESPONSE
  * @param  data     Payload bytes (must be non-NULL, length >= dlc)
  * @param  dlc      Data length code (0-8)
  * @note   Thread safety: call only from SC main task (no ISR context).
- *         SWR-SC-030: SC_Status broadcast.
+ *         SWR-SC-030: SC_Status broadcast. HIL also uses mailbox 9 for the
+ *         Phase 5 SC UDS shim.
  */
+/* T4 debug counters — incremented on each TX attempt.
+ * Readable from main via sc_dcan_tx_stats_get(). */
+static uint32 tx_call_count_mb7;
+static uint32 tx_success_count_mb7;
+static uint32 tx_fail_count_mb7;
+static uint32 tx_last_msgval;
+static uint32 tx_last_txrqst;
+
+void sc_dcan_tx_stats_get(uint32 *out)
+{
+    out[0] = tx_call_count_mb7;
+    out[1] = tx_success_count_mb7;
+    out[2] = tx_fail_count_mb7;
+    out[3] = tx_last_msgval;
+    out[4] = tx_last_txrqst;
+}
+
 void dcan1_transmit(uint8 mbIndex, const uint8* data, uint8 dlc)
 {
     uint8  i;
     uint8  tx_dlc;
+    uint32 ret;
 
-    if (mbIndex != SC_MB_TX_STATUS) {
-        return;  /* Only mailbox 7 is configured for TX */
+    if ((mbIndex != SC_MB_TX_STATUS) && (mbIndex != SC_MB_TX_UDS_RESPONSE)) {
+        return;
     }
     if (data == NULL_PTR) {
         return;
@@ -728,16 +763,31 @@ void dcan1_transmit(uint8 mbIndex, const uint8* data, uint8 dlc)
     tx_dlc = (dlc > 8u) ? 8u : dlc;
     (void)tx_dlc;
 
+    if (mbIndex == SC_MB_TX_STATUS) {
+        tx_call_count_mb7++;
+    }
+
     /* Use HALCoGen's canTransmit() which is proven to work on this LaunchPad.
      * The custom register-level TX code had endianness issues with IF1CMD/IF1DATA
      * on TMS570 BE32 — canTransmit() handles byte ordering correctly via
      * IF1DATx[] register array and s_canByteOrder[] lookup.
      * See: docs/lessons-learned/embedded-bringup-tms570-can-tx.md */
-    (void)canTransmit(canREG1, (uint32)mbIndex, data);
+    ret = canTransmit(canREG1, (uint32)mbIndex, data);
+
+    if (mbIndex == SC_MB_TX_STATUS) {
+        if (ret == 1u) {
+            tx_success_count_mb7++;
+        } else {
+            tx_fail_count_mb7++;
+        }
+        /* Snapshot MSGVALx[0] (0xC4) and TXRQx[0] (0x88) to see hardware state */
+        tx_last_msgval = reg_read(DCAN1_BASE, 0xC4u);
+        tx_last_txrqst = reg_read(DCAN1_BASE, 0x88u);
+    }
 
     /* Wait for TX to complete (IF1 not busy) */
     i = 0u;
-    while (((*(volatile uint32*)(DCAN1_BASE + 0x100u)) & 0x80u) != 0u) {
+    while ((reg_read8(DCAN1_BASE, DCAN_IF1STAT_BYTE) & 0x80u) != 0u) {
         i++;
         if (i > 200u) {
             break;  /* Safety: don't spin forever */
@@ -1334,9 +1384,20 @@ void sc_hw_debug_boot_dump(void)
 void sc_hw_debug_periodic(void)
 {
 #ifdef PLATFORM_HIL
-    /* HIL: no SCI output — verbose prints block the 10ms main loop for 50ms+,
-     * causing DCAN mailbox overwrites and heartbeat timeout false positives. */
-    sc_sci_puts("\r\n");
+    /* T4 probe (2026-04-21): print TX counters each 5s to see if canTransmit
+     * is being called, returning 1 (success) or 0 (fail), and the HW state
+     * of MB7 MSGVAL and TXRQ. Short prints (~100 bytes) — should fit in 10ms. */
+    {
+        uint32 s[5];
+        sc_dcan_tx_stats_get(s);
+        sc_sci_puts(" tx7 call="); sc_sci_put_uint(s[0]);
+        sc_sci_puts(" ok=");       sc_sci_put_uint(s[1]);
+        sc_sci_puts(" fail=");     sc_sci_put_uint(s[2]);
+        sc_sci_puts(" msgval=");   sc_sci_put_hex32(s[3]);
+        sc_sci_puts(" txrq=");     sc_sci_put_hex32(s[4]);
+        sc_sci_puts(" es=");       sc_sci_put_hex32(*(volatile uint32 *)0xFFF7DC04u);
+        sc_sci_puts("\r\n");
+    }
 #else
     uint32 ccm_dbg[9];
 
