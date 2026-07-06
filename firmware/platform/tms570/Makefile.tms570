@@ -49,6 +49,11 @@ ifdef HIL
   COMMON_CFLAGS += -DPLATFORM_HIL
 endif
 
+# --- Ethernet bench instrumentation (pass ETH=1 to opt in) ---
+ifdef ETH
+  COMMON_CFLAGS += -DSC_ETH_ENABLE
+endif
+
 # --- Directories (production layout) ---
 FW           = firmware
 ECU          = $(FW)/ecu
@@ -84,6 +89,13 @@ LDFLAGS += -Wl,-m,$(BUILD_DIR)/sc.map
 LDFLAGS += -Wl,--rom_model
 LDFLAGS += -Wl,--be32
 
+ifdef ETH
+  LDFLAGS += -Wl,--retain=Sc_Eth_Init
+  LDFLAGS += -Wl,--retain=Sc_Eth_PollRx
+  LDFLAGS += -Wl,--retain=Sc_Eth_Tx
+  LDFLAGS += -Wl,--retain=Sc_Eth_LinkUp
+endif
+
 # --- HALCoGen C sources (exclude files with conflicting symbols) ---
 # Excluded:
 #   HL_sys_main.c  — defines main() (conflicts with sc_main.c)
@@ -98,6 +110,16 @@ HALCOGEN_EXCLUDE  = $(HALCOGEN_DIR)/source/HL_sys_main.c \
                     $(HALCOGEN_DIR)/source/HL_rti.c \
                     $(HALCOGEN_DIR)/source/HL_notification.c \
                     $(HALCOGEN_DIR)/source/HL_emif.c
+
+HALCOGEN_APP_ETH_SRCS = $(HALCOGEN_DIR)/source/HL_emac.c \
+                        $(HALCOGEN_DIR)/source/HL_mdio.c \
+                        $(HALCOGEN_DIR)/source/HL_phy_dp83640.c \
+                        $(HALCOGEN_DIR)/source/HL_phy_tlk111.c
+
+ifndef ETH
+  HALCOGEN_EXCLUDE += $(HALCOGEN_APP_ETH_SRCS)
+endif
+
 HALCOGEN_SRCS = $(filter-out $(HALCOGEN_EXCLUDE),$(HALCOGEN_SRCS_ALL))
 
 # --- HALCoGen assembly (.asm — TI assembler syntax) ---
@@ -112,8 +134,13 @@ HALCOGEN_ASM = $(filter-out $(HALCOGEN_ASM_EXCLUDE),$(HALCOGEN_ASM_ALL))
 
 # --- SC application sources (exclude POSIX backend) ---
 SC_SRCS_ALL = $(wildcard $(SC_DIR)/src/*.c)
+SC_ETH_SRCS = $(SC_DIR)/src/sc_eth.c
 SC_HW_TMS570 = $(PLAT)/src/sc_hw_tms570.c
-SC_SRCS = $(filter-out %_posix.c,$(SC_SRCS_ALL)) $(SC_HW_TMS570)
+SC_SRCS = $(filter-out %_posix.c $(SC_ETH_SRCS),$(SC_SRCS_ALL)) $(SC_HW_TMS570)
+
+ifdef ETH
+  SC_SRCS += $(SC_ETH_SRCS)
+endif
 
 # --- SC GNU assembly (.S — preprocessed assembly, e.g. sc_startup.S) ---
 SC_ASM_GNU = $(wildcard $(SC_DIR)/src/*.S)

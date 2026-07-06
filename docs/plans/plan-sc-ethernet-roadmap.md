@@ -36,7 +36,7 @@ Status markers: PENDING / IN PROGRESS / DONE.
 
 ---
 
-## Phase 0 — Foundations (shared by all later phases) — IN PROGRESS
+## Phase 0 — Foundations (shared by all later phases) — DONE
 
 #### S-ETH-00 — Ethernet bring-up (reference datapath) — DONE
 - **Goal:** Prove EMAC + DP83630 datapath end-to-end on the SC LaunchPad.
@@ -88,7 +88,7 @@ Status markers: PENDING / IN PROGRESS / DONE.
 - **Definition of done:** both build variants compile and boot on bench with
   documented pin ownership.
 
-#### S-ETH-03 — Build-flag integration in Makefile.tms570
+#### S-ETH-03 — Build-flag integration in Makefile.tms570 — DONE
 - **Goal:** One-flag opt-in Ethernet for the SC application binary.
 - **Inputs:** S-ETH-01, S-ETH-02 deliverables;
   `firmware/platform/tms570/Makefile.tms570`.
