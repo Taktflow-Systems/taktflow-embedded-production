@@ -105,9 +105,9 @@ Status markers: PENDING / IN PROGRESS / DONE.
 
 ---
 
-## Phase 1 — UDP telemetry channel (no TCP/IP stack) — PENDING
+## Phase 1 — UDP telemetry channel (no TCP/IP stack) — IN PROGRESS
 
-#### S-UDP-01 — Telemetry wire-format specification
+#### S-UDP-01 — Telemetry wire-format specification — DONE
 - **Goal:** Define a versioned, decodable-forever packet layout for SC
   telemetry over UDP.
 - **Inputs:** `firmware/ecu/sc/src/sc_monitoring.c` (available counters);
