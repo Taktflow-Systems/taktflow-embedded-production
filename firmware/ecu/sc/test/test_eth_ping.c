@@ -28,9 +28,8 @@
 #include "HL_sci.h"
 #include "HL_reg_sci.h"
 #include "HL_emac.h"
-#include "HL_mdio.h"
-#include "HL_phy_dp83640.h"
 #include "HL_sys_vim.h"
+#include "sc_eth.h"
 
 /* ================================================================
  * HALCoGen notification stubs (HL_notification.c excluded to avoid
@@ -74,10 +73,8 @@ static uint8 g_my_mac[6] = { 0x02U, 0x00U, 0x4BU, 0x57U, 0x01U, 0x00U };
  * Global state
  * ================================================================ */
 
-static hdkif_t *g_hdkif = NULL;
-
 /* RX packet buffer — filled by emacRxNotification */
-static volatile uint8  g_rx_buf[1520];
+static uint8           g_rx_buf[1520];
 static volatile uint32 g_rx_len = 0U;
 static volatile uint32 g_rx_ready = 0U;
 
@@ -221,43 +218,6 @@ static void write_u16(uint8 *p, uint16 val)
     p[1] = (uint8)(val & 0xFFU);
 }
 
-static uint32 read_u32(const volatile uint8 *p)
-{
-    return ((uint32)p[0] << 24U) | ((uint32)p[1] << 16U) |
-           ((uint32)p[2] << 8U)  | (uint32)p[3];
-}
-
-/* ================================================================
- * D-cache maintenance — MPU region 3 maps RAM write-back cacheable
- * and _c_int00 enables the D-cache, but EMAC DMA moves packet data
- * directly to/from RAM. Clean+invalidate before reading an RX buffer;
- * clean before handing a TX buffer to the DMA. Cortex-R5 line = 32B.
- * (BDs live in CPPI RAM 0xFC520000 — uncached MPU region 4 — so
- * descriptor reads are live without maintenance.)
- * ================================================================ */
-
-static void dcache_cinv_range(uint32 start, uint32 len)
-{
-    uint32 addr = start & ~31U;
-    uint32 end  = start + len;
-    while (addr < end) {
-        __asm__ volatile("mcr p15, #0, %0, c7, c14, #1" : : "r"(addr));
-        addr += 32U;
-    }
-    __asm__ volatile("dsb" : : : "memory");
-}
-
-static void dcache_clean_range(uint32 start, uint32 len)
-{
-    uint32 addr = start & ~31U;
-    uint32 end  = start + len;
-    while (addr < end) {
-        __asm__ volatile("mcr p15, #0, %0, c7, c10, #1" : : "r"(addr));
-        addr += 32U;
-    }
-    __asm__ volatile("dsb" : : : "memory");
-}
-
 /* ================================================================
  * ICMP checksum (RFC 1071)
  * ================================================================ */
@@ -294,27 +254,10 @@ static uint16 ip_checksum(const uint8 *hdr, uint32 hdr_len)
 
 static void eth_transmit(uint8 *frame, uint32 len)
 {
-    pbuf_t pbuf;
-
-    if (len < MIN_PKT_LEN + 14U) {
-        /* Pad to minimum Ethernet frame size */
-        uint32 i;
-        for (i = len; i < (MIN_PKT_LEN + 14U); i++) {
-            frame[i] = 0U;
-        }
-        len = MIN_PKT_LEN + 14U;
+    if ((len <= SC_ETH_FRAME_MAX_LEN) &&
+        (Sc_Eth_Tx(frame, (uint16)len) == E_OK)) {
+        g_tx_count++;
     }
-
-    pbuf.payload = frame;
-    pbuf.len = (uint16)len;
-    pbuf.tot_len = (uint16)len;
-    pbuf.next = NULL;
-
-    /* Flush the frame out of the D-cache — EMAC DMA reads RAM directly */
-    dcache_clean_range((uint32)frame, len);
-
-    (void)EMACTransmit(g_hdkif, &pbuf);
-    g_tx_count++;
 }
 
 /* ================================================================
@@ -550,112 +493,13 @@ void emacTxNotification(hdkif_t *hdkif)
 
 static void eth_poll_rx(void)
 {
-    rxch_t *rxch = &(g_hdkif->rxchptr);
-    volatile emac_rx_bd_t *bd = rxch->active_head;
-    uint32 flags;
+    uint16 pkt_len = 0U;
 
-    if (bd == NULL) {
-        return;
+    if (Sc_Eth_PollRx(g_rx_buf, (uint16)sizeof(g_rx_buf), &pkt_len) == TRUE) {
+        g_rx_len = (uint32)pkt_len;
+        g_rx_ready = 1U;
+        g_rx_count++;
     }
-
-    flags = EMACSwizzleData(bd->flags_pktlen);
-    if (((flags & EMAC_BUF_DESC_SOP) != 0U) &&
-        ((flags & EMAC_BUF_DESC_OWNER) == 0U)) {
-        uint32 pkt_len = flags & 0xFFFFU;
-        uint32 buf_ptr = EMACSwizzleData(bd->bufptr);
-
-        if ((pkt_len > 0U) && (pkt_len <= sizeof(g_rx_buf)) && (buf_ptr != 0U)) {
-            uint32 i;
-            const volatile uint8 *src;
-
-            /* DMA wrote this buffer behind the D-cache — drop stale lines */
-            dcache_cinv_range(buf_ptr, pkt_len);
-            src = (const volatile uint8 *)buf_ptr;
-            for (i = 0U; i < pkt_len; i++) {
-                g_rx_buf[i] = src[i];
-            }
-            g_rx_len = pkt_len;
-            g_rx_ready = 1U;
-            g_rx_count++;
-        }
-
-        /* Recycle the processed descriptor(s) and re-arm the RX chain */
-        EMACReceive(g_hdkif);
-    }
-}
-
-/* ================================================================
- * ECLK — 25 MHz reference clock for DP83630 PHY
- * ================================================================ */
-
-#include "HL_reg_system.h"
-
-static void eclk_25mhz(void)
-{
-    /* SYSPC1 = 1: ECLK pin in ECLK function mode (not GIO) */
-    systemREG1->SYSPC1 = 1U;
-
-    /* ECPCNTL: divider=3 (VCLK1=75MHz / 3 = 25MHz), continue on suspend
-     * Bit 23: ECPCOS = 1 (continue clock during debug suspend)
-     * Bits 15:0: ECPDIV = 3-1 = 2 */
-    systemREG1->ECPCNTL = ((uint32)1U << 23U)
-                        | ((uint32)(3U - 1U) & 0xFFFFU);
-}
-
-/* ================================================================
- * PINMUX fix — route MDIO and MDCLK to balls G3 and V5
- *
- * HALCoGen sets G3=MIBSPI1NCS_2 and V5=MIBSPI3NCS_1, but these
- * balls must be MDIO and MDCLK for the EMAC to talk to the PHY.
- * Without this, EMACHWInit returns EMAC_ERR_CONNECT because MDIO
- * bus has no output path.
- * ================================================================ */
-
-#include "HL_pinmux.h"
-
-static void fix_mdio_pinmux(void)
-{
-    /* MDIO (F4) and MDCLK (T9) are PRIMARY functions on those balls
-     * and work by default — no override needed.
-     *
-     * However, HALCoGen's MII enable may have muxed G3/V5 to MDIO/MDCLK
-     * as a side effect, fighting the primary balls. Restore them to
-     * their defaults (MIBSPI chip selects) per the Hackster.io guide. */
-
-    /* Restore balls that MII enable incorrectly overrides.
-     * The key insight from Jan Cumps: after enabling MII in HALCoGen,
-     * uncheck signals on A14, B4, B11, D19, E18, F3, G3, G19, H18,
-     * H19, J18, J19, K19, N19, P1, R2, V5. Our HALCoGen project
-     * already has most of these correct. Just verify G3 and V5
-     * are NOT set to MDIO/MDCLK (they should be SPI chip selects). */
-
-    /* Nothing to do — our HALCoGen already has G3=MIBSPI1NCS_2 and
-     * V5=MIBSPI3NCS_1 (correct defaults). Primary balls F4/T9 handle
-     * MDIO/MDCLK automatically when EMAC module is enabled. */
-}
-
-/* ================================================================
- * PHY Release — GIOA[3]=reset, GIOA[4]=powerdown, then 200ms wait
- * ================================================================ */
-
-static void phy_release(void)
-{
-    volatile uint32 delay;
-
-    /* 1. Fix MDIO/MDCLK pin muxing (HALCoGen has them as SPI chip selects) */
-    fix_mdio_pinmux();
-
-    /* 2. Enable 25 MHz ECLK output — PHY needs this as reference clock */
-    eclk_25mhz();
-
-    /* 3. Match Jan Cumps' HALCoGen config: both GIOA[3] and GIOA[4] = OUTPUT HIGH.
-     *    gioInit() now sets them HIGH from boot (patched HL_gio.c).
-     *    Just reinforce here and wait for PHY to stabilize. */
-    gioPORTA->DIR |= (uint32)(1U << 3U) | (uint32)(1U << 4U);
-    gioPORTA->DSET = (uint32)(1U << 3U) | (uint32)(1U << 4U);
-
-    /* 4. Wait 200ms for PHY PLL lock */
-    for (delay = 0U; delay < 20000000U; delay++) {}
 }
 
 /* ================================================================
@@ -664,8 +508,7 @@ static void phy_release(void)
 
 int main(void)
 {
-    uint32 emac_result;
-    extern hdkif_t hdkif_data[MAX_EMAC_INSTANCE];
+    Std_ReturnType eth_status;
 
     /* 1. System init — PLL to 300 MHz */
     systemInit();
@@ -675,206 +518,24 @@ int main(void)
     uart_init();
     uart_puts("\r\n=== TMS570 Ethernet Ping Test ===\r\n");
 
-    /* 3. Release PHY from reset/powerdown */
-    uart_puts("PHY: releasing reset... ");
-    phy_release();
-    uart_puts("done\r\n");
-
-    /* 4. MDIO diagnostics — read registers before EMACHWInit */
-    {
-        volatile uint32 *mdio = (volatile uint32 *)0xFCF78900U;
-        uart_puts("MDIO diag:\r\n");
-        uart_puts("  REVID=0x"); uart_put_hex8((uint8)(mdio[0] >> 24U));
-        uart_put_hex8((uint8)(mdio[0] >> 16U));
-        uart_put_hex8((uint8)(mdio[0] >> 8U));
-        uart_put_hex8((uint8)(mdio[0])); uart_puts("\r\n");
-
-        /* Init MDIO manually: enable, preamble, clkdiv=0x1F */
-        mdio[1] = 0x40000000U | 0x00100000U | 0x1FU;
-        volatile uint32 w;
-        for (w = 0U; w < 1000000U; w++) {}
-
-        uart_puts("  CTRL=0x"); uart_put_hex8((uint8)(mdio[1] >> 24U));
-        uart_put_hex8((uint8)(mdio[1] >> 16U));
-        uart_put_hex8((uint8)(mdio[1] >> 8U));
-        uart_put_hex8((uint8)(mdio[1])); uart_puts("\r\n");
-
-        uart_puts("  ALIVE=0x"); uart_put_hex8((uint8)(mdio[2] >> 24U));
-        uart_put_hex8((uint8)(mdio[2] >> 16U));
-        uart_put_hex8((uint8)(mdio[2] >> 8U));
-        uart_put_hex8((uint8)(mdio[2])); uart_puts("\r\n");
-
-        uart_puts("  LINK=0x"); uart_put_hex8((uint8)(mdio[3] >> 24U));
-        uart_put_hex8((uint8)(mdio[3] >> 16U));
-        uart_put_hex8((uint8)(mdio[3] >> 8U));
-        uart_put_hex8((uint8)(mdio[3])); uart_puts("\r\n");
-
-        /* GIOA DOUT state */
-        uart_puts("  GIOA_DIR=0x"); uart_put_hex8((uint8)(gioPORTA->DIR));
-        uart_puts(" DOUT=0x"); uart_put_hex8((uint8)(gioPORTA->DOUT));
-        uart_puts("\r\n");
-
-        /* ECLK state */
-        uart_puts("  SYSPC1=0x"); uart_put_hex8((uint8)(systemREG1->SYSPC1));
-        uart_puts(" ECPCNTL=0x"); uart_put_hex8((uint8)(systemREG1->ECPCNTL >> 16U));
-        uart_put_hex8((uint8)(systemREG1->ECPCNTL >> 8U));
-        uart_put_hex8((uint8)(systemREG1->ECPCNTL));
-        uart_puts("\r\n");
-    }
-
-    /* 5. Quick PHY check — do NOT toggle GPIOs before EMACHWInit */
-    {
-        volatile uint16 phyReg = 0U;
-        MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 2U, &phyReg);
-        uart_puts("PHY ID1=0x");
-        uart_put_hex8((uint8)(phyReg >> 8U));
-        uart_put_hex8((uint8)(phyReg));
-        MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, &phyReg);
-        uart_puts(" BMCR=0x");
-        uart_put_hex8((uint8)(phyReg >> 8U));
-        uart_put_hex8((uint8)(phyReg));
-        uart_puts(" PWRDN=");
-        uart_puts((phyReg & 0x0800U) ? "YES" : "no");
-        uart_puts("\r\n");
-    }
-
-    /* 5b. Wake PHY from pin-induced power-down.
-     *
-     * Board fact (SPRR397 sheet 12): DP83630 PWRDOWN/INTN (pin 7) has a
-     * 2.2k pulldown (RP11B), so the PHY powers up in Power Down mode and
-     * BMCR bit 11 is OR'd/latched with the pin — clearing BMCR alone does
-     * not stick. Datasheet 5.9.1: set MICR.INT_OE (reg 0x11 bit 0) to
-     * repurpose pin 7 as interrupt output, disabling the power-down input;
-     * only then can BMCR.PWRDN be cleared. */
-    {
-        volatile uint16 reg = 0U;
-        volatile uint32 d;
-
-        /* Actual ball level as seen by the pins (DIN), for diagnosis:
-         * bit 3 low here would mean the GIOA[3] drive never reaches E1 */
-        uart_puts("PHY wake: GIOA_DIN=0x");
-        uart_put_hex8((uint8)(gioPORTA->DIN));
-        uart_puts("\r\n");
-
-        /* Disable PWRDOWN pin function; readback also proves MDIO writes */
-        MDIOPhyRegWrite(MDIO_0_BASE, EMAC_PHYADDRESS, 0x11U, 0x0001U);
-        MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0x11U, &reg);
-        uart_puts("  MICR=0x");
-        uart_put_hex8((uint8)(reg >> 8U));
-        uart_put_hex8((uint8)(reg));
-        uart_puts((reg & 0x0001U) ? " (INT_OE set)\r\n" : " (WRITE FAILED)\r\n");
-
-        /* Clear power-down and restart auto-negotiation */
-        MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, &reg);
-        MDIOPhyRegWrite(MDIO_0_BASE, EMAC_PHYADDRESS, 0U,
-                        (uint16)((reg & ~0x0800U) | 0x0200U));
-        for (d = 0U; d < 3000000U; d++) {}  /* ~40ms for power-up */
-
-        MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, &reg);
-        uart_puts("  BMCR=0x");
-        uart_put_hex8((uint8)(reg >> 8U));
-        uart_put_hex8((uint8)(reg));
-        uart_puts((reg & 0x0800U) ? " PWRDN=STILL SET\r\n" : " PWRDN=cleared\r\n");
-    }
-
-    /* 5c. Wait for link BEFORE EMACHWInit. Auto-negotiation takes 1-3s
-     * after power-up; EMACHWInit's internal wait is shorter and returns
-     * EMAC_ERR_CONNECT if the link is not yet up — leaving the MAC RX
-     * path disabled (rx counter stays 0 forever despite link=UP). */
-    {
-        volatile uint16 bsr = 0U;
-        uint32 tries;
-        uart_puts("Link: waiting");
-        for (tries = 0U; tries < 80U; tries++) {
-            volatile uint32 d;
-            MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 1U, &bsr);
-            if ((bsr & 0x0004U) != 0U) {
-                break;
-            }
-            if ((tries % 10U) == 9U) {
-                uart_puts(".");
-            }
-            for (d = 0U; d < 10000000U; d++) {}  /* ~100ms */
-        }
-        uart_puts(((bsr & 0x0004U) != 0U) ? " UP\r\n" : " TIMEOUT (continuing)\r\n");
-    }
-
-    /* 6. Initialize EMAC + PHY */
-    uart_puts("EMAC: init (MAC=");
+    /* 3. Initialize reusable Ethernet driver */
+    uart_puts("Ethernet: init (MAC=");
     {
         uint32 i;
         for (i = 0U; i < 6U; i++) {
-            if (i > 0U) uart_puts(":");
+            if (i > 0U) {
+                uart_puts(":");
+            }
             uart_put_hex8(g_my_mac[i]);
         }
     }
     uart_puts(")... ");
-
-    emac_result = EMACHWInit(g_my_mac);
-    if (emac_result != EMAC_ERR_OK) {
-        uart_puts("WARN (");
-        uart_put_dec(emac_result);
-        uart_puts(") — EMACHWInit returned error, but EMAC DMA is initialized.\r\n");
-
-        /* Dump diagnostic registers */
-        {
-            volatile uint32 *emac = (volatile uint32 *)0xFCF78000U;
-            uart_puts("  MACCONTROL=0x");
-            uart_put_hex8((uint8)(emac[0x104U/4U] >> 24U));
-            uart_put_hex8((uint8)(emac[0x104U/4U] >> 16U));
-            uart_put_hex8((uint8)(emac[0x104U/4U] >> 8U));
-            uart_put_hex8((uint8)(emac[0x104U/4U]));
-
-            volatile uint16 bmcr = 0U;
-            MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, &bmcr);
-            uart_puts(" BMCR=0x");
-            uart_put_hex8((uint8)(bmcr >> 8U));
-            uart_put_hex8((uint8)(bmcr));
-            uart_puts(" (pwrdn=");
-            uart_puts((bmcr & 0x0800U) ? "YES" : "no");
-            uart_puts(")\r\n");
-
-            /* If PWRDN still stuck, try one last clear and force-continue */
-            if (bmcr & 0x0800U) {
-                uart_puts("  Force-clearing PWRDN post-EMACHWInit...\r\n");
-                MDIOPhyRegWrite(MDIO_0_BASE, EMAC_PHYADDRESS, 0U,
-                                (uint16)(bmcr & ~0x0800U));
-                volatile uint32 d;
-                for (d = 0U; d < 3000000U; d++) {}
-                MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, &bmcr);
-                uart_puts("  BMCR now=0x");
-                uart_put_hex8((uint8)(bmcr >> 8U));
-                uart_put_hex8((uint8)(bmcr));
-                uart_puts("\r\n");
-            }
-        }
-        /* NOTE: GIOA[3] = DP83630 PWRDOWN/INTN (pin 7), active LOW, 2.2k
-         * board pulldown RP11B. Keep HIGH. Energy Detect is NOT the cause
-         * of power-down here: EDCR is reg 0x1D (not 0x1E) and its ED_EN
-         * (bit 15) defaults to 0 on DP83630. */
-        uart_puts("EDCR=0x");
-        {
-            volatile uint16 edcr = 0U;
-            MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0x1DU, &edcr);
-            uart_put_hex8((uint8)(edcr >> 8U));
-            uart_put_hex8((uint8)(edcr));
-            uart_puts(" (ED_EN=");
-            uart_puts((edcr & 0x8000U) ? "ON" : "off");
-            uart_puts(" ED_PWR_STATE=");
-            uart_puts((edcr & 0x0400U) ? "up" : "down/na");
-            uart_puts(")\r\n");
-        }
-        uart_puts("Continuing — will poll for link in main loop.\r\n");
-    } else {
+    eth_status = Sc_Eth_Init(g_my_mac);
+    if (eth_status == E_OK) {
         uart_puts("OK\r\n");
+    } else {
+        uart_puts("WARN - continuing with EMAC DMA initialized\r\n");
     }
-
-    /* 5. Enable RX/TX interrupts */
-    g_hdkif = &hdkif_data[0U];
-    EMACTxIntPulseEnable(g_hdkif->emac_base, g_hdkif->emac_ctrl_base,
-                         0U, EMAC_CHANNELNUMBER);
-    EMACRxIntPulseEnable(g_hdkif->emac_base, g_hdkif->emac_ctrl_base,
-                         0U, EMAC_CHANNELNUMBER);
 
     uart_puts("IP:   ");
     uart_put_ip(g_my_ip);
@@ -913,11 +574,8 @@ int main(void)
                 uart_puts(" icmp=");
                 uart_put_dec(g_icmp_count);
 
-                /* Check link status */
-                volatile uint16 bsr = 0U;
-                MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 1U, &bsr);
                 uart_puts(" link=");
-                uart_puts((bsr & 0x0004U) ? "UP" : "DOWN");
+                uart_puts((Sc_Eth_LinkUp() == TRUE) ? "UP" : "DOWN");
                 uart_puts("\r\n");
             }
         }

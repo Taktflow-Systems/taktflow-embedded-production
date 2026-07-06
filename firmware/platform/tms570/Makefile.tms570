@@ -214,6 +214,10 @@ flash-blinky: $(BLINKY_ELF)
 # GIOA[3]/GIOA[4] used for PHY reset/powerdown instead of LEDs.
 ETH_PING_SRC = $(SC_DIR)/test/test_eth_ping.c
 ETH_PING_OBJ = $(BUILD_DIR)/test_eth_ping.o
+ETH_SC_ETH_SRC = $(SC_DIR)/src/sc_eth.c
+ETH_SC_ETH_OBJ = $(BUILD_DIR)/eth/$(SC_DIR)/src/sc_eth.o
+ETH_PING_CFLAGS = $(HAL_CFLAGS) -DSC_ETH_ENABLE
+ETH_SC_ETH_CFLAGS = $(SC_CFLAGS) -DSC_ETH_ENABLE
 
 # HALCoGen objects needed: all except HL_sys_main.c (we have our own main)
 # Keep HL_gio.c and HL_rti.c for this test (no SC wrapper conflict)
@@ -228,14 +232,18 @@ ETH_PING_ELF = $(BUILD_DIR)/test_eth_ping.elf
 eth-ping: check-halcogen $(ETH_PING_ELF)
 	@echo "=== Built $(ETH_PING_ELF) (standalone Ethernet ping test) ==="
 	@echo "Flash: make -f firmware/platform/tms570/Makefile.tms570 flash-eth-ping"
-	@echo "Test:  ping 192.168.1.200"
+	@echo "Test:  ping the board IP configured in test_eth_ping.c"
 
-$(ETH_PING_ELF): $(ETH_PING_OBJ) $(HAL_ETH_OBJS) $(ASM_ETH_OBJS) $(ETH_STARTUP_OBJ) | $(BUILD_DIR)
+$(ETH_PING_ELF): $(ETH_PING_OBJ) $(ETH_SC_ETH_OBJ) $(HAL_ETH_OBJS) $(ASM_ETH_OBJS) $(ETH_STARTUP_OBJ) | $(BUILD_DIR)
 	$(CC) $(LDFLAGS) $^ $(LDSCRIPT) -o $@
 
 $(ETH_PING_OBJ): $(ETH_PING_SRC) | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
-	$(CC) $(HAL_CFLAGS) -c $< -o $@
+	$(CC) $(ETH_PING_CFLAGS) -c $< -o $@
+
+$(ETH_SC_ETH_OBJ): $(ETH_SC_ETH_SRC) | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(ETH_SC_ETH_CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/eth/$(HALCOGEN_DIR)/%.o: $(HALCOGEN_DIR)/%.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
