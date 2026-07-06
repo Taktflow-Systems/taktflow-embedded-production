@@ -11,8 +11,12 @@
  *          Flash:  make -f firmware/platform/tms570/Makefile.tms570 flash-eth-ping
  *          Test:   ping 192.168.1.200
  *
- * @note    GIOA[3]=PHY_PWRDOWN (LOW=normal, HIGH=powerdown) — schematic pin 7
- *          GIOA[4]=PHY_RESET_N (HIGH=release, LOW=reset) — schematic pin 29
+ * @note    GIOA[3] (ball E1) = DP83630 PWRDOWN/INTN pin 7, ACTIVE LOW, with
+ *          2.2k pulldown RP11B on board (schematic SPRR397 sheet 12) — the
+ *          PHY boots held in power-down until GIOA[3] drives HIGH, and
+ *          BMCR bit 11 is OR'd/latched with this pin. MICR.INT_OE (reg
+ *          0x11 bit 0) disables the pin's power-down function (DS 5.9.1).
+ *          GIOA[4] (ball A6) = PHY RESET_N pin 29 (HIGH=release, LOW=reset)
  *          These pins conflict with SC LED assignments — this test is standalone.
  *
  * @note    Cache must be write-through for EMAC DMA coherency (TI E2E known issue).
@@ -224,6 +228,37 @@ static uint32 read_u32(const volatile uint8 *p)
 }
 
 /* ================================================================
+ * D-cache maintenance — MPU region 3 maps RAM write-back cacheable
+ * and _c_int00 enables the D-cache, but EMAC DMA moves packet data
+ * directly to/from RAM. Clean+invalidate before reading an RX buffer;
+ * clean before handing a TX buffer to the DMA. Cortex-R5 line = 32B.
+ * (BDs live in CPPI RAM 0xFC520000 — uncached MPU region 4 — so
+ * descriptor reads are live without maintenance.)
+ * ================================================================ */
+
+static void dcache_cinv_range(uint32 start, uint32 len)
+{
+    uint32 addr = start & ~31U;
+    uint32 end  = start + len;
+    while (addr < end) {
+        __asm__ volatile("mcr p15, #0, %0, c7, c14, #1" : : "r"(addr));
+        addr += 32U;
+    }
+    __asm__ volatile("dsb" : : : "memory");
+}
+
+static void dcache_clean_range(uint32 start, uint32 len)
+{
+    uint32 addr = start & ~31U;
+    uint32 end  = start + len;
+    while (addr < end) {
+        __asm__ volatile("mcr p15, #0, %0, c7, c10, #1" : : "r"(addr));
+        addr += 32U;
+    }
+    __asm__ volatile("dsb" : : : "memory");
+}
+
+/* ================================================================
  * ICMP checksum (RFC 1071)
  * ================================================================ */
 
@@ -274,6 +309,9 @@ static void eth_transmit(uint8 *frame, uint32 len)
     pbuf.len = (uint16)len;
     pbuf.tot_len = (uint16)len;
     pbuf.next = NULL;
+
+    /* Flush the frame out of the D-cache — EMAC DMA reads RAM directly */
+    dcache_clean_range((uint32)frame, len);
 
     (void)EMACTransmit(g_hdkif, &pbuf);
     g_tx_count++;
@@ -417,11 +455,11 @@ static void handle_icmp(const volatile uint8 *pkt, uint32 len)
         g_tx_buf[6U + i] = g_my_mac[i];
     }
 
-    /* IP: swap src/dst IP */
+    /* IP: swap src/dst IP (src @ offset 12, dst @ offset 16) */
     uint8 *tx_ip = &g_tx_buf[14];
     for (i = 0U; i < 4U; i++) {
-        tx_ip[16U + i] = g_my_ip[i];         /* src = us */
-        tx_ip[12U + i] = ip_hdr[12U + i];    /* dst = sender (already there from copy) */
+        tx_ip[12U + i] = g_my_ip[i];         /* src = us */
+        tx_ip[16U + i] = ip_hdr[12U + i];    /* dst = original sender */
     }
 
     /* IP: recalculate header checksum */
@@ -500,6 +538,50 @@ void emacTxNotification(hdkif_t *hdkif)
 {
     /* Nothing to do — TX complete */
     (void)hdkif;
+}
+
+/* ================================================================
+ * Polled RX — this test never enables VIM/IRQs, so emacRxNotification
+ * (ISR-driven) never fires. EMACReceive() alone only RECYCLES completed
+ * descriptors — it does not deliver data. Poll the descriptor chain
+ * ourselves: copy a completed frame out FIRST, then let EMACReceive
+ * re-arm the chain.
+ * ================================================================ */
+
+static void eth_poll_rx(void)
+{
+    rxch_t *rxch = &(g_hdkif->rxchptr);
+    volatile emac_rx_bd_t *bd = rxch->active_head;
+    uint32 flags;
+
+    if (bd == NULL) {
+        return;
+    }
+
+    flags = EMACSwizzleData(bd->flags_pktlen);
+    if (((flags & EMAC_BUF_DESC_SOP) != 0U) &&
+        ((flags & EMAC_BUF_DESC_OWNER) == 0U)) {
+        uint32 pkt_len = flags & 0xFFFFU;
+        uint32 buf_ptr = EMACSwizzleData(bd->bufptr);
+
+        if ((pkt_len > 0U) && (pkt_len <= sizeof(g_rx_buf)) && (buf_ptr != 0U)) {
+            uint32 i;
+            const volatile uint8 *src;
+
+            /* DMA wrote this buffer behind the D-cache — drop stale lines */
+            dcache_cinv_range(buf_ptr, pkt_len);
+            src = (const volatile uint8 *)buf_ptr;
+            for (i = 0U; i < pkt_len; i++) {
+                g_rx_buf[i] = src[i];
+            }
+            g_rx_len = pkt_len;
+            g_rx_ready = 1U;
+            g_rx_count++;
+        }
+
+        /* Recycle the processed descriptor(s) and re-arm the RX chain */
+        EMACReceive(g_hdkif);
+    }
 }
 
 /* ================================================================
@@ -656,6 +738,67 @@ int main(void)
         uart_puts("\r\n");
     }
 
+    /* 5b. Wake PHY from pin-induced power-down.
+     *
+     * Board fact (SPRR397 sheet 12): DP83630 PWRDOWN/INTN (pin 7) has a
+     * 2.2k pulldown (RP11B), so the PHY powers up in Power Down mode and
+     * BMCR bit 11 is OR'd/latched with the pin — clearing BMCR alone does
+     * not stick. Datasheet 5.9.1: set MICR.INT_OE (reg 0x11 bit 0) to
+     * repurpose pin 7 as interrupt output, disabling the power-down input;
+     * only then can BMCR.PWRDN be cleared. */
+    {
+        volatile uint16 reg = 0U;
+        volatile uint32 d;
+
+        /* Actual ball level as seen by the pins (DIN), for diagnosis:
+         * bit 3 low here would mean the GIOA[3] drive never reaches E1 */
+        uart_puts("PHY wake: GIOA_DIN=0x");
+        uart_put_hex8((uint8)(gioPORTA->DIN));
+        uart_puts("\r\n");
+
+        /* Disable PWRDOWN pin function; readback also proves MDIO writes */
+        MDIOPhyRegWrite(MDIO_0_BASE, EMAC_PHYADDRESS, 0x11U, 0x0001U);
+        MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0x11U, &reg);
+        uart_puts("  MICR=0x");
+        uart_put_hex8((uint8)(reg >> 8U));
+        uart_put_hex8((uint8)(reg));
+        uart_puts((reg & 0x0001U) ? " (INT_OE set)\r\n" : " (WRITE FAILED)\r\n");
+
+        /* Clear power-down and restart auto-negotiation */
+        MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, &reg);
+        MDIOPhyRegWrite(MDIO_0_BASE, EMAC_PHYADDRESS, 0U,
+                        (uint16)((reg & ~0x0800U) | 0x0200U));
+        for (d = 0U; d < 3000000U; d++) {}  /* ~40ms for power-up */
+
+        MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0U, &reg);
+        uart_puts("  BMCR=0x");
+        uart_put_hex8((uint8)(reg >> 8U));
+        uart_put_hex8((uint8)(reg));
+        uart_puts((reg & 0x0800U) ? " PWRDN=STILL SET\r\n" : " PWRDN=cleared\r\n");
+    }
+
+    /* 5c. Wait for link BEFORE EMACHWInit. Auto-negotiation takes 1-3s
+     * after power-up; EMACHWInit's internal wait is shorter and returns
+     * EMAC_ERR_CONNECT if the link is not yet up — leaving the MAC RX
+     * path disabled (rx counter stays 0 forever despite link=UP). */
+    {
+        volatile uint16 bsr = 0U;
+        uint32 tries;
+        uart_puts("Link: waiting");
+        for (tries = 0U; tries < 80U; tries++) {
+            volatile uint32 d;
+            MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 1U, &bsr);
+            if ((bsr & 0x0004U) != 0U) {
+                break;
+            }
+            if ((tries % 10U) == 9U) {
+                uart_puts(".");
+            }
+            for (d = 0U; d < 10000000U; d++) {}  /* ~100ms */
+        }
+        uart_puts(((bsr & 0x0004U) != 0U) ? " UP\r\n" : " TIMEOUT (continuing)\r\n");
+    }
+
     /* 6. Initialize EMAC + PHY */
     uart_puts("EMAC: init (MAC=");
     {
@@ -705,24 +848,22 @@ int main(void)
                 uart_puts("\r\n");
             }
         }
-        /* NOTE: GIOA[3] = DP83630 pin 7 = IO_VDD (power supply pin!)
-         * Do NOT drive LOW — it kills the PHY. Keep HIGH always.
-         * PWRDN is controlled by Energy Detect (EDCR 0x1E = 0x3F80).
-         * ED auto-powers-down when no cable connected.
-         * Connect Ethernet cable and the PHY should wake up. */
+        /* NOTE: GIOA[3] = DP83630 PWRDOWN/INTN (pin 7), active LOW, 2.2k
+         * board pulldown RP11B. Keep HIGH. Energy Detect is NOT the cause
+         * of power-down here: EDCR is reg 0x1D (not 0x1E) and its ED_EN
+         * (bit 15) defaults to 0 on DP83630. */
         uart_puts("EDCR=0x");
         {
             volatile uint16 edcr = 0U;
-            MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0x1EU, &edcr);
+            MDIOPhyRegRead(MDIO_0_BASE, EMAC_PHYADDRESS, 0x1DU, &edcr);
             uart_put_hex8((uint8)(edcr >> 8U));
             uart_put_hex8((uint8)(edcr));
             uart_puts(" (ED_EN=");
-            uart_puts(((edcr >> 8U) & 0x03U) ? "ON" : "off");
-            uart_puts(" ED_PWR=");
-            uart_puts((edcr & 0x0080U) ? "PWRDN" : "normal");
+            uart_puts((edcr & 0x8000U) ? "ON" : "off");
+            uart_puts(" ED_PWR_STATE=");
+            uart_puts((edcr & 0x0400U) ? "up" : "down/na");
             uart_puts(")\r\n");
         }
-        uart_puts(">>> CONNECT ETHERNET CABLE — ED will auto-wake PHY <<<\r\n");
         uart_puts("Continuing — will poll for link in main loop.\r\n");
     } else {
         uart_puts("OK\r\n");
@@ -750,13 +891,14 @@ int main(void)
     {
         volatile uint32 heartbeat = 0U;
         for (;;) {
+            /* Poll RX descriptors — copies one completed frame into
+             * g_rx_buf (sets g_rx_ready) and recycles the descriptors */
+            eth_poll_rx();
+
             if (g_rx_ready != 0U) {
                 process_packet(g_rx_buf, g_rx_len);
                 g_rx_ready = 0U;
             }
-
-            /* Call EMACReceive to process RX descriptors (polled mode) */
-            EMACReceive(g_hdkif);
 
             /* Periodic heartbeat every ~5 seconds */
             heartbeat++;
