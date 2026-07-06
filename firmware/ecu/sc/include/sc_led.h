@@ -3,7 +3,7 @@
  * @brief   Fault LED panel driver for Safety Controller
  * @date    2026-02-23
  *
- * @details 4 LEDs: GIO_A1 (CVC), GIO_A2 (FZC), GIO_A3 (RZC), GIO_B1 (system).
+ * @details 4 LEDs: CVC/FZC/RZC/system pins are selected in Sc_Hw_Cfg.h.
  *          Off = normal, blink 500ms = degraded, steady ON = fault/timeout.
  *
  * @safety_req SWR-SC-013

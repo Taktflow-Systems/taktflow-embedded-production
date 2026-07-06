@@ -137,12 +137,32 @@
 #define SC_GIO_PORT_A               0u
 #define SC_GIO_PORT_B               1u
 
+#define SC_PORT_RELAY               SC_GIO_PORT_A
 #define SC_PIN_RELAY                0u     /* GIO_A0: Kill relay output */
+#define SC_PORT_LED_CVC             SC_GIO_PORT_A
 #define SC_PIN_LED_CVC              1u     /* GIO_A1: CVC fault LED */
+#define SC_PORT_LED_FZC             SC_GIO_PORT_A
 #define SC_PIN_LED_FZC              2u     /* GIO_A2: FZC fault LED */
+
+#define SC_PORT_ETH_PHY             SC_GIO_PORT_A
+#define SC_PIN_ETH_PHY_PWRDOWN      3u     /* GIO_A3: DP83630 PWRDOWN/INTN */
+#define SC_PIN_ETH_PHY_RESET_N      4u     /* GIO_A4: DP83630 RESET_N */
+
+#ifdef SC_ETH_ENABLE
+#define SC_PORT_LED_RZC             SC_GIO_PORT_B
+#define SC_PIN_LED_RZC              6u     /* GIO_B6: RZC fault LED, ETH build */
+#define SC_PORT_LED_SYS             SC_GIO_PORT_B
+#define SC_PIN_LED_SYS              7u     /* GIO_B7: System fault LED, ETH build */
+#else
+#define SC_PORT_LED_RZC             SC_GIO_PORT_A
 #define SC_PIN_LED_RZC              3u     /* GIO_A3: RZC fault LED */
+#define SC_PORT_LED_SYS             SC_GIO_PORT_A
 #define SC_PIN_LED_SYS              4u     /* GIO_A4: System fault LED (amber) */
+#endif
+
+#define SC_PORT_WDI                 SC_GIO_PORT_A
 #define SC_PIN_WDI                  5u     /* GIO_A5: TPS3823 watchdog input */
+#define SC_PORT_LED_HB              SC_GIO_PORT_B
 #define SC_PIN_LED_HB               1u     /* GIO_B1: Heartbeat LED (onboard) */
 
 /* ==================================================================

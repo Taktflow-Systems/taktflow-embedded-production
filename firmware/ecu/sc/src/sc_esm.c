@@ -56,7 +56,7 @@ void SC_ESM_HighLevelInterrupt(void)
     gioSetBit(SC_GIO_PORT_A, SC_PIN_RELAY, 0u);
 
     /* System fault LED ON */
-    gioSetBit(SC_GIO_PORT_A, SC_PIN_LED_SYS, 1u);
+    gioSetBit(SC_PORT_LED_SYS, SC_PIN_LED_SYS, 1u);
 
     /* Latch error */
     esm_error_active = TRUE;

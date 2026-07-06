@@ -47,25 +47,24 @@
 
 static void sc_configure_gpio(void)
 {
-    /* Port A outputs: A0=relay, A1=LED_CVC, A2=LED_FZC, A3=LED_RZC, A4=LED_SYS, A5=WDI */
-    gioSetDirection(SC_GIO_PORT_A, SC_PIN_RELAY,   1u);
-    gioSetDirection(SC_GIO_PORT_A, SC_PIN_LED_CVC, 1u);
-    gioSetDirection(SC_GIO_PORT_A, SC_PIN_LED_FZC, 1u);
-    gioSetDirection(SC_GIO_PORT_A, SC_PIN_LED_RZC, 1u);
-    gioSetDirection(SC_GIO_PORT_A, SC_PIN_LED_SYS, 1u);
-    gioSetDirection(SC_GIO_PORT_A, SC_PIN_WDI,     1u);
+    gioSetDirection(SC_PORT_RELAY,   SC_PIN_RELAY,   1u);
+    gioSetDirection(SC_PORT_LED_CVC, SC_PIN_LED_CVC, 1u);
+    gioSetDirection(SC_PORT_LED_FZC, SC_PIN_LED_FZC, 1u);
+    gioSetDirection(SC_PORT_LED_RZC, SC_PIN_LED_RZC, 1u);
+    gioSetDirection(SC_PORT_LED_SYS, SC_PIN_LED_SYS, 1u);
+    gioSetDirection(SC_PORT_WDI,     SC_PIN_WDI,     1u);
 
     /* Port B output: B1=Heartbeat LED */
-    gioSetDirection(SC_GIO_PORT_B, SC_PIN_LED_HB, 1u);
+    gioSetDirection(SC_PORT_LED_HB, SC_PIN_LED_HB, 1u);
 
     /* All pins LOW initially */
-    gioSetBit(SC_GIO_PORT_A, SC_PIN_RELAY,   0u);
-    gioSetBit(SC_GIO_PORT_A, SC_PIN_LED_CVC, 0u);
-    gioSetBit(SC_GIO_PORT_A, SC_PIN_LED_FZC, 0u);
-    gioSetBit(SC_GIO_PORT_A, SC_PIN_LED_RZC, 0u);
-    gioSetBit(SC_GIO_PORT_A, SC_PIN_LED_SYS, 0u);
-    gioSetBit(SC_GIO_PORT_A, SC_PIN_WDI,     0u);
-    gioSetBit(SC_GIO_PORT_B, SC_PIN_LED_HB,  0u);
+    gioSetBit(SC_PORT_RELAY,   SC_PIN_RELAY,   0u);
+    gioSetBit(SC_PORT_LED_CVC, SC_PIN_LED_CVC, 0u);
+    gioSetBit(SC_PORT_LED_FZC, SC_PIN_LED_FZC, 0u);
+    gioSetBit(SC_PORT_LED_RZC, SC_PIN_LED_RZC, 0u);
+    gioSetBit(SC_PORT_LED_SYS, SC_PIN_LED_SYS, 0u);
+    gioSetBit(SC_PORT_WDI,     SC_PIN_WDI,     0u);
+    gioSetBit(SC_PORT_LED_HB,  SC_PIN_LED_HB,  0u);
 }
 
 /* ==================================================================
@@ -87,9 +86,9 @@ static void sc_startup_fail_blink(uint8 failStep)
     for (;;) {
         /* Blink failStep times */
         for (blink = 0u; blink < failStep; blink++) {
-            gioSetBit(SC_GIO_PORT_A, SC_PIN_LED_SYS, 1u);
+            gioSetBit(SC_PORT_LED_SYS, SC_PIN_LED_SYS, 1u);
             for (delay = 0u; delay < 15000000u; delay++) { /* ~300ms at 300MHz */ }
-            gioSetBit(SC_GIO_PORT_A, SC_PIN_LED_SYS, 0u);
+            gioSetBit(SC_PORT_LED_SYS, SC_PIN_LED_SYS, 0u);
             for (delay = 0u; delay < 15000000u; delay++) { /* ~300ms at 300MHz */ }
         }
         /* Pause between blink groups */
@@ -108,7 +107,9 @@ int main(void)
     uint8 startup_result;
     boolean all_checks_ok;
     uint16 dbg_tick_counter = 0u;  /* 5s periodic debug print */
+#ifndef SC_ETH_ENABLE
     uint8 hb_blink_counter = 0u;  /* heartbeat LED blink (GIOB[6:7]) */
+#endif
 #ifdef SIL_DIAG
     uint16 sil_diag_tick = 0u;
 #endif
@@ -118,7 +119,9 @@ int main(void)
      *   Both stay ON  = CPU stuck before main
      *   Both go OFF   = main reached
      *   Both back ON  = system init done */
+#ifndef SC_ETH_ENABLE
     sc_het_led_off();
+#endif
 
     /* ---- 1. System initialization ---- */
     systemInit();           /* PLL to 300 MHz (TMS570: HALCoGen, POSIX: no-op) */
@@ -131,9 +134,11 @@ int main(void)
      * (b) sc_sci_init overrides PINMUX83 which muxInit() sets to GIOA[0]. */
     sc_sci_init();
 
-    /* gioInit() resets DIRB/DOUTB, turning off GIOB[6:7] user LEDs.
-     * Re-enable them so they stay ON as a "firmware running" indicator. */
+    /* In non-Ethernet builds, GIOB[6:7] remain bring-up indicators.
+     * In Ethernet builds, they are assigned to RZC/system fault LEDs. */
+#ifndef SC_ETH_ENABLE
     sc_het_led_on();
+#endif
     sc_sci_puts("=== SC Boot [" GIT_HASH "] ===\r\n");
     sc_sci_puts("main() reached OK\r\n");
 
@@ -258,6 +263,7 @@ int main(void)
          *   ESM error active → both solid ON (fault)
          *   SC_ESM_ENABLED   → alternating (lockstep monitored)
          *   ESM disabled     → both blink together (no lockstep) */
+#ifndef SC_ETH_ENABLE
         hb_blink_counter++;
         if (hb_blink_counter >= 100u) {
             hb_blink_counter = 0u;
@@ -277,6 +283,7 @@ int main(void)
         } else {
             sc_het_led_off();
         }
+#endif
 #endif
 
         /* ---- Step 6: Bus Silence Monitor ---- */

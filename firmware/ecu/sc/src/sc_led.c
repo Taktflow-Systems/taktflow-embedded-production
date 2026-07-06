@@ -25,7 +25,7 @@
 
 /** LED port lookup */
 static const uint8 led_port[SC_LED_COUNT] = {
-    SC_GIO_PORT_A, SC_GIO_PORT_A, SC_GIO_PORT_A, SC_GIO_PORT_A
+    SC_PORT_LED_CVC, SC_PORT_LED_FZC, SC_PORT_LED_RZC, SC_PORT_LED_SYS
 };
 
 /** LED pin lookup */

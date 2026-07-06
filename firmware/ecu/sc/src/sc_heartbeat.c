@@ -54,9 +54,15 @@ static uint8 hb_last_fault_status[SC_ECU_COUNT];
  * ================================================================== */
 
 static const uint8 ecu_led_pin[SC_ECU_COUNT] = {
-    SC_PIN_LED_CVC,     /* GIO_A1 */
-    SC_PIN_LED_FZC,     /* GIO_A2 */
-    SC_PIN_LED_RZC      /* GIO_A3 */
+    SC_PIN_LED_CVC,
+    SC_PIN_LED_FZC,
+    SC_PIN_LED_RZC
+};
+
+static const uint8 ecu_led_port[SC_ECU_COUNT] = {
+    SC_PORT_LED_CVC,
+    SC_PORT_LED_FZC,
+    SC_PORT_LED_RZC
 };
 
 /* ==================================================================
@@ -101,7 +107,7 @@ void SC_Heartbeat_NotifyRx(uint8 ecuIndex)
             hb_timed_out[ecuIndex]       = FALSE;
             hb_confirm_counter[ecuIndex] = 0u;
             hb_recovery_count[ecuIndex]  = 0u;
-            gioSetBit(SC_GIO_PORT_A, ecu_led_pin[ecuIndex], 0u);
+            gioSetBit(ecu_led_port[ecuIndex], ecu_led_pin[ecuIndex], 0u);
         }
     }
     /* If not timed out, counter reset above is sufficient */
@@ -136,7 +142,7 @@ void SC_Heartbeat_Monitor(void)
 
         /* If not timed out, ensure fault LED is cleared */
         if ((hb_timed_out[i] == FALSE) && (hb_confirmed[i] == FALSE)) {
-            gioSetBit(SC_GIO_PORT_A, ecu_led_pin[i], 0u);
+            gioSetBit(ecu_led_port[i], ecu_led_pin[i], 0u);
         }
 
         /* Check for timeout threshold (150ms) */
@@ -147,7 +153,7 @@ void SC_Heartbeat_Monitor(void)
                 hb_confirm_counter[i] = 0u;
 
                 /* Drive fault LED HIGH immediately */
-                gioSetBit(SC_GIO_PORT_A, ecu_led_pin[i], 1u);
+                gioSetBit(ecu_led_port[i], ecu_led_pin[i], 1u);
             } else {
                 /* Already timed out — reset recovery, increment confirmation */
                 hb_recovery_count[i] = 0u;

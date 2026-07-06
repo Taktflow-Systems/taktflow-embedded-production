@@ -198,7 +198,7 @@ void SC_Plausibility_Check(void)
 
         if (plaus_debounce >= SC_PLAUS_DEBOUNCE_TICKS) {
             plaus_faulted = TRUE;
-            gioSetBit(SC_GIO_PORT_A, SC_PIN_LED_SYS, 1u);
+            gioSetBit(SC_PORT_LED_SYS, SC_PIN_LED_SYS, 1u);
         }
     }
 
@@ -212,7 +212,7 @@ void SC_Plausibility_Check(void)
             backup_cutoff_counter++;
             if (backup_cutoff_counter >= SC_BACKUP_CUTOFF_TICKS) {
                 plaus_faulted = TRUE;
-                gioSetBit(SC_GIO_PORT_A, SC_PIN_LED_SYS, 1u);
+                gioSetBit(SC_PORT_LED_SYS, SC_PIN_LED_SYS, 1u);
             }
         } else {
             backup_cutoff_counter = 0u;
@@ -263,7 +263,7 @@ void SC_CreepGuard_Check(void)
         creep_debounce++;
         if (creep_debounce >= SC_CREEP_DEBOUNCE_CYCLES) {
             creep_faulted = TRUE;
-            gioSetBit(SC_GIO_PORT_A, SC_PIN_LED_SYS, 1u);
+            gioSetBit(SC_PORT_LED_SYS, SC_PIN_LED_SYS, 1u);
         }
     } else {
         creep_debounce = 0u;

@@ -71,7 +71,7 @@ Status markers: PENDING / IN PROGRESS / DONE.
 - **Definition of done:** ping test passes on bench using only the sc_eth
   API, with unit tests green in CI.
 
-#### S-ETH-02 — GIOA[3]/[4] pin reconciliation decision memo
+#### S-ETH-02 — GIOA[3]/[4] pin reconciliation decision memo — DONE
 - **Goal:** Resolve the conflict between PHY control pins and SC LED
   assignments so Ethernet can coexist with the SC application.
 - **Inputs:** `firmware/ecu/sc/include/Sc_Hw_Cfg.h` (LED pin map);
