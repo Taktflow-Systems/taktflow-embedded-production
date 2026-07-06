@@ -146,7 +146,7 @@ Status markers: PENDING / IN PROGRESS / DONE.
   XDS110 and a PC-side UDP receiver accepted 1000 consecutive S-UDP-02 probe
   datagrams with zero gaps and zero invalid payloads.
 
-#### S-UDP-03 — SC telemetry producer integration
+#### S-UDP-03 — SC telemetry producer integration — IN PROGRESS
 - **Goal:** Emit the S-UDP-01 packet from the SC main loop at a fixed
   cadence without violating loop timing.
 - **Inputs:** S-UDP-02 encoder; `sc_main.c` scheduler structure;
@@ -166,8 +166,15 @@ Status markers: PENDING / IN PROGRESS / DONE.
   PR); development-discipline.md Layer 4.
 - **Definition of done:** 10-minute soak on bench: zero watchdog resets,
   zero sequence gaps at the receiver.
+- **Current status:** software integration is present and bench streaming is
+  proven, but the configured-rate gate is still open. The integrated `ETH=1`
+  image streams valid `SCET` packets through the S-UDP-04 receiver with zero
+  sequence gaps and zero CRC or shape errors over a 60 s window, but the
+  measured rate is about 95.23 Hz against the nominal 100 Hz cadence. Next work
+  is RTI/main-loop timing diagnosis or an explicit cadence change before
+  marking this step done.
 
-#### S-UDP-04 — PC-side telemetry receiver
+#### S-UDP-04 — PC-side telemetry receiver — DONE
 - **Goal:** Decode and record the telemetry stream on the bench PC.
 - **Inputs:** S-UDP-01 format doc only (deliberate independence check).
 - **Deliverables:** `tools/bench/eth_telemetry_rx.py` — binds the bench NIC,
@@ -179,6 +186,9 @@ Status markers: PENDING / IN PROGRESS / DONE.
 - **Gate / review:** ungated (QM tooling); PR review.
 - **Definition of done:** 60 s capture from the bench produces a CSV with
   zero decode errors and a printed loss report of 0.
+- **Current status:** done. `tools/bench/eth_telemetry_rx.py` decoded a live
+  60 s bench stream into CSV with 5715 data rows, zero invalid frames, and zero
+  sequence gaps.
 
 #### S-UDP-05 — Bench validation against a HIL scenario
 - **Goal:** Prove the telemetry channel is trustworthy during real HIL load

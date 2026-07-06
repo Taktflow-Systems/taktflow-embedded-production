@@ -78,5 +78,6 @@ gateway/taktflow.dbc.bak
 .claude/*.lock
 true
 tools/bench/*.local.toml
+tools/bench/*.csv
 tools/bench/__pycache__/
 tools/xtask/Cargo.lock

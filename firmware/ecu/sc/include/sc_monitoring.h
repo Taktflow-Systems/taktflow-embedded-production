@@ -4,7 +4,8 @@
  * @author  System
  * @date    2026-03-07
  *
- * @details Transmits CAN ID 0x013 (SC_Status) every 500ms on DCAN1.
+ * @details Transmits CAN ID 0x013 (SC_Status) at the configured monitoring
+ *          period on DCAN1.
  *          Provides SC health visibility to gateway and ICU so that
  *          an SC firmware halt is detectable via missing alive counter.
  *          Addresses: GAP-1 (no SC heartbeat TX) and GAP-2 (no fault message).
@@ -27,11 +28,26 @@
 void SC_Monitoring_Init(void);
 
 /**
- * @brief  10ms cyclic update — build and transmit SC_Status every 500ms
+ * @brief  Build the 4-byte SC_Status payload without transmitting it.
+ *
+ * This helper is shared by the CAN SC_Status broadcaster and QM Ethernet
+ * telemetry so both transports expose the same status layout.
+ *
+ * @param  frame          Output buffer.
+ * @param  len            Output buffer size in bytes.
+ * @param  alive_counter  Transport-local modulo-16 alive counter value.
+ * @return E_OK when frame was populated; E_NOT_OK on invalid arguments.
+ */
+Std_ReturnType SC_Monitoring_BuildStatusPayload(uint8 *frame,
+                                                uint8 len,
+                                                uint8 alive_counter);
+
+/**
+ * @brief  10ms cyclic update — build and transmit SC_Status periodically
  *
  * Queries SC state from heartbeat, plausibility, relay, and selftest modules.
  * Builds the 4-byte SC_Status frame and calls SC_CAN_TransmitStatus().
- * Only transmits once per 50 main-loop iterations (500ms period).
+ * Only transmits when the configured monitoring period expires.
  *
  * @note   Call after SC_Relay_CheckTriggers() so relay state is current.
  *         Call before SC_LED_Update() to keep frame content consistent.

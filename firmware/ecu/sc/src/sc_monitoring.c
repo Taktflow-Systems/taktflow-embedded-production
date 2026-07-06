@@ -20,9 +20,8 @@
 #include "sc_selftest.h"
 #include "sc_state.h"
 
-/* T1 probe: unconditional TX every 10ms tick (toggled by -DSC_DEBUG_T1_PROBE
- * or local define). Remove for production. */
-#define SC_DEBUG_T1_PROBE 1
+/* Optional T1 probe: compile with -DSC_DEBUG_T1_PROBE=1 to fire an
+ * unconditional CAN status test frame every 10ms tick during bring-up. */
 
 /* ==================================================================
  * Module State
@@ -43,7 +42,7 @@ static uint8 mon_tick;
  * Byte 3: ECU_Health [2:0] | FaultReason [6:3] | RelayState [7]
  * ================================================================== */
 
-static void mon_build_payload(uint8* frame)
+static void mon_build_payload(uint8* frame, uint8 alive_counter)
 {
     uint8 sc_mode;
     uint8 fault_flags;
@@ -102,7 +101,7 @@ static void mon_build_payload(uint8* frame)
     relay_state = (killed == FALSE) ? 1u : 0u;  /* 1=energized, 0=de-energized */
 
     /* Pack frame — AUTOSAR E2E Profile P01 format */
-    frame[0] = (uint8)((mon_alive_counter & 0x0Fu) << 4u)
+    frame[0] = (uint8)((alive_counter & 0x0Fu) << 4u)
              | (uint8)(SC_E2E_STATUS_DATA_ID & 0x0Fu);
     frame[2] = (uint8)(sc_mode & 0x0Fu) | (uint8)((fault_flags & 0x0Fu) << 4u);
     frame[3] = (uint8)(ecu_health & 0x07u)
@@ -126,11 +125,24 @@ void SC_Monitoring_Init(void)
     mon_tick          = 0u;
 }
 
+Std_ReturnType SC_Monitoring_BuildStatusPayload(uint8 *frame,
+                                                uint8 len,
+                                                uint8 alive_counter)
+{
+    if ((frame == NULL_PTR) || (len < SC_RELAY_STATUS_DLC)) {
+        return E_NOT_OK;
+    }
+
+    mon_build_payload(frame, alive_counter);
+
+    return E_OK;
+}
+
 void SC_Monitoring_Update(void)
 {
     uint8 frame[SC_RELAY_STATUS_DLC];  /* 4 bytes */
 
-#ifdef SC_DEBUG_T1_PROBE
+#if defined(SC_DEBUG_T1_PROBE) && (SC_DEBUG_T1_PROBE != 0)
     /* T1 probe: fire a hardcoded TX every tick (every 10ms), unconditional.
      * Bypasses SC_MONITORING_TX_PERIOD gate. Payload = {0xAA,0x55,0x01,...}.
      * If 0x013 appears on the wire → DCAN path works, bug is gating or
@@ -149,8 +161,11 @@ void SC_Monitoring_Update(void)
     }
     mon_tick = 0u;
 
-    mon_build_payload(frame);
-    SC_CAN_TransmitStatus(frame, SC_RELAY_STATUS_DLC);
+    if (SC_Monitoring_BuildStatusPayload(frame,
+                                         SC_RELAY_STATUS_DLC,
+                                         mon_alive_counter) == E_OK) {
+        SC_CAN_TransmitStatus(frame, SC_RELAY_STATUS_DLC);
+    }
 
     /* Increment alive counter after TX so receivers detect a halt on the NEXT frame */
     mon_alive_counter++;

@@ -135,7 +135,8 @@ HALCOGEN_ASM = $(filter-out $(HALCOGEN_ASM_EXCLUDE),$(HALCOGEN_ASM_ALL))
 # --- SC application sources (exclude POSIX backend) ---
 SC_SRCS_ALL = $(wildcard $(SC_DIR)/src/*.c)
 SC_ETH_SRCS = $(SC_DIR)/src/sc_eth.c \
-              $(SC_DIR)/src/sc_eth_udp.c
+              $(SC_DIR)/src/sc_eth_udp.c \
+              $(SC_DIR)/src/sc_eth_telemetry.c
 SC_HW_TMS570 = $(PLAT)/src/sc_hw_tms570.c
 SC_SRCS = $(filter-out %_posix.c $(SC_ETH_SRCS),$(SC_SRCS_ALL)) $(SC_HW_TMS570)
 

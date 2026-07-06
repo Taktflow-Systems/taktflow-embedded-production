@@ -28,6 +28,7 @@
 #include "sc_selftest.h"
 #include "sc_gio.h"
 #include "sc_monitoring.h"     /* SWR-SC-029/030: SC_Status broadcast (GAP-1/2) */
+#include "sc_eth_telemetry.h"  /* S-UDP-03: QM Ethernet telemetry producer */
 #include "sc_state.h"         /* GAP-SC-006: authoritative state machine */
 #include "sc_uds_shim.h"
 
@@ -156,6 +157,13 @@ int main(void)
     SC_LED_Init();
     SC_Watchdog_Init();
     SC_Monitoring_Init();       /* SWR-SC-030: SC_Status TX init */
+#ifdef SC_ETH_ENABLE
+    if (SC_EthTelemetry_Init() == E_OK) {
+        sc_sci_puts("ETH telemetry: OK\r\n");
+    } else {
+        sc_sci_puts("ETH telemetry: unavailable\r\n");
+    }
+#endif
     SC_State_Init();            /* GAP-SC-006: state machine starts in INIT */
     SC_UdsShim_Init();          /* HIL-only direct UDS shim for Phase 5 SC routing */
     /* ESM lockstep monitoring — define SC_ESM_ENABLED to activate.
@@ -258,8 +266,11 @@ int main(void)
         }
 #endif
 
-        /* ---- Step 4b: SC_Status Broadcast (500ms, SWR-SC-029/030) ---- */
+        /* ---- Step 4b: SC_Status Broadcast (SWR-SC-029/030) ---- */
         SC_Monitoring_Update();
+#ifdef SC_ETH_ENABLE
+        SC_EthTelemetry_Update();
+#endif
 
         /* ---- Step 5: LED Update ---- */
         SC_LED_Update();

@@ -35,9 +35,9 @@ Total payload length is 16 bytes.
 | 4 | 1 | `uint8` | `format_version` | version | S-UDP-01 constant, value `1` |
 | 5 | 1 | `uint8` | `header_len` | bytes | S-UDP-01 constant, value `12` |
 | 6 | 2 | `uint16` | `payload_len` | bytes | `SC_RELAY_STATUS_DLC`, `firmware/ecu/sc/include/Sc_Hw_Cfg.h:310`, value `4` |
-| 8 | 1 | `uint8` | `sequence_mod16` | count | `mon_alive_counter`, `firmware/ecu/sc/src/sc_monitoring.c:27`, packed at `sc_monitoring.c:101` |
+| 8 | 1 | `uint8` | `sequence_mod16` | count | `g_sc_eth_telemetry_sequence`, `firmware/ecu/sc/src/sc_eth_telemetry.c`; passed into `SC_Monitoring_BuildStatusPayload` so the status alive counter matches the Ethernet frame sequence |
 | 9 | 1 | `uint8` | `timestamp_source` | enum | `SC_Monitoring_Update`, called from `firmware/ecu/sc/src/sc_main.c:256` and `sc_main.c:257` after the 10 ms RTI gate at `sc_main.c:203` through `sc_main.c:208` |
-| 10 | 2 | `uint16` | `status_period_ms` | ms | `SC_MONITORING_TX_PERIOD`, `firmware/ecu/sc/include/Sc_Hw_Cfg.h:257`, multiplied by the 10 ms main-loop tick |
+| 10 | 2 | `uint16` | `status_period_ms` | ms | `SC_ETH_TELEMETRY_PERIOD_TICKS`, `firmware/ecu/sc/include/sc_eth_telemetry.h`, multiplied by the 10 ms main-loop tick |
 | 12 | 1 | `uint8` | `status_byte0` | packed | `frame[0]`, `firmware/ecu/sc/src/sc_monitoring.c:101` and `sc_monitoring.c:102` |
 | 13 | 1 | `uint8` | `status_crc8` | CRC | `frame[1]`, `firmware/ecu/sc/src/sc_monitoring.c:112`; CRC function `SC_E2E_ComputeCRC8`, `firmware/ecu/sc/src/sc_e2e.c:223` through `sc_e2e.c:242` |
 | 14 | 1 | `uint8` | `status_byte2` | packed | `frame[2]`, `firmware/ecu/sc/src/sc_monitoring.c:103` |
@@ -56,7 +56,7 @@ by `mon_build_payload`.
 
 | UDP offset | Bits | Name | Type | Unit | Source symbol |
 |---:|---|---|---|---|---|
-| 12 | `[7:4]` | `alive_counter_mod16` | `uint4` | count | `mon_alive_counter`, `firmware/ecu/sc/src/sc_monitoring.c:27`, packed at `sc_monitoring.c:101` |
+| 12 | `[7:4]` | `alive_counter_mod16` | `uint4` | count | Ethernet transport-local sequence passed to `SC_Monitoring_BuildStatusPayload`, `firmware/ecu/sc/src/sc_monitoring.c` |
 | 12 | `[3:0]` | `status_data_id` | `uint4` | enum | `SC_E2E_STATUS_DATA_ID`, `firmware/ecu/sc/include/Sc_Hw_Cfg.h:73`, packed at `sc_monitoring.c:102` |
 | 13 | `[7:0]` | `status_crc8` | `uint8` | CRC | `crc_input`, `firmware/ecu/sc/src/sc_monitoring.c:50` and `sc_monitoring.c:108` through `sc_monitoring.c:112` |
 | 14 | `[3:0]` | `sc_mode` | `uint4` | enum | `sc_mode`, `firmware/ecu/sc/src/sc_monitoring.c:44`, sourced from `SC_State_Get`, `sc_monitoring.c:57` through `sc_monitoring.c:66` |
@@ -176,10 +176,9 @@ Interpretation:
 | 1 | in-order packet, no detected loss |
 | 2..15 | `delta - 1` packet periods were missed |
 
-The first transmitted packet after `SC_Monitoring_Init` has sequence 0 because
-`mon_alive_counter` is reset at `firmware/ecu/sc/src/sc_monitoring.c:119`
-through `sc_monitoring.c:122` and incremented only after transmit at
-`sc_monitoring.c:138` and `sc_monitoring.c:139`.
+The first transmitted packet after `SC_EthTelemetry_Init` has sequence 0. The
+Ethernet sequence increments only after `Sc_EthUdp_Send` accepts a frame, so a
+failed TX attempt does not create a receiver-visible sequence gap by itself.
 
 Because the sequence is modulo 16, an outage of 16 or more consecutive packet
 periods is indistinguishable from no sequence gap. Receivers that need longer
@@ -193,7 +192,7 @@ The version 1 payload intentionally includes every runtime value packed by
 
 | `mon_build_payload` value | Wire field |
 |---|---|
-| `mon_alive_counter` | `sequence_mod16`, `alive_counter_mod16`, `status_byte0[7:4]` |
+| Ethernet telemetry sequence | `sequence_mod16`, `alive_counter_mod16`, `status_byte0[7:4]` |
 | `SC_E2E_STATUS_DATA_ID` | `status_data_id`, `status_byte0[3:0]`, CRC input |
 | `sc_mode` | `sc_mode`, `status_byte2[3:0]` |
 | `fault_flags` | `fault_flags`, `status_byte2[7:4]` |
