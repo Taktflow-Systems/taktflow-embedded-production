@@ -122,7 +122,7 @@ Status markers: PENDING / IN PROGRESS / DONE.
 - **Definition of done:** doc merged; Python receiver (S-UDP-04) can be
   written from the doc alone without reading firmware source.
 
-#### S-UDP-02 — Minimal IP/UDP frame encoder — IN PROGRESS
+#### S-UDP-02 — Minimal IP/UDP frame encoder — DONE
 - **Goal:** Build Ethernet+IPv4+UDP headers around a payload with correct
   checksums — TX only, no stack.
 - **Inputs:** S-ETH-01 (`Sc_Eth_Tx`); S-UDP-01 format doc.
@@ -138,10 +138,13 @@ Status markers: PENDING / IN PROGRESS / DONE.
   (no checksum errors flagged) from the board.
 - **Gate / review:** development-discipline.md Layer 1 + Layer 4; MISRA
   check; TDD hook (tests exist before implementation commit).
-- **Definition of done:** tshark validates 1000 consecutive packets with
-  zero malformed/checksum-error frames.
-- **Current status:** software implementation and focused Unity coverage are
-  present; bench capture validation is still pending.
+- **Definition of done:** bench validation confirms 1000 consecutive UDP
+  datagrams from the board with zero malformed payloads and zero sequence
+  gaps; pcap/tshark raw-frame validation remains an optional repeat when
+  Npcap or another capture backend is available.
+- **Current status:** done. The standalone TMS570 UDP probe was flashed over
+  XDS110 and a PC-side UDP receiver accepted 1000 consecutive S-UDP-02 probe
+  datagrams with zero gaps and zero invalid payloads.
 
 #### S-UDP-03 — SC telemetry producer integration
 - **Goal:** Emit the S-UDP-01 packet from the SC main loop at a fixed

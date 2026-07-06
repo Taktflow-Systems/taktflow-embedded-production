@@ -1,0 +1,70 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Taktflow Systems
+#
+# Sanitized example hardware map for local HIL/bench work.
+# Copy to `tools/bench/hardware-map.local.toml` and fill with local probe,
+# COM port, firmware image, and host details. The `.local.toml` file is ignored
+# because it can contain private hardware IDs, local network addresses, and
+# per-machine flashing history.
+
+[host.windows]
+name = "Windows dev machine"
+role = "primary bench host"
+notes = "Local notes for probe ownership and flashing tools."
+
+[[stlink]]
+logical_ecu = "cvc"
+stlink_serial = "STLINK_SERIAL_CVC"
+com_port = "COM_CVC"
+usb_location = "USB_LOCATION_CVC"
+assigned_on = "YYYY-MM-DD"
+assigned_by = "operator"
+flashed_image = "build/cvc-arm/cvc_firmware.elf sha256=SHA256_CVC_IMAGE"
+target_mcu = "STM32G47x/G48x"
+target_mcu_resolved_on = "YYYY-MM-DD"
+notes = "CVC local bench notes."
+
+[[stlink]]
+logical_ecu = "fzc"
+stlink_serial = "STLINK_SERIAL_FZC"
+com_port = "COM_FZC"
+usb_location = "USB_LOCATION_FZC"
+assigned_on = "YYYY-MM-DD"
+assigned_by = "operator"
+flashed_image = "build/fzc-arm/fzc_firmware.elf sha256=SHA256_FZC_IMAGE"
+target_mcu = "STM32G47x/G48x"
+target_mcu_resolved_on = "YYYY-MM-DD"
+notes = "FZC local bench notes."
+
+[[stlink]]
+logical_ecu = "rzc"
+stlink_serial = "STLINK_SERIAL_RZC"
+com_port = "COM_RZC"
+usb_location = "USB_LOCATION_RZC"
+assigned_on = "YYYY-MM-DD"
+assigned_by = "operator"
+flashed_image = "build/rzc-arm/rzc_firmware.elf sha256=SHA256_RZC_IMAGE"
+target_mcu = "STM32G47x/G48x"
+target_mcu_resolved_on = "YYYY-MM-DD"
+notes = "RZC local bench notes."
+
+[[xds110]]
+logical_ecu = "sc"
+com_port_main = "COM_XDS110_MAIN"
+com_port_uart = "COM_XDS110_UART"
+assigned_on = "YYYY-MM-DD"
+flashed_image = "build/tms570/sc.elf sha256=SHA256_SC_IMAGE"
+target_mcu = "TMS570 family"
+notes = "SC local bench notes."
+
+[host.pi]
+name = "Raspberry Pi bench host"
+ssh_target = "bench-user@BENCH_HOST"
+role = "bench-resident services and real-CAN gateway"
+notes = "Local bench host notes."
+
+[pi.probes]
+can_interface = "can0"
+can_adapter = "CAN_ADAPTER_NAME"
+stlink_attached = false
+stlink_note = "Local probe notes."

@@ -9,7 +9,7 @@
  *
  *          Build:  make -f firmware/platform/tms570/Makefile.tms570 eth-ping
  *          Flash:  make -f firmware/platform/tms570/Makefile.tms570 flash-eth-ping
- *          Test:   ping 192.168.1.200
+ *          Test:   ping <configured SC Ethernet test IP>
  *
  * @note    GIOA[3] (ball E1) = DP83630 PWRDOWN/INTN pin 7, ACTIVE LOW, with
  *          2.2k pulldown RP11B on board (schematic SPRR397 sheet 12) — the
@@ -30,6 +30,7 @@
 #include "HL_emac.h"
 #include "HL_sys_vim.h"
 #include "sc_eth.h"
+#include "sc_eth_udp.h"
 
 /* ================================================================
  * HALCoGen notification stubs (HL_notification.c excluded to avoid
@@ -51,11 +52,32 @@ void canErrorNotification(void *node, uint32 notification) { (void)node; (void)n
  * Network Configuration
  * ================================================================ */
 
-/* TMS570 static IP: 192.168.1.200 */
-static const uint8 g_my_ip[4]  = { 192U, 168U, 1U, 200U };
+/* Public default uses TEST-NET-1. Override SC_ETH_TEST_IP* for a local bench. */
+#ifndef SC_ETH_TEST_IP0
+#define SC_ETH_TEST_IP0 192U
+#endif
+#ifndef SC_ETH_TEST_IP1
+#define SC_ETH_TEST_IP1 0U
+#endif
+#ifndef SC_ETH_TEST_IP2
+#define SC_ETH_TEST_IP2 2U
+#endif
+#ifndef SC_ETH_TEST_IP3
+#define SC_ETH_TEST_IP3 200U
+#endif
+
+static const uint8 g_my_ip[4]  = {
+    SC_ETH_TEST_IP0,
+    SC_ETH_TEST_IP1,
+    SC_ETH_TEST_IP2,
+    SC_ETH_TEST_IP3
+};
 
 /* MAC address — locally administered, unique on bench */
 static uint8 g_my_mac[6] = { 0x02U, 0x00U, 0x4BU, 0x57U, 0x01U, 0x00U };
+
+/* Limited broadcast used by the S-UDP-02 bench probe. */
+static const uint8 g_broadcast_ip[4] = { 255U, 255U, 255U, 255U };
 
 /* ================================================================
  * Ethernet Protocol Constants
@@ -68,6 +90,9 @@ static uint8 g_my_mac[6] = { 0x02U, 0x00U, 0x4BU, 0x57U, 0x01U, 0x00U };
 #define ARP_OP_REPLY    2U
 #define ICMP_ECHO_REQ   8U
 #define ICMP_ECHO_REPLY 0U
+#define UDP_PROBE_SRC_PORT 55000U
+#define UDP_PROBE_DST_PORT 55001U
+#define UDP_PROBE_DELAY_LOOPS 3000000U
 
 /* ================================================================
  * Global state
@@ -86,6 +111,8 @@ static volatile uint32 g_rx_count = 0U;
 static volatile uint32 g_tx_count = 0U;
 static volatile uint32 g_arp_count = 0U;
 static volatile uint32 g_icmp_count = 0U;
+static volatile uint32 g_udp_probe_tx_count = 0U;
+static uint32 g_udp_probe_seq = 0U;
 
 /* ================================================================
  * SCI (UART) — raw register access, same as working SC firmware
@@ -257,6 +284,65 @@ static void eth_transmit(uint8 *frame, uint32 len)
     if ((len <= SC_ETH_FRAME_MAX_LEN) &&
         (Sc_Eth_Tx(frame, (uint16)len) == E_OK)) {
         g_tx_count++;
+    }
+}
+
+/* ================================================================
+ * S-UDP-02 UDP probe emitter
+ * ================================================================ */
+
+static void udp_probe_delay(void)
+{
+    volatile uint32 i;
+
+    for (i = 0U; i < UDP_PROBE_DELAY_LOOPS; i++) {
+        /* Busy wait to avoid overrunning the PC UDP receive buffer. */
+    }
+}
+
+static void udp_probe_init(void)
+{
+    sc_eth_udp_config_t config;
+    uint32 i;
+
+    for (i = 0U; i < SC_ETH_UDP_MAC_ADDR_LEN; i++) {
+        config.src_mac[i] = g_my_mac[i];
+        config.unicast_dst_mac[i] = 0xFFU;
+    }
+    for (i = 0U; i < SC_ETH_UDP_IPV4_ADDR_LEN; i++) {
+        config.src_ip[i] = g_my_ip[i];
+    }
+    config.src_port = UDP_PROBE_SRC_PORT;
+
+    Sc_EthUdp_Init(&config);
+}
+
+static void udp_probe_send(void)
+{
+    uint8 payload[16U];
+    uint32 seq = g_udp_probe_seq;
+
+    payload[0] = (uint8)'S';
+    payload[1] = (uint8)'U';
+    payload[2] = (uint8)'0';
+    payload[3] = (uint8)'2';
+    payload[4] = (uint8)((seq >> 24U) & 0xFFU);
+    payload[5] = (uint8)((seq >> 16U) & 0xFFU);
+    payload[6] = (uint8)((seq >> 8U) & 0xFFU);
+    payload[7] = (uint8)(seq & 0xFFU);
+    payload[8] = (uint8)(seq & 0xFFU);
+    payload[9] = (uint8)((~seq) & 0xFFU);
+    payload[10] = 0xA5U;
+    payload[11] = 0x5AU;
+    payload[12] = (uint8)'B';
+    payload[13] = (uint8)'E';
+    payload[14] = (uint8)'N';
+    payload[15] = (uint8)'C';
+
+    if (Sc_EthUdp_Send(g_broadcast_ip, UDP_PROBE_DST_PORT,
+                       payload, (uint16)sizeof(payload)) == E_OK) {
+        g_udp_probe_tx_count++;
+        g_udp_probe_seq++;
     }
 }
 
@@ -536,6 +622,7 @@ int main(void)
     } else {
         uart_puts("WARN - continuing with EMAC DMA initialized\r\n");
     }
+    udp_probe_init();
 
     uart_puts("IP:   ");
     uart_put_ip(g_my_ip);
@@ -573,11 +660,16 @@ int main(void)
                 uart_put_dec(g_arp_count);
                 uart_puts(" icmp=");
                 uart_put_dec(g_icmp_count);
+                uart_puts(" udp=");
+                uart_put_dec(g_udp_probe_tx_count);
 
                 uart_puts(" link=");
                 uart_puts((Sc_Eth_LinkUp() == TRUE) ? "UP" : "DOWN");
                 uart_puts("\r\n");
             }
+
+            udp_probe_send();
+            udp_probe_delay();
         }
     }
 
