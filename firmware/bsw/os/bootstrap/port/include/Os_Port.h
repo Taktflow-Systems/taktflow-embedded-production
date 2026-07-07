@@ -23,6 +23,7 @@ void Os_PortStartFirstTask(void);
 void Os_PortRequestContextSwitch(void);
 void Os_PortEnterIsr2(void);
 void Os_PortExitIsr2(void);
+boolean Os_PortIsInIsrContext(void);
 
 void Os_PortTimingProtArmBudget(uint32 BudgetUs);
 void Os_PortTimingProtDisarm(void);

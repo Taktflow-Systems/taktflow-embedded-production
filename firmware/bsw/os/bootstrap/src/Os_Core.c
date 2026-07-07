@@ -49,7 +49,7 @@ Os_HookType os_pre_task_hook = 0;
 Os_HookType os_post_task_hook = 0;
 Os_ShutdownHookType os_shutdown_hook = 0;
 
-#if defined(UNIT_TEST)
+#if defined(UNIT_TEST) || defined(OS_BOOTSTRAP_BRINGUP)
 void os_clear_task_cfg(void)
 {
     uint8 idx;
@@ -394,7 +394,7 @@ void StartOS(AppModeType Mode)
 
     (void)os_run_ready_tasks();
 
-#if !defined(UNIT_TEST)
+#if !defined(UNIT_TEST) && !defined(OS_BOOTSTRAP_BRINGUP)
     for (;;) {
         if (os_shutdown_requested == TRUE) {
             break;
@@ -448,7 +448,7 @@ void Os_BootstrapExitIsr2(void)
     }
 }
 
-#if defined(UNIT_TEST)
+#if defined(UNIT_TEST) || defined(OS_BOOTSTRAP_BRINGUP)
 void Os_TestReset(void)
 {
     os_clear_task_cfg();
@@ -881,14 +881,28 @@ void Os_TestSetProtectionHook(Os_ProtectionHookType Hook)
     os_protection_hook = Hook;
 }
 
-void Os_TestSetCurrentTaskRunning(TaskType TaskID)
+StatusType Os_TestSetCurrentTaskRunning(TaskType TaskID)
 {
-    if (os_is_valid_task(TaskID) == FALSE) {
-        return;
+    if ((os_started == FALSE) || (os_is_valid_task(TaskID) == FALSE)) {
+        return E_OS_STATE;
+    }
+
+    if ((os_current_task != INVALID_TASK) &&
+        (os_current_task != TaskID) &&
+        (os_tcb[os_current_task].State == RUNNING)) {
+        os_tcb[os_current_task].State = READY;
+        os_tcb[os_current_task].ReadyStamp = os_ready_stamp_counter++;
+    }
+
+    if (os_tcb[TaskID].PendingActivations == 0u) {
+        os_tcb[TaskID].PendingActivations = 1u;
     }
 
     os_current_task = TaskID;
     os_tcb[TaskID].State = RUNNING;
-    os_ready_bitmap |= (uint32)(1u << TaskID);
+    os_tcb[TaskID].CurrentPriority = os_task_cfg[TaskID].Priority;
+    os_tcb[TaskID].ReadyStamp = 0u;
+    os_rebuild_ready_bitmap();
+    return E_OK;
 }
 #endif

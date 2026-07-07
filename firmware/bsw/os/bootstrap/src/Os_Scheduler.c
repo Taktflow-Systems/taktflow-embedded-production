@@ -6,6 +6,7 @@
 #include "Os_Internal.h"
 
 #if defined(PLATFORM_STM32) || defined(PLATFORM_STM32L5) || defined(PLATFORM_TMS570)
+#include "Os_Port.h"
 #include "Os_Port_TaskBinding.h"
 #endif
 
@@ -144,6 +145,22 @@ static void os_dispatch_task(TaskType NextTask)
     os_stack_monitor_enter_task(NextTask, (uintptr_t)&stack_base_marker);
     os_rebuild_ready_bitmap();
     os_dispatch_count++;
+
+#if defined(PLATFORM_STM32) || defined(PLATFORM_TMS570)
+    /* On hardware, context switch is deferred to PendSV/IRQ exception return.
+     * os_stage_port_dispatch already set SelectedNextTask + requested switch.
+     * Do NOT call Entry() from ISR context -- PendSV will restore the task.
+     *
+     * ThreadX ref: tx_timer_interrupt.S -- SysTick never calls task entry,
+     * only sets _tx_timer_expired + PENDSVSET.
+     *
+     * Kernel os_isr_cat2_nesting is already 0 here (decremented by
+     * Os_BootstrapExitIsr2 before dispatch).  Os_PortIsInIsrContext checks
+     * port-level nesting, decremented later in Os_PortExitIsr2. */
+    if (Os_PortIsInIsrContext() == TRUE) {
+        return;
+    }
+#endif
 
     if (os_pre_task_hook != (Os_HookType)0) {
         os_pre_task_hook();

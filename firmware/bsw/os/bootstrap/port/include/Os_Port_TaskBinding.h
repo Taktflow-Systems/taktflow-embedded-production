@@ -12,6 +12,7 @@ StatusType Os_Port_PrepareConfiguredTask(TaskType TaskID, uintptr_t StackTop);
 StatusType Os_Port_PrepareConfiguredFirstTask(TaskType TaskID, uintptr_t StackTop);
 StatusType Os_Port_SelectConfiguredTask(TaskType TaskID);
 void Os_Port_SynchronizeConfiguredTask(TaskType TaskID);
+StatusType Os_Port_RebuildTaskFrame(TaskType TaskID);
 StatusType Os_Port_RequestConfiguredDispatch(TaskType TaskID);
 StatusType Os_Port_CompleteConfiguredDispatch(void);
 void Os_Port_ObserveConfiguredDispatch(TaskType TaskID);

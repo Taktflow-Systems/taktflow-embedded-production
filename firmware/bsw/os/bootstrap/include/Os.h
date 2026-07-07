@@ -66,7 +66,7 @@ typedef void (*Os_ErrorHookType)(StatusType Error);
 typedef void (*Os_ShutdownHookType)(StatusType Error);
 typedef void* TrustedFunctionParameterRefType;
 typedef StatusType (*Os_TrustedFunctionType)(TrustedFunctionParameterRefType Params);
-#if defined(UNIT_TEST)
+#if defined(UNIT_TEST) || defined(OS_BOOTSTRAP_BRINGUP)
 typedef void (*Os_TestIsrHandlerType)(void);
 #endif
 
@@ -299,7 +299,7 @@ boolean Os_ServiceProtCheck(uint8 AllowedMask);
 void Os_ServiceProtViolation(void);
 void Os_ServiceProtReset(void);
 
-#if defined(UNIT_TEST)
+#if defined(UNIT_TEST) || defined(OS_BOOTSTRAP_BRINGUP)
 void Os_TestReset(void);
 StatusType Os_TestConfigureTasks(const Os_TaskConfigType* Config, uint8 TaskCount);
 StatusType Os_TestConfigureResources(const Os_ResourceConfigType* Config, uint8 ResourceCount);
@@ -329,7 +329,7 @@ TickType Os_TestGetCounterValue(void);
 uint16 Os_TestGetTaskStackPeak(TaskType TaskID);
 boolean Os_TestTaskHasStackViolation(TaskType TaskID);
 void Os_TestSetProtectionHook(Os_ProtectionHookType Hook);
-void Os_TestSetCurrentTaskRunning(TaskType TaskID);
+StatusType Os_TestSetCurrentTaskRunning(TaskType TaskID);
 #endif
 
 #endif /* OS_H */
