@@ -73,6 +73,12 @@
 #include "tx_api.h"
 #endif
 
+#ifdef USE_OSEK
+#include "Os_Cfg_Rzc.h"   /* generated kernel config (S-OS-11) */
+#include "Os_TaskMap.h"
+#include "Os_Port.h"
+#endif
+
 /* ==================================================================
  * External Configuration (defined in cfg/ files)
  * ================================================================== */
@@ -296,6 +302,48 @@ void Timer_5s_Callback(ULONG arg)
 #endif
 
 /* ==================================================================
+ * OSEK task map (USE_OSEK only — S-OS-22 STM32 cutover)
+ *
+ * Bridges the legacy super-loop BSW slots into the generated period
+ * tasks. Each generated task body (Rte_TaskBodies_Rzc.c) runs
+ * Os_TaskMap_RunMappedFunctions() BEFORE its RTE runnables, preserving
+ * the legacy slot-before-RTE order within each period group. Array
+ * order preserves the legacy call order within a slot. The idle entry
+ * binds the legacy Main_Hw_Wfi to the generated idle task's hook loop.
+ * ================================================================== */
+
+#ifdef USE_OSEK
+
+/** @brief 5 s debug slot wrapper — legacy loop passed tick_us */
+static void Main_Os_DebugPrintStatus(void)
+{
+    Main_Hw_DebugPrintStatus(Main_Hw_GetTick());
+}
+
+/* Registered once via Os_TaskMap_SetTable() before StartOS.
+ * Os_TaskMapEntryType is a new-module config (not a generated
+ * CanIf/PduR/Com table — development-discipline rule 1). */
+static const Os_TaskMapEntryType rzc_os_task_map[] = {
+    /* Name, MainFunction, MappedTask, PeriodTicks */
+    /* legacy 10 ms slot (super-loop order) */
+    { "CanTp_MainFunction",       CanTp_MainFunction,       OS_TASK_RZC_10MS,     10u },
+    { "Dcm_MainFunction",         Dcm_MainFunction,         OS_TASK_RZC_10MS,     10u },
+    { "BswM_MainFunction",        BswM_MainFunction,        OS_TASK_RZC_10MS,     10u },
+    { "CanSM_MainFunction",       CanSM_MainFunction,       OS_TASK_RZC_10MS,     10u },
+    /* legacy 100 ms slot */
+    { "WdgM_MainFunction",        WdgM_MainFunction,        OS_TASK_RZC_100MS,   100u },
+    { "Dem_MainFunction",         Dem_MainFunction,         OS_TASK_RZC_100MS,   100u },
+    /* legacy 5 s debug slot */
+    { "Main_Hw_DebugPrintStatus", Main_Os_DebugPrintStatus, OS_TASK_RZC_5000MS, 5000u },
+    /* legacy idle WFI (generated idle task hook loop) */
+    { "Main_Hw_Wfi",              Main_Hw_Wfi,              OS_TASK_RZC_IDLE,      0u },
+};
+#define RZC_OS_TASK_MAP_COUNT \
+    ((uint8)(sizeof(rzc_os_task_map) / sizeof(rzc_os_task_map[0])))
+
+#endif /* USE_OSEK */
+
+/* ==================================================================
  * Main Entry Point
  * ================================================================== */
 
@@ -307,7 +355,7 @@ void Timer_5s_Callback(ULONG arg)
  */
 int main(void)
 {
-#ifndef USE_THREADX
+#if !defined(USE_THREADX) && !defined(USE_OSEK)
     uint32 last_1ms_us   = 0u;
     uint32 last_10ms_us  = 0u;
     uint32 last_100ms_us = 0u;
@@ -420,6 +468,34 @@ int main(void)
 
 #ifdef USE_THREADX
     tx_kernel_enter();
+#elif defined(USE_OSEK)
+    /* OSEK SC3 kernel boot (S-OS-22 STM32 cutover, build-level; on-target
+     * bringup is S-OS-31). Port init -> generated config -> StartOS. The
+     * generated idle task (autostarted) starts the period schedule tables
+     * from task context and loops on the task-map idle hook (Main_Hw_Wfi).
+     *
+     * Fail-closed: Os_Configure wipes all kernel tables on rejection, so
+     * a bad config can never be partially applied. The reaction mirrors
+     * the self-test-failure idiom (Det + Dem), then parks the ECU in WFI
+     * WITHOUT starting any scheduler — WdgM_MainFunction never runs, the
+     * external watchdog starves and forces the safe state. */
+    {
+        StatusType os_status;
+
+        Os_PortTargetInit();
+        Os_TaskMap_SetTable(rzc_os_task_map, RZC_OS_TASK_MAP_COUNT);
+        os_status = Os_Configure(&rzc_os_config);
+        if (os_status != E_OK)
+        {
+            Det_ReportRuntimeError(DET_MODULE_RZC_MAIN, 0u, MAIN_API_RUN, DET_E_DBG_OS_CONFIG_FAIL);
+            Dem_ReportErrorStatus(RZC_DTC_SELF_TEST_FAIL, DEM_EVENT_STATUS_FAILED);
+            for (;;)
+            {
+                Main_Hw_Wfi();
+            }
+        }
+        StartOS(OSDEFAULTAPPMODE);  /* never returns */
+    }
 #else
     for (;;)
     {
@@ -460,7 +536,7 @@ int main(void)
             Main_Hw_DebugPrintStatus(tick_us);
         }
     }
-#endif /* USE_THREADX else */
+#endif /* USE_THREADX / USE_OSEK / legacy loop */
 
     /* MISRA: unreachable but satisfies compiler */
     return 0;

@@ -81,6 +81,12 @@ extern const Dcm_ConfigType  cvc_dcm_config;
 #include "tx_api.h"
 #endif
 
+#ifdef USE_OSEK
+#include "Os_Cfg_Cvc.h"   /* generated kernel config (S-OS-11) */
+#include "Os_TaskMap.h"
+#include "Os_Port.h"
+#endif
+
 /* ==================================================================
  * Static Configuration Constants
  * ================================================================== */
@@ -344,6 +350,70 @@ void Timer_5s_Callback(ULONG arg)
 #endif
 
 /* ==================================================================
+ * OSEK task map (USE_OSEK only — S-OS-22 STM32 cutover)
+ *
+ * Bridges the legacy super-loop BSW slots into the generated period
+ * tasks. Each generated task body (Rte_TaskBodies_Cvc.c) runs
+ * Os_TaskMap_RunMappedFunctions() BEFORE its RTE runnables, which
+ * preserves the legacy slot-before-RTE order within each period group
+ * (e.g. Swc_CvcCom_TransmitSchedule still writes Com PDU buffers
+ * before Com_MainFunction_Tx reads them). Array order preserves the
+ * legacy call order within a slot. The idle entry binds the legacy
+ * Main_Hw_Wfi low-power idle to the generated idle task's hook loop.
+ * ================================================================== */
+
+#ifdef USE_OSEK
+
+/** @brief 10 ms slot wrapper — legacy loop passed the tick in ms */
+static void Main_Os_TransmitSchedule(void)
+{
+    Swc_CvcCom_TransmitSchedule(Main_Hw_GetTick() / 1000u);
+}
+
+/** @brief 5 s debug slot wrapper — legacy loop passed tick_us */
+static void Main_Os_DebugPrintStatus(void)
+{
+    uint32 now_us = Main_Hw_GetTick();
+
+    Main_Hw_DebugPrintStatus(now_us);
+#ifdef SIL_DIAG
+    fprintf(stderr, "[MAIN] t=%us com_tx_calls=%u hb_sends=%u vs_sends=%u\n",
+        (unsigned)(now_us / 1000000u),
+        (unsigned)g_dbg_com_tx_calls,
+        (unsigned)com_tx_send_count[1],  /* heartbeat PDU */
+        (unsigned)com_tx_send_count[2]);  /* vehicle state PDU */
+#endif
+}
+
+/* Registered once via Os_TaskMap_SetTable() before StartOS.
+ * Os_TaskMapEntryType is a new-module config (not a generated
+ * CanIf/PduR/Com table — development-discipline rule 1). */
+static const Os_TaskMapEntryType cvc_os_task_map[] = {
+    /* Name, MainFunction, MappedTask, PeriodTicks */
+    /* legacy 10 ms slot (super-loop order) */
+    { "Spi_Hw_PollUdp",           Spi_Hw_PollUdp,           OS_TASK_CVC_10MS,     10u },
+    { "Swc_CvcCom_BridgeRxToRte", Swc_CvcCom_BridgeRxToRte, OS_TASK_CVC_10MS,     10u },
+    { "Swc_CvcCom_TransmitSchedule", Main_Os_TransmitSchedule, OS_TASK_CVC_10MS,  10u },
+    { "CanTp_MainFunction",       CanTp_MainFunction,       OS_TASK_CVC_10MS,     10u },
+    { "Dcm_MainFunction",         Dcm_MainFunction,         OS_TASK_CVC_10MS,     10u },
+    { "Swc_CvcDcm_MainFunction",  Swc_CvcDcm_MainFunction,  OS_TASK_CVC_10MS,     10u },
+    { "BswM_MainFunction",        BswM_MainFunction,        OS_TASK_CVC_10MS,     10u },
+    { "CanSM_MainFunction",       CanSM_MainFunction,       OS_TASK_CVC_10MS,     10u },
+    /* legacy 100 ms slot */
+    { "WdgM_MainFunction",        WdgM_MainFunction,        OS_TASK_CVC_100MS,   100u },
+    { "Dem_MainFunction",         Dem_MainFunction,         OS_TASK_CVC_100MS,   100u },
+    { "FiM_MainFunction",         FiM_MainFunction,         OS_TASK_CVC_100MS,   100u },
+    /* legacy 5 s debug slot */
+    { "Main_Hw_DebugPrintStatus", Main_Os_DebugPrintStatus, OS_TASK_CVC_5000MS, 5000u },
+    /* legacy idle WFI (generated idle task hook loop) */
+    { "Main_Hw_Wfi",              Main_Hw_Wfi,              OS_TASK_CVC_IDLE,      0u },
+};
+#define CVC_OS_TASK_MAP_COUNT \
+    ((uint8)(sizeof(cvc_os_task_map) / sizeof(cvc_os_task_map[0])))
+
+#endif /* USE_OSEK */
+
+/* ==================================================================
  * Main Entry Point
  * ================================================================== */
 
@@ -355,7 +425,7 @@ void Timer_5s_Callback(ULONG arg)
  */
 int main(void)
 {
-#ifndef USE_THREADX
+#if !defined(USE_THREADX) && !defined(USE_OSEK)
     uint32 last_1ms_us   = 0u;
     uint32 last_10ms_us  = 0u;
     uint32 last_100ms_us = 0u;
@@ -450,6 +520,34 @@ int main(void)
 
 #ifdef USE_THREADX
     tx_kernel_enter();
+#elif defined(USE_OSEK)
+    /* OSEK SC3 kernel boot (S-OS-22 STM32 cutover, build-level; on-target
+     * bringup is S-OS-31). Port init -> generated config -> StartOS. The
+     * generated idle task (autostarted) starts the period schedule tables
+     * from task context and loops on the task-map idle hook (Main_Hw_Wfi).
+     *
+     * Fail-closed: Os_Configure wipes all kernel tables on rejection, so
+     * a bad config can never be partially applied. The reaction mirrors
+     * the self-test-failure idiom (Det + Dem), then parks the ECU in WFI
+     * WITHOUT starting any scheduler — WdgM_MainFunction never runs, the
+     * external watchdog starves and forces the safe state. */
+    {
+        StatusType os_status;
+
+        Os_PortTargetInit();
+        Os_TaskMap_SetTable(cvc_os_task_map, CVC_OS_TASK_MAP_COUNT);
+        os_status = Os_Configure(&cvc_os_config);
+        if (os_status != E_OK)
+        {
+            Det_ReportRuntimeError(DET_MODULE_CVC_MAIN, 0u, MAIN_API_RUN, DET_E_DBG_OS_CONFIG_FAIL);
+            Dem_ReportErrorStatus(CVC_DTC_SELF_TEST_FAIL, DEM_EVENT_STATUS_FAILED);
+            for (;;)
+            {
+                Main_Hw_Wfi();
+            }
+        }
+        StartOS(OSDEFAULTAPPMODE);  /* never returns */
+    }
 #else
     for (;;)
     {
@@ -505,7 +603,7 @@ int main(void)
 #endif
         }
     }
-#endif /* USE_THREADX else */
+#endif /* USE_THREADX / USE_OSEK / legacy loop */
 
     /* MISRA: unreachable but satisfies compiler */
     return 0;

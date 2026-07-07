@@ -40,6 +40,7 @@
 #define DET_E_DBG_BSW_INIT_START    0x87u  /**< BSW init sequence starting      */
 #define DET_E_DBG_SELF_TEST_START   0x88u  /**< Self-test sequence starting     */
 #define DET_E_DBG_CAN_STARTED       0x89u  /**< CAN controller mode = STARTED   */
+#define DET_E_DBG_OS_CONFIG_FAIL    0x8Au  /**< Os_Configure rejected the generated kernel config (fail-closed halt) */
 
 /* ---- DEM Debug Runtime Error IDs ---- */
 
