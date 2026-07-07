@@ -272,7 +272,7 @@ Status markers: PENDING / IN PROGRESS / DONE.
   plan -> approve -> code).
 - **Definition of done:** memo merged and decision approved.
 
-#### S-XCP-02 — UDP RX dispatch + XCP slave connect/read — IN PROGRESS
+#### S-XCP-02 — UDP RX dispatch + XCP slave connect/read — DONE
 <!-- 2026-07-07: code + Layer-1 done (16 XCP unit tests + 6 encoder
      regression green; ETH build has the symbols, default build has zero;
      smoke client self-test passes). Remaining: Layer-4 bench DoD (live
@@ -281,6 +281,26 @@ Status markers: PENDING / IN PROGRESS / DONE.
      + Sc_EthUdp_SendTo in sc_eth_udp, main-loop Step 1b, tools/bench/
      xcp_smoke.py. Design note: broadcast request -> unicast reply to the
      requester's learned MAC (no ARP responder needed). -->
+<!-- 2026-07-07 closure: bench DoD MET. Bring-up session with temporary
+     volatile g_dbg_* counters (added, used, removed per
+     development-discipline rule 8) localized the CONNECT timeout: the
+     board received, dispatched, and answered every request (frames
+     polled / parsed / dispatched / replies-ok all incremented; EMAC RX
+     path healthy in production), but the unicast XCP reply carried
+     source IP 0.0.0.0 and was dropped by the PC IP stack as a martian
+     (the broadcast telemetry from 0.0.0.0 passes; unicast does not).
+     Fix: new Makefile.tms570 var ETH_IP=a.b.c.d injects the SC bench
+     source IP at build time via the existing SC_ETH_TELEMETRY_SRC_IP*
+     override hooks (privacy rule: the literal bench IP is never
+     committed). DoD evidence on the clean, de-instrumented ETH=1 HIL=1
+     image: xcp_smoke.py CONNECT ok -> Seed&Key UNLOCK ok -> SHORT_UPLOAD
+     of g_sc_eth_telemetry_sequence twice 1.0 s apart read 0x0D then
+     0x02 (value CHANGED, exit 0). Instrumented-run counter evidence:
+     six XCP transactions (CONNECT, GET_SEED, UNLOCK, 2x SHORT_UPLOAD,
+     DISCONNECT) -> d=6 q=6 ok=6 er=0. Known limitation: xcp_smoke.py
+     --symbol cannot resolve file-static symbols from the TI map (they
+     only appear as section names); use --addr, or the S-XCP-03 A2L
+     flow. -->
 - **Goal:** Implement the memo's chosen architecture far enough that an XCP
   master can CONNECT and read one measurement over Ethernet.
 - **Inputs:** S-XCP-01 memo (blocking: do not start without it).
@@ -298,7 +318,24 @@ Status markers: PENDING / IN PROGRESS / DONE.
 - **Definition of done:** smoke script output shows a changing counter value
   read over XCP twice, one second apart.
 
-#### S-XCP-03 — Measurement description (A2L) generation
+#### S-XCP-03 — Measurement description (A2L) generation — DONE
+<!-- 2026-07-07 closure: gen_a2l.py extended with --map (TI linker map
+     section-allocation parser — also resolves file-static symbols),
+     --symbols (YAML allowlist tools/xcp/xcp_symbols.yaml, fail-closed if
+     nothing resolves) and --byte-order MSB_FIRST for the big-endian
+     TMS570; Makefile.tms570 gained the `a2l` target emitting
+     $(BUILD_DIR)/sc_xcp.a2l; xcp_smoke.py gained --a2l symbol
+     resolution. Acceptance evidence: 6 allowlisted symbols resolved
+     (>= 5 required); regenerating from two different builds of the same
+     sources showed g_sc_eth_telemetry_sequence move (0x08005DA4 ->
+     0x08005D88), proving regeneration tracks relinks; live scripted
+     measurement session driven by the generated A2L (BYTE_ORDER
+     MSB_FIRST) read the counter twice 1 s apart with value CHANGED,
+     exit 0, against the flashed S-XCP-02 image. Caveat: the `make a2l`
+     invocation itself was validated at recipe level (the exact command
+     was run standalone); the end-to-end make run needs the tree to
+     build, which was blocked at closure time by unrelated
+     work-in-progress SC sources in the working tree. -->
 - **Goal:** Make XCP measurements tool-consumable without hand-maintained
   addresses.
 - **Inputs:** S-XCP-02; `build/tms570/sc.map` (symbol addresses);

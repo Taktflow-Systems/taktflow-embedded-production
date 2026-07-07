@@ -54,6 +54,19 @@ ifdef ETH
   COMMON_CFLAGS += -DSC_ETH_ENABLE
 endif
 
+# --- SC source IP for ETH builds (pass ETH_IP=a.b.c.d on the command line) ---
+# Without it the UDP source IP defaults to 0.0.0.0: broadcast telemetry is
+# still accepted by receivers, but unicast replies (XCP-on-UDP, S-XCP-02)
+# are dropped as martians by the PC IP stack. Privacy rule: never commit a
+# literal bench IP here — always pass it per-build.
+ifdef ETH_IP
+  ETH_IP_PARTS = $(subst ., ,$(ETH_IP))
+  COMMON_CFLAGS += -DSC_ETH_TELEMETRY_SRC_IP0=$(word 1,$(ETH_IP_PARTS))u
+  COMMON_CFLAGS += -DSC_ETH_TELEMETRY_SRC_IP1=$(word 2,$(ETH_IP_PARTS))u
+  COMMON_CFLAGS += -DSC_ETH_TELEMETRY_SRC_IP2=$(word 3,$(ETH_IP_PARTS))u
+  COMMON_CFLAGS += -DSC_ETH_TELEMETRY_SRC_IP3=$(word 4,$(ETH_IP_PARTS))u
+endif
+
 # --- Periodic 5s SCI debug dump (pass DBGDUMP=1 to opt in) ---
 # Blocks the 10ms loop ~280ms per dump at the SCI3 9600-baud bottleneck;
 # bring-up diagnostics only, never for timing-sensitive runs.
@@ -178,7 +191,7 @@ CCXML  = $(SC_DIR)/TMS570LC43xx_XDS110.ccxml
 # Targets
 # =============================================================================
 
-.PHONY: all flash size clean check-halcogen blinky flash-blinky eth-ping flash-eth-ping
+.PHONY: all flash size clean check-halcogen blinky flash-blinky eth-ping flash-eth-ping a2l
 
 all: check-halcogen $(ELF)
 	@echo "=== Built $(ELF) ==="
@@ -304,6 +317,13 @@ $(BUILD_DIR)/eth/$(SC_DIR)/src/sc_startup.o: $(SC_DIR)/src/sc_startup.S | $(BUIL
 flash-eth-ping: $(ETH_PING_ELF)
 	@echo "=== Flashing Ethernet ping test via DSLite (XDS110) ==="
 	"$(DSLITE)" load -c "$(CCXML)" -f "$(ETH_PING_ELF)"
+
+# --- A2L generation (S-XCP-03: XCP measurement description from the map) ---
+a2l: $(ELF)
+	python tools/xcp/gen_a2l.py --map $(MAP) \
+		--symbols tools/xcp/xcp_symbols.yaml \
+		--byte-order MSB_FIRST --ecu SC \
+		-o $(BUILD_DIR)/sc_xcp.a2l
 
 # --- Firmware size report ---
 size: $(ELF)

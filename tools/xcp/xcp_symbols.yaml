@@ -1,0 +1,24 @@
+# XCP measurement symbol allowlist for the SC (TMS570) ETH=1 image.
+# Consumed by tools/xcp/gen_a2l.py --symbols (S-XCP-03).
+#
+# Only symbols listed here are emitted into the A2L. Addresses/sizes come
+# from the TI linker map at generation time, so a rebuild + regenerate
+# always picks up moved addresses. All addresses must fall inside the SC
+# XCP slave whitelist (Flash 0x00000100-0x003FFFFF, SRAM
+# 0x08000000-0x0803FFFF — see firmware/ecu/sc/src/sc_xcp_eth.c).
+#
+# Tool qualification: TCL1 (bench-only measurement tooling).
+
+symbols:
+  - name: g_sc_eth_telemetry_sequence
+    desc: Telemetry sequence counter (mod-16, ticks at 100 Hz)
+  - name: g_sc_eth_telemetry_tick
+    desc: Telemetry cadence tick divider
+  - name: g_sc_eth_telemetry_ready
+    desc: Telemetry producer initialized flag
+  - name: g_sc_eth_udp_configured
+    desc: UDP encoder configured flag
+  - name: g_sc_eth_initialized
+    desc: EMAC driver initialized flag
+  - name: g_sc_eth_hdkif
+    desc: EMAC driver instance pointer (nonzero after init)
