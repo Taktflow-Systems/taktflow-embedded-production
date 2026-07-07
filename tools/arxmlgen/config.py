@@ -55,7 +55,7 @@ class ProjectConfig:
     project_root: str = ""
 
 
-KNOWN_GENERATORS = {"com", "rte", "canif", "pdur", "e2e", "swc", "cfg"}
+KNOWN_GENERATORS = {"com", "rte", "canif", "pdur", "e2e", "swc", "cfg", "os"}
 
 
 def load_config(path: str) -> ProjectConfig:

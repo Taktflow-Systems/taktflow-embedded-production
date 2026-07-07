@@ -1,0 +1,71 @@
+{% include "common/file_header.j2" %}
+#ifndef OS_CFG_{{ prefix_upper }}_H
+#define OS_CFG_{{ prefix_upper }}_H
+
+#include "Os.h"
+#include "Os_Cfg_Types.h"
+
+/* ==================================================================
+ * Task IDs — one basic task per period group + mandatory idle task
+ * (kernel convention, FMEA OS-C-03)
+ * ================================================================== */
+
+{% for g in groups %}
+#define {{ g.task_define }}{{ " " * (30 - g.task_define|length) }}((TaskType){{ g.task_id }}u)
+{% endfor %}
+#define {{ idle_task_define }}{{ " " * (30 - idle_task_define|length) }}((TaskType){{ idle_task_id }}u)
+#define OS_TASK_COUNT_{{ prefix_upper }}{{ " " * (30 - (14 + prefix_upper|length)) }}((uint8){{ task_count }}u)
+
+/* ==================================================================
+ * Task priorities — shorter period = higher priority; numeric 0 is the
+ * HIGHEST priority (Os_Scheduler.c os_select_next_ready_task scans
+ * priority 0 upward). Idle sits at OS_MAX_PRIORITIES-1.
+ * ================================================================== */
+
+{% for g in groups %}
+#define {{ g.prio_define }}{{ " " * (34 - g.prio_define|length) }}((uint8){{ g.task_priority }}u)
+{% endfor %}
+
+/* ==================================================================
+ * Schedule table IDs — one repeating table per period group
+ * ================================================================== */
+
+{% for g in groups %}
+#define {{ g.table_define }}{{ " " * (30 - g.table_define|length) }}((ScheduleTableType){{ loop.index0 }}u)
+{% endfor %}
+#define OS_SCHED_TABLE_COUNT_{{ prefix_upper }}  ((uint8){{ groups|length }}u)
+
+/* ==================================================================
+ * System counter — 1 tick per legacy RTE dispatch tick.
+ * The kernel derives its counter base (AlarmBaseType) from alarm table
+ * element 0 when alarms are configured; this configuration uses no
+ * alarms, so the kernel default applies. The values below document that
+ * base for integrators (must match Os_Core.c defaults).
+ * ================================================================== */
+
+#define {{ prefix_upper }}_OS_COUNTER_MAXALLOWEDVALUE  0xFFFFFFFFu
+#define {{ prefix_upper }}_OS_COUNTER_TICKSPERBASE     1u
+#define {{ prefix_upper }}_OS_COUNTER_MINCYCLE         1u
+
+/* ==================================================================
+ * Generated task bodies (Rte_TaskBodies_{{ prefix_pascal }}.c)
+ * ================================================================== */
+
+{% for g in groups %}
+void {{ g.task_name }}(void);
+{% endfor %}
+void {{ idle_task_name }}(void);
+
+/* Aggregate kernel configuration — pass to Os_Configure() before StartOS */
+extern const Os_ConfigType {{ ecu.name }}_os_config;
+
+/**
+ * @brief   Start all period-group schedule tables (absolute start 0).
+ * @return  E_OK, or the last non-OK status from StartScheduleTableAbs.
+ * @note    Call once from a task context after StartOS (scheduler-cutover
+ *          wiring): StartScheduleTableAbs is rejected outside TASK/ISR2
+ *          call level by the SC3 service protection.
+ */
+StatusType {{ prefix_pascal }}_Os_StartScheduleTables(void);
+
+#endif /* OS_CFG_{{ prefix_upper }}_H */

@@ -1,0 +1,69 @@
+{% include "common/file_header.j2" %}
+#include "Os_Cfg_{{ prefix_pascal }}.h"
+#include "Os_TaskMap.h"
+{% if has_checkpoints %}
+#include "WdgM.h"
+{% endif %}
+
+/* ==================================================================
+ * S-OS-11 task bodies — legacy-order runnable dispatch
+ *
+ * Each period-group task body calls its runnables in EXACTLY the order
+ * the legacy dispatcher (Rte_DispatchRunnables, Rte.c:40-105) executed
+ * them: priority descending, ties broken by runnable-table index. The
+ * generator proves this order equivalence over an LCM-of-periods window
+ * before emitting this file and refuses the ECU otherwise.
+ *
+ * WdgM checkpoints replicate Rte.c:93-100 (once per unique seId per
+ * dispatch, seId < RTE_MAX_RUNNABLES): the once-per-seId bookkeeping is
+ * resolved at generation time — the checkpoint call is emitted after
+ * the FIRST runnable of each unique valid seId in the group.
+ *
+ * Os_TaskMap_RunMappedFunctions() bridges the super-loop BSW slot
+ * MainFunctions into the same period task (weak-empty map until the
+ * scheduler-cutover step provides the per-ECU table).
+ *
+ * Basic-task pattern: every period task terminates via TerminateTask()
+ * (schedule-table expiry points re-activate it each period).
+ * ================================================================== */
+
+{% if groups | selectattr('runnables') | list %}
+/* Forward declarations for SWC/BSW runnables */
+{% for g in groups %}
+{% for r in g.runnables %}
+extern void {{ r.name }}(void);
+{% endfor %}
+{% endfor %}
+
+{% endif %}
+{% for g in groups %}
+/**
+ * @brief   {{ g.period }} ms period-group task ({{ g.runnables|length }} runnable{{ "s" if g.runnables|length != 1 }})
+ * @note    Activated by schedule table {{ g.table_define }} at every
+ *          counter tick with tick % {{ g.period }} == 0.
+ */
+void {{ g.task_name }}(void)
+{
+    Os_TaskMap_RunMappedFunctions({{ g.task_define }});
+
+{% for r in g.runnables %}
+    {{ r.name }}();
+{% if r.raise_checkpoint %}
+    (void)WdgM_CheckpointReached({{ "0x%02Xu" | format(r.se_id) }});
+{% endif %}
+{% endfor %}
+    (void)TerminateTask();
+}
+
+{% endfor %}
+/**
+ * @brief   Idle task — lowest priority, autostarted, never terminates
+ * @note    Assumption of Use (kernel os_cfg_validate_idle_task): the
+ *          idle body must not return. Platform low-power hooks (WFI)
+ *          are a scheduler-cutover concern.
+ */
+void {{ idle_task_name }}(void)
+{
+    for (;;) {
+    }
+}

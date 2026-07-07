@@ -49,6 +49,8 @@ generators:
     overwrite: false
   cfg:
     enabled: true
+  os:
+    enabled: true
 
 templates:
   search_path: null

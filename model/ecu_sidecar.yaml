@@ -130,6 +130,12 @@ ecus:
         priority: 1
         wdgm_se_id: 0xFF
 
+    # OSEK OS config (S-OS-11). bsw_slot_periods = super-loop BSW slots
+    # (main.c 10ms/100ms/5s slots; the 1ms slot is the RTE dispatch tick
+    # itself and appears as a period group only when 1ms runnables exist).
+    os:
+      bsw_slot_periods: [10, 100, 5000]
+
   fzc:
     uds_rx_pdu_name: "UDS_Phys_Req_FZC"
     uds_tx_pdu_name: "UDS_Resp_FZC"
@@ -269,6 +275,10 @@ ecus:
         period_ms: 10
         priority: 1
         wdgm_se_id: 0xFF
+
+    # OSEK OS config (S-OS-11): STM32 super-loop BSW slots (main.c).
+    os:
+      bsw_slot_periods: [10, 100, 5000]
 
   rzc:
     uds_rx_pdu_name: "UDS_Phys_Req_RZC"
@@ -415,6 +425,10 @@ ecus:
         priority: 2
         wdgm_se_id: 6
 
+    # OSEK OS config (S-OS-11): STM32 super-loop BSW slots (main.c).
+    os:
+      bsw_slot_periods: [10, 100, 5000]
+
   bcm:
     e2e_data_ids:
       BCM_E2E_HEARTBEAT_DATA_ID: 0x12    # CAN 0x016 → DBC DataID 18
@@ -438,6 +452,12 @@ ecus:
       BCM_INDICATOR_FLASH_OFF: 33
       BCM_AUTO_LOCK_SPEED: 10
       BCM_DOOR_LOCK_TIMEOUT: 3000
+
+    # OSEK OS config (S-OS-11). POSIX slot structure (bcm_main.c): the
+    # every-tick BSW slot (period 1) and the heartbeat slot at
+    # 500ms / BCM_RTE_PERIOD_MS = 10 ticks.
+    os:
+      bsw_slot_periods: [1, 10]
 
   icu:
     e2e_data_ids:
@@ -465,6 +485,11 @@ ecus:
       ICU_DISPLAY_REFRESH_MS: 100
       ICU_DTC_PAGE_SIZE: 8
 
+    # OSEK OS config (S-OS-11). POSIX slot structure (icu_main.c): the
+    # every-tick BSW slot (period 1) and the heartbeat slot at 10 ticks.
+    os:
+      bsw_slot_periods: [1, 10]
+
   tcu:
     uds_rx_pdu_name: "UDS_Phys_Req_TCU"
     uds_tx_pdu_name: "UDS_Resp_TCU"
@@ -489,3 +514,9 @@ ecus:
     thresholds:
       TCU_RTE_PERIOD_MS: 50  # QM — 50ms tick sufficient for diagnostics
       TCU_COMM_TIMEOUT: 200
+
+    # OSEK OS config (S-OS-11). POSIX slot structure (tcu_main.c): the
+    # every-tick BSW slot (period 1) and the heartbeat slot at
+    # 500ms / TCU_RTE_PERIOD_MS = 10 ticks.
+    os:
+      bsw_slot_periods: [1, 10]

@@ -812,6 +812,30 @@ class ArxmlReader:
             elif "rte_internal_signal_count" in ecu_data:
                 ecu.rte_internal_signal_count = int(ecu_data["rte_internal_signal_count"])
 
+            # OS section — per-ECU OSEK config (S-OS-11 schema extension).
+            # Absent section keeps EcuOsConfig defaults (backward compatible).
+            if "os" in ecu_data:
+                os_data = ecu_data["os"] or {}
+                ecu.os.bsw_slot_periods = [
+                    int(p) for p in (os_data.get("bsw_slot_periods") or [])
+                ]
+                ecu.os.default_task_stack_bytes = int(
+                    os_data.get("default_task_stack_bytes", 1024)
+                )
+                ecu.os.task_stack_bytes = {
+                    int(k): int(v)
+                    for k, v in (os_data.get("task_stack_bytes") or {}).items()
+                }
+                scheduling = str(os_data.get("scheduling", "FULL")).upper()
+                if scheduling not in ("FULL", "NON"):
+                    self._warn(
+                        f"os.scheduling '{scheduling}' for '{ecu_name}' "
+                        f"invalid — using FULL"
+                    )
+                    scheduling = "FULL"
+                ecu.os.scheduling = scheduling
+                ecu.os.applications = list(os_data.get("applications") or [])
+
             # Extract Com_MainFunction_Rx period for E2E param computation
             if "runnables" in ecu_data:
                 com_rx = ecu_data["runnables"].get("Com_MainFunction_Rx", {})
