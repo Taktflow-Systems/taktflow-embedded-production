@@ -93,6 +93,7 @@ void HardFault_Handler(void)
   }
 }
 
+#if !defined(USE_OSEK)
 /**
   * @brief This function handles Memory management fault.
   */
@@ -107,6 +108,13 @@ void MemManage_Handler(void)
     /* USER CODE END W1_MemoryManagement_IRQn 0 */
   }
 }
+#else
+/* MemManage_Handler is provided by Os_Port_Stm32_Sc3.c (routes the MPU
+ * fault into Os_MemProtFaultHandler -> ProtectionHook). User-approved
+ * hand edit of this CubeMX-owned file (2026-07-07), same guard pattern
+ * as the PendSV yield below (d74a60e); the default (non-OSEK) build
+ * stays byte-identical. */
+#endif /* !USE_OSEK */
 
 /**
   * @brief This function handles Prefetch fault, memory access fault.

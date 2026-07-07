@@ -21,8 +21,9 @@
  *            4-7 carry the per-task records from Os_MemProt. PRIVDEFENA
  *            keeps the kernel on the default privileged map.
  *          - MemManage fault body Os_Port_Stm32_Sc3_MemManageHandler() is
- *            provided here; the MemManage_Handler VECTOR symbol is owned
- *            by the CubeMX stm32g4xx_it.c and is wired at cutover.
+ *            provided here; in OSEK builds (USE_OSEK) the MemManage_Handler
+ *            VECTOR symbol is also provided here (the CubeMX stub in
+ *            stm32g4xx_it.c compiles away, same pattern as PendSV).
  *
  *          Interrupt masking: PRIMASK for the all-interrupts pair, BASEPRI
  *          (= 0x40, the bootstrap SysTick/Cat2 level) for the OS pair so
@@ -632,8 +633,8 @@ void Os_PortMemProtEnableUnprivileged(void)
  *          faulting address from MMFAR when CFSR.MMARVALID, clears the
  *          CFSR MemManage byte (write-1-to-clear), then routes into
  *          Os_MemProtFaultHandler -> ProtectionHook(E_OS_PROTECTION_MEMORY).
- *          The MemManage_Handler vector symbol is owned by the CubeMX
- *          stm32g4xx_it.c and is wired to this body at scheduler cutover.
+ *          In OSEK builds the MemManage_Handler vector symbol below wires
+ *          this body to the fault vector (CubeMX stub compiled out).
  */
 void Os_Port_Stm32_Sc3_MemManageHandler(void)
 {
@@ -649,6 +650,21 @@ void Os_Port_Stm32_Sc3_MemManageHandler(void)
 
     Os_MemProtFaultHandler(fault_address);
 }
+
+#if defined(USE_OSEK) && !defined(UNIT_TEST)
+/**
+ * @brief   MemManage fault vector entry (OSEK builds)
+ * @note    Fault context. In OSEK builds the CubeMX stub in
+ *          stm32g4xx_it.c is compiled out (guarded !USE_OSEK, same
+ *          user-approved pattern as PendSV, d74a60e) and this symbol
+ *          takes the vector, routing the MPU fault into
+ *          Os_MemProtFaultHandler -> ProtectionHook(E_OS_PROTECTION_MEMORY).
+ */
+void MemManage_Handler(void)
+{
+    Os_Port_Stm32_Sc3_MemManageHandler();
+}
+#endif
 
 /* ==================================================================
  * Interrupt masking — PRIMASK (all) / BASEPRI (OS Cat2 level)

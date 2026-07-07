@@ -167,6 +167,7 @@ Before claiming SC3 coverage for a safety case, verify:
 |---------|------|--------|--------|
 | 0.1 | 2026-03-15 | AI-assisted | Initial skeleton — assumptions of use, constraints, checklist |
 | 0.2 | 2026-07-07 | AI-assisted | Appended §9 (S-OS-30 STM32 hook implementation notes: TIM7, not TIM6) |
+| 0.3 | 2026-07-07 | AI-assisted | Appended §9 closure note: MemManage vector wired in OSEK builds (§9 item 2 interim state resolved) |
 
 ## 9. S-OS-30 Implementation Notes (appended 2026-07-07)
 
@@ -189,3 +190,17 @@ reconciliation deferred to S-OS-51):
    escalates via watchdog rather than reaching ProtectionHook
    (interim fail-safe, not the specified reaction). Tracked as an S-OS
    cutover item.
+
+**Closure of item 2 (appended 2026-07-07):** the interim state described in
+item 2 is resolved. In OSEK builds (`OSEK=1` -> `USE_OSEK`) the
+`MemManage_Handler` vector symbol is now provided by
+`firmware/platform/stm32/src/Os_Port_Stm32_Sc3.c` and routes into
+`Os_Port_Stm32_Sc3_MemManageHandler` ->
+`Os_MemProtFaultHandler` -> `ProtectionHook(E_OS_PROTECTION_MEMORY)` — the
+specified SC3 reaction. The CubeMX stub in
+`firmware/ecu/cvc/cfg/Core/Src/stm32g4xx_it.c` is compiled only when
+`USE_OSEK` is absent (same user-approved guard pattern as PendSV, commit
+d74a60e), so default (non-OSEK) builds are byte-identical to baseline.
+Verified: default cvc/fzc/rzc images byte-identical sizes
+(39480/37780/36880 text); OSEK=1 images link for all three; full OS test
+runner 32/32 suites PASS (488 tests).
