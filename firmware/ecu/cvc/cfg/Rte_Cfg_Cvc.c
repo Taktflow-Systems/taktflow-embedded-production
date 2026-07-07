@@ -258,10 +258,10 @@ static const Rte_RunnableConfigType cvc_runnable_config[] = {
     { Swc_EStop_MainFunction,                     10u,     6u, 0x02u },
     { Swc_Pedal_MainFunction,                     10u,     5u, 0x00u },
     { Swc_VehicleState_MainFunction,              10u,     4u, 0x01u },
-    { Swc_Heartbeat_MainFunction,                 50u,     3u, 0x03u },
-    { Swc_Dashboard_MainFunction,                 10u,     2u, 0x04u },
-    { Com_MainFunction_Tx,                        10u,     1u, 0xFFu },
-    { Can_MainFunction_BusOff,                    10u,     0u, 0xFFu },
+    { Swc_Dashboard_MainFunction,                 10u,     3u, 0x04u },
+    { Com_MainFunction_Tx,                        10u,     2u, 0xFFu },
+    { Can_MainFunction_BusOff,                    10u,     1u, 0xFFu },
+    { Swc_Heartbeat_MainFunction,                 50u,     0u, 0x03u },
 };
 
 #define CVC_RUNNABLE_COUNT  (sizeof(cvc_runnable_config) / sizeof(cvc_runnable_config[0]))

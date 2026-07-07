@@ -18,6 +18,6 @@
  * They MUST be consistent across all translation units that include Rte.h.
  */
 #define RTE_MAX_SIGNALS    198u
-#define RTE_MAX_RUNNABLES  9u
+#define RTE_MAX_RUNNABLES  10u
 
 #endif /* RTE_PBCFG_H */

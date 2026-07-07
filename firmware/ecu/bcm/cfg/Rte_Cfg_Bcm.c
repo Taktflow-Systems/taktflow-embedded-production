@@ -237,9 +237,9 @@ static const Rte_SignalConfigType bcm_signal_config[BCM_SIG_COUNT] = {
 
 static const Rte_RunnableConfigType bcm_runnable_config[] = {
     /* func,                        periodMs, priority, seId */
-    { Swc_DoorLock_100ms,                        100u,     5u, 0xFFu },
-    { Swc_Indicators_10ms,                        10u,     5u, 0xFFu },
-    { Swc_Lights_10ms,                            10u,     5u, 0xFFu },
+    { Swc_Indicators_10ms,                        10u,     2u, 0xFFu },
+    { Swc_Lights_10ms,                            10u,     1u, 0xFFu },
+    { Swc_DoorLock_100ms,                        100u,     0u, 0xFFu },
 };
 
 #define BCM_RUNNABLE_COUNT  (sizeof(bcm_runnable_config) / sizeof(bcm_runnable_config[0]))

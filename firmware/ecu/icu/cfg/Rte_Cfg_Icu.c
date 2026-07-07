@@ -234,8 +234,8 @@ static const Rte_SignalConfigType icu_signal_config[ICU_SIG_COUNT] = {
 
 static const Rte_RunnableConfigType icu_runnable_config[] = {
     /* func,                        periodMs, priority, seId */
-    { Swc_Dashboard_50ms,                         50u,     5u, 0xFFu },
-    { Swc_DtcDisplay_50ms,                        50u,     5u, 0xFFu },
+    { Swc_Dashboard_50ms,                         50u,     1u, 0xFFu },
+    { Swc_DtcDisplay_50ms,                        50u,     0u, 0xFFu },
 };
 
 #define ICU_RUNNABLE_COUNT  (sizeof(icu_runnable_config) / sizeof(icu_runnable_config[0]))
