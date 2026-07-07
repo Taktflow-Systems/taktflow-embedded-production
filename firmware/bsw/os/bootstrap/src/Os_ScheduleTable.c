@@ -21,7 +21,6 @@ boolean os_is_valid_sched_table(ScheduleTableType TableID)
     return (boolean)(TableID < os_sched_table_count);
 }
 
-#if defined(UNIT_TEST)
 void os_clear_sched_table_cfg(void)
 {
     uint8 idx;
@@ -42,7 +41,10 @@ void os_clear_sched_table_cfg(void)
     os_sched_table_count = 0u;
 }
 
-StatusType Os_TestConfigureScheduleTables(const Os_ScheduleTableConfigType* Config, uint8 TableCount)
+/* Production per-area apply (S-OS-10): body moved verbatim from the
+ * former Os_TestConfigureScheduleTables so the test wrapper and the
+ * production path share one implementation. */
+StatusType os_cfg_apply_schedule_tables(const Os_ScheduleTableConfigType* Config, uint8 TableCount)
 {
     uint8 idx;
 
@@ -58,6 +60,12 @@ StatusType Os_TestConfigureScheduleTables(const Os_ScheduleTableConfigType* Conf
 
     os_sched_table_count = TableCount;
     return E_OK;
+}
+
+#if defined(UNIT_TEST) || defined(OS_BOOTSTRAP_BRINGUP)
+StatusType Os_TestConfigureScheduleTables(const Os_ScheduleTableConfigType* Config, uint8 TableCount)
+{
+    return os_cfg_apply_schedule_tables(Config, TableCount);
 }
 #endif
 

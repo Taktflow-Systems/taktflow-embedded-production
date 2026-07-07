@@ -5,6 +5,8 @@
  */
 #include "Os_Internal.h"
 
+#include "Os_Cfg_Types.h"
+
 #if defined(PLATFORM_STM32) || defined(PLATFORM_STM32L5) || defined(PLATFORM_TMS570)
 #include "Os_Port.h"
 #include "Os_Port_TaskBinding.h"
@@ -49,7 +51,8 @@ Os_HookType os_pre_task_hook = 0;
 Os_HookType os_post_task_hook = 0;
 Os_ShutdownHookType os_shutdown_hook = 0;
 
-#if defined(UNIT_TEST) || defined(OS_BOOTSTRAP_BRINGUP)
+/* Config clear helpers: production code since S-OS-10 (Os_Configure
+ * wipes all areas before applying and after a rejected configuration). */
 void os_clear_task_cfg(void)
 {
     uint8 idx;
@@ -147,7 +150,6 @@ void os_clear_trusted_function_cfg(void)
         os_trusted_function_cfg[idx].AccessibleApplicationMask = 0u;
     }
 }
-#endif
 
 void os_reset_runtime_state(void)
 {
@@ -482,8 +484,20 @@ void Os_TestReset(void)
     os_protection_hook = (Os_ProtectionHookType)0;
     os_reset_runtime_state();
 }
+#endif
 
-StatusType Os_TestConfigureTasks(const Os_TaskConfigType* Config, uint8 TaskCount)
+/* ================================================================== *
+ * Production configuration path (S-OS-10)                             *
+ *                                                                      *
+ * The per-area apply functions below are the former Os_TestConfigure*  *
+ * bodies, verbatim (the Os_TestConfigure* names remain available as    *
+ * thin wrappers under UNIT_TEST/OS_BOOTSTRAP_BRINGUP further down).    *
+ * Os_Configure() applies a full aggregate Os_ConfigType and adds the   *
+ * cross-area validation the FMEA requires; see Os_Cfg_Types.h for the  *
+ * entry-point rationale and the error-code mapping.                    *
+ * ================================================================== */
+
+StatusType os_cfg_apply_tasks(const Os_TaskConfigType* Config, uint8 TaskCount)
 {
     uint8 idx;
 
@@ -519,7 +533,7 @@ StatusType Os_TestConfigureTasks(const Os_TaskConfigType* Config, uint8 TaskCoun
     return E_OK;
 }
 
-StatusType Os_TestConfigureResources(const Os_ResourceConfigType* Config, uint8 ResourceCount)
+StatusType os_cfg_apply_resources(const Os_ResourceConfigType* Config, uint8 ResourceCount)
 {
     uint8 idx;
 
@@ -548,7 +562,7 @@ StatusType Os_TestConfigureResources(const Os_ResourceConfigType* Config, uint8 
     return E_OK;
 }
 
-StatusType Os_TestConfigureAlarms(const Os_AlarmConfigType* Config, uint8 AlarmCount)
+StatusType os_cfg_apply_alarms(const Os_AlarmConfigType* Config, uint8 AlarmCount)
 {
     uint8 idx;
 
@@ -595,7 +609,7 @@ StatusType Os_TestConfigureAlarms(const Os_AlarmConfigType* Config, uint8 AlarmC
     return E_OK;
 }
 
-StatusType Os_TestConfigureApplications(const Os_ApplicationConfigType* Config, uint8 ApplicationCount)
+StatusType os_cfg_apply_applications(const Os_ApplicationConfigType* Config, uint8 ApplicationCount)
 {
     uint8 idx;
 
@@ -622,7 +636,7 @@ StatusType Os_TestConfigureApplications(const Os_ApplicationConfigType* Config, 
     return E_OK;
 }
 
-StatusType Os_TestConfigureIoc(const Os_IocConfigType* Config, uint8 IocCount)
+StatusType os_cfg_apply_ioc(const Os_IocConfigType* Config, uint8 IocCount)
 {
     uint8 idx;
 
@@ -651,7 +665,7 @@ StatusType Os_TestConfigureIoc(const Os_IocConfigType* Config, uint8 IocCount)
     return E_OK;
 }
 
-StatusType Os_TestConfigureStacks(const Os_StackMonitorConfigType* Config, uint8 StackCount)
+StatusType os_cfg_apply_stacks(const Os_StackMonitorConfigType* Config, uint8 StackCount)
 {
     uint8 idx;
 
@@ -678,7 +692,7 @@ StatusType Os_TestConfigureStacks(const Os_StackMonitorConfigType* Config, uint8
     return E_OK;
 }
 
-StatusType Os_TestConfigureMemoryRegions(const Os_MemoryRegionConfigType* Config, uint8 RegionCount)
+StatusType os_cfg_apply_memory_regions(const Os_MemoryRegionConfigType* Config, uint8 RegionCount)
 {
     uint8 idx;
 
@@ -711,7 +725,7 @@ StatusType Os_TestConfigureMemoryRegions(const Os_MemoryRegionConfigType* Config
     return E_OK;
 }
 
-StatusType Os_TestConfigureTrustedFunctions(const Os_TrustedFunctionConfigType* Config,
+StatusType os_cfg_apply_trusted_functions(const Os_TrustedFunctionConfigType* Config,
                                             uint8 TrustedFunctionCount)
 {
     uint8 idx;
@@ -738,6 +752,244 @@ StatusType Os_TestConfigureTrustedFunctions(const Os_TrustedFunctionConfigType* 
     os_trusted_function_count = TrustedFunctionCount;
     Os_Init();
     return E_OK;
+}
+
+/**
+ * @brief   Wipe every configuration area and reset runtime state
+ * @note    Fail-closed: after a wipe the kernel holds zero tasks, so a
+ *          subsequent StartOS dispatches nothing.
+ */
+static void os_cfg_wipe(void)
+{
+    os_clear_task_cfg();
+    os_clear_resource_cfg();
+    os_clear_alarm_cfg();
+    os_clear_application_cfg();
+    os_clear_ioc_cfg();
+    os_clear_stack_cfg();
+    os_clear_memory_region_cfg();
+    os_clear_trusted_function_cfg();
+    os_clear_sched_table_cfg();
+    os_task_count = 0u;
+    os_resource_count = 0u;
+    os_alarm_count = 0u;
+    os_application_count = 0u;
+    os_ioc_count = 0u;
+    os_memory_region_count = 0u;
+    os_trusted_function_count = 0u;
+    os_counter_base.maxallowedvalue = 0xFFFFFFFFu;
+    os_counter_base.ticksperbase = 1u;
+    os_counter_base.mincycle = 1u;
+    Os_MemProtReset();
+    os_reset_runtime_state();
+}
+
+/**
+ * @brief   Is TaskID statically allowed to use resource ResID?
+ * @note    Mirrors the runtime access model (Os_Application.c): with no
+ *          OS-Applications configured every task may take every
+ *          resource; otherwise a task is an accessor if some
+ *          application owns the task AND owns or may access the
+ *          resource.
+ */
+static boolean os_cfg_task_is_resource_accessor(TaskType TaskID, ResourceType ResID)
+{
+    uint8 app;
+    uint32 task_bit = ((uint32)1u << TaskID);
+    uint32 resource_bit = ((uint32)1u << ResID);
+
+    if (os_application_count == 0u) {
+        return TRUE;
+    }
+
+    for (app = 0u; app < os_application_count; app++) {
+        if (((os_application_cfg[app].OwnedTaskMask & task_bit) != 0u) &&
+            (((os_application_cfg[app].OwnedResourceMask |
+               os_application_cfg[app].AccessibleResourceMask) & resource_bit) != 0u)) {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+/**
+ * @brief   FMEA OS-R-04: reject a resource ceiling numerically greater
+ *          (i.e. lower priority — this kernel treats numerically lower
+ *          as higher priority) than any accessor task's base priority
+ * @return  E_OK or E_OS_RESOURCE
+ */
+static StatusType os_cfg_validate_resource_ceilings(void)
+{
+    uint8 res;
+    uint8 task;
+
+    for (res = 0u; res < os_resource_count; res++) {
+        for (task = 0u; task < os_task_count; task++) {
+            if ((os_cfg_task_is_resource_accessor(task, res) == TRUE) &&
+                (os_resource_cfg[res].CeilingPriority > os_task_cfg[task].Priority)) {
+                return E_OS_RESOURCE;
+            }
+        }
+    }
+
+    return E_OK;
+}
+
+/**
+ * @brief   FMEA OS-C-03: require a configured idle task
+ * @note    Idle-task convention: Priority == OS_MAX_PRIORITIES-1 (the
+ *          lowest priority level), autostarted (AutostartMask != 0),
+ *          Schedule == FULL (a never-terminating NON idle task would
+ *          starve every other task). "Never terminates" is an
+ *          Assumption of Use on the task body — not statically
+ *          checkable here.
+ * @return  E_OK or E_OS_NOFUNC
+ */
+static StatusType os_cfg_validate_idle_task(void)
+{
+    uint8 idx;
+
+    for (idx = 0u; idx < os_task_count; idx++) {
+        if ((os_task_cfg[idx].Priority == (uint8)(OS_MAX_PRIORITIES - 1u)) &&
+            (os_task_cfg[idx].AutostartMask != 0u) &&
+            (os_task_cfg[idx].Schedule == FULL)) {
+            return E_OK;
+        }
+    }
+
+    return E_OS_NOFUNC;
+}
+
+StatusType Os_Configure(const Os_ConfigType* Config)
+{
+    StatusType status;
+
+    if (Config == NULL_PTR) {
+        return E_OS_VALUE;
+    }
+
+    os_cfg_wipe();
+
+    /* Dependency order: tasks first (alarms/stacks reference them),
+     * applications before memory regions (regions reference an app). */
+    status = os_cfg_apply_tasks(Config->Tasks, Config->TaskCount);
+
+    if (status == E_OK) {
+        status = os_cfg_apply_resources(Config->Resources, Config->ResourceCount);
+    }
+
+    if (status == E_OK) {
+        status = os_cfg_apply_applications(Config->Applications, Config->ApplicationCount);
+    }
+
+    if (status == E_OK) {
+        status = os_cfg_apply_ioc(Config->Iocs, Config->IocCount);
+    }
+
+    if (status == E_OK) {
+        status = os_cfg_apply_alarms(Config->Alarms, Config->AlarmCount);
+    }
+
+    if (status == E_OK) {
+        status = os_cfg_apply_stacks(Config->Stacks, Config->StackCount);
+    }
+
+    if (status == E_OK) {
+        status = os_cfg_apply_memory_regions(Config->MemoryRegions, Config->MemoryRegionCount);
+    }
+
+    if (status == E_OK) {
+        status = os_cfg_apply_trusted_functions(Config->TrustedFunctions, Config->TrustedFunctionCount);
+    }
+
+    /* (NULL, 0) means "no schedule tables" (already cleared by the wipe);
+     * os_cfg_apply_schedule_tables itself rejects a NULL pointer. */
+    if ((status == E_OK) &&
+        ((Config->ScheduleTables != NULL_PTR) || (Config->ScheduleTableCount > 0u))) {
+        status = os_cfg_apply_schedule_tables(Config->ScheduleTables, Config->ScheduleTableCount);
+    }
+
+    if ((status == E_OK) && (Config->MemProtTaskCount > 0u)) {
+        if (Config->MemProtTasks == NULL_PTR) {
+            status = E_OS_VALUE;
+        } else if (Config->MemProtTaskCount > OS_MAX_TASKS) {
+            status = E_OS_LIMIT;
+        } else {
+            uint8 idx;
+
+            for (idx = 0u; (idx < Config->MemProtTaskCount) && (status == E_OK); idx++) {
+                if (Config->MemProtTasks[idx].RegionCount > 0u) {
+                    status = Os_MemProtConfigureTask((TaskType)idx,
+                                                     Config->MemProtTasks[idx].Regions,
+                                                     Config->MemProtTasks[idx].RegionCount);
+                }
+            }
+        }
+    }
+
+    /* Cross-area validation (FMEA closures) */
+    if (status == E_OK) {
+        status = os_cfg_validate_resource_ceilings();
+    }
+
+    if (status == E_OK) {
+        status = os_cfg_validate_idle_task();
+    }
+
+    if (status != E_OK) {
+        /* Refuse to start: leave the kernel unconfigured (fail-closed). */
+        os_cfg_wipe();
+        return status;
+    }
+
+    Os_Init();
+    return E_OK;
+}
+
+#if defined(UNIT_TEST) || defined(OS_BOOTSTRAP_BRINGUP)
+/* Os_TestConfigure* family: thin wrappers over the production per-area
+ * apply path (S-OS-10). No behavior change — the pre-existing kernel
+ * suites are the regression net for this equivalence. */
+StatusType Os_TestConfigureTasks(const Os_TaskConfigType* Config, uint8 TaskCount)
+{
+    return os_cfg_apply_tasks(Config, TaskCount);
+}
+
+StatusType Os_TestConfigureResources(const Os_ResourceConfigType* Config, uint8 ResourceCount)
+{
+    return os_cfg_apply_resources(Config, ResourceCount);
+}
+
+StatusType Os_TestConfigureAlarms(const Os_AlarmConfigType* Config, uint8 AlarmCount)
+{
+    return os_cfg_apply_alarms(Config, AlarmCount);
+}
+
+StatusType Os_TestConfigureApplications(const Os_ApplicationConfigType* Config, uint8 ApplicationCount)
+{
+    return os_cfg_apply_applications(Config, ApplicationCount);
+}
+
+StatusType Os_TestConfigureIoc(const Os_IocConfigType* Config, uint8 IocCount)
+{
+    return os_cfg_apply_ioc(Config, IocCount);
+}
+
+StatusType Os_TestConfigureStacks(const Os_StackMonitorConfigType* Config, uint8 StackCount)
+{
+    return os_cfg_apply_stacks(Config, StackCount);
+}
+
+StatusType Os_TestConfigureMemoryRegions(const Os_MemoryRegionConfigType* Config, uint8 RegionCount)
+{
+    return os_cfg_apply_memory_regions(Config, RegionCount);
+}
+
+StatusType Os_TestConfigureTrustedFunctions(const Os_TrustedFunctionConfigType* Config,
+                                            uint8 TrustedFunctionCount)
+{
+    return os_cfg_apply_trusted_functions(Config, TrustedFunctionCount);
 }
 
 void Os_TestSetStartupHook(Os_HookType Hook)

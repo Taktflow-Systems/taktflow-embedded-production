@@ -162,7 +162,10 @@ extern uint8 os_suspend_os_nesting;
 extern uint8 os_test_all_interrupts_disabled;
 extern uint8 os_test_os_interrupts_disabled;
 extern uint8 os_test_mp_loaded_count;
+#endif
 
+/* Config clear + per-area apply helpers (S-OS-10): shared by the
+ * production Os_Configure path and the Os_TestConfigure* wrappers. */
 void os_clear_task_cfg(void);
 void os_clear_resource_cfg(void);
 void os_clear_alarm_cfg(void);
@@ -172,7 +175,15 @@ void os_clear_stack_cfg(void);
 void os_clear_memory_region_cfg(void);
 void os_clear_trusted_function_cfg(void);
 void os_clear_sched_table_cfg(void);
-#endif
+StatusType os_cfg_apply_tasks(const Os_TaskConfigType* Config, uint8 TaskCount);
+StatusType os_cfg_apply_resources(const Os_ResourceConfigType* Config, uint8 ResourceCount);
+StatusType os_cfg_apply_alarms(const Os_AlarmConfigType* Config, uint8 AlarmCount);
+StatusType os_cfg_apply_applications(const Os_ApplicationConfigType* Config, uint8 ApplicationCount);
+StatusType os_cfg_apply_ioc(const Os_IocConfigType* Config, uint8 IocCount);
+StatusType os_cfg_apply_stacks(const Os_StackMonitorConfigType* Config, uint8 StackCount);
+StatusType os_cfg_apply_memory_regions(const Os_MemoryRegionConfigType* Config, uint8 RegionCount);
+StatusType os_cfg_apply_trusted_functions(const Os_TrustedFunctionConfigType* Config, uint8 TrustedFunctionCount);
+StatusType os_cfg_apply_schedule_tables(const Os_ScheduleTableConfigType* Config, uint8 TableCount);
 void os_reset_runtime_state(void);
 boolean os_is_valid_task(TaskType TaskID);
 boolean os_is_valid_resource(ResourceType ResID);
