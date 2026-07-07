@@ -58,6 +58,26 @@ static const Os_AlarmConfigType test_alarm_cfg[] = {
     { "Alarm0", TASK_A, 1000u, 1u, 1u }
 };
 
+/* S-OS-11 rate-monotonic re-band: cvc/rzc period groups are
+ * {1,10,50,100,5000} ms -> five schedule tables per ECU
+ * (docs/plans/memo-rm-reband-trace.md section 3). */
+static const Os_ScheduleTableConfigType st_five_cfg[] = {
+    { "ST_1ms",    1u,    TRUE, ep_chainA, 1u },
+    { "ST_10ms",   10u,   TRUE, ep_chainA, 1u },
+    { "ST_50ms",   50u,   TRUE, ep_chainA, 1u },
+    { "ST_100ms",  100u,  TRUE, ep_chainA, 1u },
+    { "ST_5000ms", 5000u, TRUE, ep_chainA, 1u }
+};
+
+static const Os_ScheduleTableConfigType st_six_cfg[] = {
+    { "ST_A", 1u, TRUE, ep_chainA, 1u },
+    { "ST_B", 2u, TRUE, ep_chainA, 1u },
+    { "ST_C", 3u, TRUE, ep_chainA, 1u },
+    { "ST_D", 4u, TRUE, ep_chainA, 1u },
+    { "ST_E", 5u, TRUE, ep_chainA, 1u },
+    { "ST_F", 6u, TRUE, ep_chainA, 1u }
+};
+
 void setUp(void)
 {
     Os_TestReset();
@@ -287,6 +307,26 @@ void test_NextScheduleTable_ToAlreadyRunning_ReturnsE_OS_STATE(void)
     TEST_ASSERT_EQUAL(E_OS_STATE, st);
 }
 
+/**
+ * @spec S-OS-11 (docs/plans/plan-osek-os-migration.md), memo-rm-reband-trace.md
+ * @requirement OS_MAX_SCHEDULE_TABLES shall admit the five period-group
+ *              tables the cvc/rzc generated configs require; one beyond
+ *              the bound shall be rejected fail-closed with E_OS_VALUE.
+ */
+void test_Configure_FivePeriodGroupTables_Accepted(void)
+{
+    TEST_ASSERT_EQUAL(E_OK, Os_TestConfigureScheduleTables(st_five_cfg, 5u));
+
+    TEST_ASSERT_EQUAL(E_OK, StartScheduleTableRel(4u, 1u));
+    TEST_ASSERT_EQUAL(E_OS_ID, StartScheduleTableRel(5u, 1u));
+}
+
+void test_Configure_TablesBeyondBound_Rejected(void)
+{
+    TEST_ASSERT_EQUAL(E_OS_VALUE,
+                      Os_TestConfigureScheduleTables(st_six_cfg, 6u));
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -303,5 +343,7 @@ int main(void)
     RUN_TEST(test_NextScheduleTable_ChainsToNextTable);
     RUN_TEST(test_NextScheduleTable_FromNotRunning_ReturnsE_OS_NOFUNC);
     RUN_TEST(test_NextScheduleTable_ToAlreadyRunning_ReturnsE_OS_STATE);
+    RUN_TEST(test_Configure_FivePeriodGroupTables_Accepted);
+    RUN_TEST(test_Configure_TablesBeyondBound_Rejected);
     return UNITY_END();
 }

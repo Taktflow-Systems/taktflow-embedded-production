@@ -44,9 +44,11 @@ name = "os"
 #: Rte_DispatchRunnables (`se < RTE_MAX_RUNNABLES`).
 RTE_MAX_RUNNABLES = 16
 
-#: Kernel limits (firmware/bsw/os/bootstrap/include/Os.h).
+#: Kernel limits (firmware/bsw/os/bootstrap/include/Os.h). Schedule-table
+#: bound raised 4 -> 5 with the rate-monotonic re-band: cvc/rzc period
+#: groups are {1,10,50,100,5000} ms (memo-rm-reband-trace.md section 3).
 OS_MAX_TASKS = 8
-OS_MAX_SCHEDULE_TABLES = 4
+OS_MAX_SCHEDULE_TABLES = 5
 OS_MAX_PRIORITIES = 8
 
 

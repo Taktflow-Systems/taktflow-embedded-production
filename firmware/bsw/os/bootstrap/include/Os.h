@@ -151,7 +151,10 @@ typedef struct {
     MemorySizeType Size;
 } Os_MemoryRegionConfigType;
 
-#define OS_MAX_SCHEDULE_TABLES      4u
+/* 5: cvc/rzc period groups {1,10,50,100,5000} ms under rate-monotonic
+ * re-banding (S-OS-11, docs/plans/memo-rm-reband-trace.md section 3).
+ * Mirrored in tools/arxmlgen/generators/os_cfg.py. */
+#define OS_MAX_SCHEDULE_TABLES      5u
 #define OS_MAX_EXPIRY_POINTS        8u
 #define OS_MAX_TASKS            8u
 #define OS_MAX_RESOURCES        8u
