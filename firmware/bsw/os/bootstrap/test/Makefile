@@ -57,7 +57,22 @@ PORT_SPECS := Tms570:tms570:PLATFORM_TMS570 \
 PORT_NAMES  := $(foreach s,$(PORT_SPECS),$(word 1,$(subst :, ,$(s))))
 PORT_OBJDIRS := $(addprefix $(BUILD)/obj_,$(PORT_NAMES))
 KERNEL_BINS := $(addprefix $(BUILD)/,$(KERNEL_SUITES))
-PORT_BINS   := $(addprefix $(BUILD)/test_Os_Port_,$(addsuffix _bootstrap,$(PORT_NAMES)))
+# The former monolithic TMS570 smoke binary test_Os_Port_Tms570_bootstrap was
+# superseded by the harvested split family (every test name it contained
+# exists in the test_Os_Port_Tms570_bootstrap_* files), so Tms570 stays in
+# PORT_SPECS only to produce the platform kernel objects for the split binary.
+PORT_BIN_NAMES := $(filter-out Tms570,$(PORT_NAMES))
+PORT_BINS   := $(addprefix $(BUILD)/test_Os_Port_,$(addsuffix _bootstrap,$(PORT_BIN_NAMES)))
+
+# Harvested split port suites (fix/hil-scenarios bringup line):
+#  - STM32: one standalone Unity binary per test_Os_Port_Stm32_bootstrap_*.c
+#  - TMS570: all test_Os_Port_Tms570_bootstrap_*.c TUs link into ONE binary
+#    (shared support.c + _main.c runner registers the split suites)
+STM32_SPLIT_SUITES := $(notdir $(basename $(wildcard $(BOOT)/test/test_Os_Port_Stm32_bootstrap_*.c)))
+STM32_SPLIT_BINS   := $(addprefix $(BUILD)/,$(STM32_SPLIT_SUITES))
+TMS570_SPLIT_SRC   := $(wildcard $(BOOT)/test/test_Os_Port_Tms570_bootstrap_*.c)
+TMS570_SPLIT_BIN   := $(BUILD)/test_Os_Port_Tms570_bootstrap_split
+
 RUNNER      := $(BUILD)/run_os_tests.py
 
 define RUNNER_PY
@@ -101,10 +116,10 @@ endef
 
 all: run
 
-build: $(KERNEL_BINS) $(PORT_BINS)
+build: $(KERNEL_BINS) $(PORT_BINS) $(STM32_SPLIT_BINS) $(TMS570_SPLIT_BIN)
 
 run: build $(RUNNER)
-	$(PYTHON) $(RUNNER) $(KERNEL_BINS) $(PORT_BINS)
+	$(PYTHON) $(RUNNER) $(KERNEL_BINS) $(PORT_BINS) $(STM32_SPLIT_BINS) $(TMS570_SPLIT_BIN)
 
 $(BUILD):
 	$(PYTHON) -c "import os, sys; os.makedirs(sys.argv[1], exist_ok=True)" "$@"
@@ -158,6 +173,31 @@ $(BUILD)/test_Os_Port_$(1)_bootstrap: $(BOOT)/test/test_Os_Port_$(1)_bootstrap.c
 endef
 
 $(foreach s,$(PORT_SPECS),$(eval $(call PORT_RULE,$(word 1,$(subst :, ,$(s))),$(word 2,$(subst :, ,$(s))),$(word 3,$(subst :, ,$(s))))))
+
+# --- harvested split suites ---------------------------------------------------
+define STM32_SPLIT_RULE
+$(BUILD)/$(1): $(BOOT)/test/$(1).c \
+    $(ROOT)/firmware/platform/stm32/src/Os_Port_Stm32.c \
+    $(BOOT)/port/src/Os_Port_TaskBinding.c \
+    $$(PORT_OBJS_Stm32) | $(BUILD)
+	$(CC) $(CFLAGS) -DUNIT_TEST -DPLATFORM_STM32 $(INC) -I$(ROOT)/firmware/platform/stm32/include \
+	  $$(PORT_OBJS_Stm32) \
+	  $(ROOT)/firmware/platform/stm32/src/Os_Port_Stm32.c \
+	  $(BOOT)/port/src/Os_Port_TaskBinding.c \
+	  $$< -o $$@
+endef
+
+$(foreach t,$(STM32_SPLIT_SUITES),$(eval $(call STM32_SPLIT_RULE,$(t))))
+
+$(TMS570_SPLIT_BIN): $(TMS570_SPLIT_SRC) \
+    $(ROOT)/firmware/platform/tms570/src/Os_Port_Tms570.c \
+    $(BOOT)/port/src/Os_Port_TaskBinding.c \
+    $(PORT_OBJS_Tms570) | $(BUILD)
+	$(CC) $(CFLAGS) -DUNIT_TEST -DPLATFORM_TMS570 $(INC) -I$(ROOT)/firmware/platform/tms570/include \
+	  $(PORT_OBJS_Tms570) \
+	  $(ROOT)/firmware/platform/tms570/src/Os_Port_Tms570.c \
+	  $(BOOT)/port/src/Os_Port_TaskBinding.c \
+	  $(TMS570_SPLIT_SRC) -o $@
 
 clean:
 	$(PYTHON) -c "import shutil, sys; shutil.rmtree(sys.argv[1], ignore_errors=True)" "$(BUILD)"
