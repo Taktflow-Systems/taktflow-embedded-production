@@ -39,6 +39,7 @@
 #define OS_DET_API_STOP_SCHED_TABLE       0x1Au
 #define OS_DET_API_NEXT_SCHED_TABLE       0x1Bu
 #define OS_DET_API_GET_SCHED_TABLE_STATUS 0x1Cu
+#define OS_DET_API_START_OS               0x1Du
 
 typedef struct {
     TaskStateType State;
@@ -93,6 +94,7 @@ extern Os_IocConfigType os_ioc_cfg[OS_MAX_IOCS];
 extern Os_IocControlBlockType os_ioc_cb[OS_MAX_IOCS];
 extern uint8 os_ioc_count;
 extern uint16 os_stack_budget_cfg[OS_MAX_TASKS];
+extern uintptr_t os_task_stack_top_cfg[OS_MAX_TASKS];
 extern Os_MemoryRegionControlType os_memory_region_cfg[OS_MAX_MEMORY_REGIONS];
 extern uint8 os_memory_region_count;
 extern Os_TrustedFunctionConfigType os_trusted_function_cfg[OS_MAX_TRUSTED_FUNCTIONS];
@@ -172,6 +174,7 @@ void os_clear_alarm_cfg(void);
 void os_clear_application_cfg(void);
 void os_clear_ioc_cfg(void);
 void os_clear_stack_cfg(void);
+void os_clear_task_stack_cfg(void);
 void os_clear_memory_region_cfg(void);
 void os_clear_trusted_function_cfg(void);
 void os_clear_sched_table_cfg(void);
@@ -181,6 +184,7 @@ StatusType os_cfg_apply_alarms(const Os_AlarmConfigType* Config, uint8 AlarmCoun
 StatusType os_cfg_apply_applications(const Os_ApplicationConfigType* Config, uint8 ApplicationCount);
 StatusType os_cfg_apply_ioc(const Os_IocConfigType* Config, uint8 IocCount);
 StatusType os_cfg_apply_stacks(const Os_StackMonitorConfigType* Config, uint8 StackCount);
+StatusType os_cfg_apply_task_stacks(const Os_TaskStackConfigType* Config, uint8 TaskStackCount);
 StatusType os_cfg_apply_memory_regions(const Os_MemoryRegionConfigType* Config, uint8 RegionCount);
 StatusType os_cfg_apply_trusted_functions(const Os_TrustedFunctionConfigType* Config, uint8 TrustedFunctionCount);
 StatusType os_cfg_apply_schedule_tables(const Os_ScheduleTableConfigType* Config, uint8 TableCount);

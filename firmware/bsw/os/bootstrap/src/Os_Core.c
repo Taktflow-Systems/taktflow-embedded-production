@@ -30,6 +30,7 @@ Os_IocConfigType os_ioc_cfg[OS_MAX_IOCS];
 Os_IocControlBlockType os_ioc_cb[OS_MAX_IOCS];
 uint8 os_ioc_count = 0u;
 uint16 os_stack_budget_cfg[OS_MAX_TASKS];
+uintptr_t os_task_stack_top_cfg[OS_MAX_TASKS];
 Os_MemoryRegionControlType os_memory_region_cfg[OS_MAX_MEMORY_REGIONS];
 uint8 os_memory_region_count = 0u;
 Os_TrustedFunctionConfigType os_trusted_function_cfg[OS_MAX_TRUSTED_FUNCTIONS];
@@ -125,6 +126,15 @@ void os_clear_stack_cfg(void)
 
     for (idx = 0u; idx < OS_MAX_TASKS; idx++) {
         os_stack_budget_cfg[idx] = 0u;
+    }
+}
+
+void os_clear_task_stack_cfg(void)
+{
+    uint8 idx;
+
+    for (idx = 0u; idx < OS_MAX_TASKS; idx++) {
+        os_task_stack_top_cfg[idx] = (uintptr_t)0u;
     }
 }
 
@@ -370,6 +380,95 @@ void Os_Init(void)
     os_reset_runtime_state();
 }
 
+#if defined(PLATFORM_STM32) || defined(PLATFORM_STM32L5) || defined(PLATFORM_TMS570)
+/**
+ * @brief   Launch the first task through the port (S-OS-31 launch seam)
+ *
+ * @details Replays, for production configurations, exactly what the
+ *          hardware-validated bringup line (Os_Port_Stm32_Bringup.c,
+ *          6/6 PASS on STM32G474RE) did manually:
+ *          1. Os_Port_PrepareConfiguredTask for every configured task —
+ *             builds each initial exception frame at the top of the
+ *             task's configured stack storage (BRINGUP-5/6 prepare step).
+ *          2. Os_Port_PrepareConfiguredFirstTask on the highest-priority
+ *             ready (autostart) task (BRINGUP-2 launch frame).
+ *          3. Kernel dispatch bookkeeping (mirrors os_dispatch_task minus
+ *             the inline Entry() call — the port pops the prepared frame
+ *             and enters the task on its PSP via exception return).
+ *          4. Os_PortStartFirstTask — never returns on hardware.
+ *
+ *          Stack safety (docs/lessons-learned/stm32-bringup-p3.md): the
+ *          frames are written into dedicated static stack arrays from the
+ *          generated config, never into the currently executing (MSP)
+ *          boot stack.
+ *
+ * @return  E_OS_NOFUNC when no task-stack table is configured (bringup
+ *          builds and Os_TestConfigure*-driven suites): the caller keeps
+ *          the pre-existing host-cooperative dispatch. E_OK after a
+ *          successful launch (UNIT_TEST mock returns; hardware does not).
+ *          Any other status: stacks were configured but the launch could
+ *          not engage — the caller must fail closed.
+ */
+static StatusType os_startos_launch_first_configured_task(void)
+{
+    uint8 idx;
+    TaskType first_task;
+    boolean any_stack = FALSE;
+    StatusType status;
+
+    for (idx = 0u; idx < os_task_count; idx++) {
+        if (os_task_stack_top_cfg[idx] != (uintptr_t)0u) {
+            any_stack = TRUE;
+            break;
+        }
+    }
+
+    if ((os_task_count == 0u) || (any_stack == FALSE)) {
+        return E_OS_NOFUNC;
+    }
+
+    for (idx = 0u; idx < os_task_count; idx++) {
+        if (os_task_stack_top_cfg[idx] == (uintptr_t)0u) {
+            /* Os_Configure enforces completeness; defensive re-check. */
+            return E_OS_VALUE;
+        }
+
+        status = Os_Port_PrepareConfiguredTask((TaskType)idx, os_task_stack_top_cfg[idx]);
+        if (status != E_OK) {
+            return status;
+        }
+    }
+
+    first_task = os_select_next_ready_task();
+    if (first_task == INVALID_TASK) {
+        /* No autostart task in this application mode: nothing may run
+         * before the first activation, and without a running task the
+         * PendSV dispatch has no launch context — refuse (fail-closed). */
+        return E_OS_STATE;
+    }
+
+    status = Os_Port_PrepareConfiguredFirstTask(first_task, os_task_stack_top_cfg[first_task]);
+    if (status != E_OK) {
+        return status;
+    }
+
+    os_current_task = first_task;
+    os_tcb[first_task].State = RUNNING;
+    os_tcb[first_task].ReadyStamp = 0u;
+    os_stack_monitor_enter_task(first_task, os_task_stack_top_cfg[first_task]);
+    os_rebuild_ready_bitmap();
+    os_dispatch_count++;
+    Os_Port_ObserveConfiguredDispatch(first_task);
+
+    if (os_pre_task_hook != (Os_HookType)0) {
+        os_pre_task_hook();
+    }
+
+    Os_PortStartFirstTask();
+    return E_OK;
+}
+#endif /* PLATFORM_STM32 || PLATFORM_STM32L5 || PLATFORM_TMS570 */
+
 void StartOS(AppModeType Mode)
 {
     uint8 idx;
@@ -393,6 +492,34 @@ void StartOS(AppModeType Mode)
     if (os_startup_hook != (Os_HookType)0) {
         os_startup_hook();
     }
+
+#if defined(PLATFORM_STM32) || defined(PLATFORM_STM32L5) || defined(PLATFORM_TMS570)
+    {
+        StatusType launch_status = os_startos_launch_first_configured_task();
+
+        if (launch_status != E_OS_NOFUNC) {
+            if (launch_status != E_OK) {
+                /* Stacks configured but launch could not engage: fail
+                 * closed — report, then park WITHOUT dispatching anything
+                 * (WdgM never runs, the external watchdog starves and
+                 * forces the safe state — the main.c config-fail idiom). */
+                os_report_service_error(OS_DET_API_START_OS, DET_E_PARAM_VALUE,
+                                        launch_status);
+            }
+#if defined(UNIT_TEST) || defined(OS_BOOTSTRAP_BRINGUP)
+            return;
+#else
+            /* E_OK is unreachable here on hardware (Os_PortStartFirstTask
+             * does not return); the park loop is the fail-closed catch. */
+            for (;;) {
+            }
+#endif
+        }
+
+        /* E_OS_NOFUNC: no task-stack table configured — keep the
+         * pre-existing host-cooperative dispatch below unchanged. */
+    }
+#endif
 
     (void)os_run_ready_tasks();
 
@@ -459,6 +586,7 @@ void Os_TestReset(void)
     os_clear_application_cfg();
     os_clear_ioc_cfg();
     os_clear_stack_cfg();
+    os_clear_task_stack_cfg();
     os_clear_memory_region_cfg();
     os_clear_trusted_function_cfg();
     os_clear_sched_table_cfg();
@@ -692,6 +820,43 @@ StatusType os_cfg_apply_stacks(const Os_StackMonitorConfigType* Config, uint8 St
     return E_OK;
 }
 
+StatusType os_cfg_apply_task_stacks(const Os_TaskStackConfigType* Config, uint8 TaskStackCount)
+{
+    uint8 idx;
+
+    if ((Config == NULL_PTR) && (TaskStackCount > 0u)) {
+        return E_OS_VALUE;
+    }
+
+    if (TaskStackCount > OS_MAX_TASKS) {
+        return E_OS_LIMIT;
+    }
+
+    os_clear_task_stack_cfg();
+
+    for (idx = 0u; idx < TaskStackCount; idx++) {
+        uintptr_t base = (uintptr_t)Config[idx].StackBase;
+
+        /* AAPCS: the port builds the initial exception frame 8-byte
+         * aligned; base and size must both preserve that alignment.
+         * The monitor budget must fit inside the physical storage. */
+        if ((os_is_valid_task(Config[idx].TaskID) == FALSE) ||
+            (base == (uintptr_t)0u) ||
+            ((base & (uintptr_t)7u) != (uintptr_t)0u) ||
+            (Config[idx].SizeBytes == 0u) ||
+            ((Config[idx].SizeBytes & 7u) != 0u) ||
+            ((uint32)os_stack_budget_cfg[Config[idx].TaskID] > Config[idx].SizeBytes)) {
+            return E_OS_VALUE;
+        }
+
+        os_task_stack_top_cfg[Config[idx].TaskID] =
+            base + (uintptr_t)Config[idx].SizeBytes;
+    }
+
+    Os_Init();
+    return E_OK;
+}
+
 StatusType os_cfg_apply_memory_regions(const Os_MemoryRegionConfigType* Config, uint8 RegionCount)
 {
     uint8 idx;
@@ -767,6 +932,7 @@ static void os_cfg_wipe(void)
     os_clear_application_cfg();
     os_clear_ioc_cfg();
     os_clear_stack_cfg();
+    os_clear_task_stack_cfg();
     os_clear_memory_region_cfg();
     os_clear_trusted_function_cfg();
     os_clear_sched_table_cfg();
@@ -895,6 +1061,12 @@ StatusType Os_Configure(const Os_ConfigType* Config)
         status = os_cfg_apply_stacks(Config->Stacks, Config->StackCount);
     }
 
+    /* Physical task stacks AFTER budgets: the apply cross-checks each
+     * stack size against the task's monitor budget. */
+    if (status == E_OK) {
+        status = os_cfg_apply_task_stacks(Config->TaskStacks, Config->TaskStackCount);
+    }
+
     if (status == E_OK) {
         status = os_cfg_apply_memory_regions(Config->MemoryRegions, Config->MemoryRegionCount);
     }
@@ -936,6 +1108,22 @@ StatusType Os_Configure(const Os_ConfigType* Config)
     if (status == E_OK) {
         status = os_cfg_validate_idle_task();
     }
+
+#if defined(PLATFORM_STM32) || defined(PLATFORM_STM32L5) || defined(PLATFORM_TMS570)
+    /* S-OS-31 launch seam: on hardware every task runs on its own PSP
+     * stack, so every configured task MUST carry a task-stack entry —
+     * without storage the port cannot build the dispatch frame. */
+    if (status == E_OK) {
+        uint8 stack_idx;
+
+        for (stack_idx = 0u; stack_idx < os_task_count; stack_idx++) {
+            if (os_task_stack_top_cfg[stack_idx] == (uintptr_t)0u) {
+                status = E_OS_VALUE;
+                break;
+            }
+        }
+    }
+#endif
 
     if (status != E_OK) {
         /* Refuse to start: leave the kernel unconfigured (fail-closed). */
