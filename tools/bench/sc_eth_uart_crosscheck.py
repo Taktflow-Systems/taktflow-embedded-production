@@ -130,10 +130,23 @@ def parse_udp_csv(reader):
     return rows
 
 
-def find_stalls(udp_rows, stall_threshold):
-    """Indices of rows whose missed_periods burst marks a UART dump stall."""
-    return [i for i, row in enumerate(udp_rows)
-            if row["missed_periods"] >= stall_threshold]
+def find_stalls(udp_rows, stall_threshold, stall_gap_s):
+    """Indices of rows marking a UART dump stall.
+
+    Two detectors, OR-ed: a missed_periods burst (sequence-based), and a
+    host arrival-time gap (>= stall_gap_s). The second is required because
+    the SCET sequence is mod-16: a stall of >= 16 periods aliases (e.g. a
+    ~32-tick dump stall reports delta 0/1) and is invisible to
+    missed_periods — measured on the bench 2026-07-07.
+    """
+    marks = []
+    for i, row in enumerate(udp_rows):
+        seq_burst = row["missed_periods"] >= stall_threshold
+        gap = (i > 0 and
+               row["epoch"] - udp_rows[i - 1]["epoch"] >= stall_gap_s)
+        if seq_burst or gap:
+            marks.append(i)
+    return marks
 
 
 def state_agrees(uart_state, udp_row):
@@ -174,7 +187,7 @@ def nearest_row(udp_rows, epoch):
 def crosscheck(uart_dumps, udp_rows, args, out):
     failures = 0
     state_dumps = [d for d in uart_dumps if d["state"] is not None]
-    stalls = find_stalls(udp_rows, args.stall_threshold)
+    stalls = find_stalls(udp_rows, args.stall_threshold, args.stall_gap_s)
 
     out.write("# S-UDP-05 UART/UDP cross-check\n\n")
     out.write(f"- UART dumps with state: {len(state_dumps)}\n")
@@ -211,50 +224,74 @@ def crosscheck(uart_dumps, udp_rows, args, out):
                   f"| {describe_udp(row)} | {skew:+.1f} | {verdict} |\n")
 
     # --- tick-exact counter identities between consecutive stalls ------
+    # Pair each UDP stall marker with the nearest-in-time tx7 dump (the two
+    # mark the same physical event); the UART log may start before / end
+    # after the UDP capture, so ordinal pairing is not reliable.
     out.write("\n## Counter identities (criterion 1, counters)\n\n")
     tx7_dumps = [d for d in uart_dumps if d["tx7"] is not None]
-    if len(stalls) >= 2:
+    pairs = []       # (stall_row_index, tx7_dump)
+    worst_skew = 0.0
+    unmatched = 0
+    for idx in stalls:
+        epoch = udp_rows[idx]["epoch"]
+        if not tx7_dumps:
+            unmatched += 1
+            continue
+        dump = min(tx7_dumps, key=lambda d: abs(d["epoch"] - epoch))
+        skew = abs(dump["epoch"] - epoch)
+        if skew <= args.align_skew:
+            pairs.append((idx, dump))
+            worst_skew = max(worst_skew, skew)
+        else:
+            unmatched += 1
+    if len(pairs) >= 2:
         out.write("| interval | UDP frames | missed | frames+missed "
                   f"(exp {TICKS_PER_DUMP}) | d(tx7 call) "
                   f"(exp {EXPECTED_TX_PER_DUMP}) | d(ok) | d(fail) "
                   "| verdict |\n|---|---|---|---|---|---|---|---|\n")
-        for k in range(len(stalls) - 1):
-            lo, hi = stalls[k], stalls[k + 1]
+        for k in range(len(pairs) - 1):
+            (lo, dump_a), (hi, dump_b) = pairs[k], pairs[k + 1]
             frames = hi - lo                       # rows received in interval
+            # Loss is counted from the sequence (missed_periods) only. An
+            # arrival gap with an unbroken sequence is TIMEBASE SLIP, not
+            # loss: the dump stall pauses the 10 ms loop (~115 ms for the
+            # HIL dump), the skipped RTI periods are dropped (single-bit
+            # pending), and the tick-indexed stream continues complete —
+            # 500 frames per 500-tick interval, wall time 5.115 s
+            # (bench-measured 2026-07-07; same mechanism as the S-UDP-03
+            # pre-fix 95.23 Hz wall-rate with zero sequence gaps). The gap
+            # is used as a stall MARKER only. Caveat: a real loss of >= 16
+            # consecutive periods would alias in the mod-16 sequence and
+            # undercount here; the receiver-side rate gate covers that case.
             missed = sum(r["missed_periods"] for r in udp_rows[lo + 1:hi + 1])
             total = frames + missed
+            a, b = dump_a["tx7"], dump_b["tx7"]
+            dcall, dok, dfail = (b[0] - a[0], b[1] - a[1], b[2] - a[2])
             ok_total = abs(total - TICKS_PER_DUMP) <= args.counter_tol
-
-            dcall = dok = dfail = None
-            ok_tx7 = True
-            if k + 1 < len(tx7_dumps):
-                a, b = tx7_dumps[k]["tx7"], tx7_dumps[k + 1]["tx7"]
-                dcall, dok, dfail = (b[0] - a[0], b[1] - a[1], b[2] - a[2])
-                ok_tx7 = abs(dcall - EXPECTED_TX_PER_DUMP) <= args.counter_tol
+            ok_tx7 = abs(dcall - EXPECTED_TX_PER_DUMP) <= args.counter_tol
             verdict = "PASS" if (ok_total and ok_tx7) else "FAIL"
             if verdict == "FAIL":
                 failures += 1
-            fmt = lambda v: "-" if v is None else str(v)
             out.write(f"| {k} | {frames} | {missed} | {total} "
-                      f"| {fmt(dcall)} | {fmt(dok)} | {fmt(dfail)} "
-                      f"| {verdict} |\n")
+                      f"| {dcall} | {dok} | {dfail} | {verdict} |\n")
     else:
-        out.write("Fewer than two stall markers found — counter identity "
-                  "not evaluated (was DBGDUMP=1 active and the capture "
-                  "longer than two dump periods?).\n")
+        out.write("Fewer than two stall/dump pairs matched — counter "
+                  "identity not evaluated (was DBGDUMP=1 active and the "
+                  "capture longer than two dump periods?).\n")
         failures += 1
 
     # --- alignment sanity ----------------------------------------------
     out.write("\n## Alignment sanity\n\n")
-    n = min(len(state_dumps), len(stalls))
-    worst = 0.0
-    for k in range(n):
-        worst = max(worst,
-                    abs(udp_rows[stalls[k]]["epoch"] - state_dumps[k]["epoch"]))
-    out.write(f"- ordinal pairs checked: {n}; worst UART-vs-stall clock "
-              f"skew: {worst:.1f} s (limit {args.align_skew:.1f} s)\n")
-    if n and worst > args.align_skew:
-        out.write("- ALIGNMENT FAILURE: stall/dump pairing unreliable\n")
+    out.write(f"- stall/dump pairs matched: {len(pairs)}; unmatched stalls: "
+              f"{unmatched}; worst matched clock skew: {worst_skew:.2f} s "
+              f"(limit {args.align_skew:.1f} s)\n")
+    in_window = [i for i in stalls
+                 if tx7_dumps and (tx7_dumps[0]["epoch"] - args.dump_period
+                                   <= udp_rows[i]["epoch"]
+                                   <= tx7_dumps[-1]["epoch"] + args.dump_period)]
+    if len(pairs) < len(in_window):
+        out.write("- ALIGNMENT FAILURE: stalls inside the UART window "
+                  "without a matching dump\n")
         failures += 1
 
     out.write(f"\n**Result: {'PASS' if failures == 0 else 'FAIL'}** "
@@ -289,7 +326,8 @@ def self_test() -> int:
             f" tx7 call={call + 50 * (k + 1)} ok={call + 50 * (k + 1)} fail=0")
 
     args = argparse.Namespace(stall_threshold=10, align_skew=2.0,
-                              dump_period=5.0, counter_tol=1)
+                              dump_period=5.0, counter_tol=1,
+                              stall_gap_s=0.1)
     dumps = parse_uart_log(uart_lines, base.date())
     buf = io.StringIO()
     rc = crosscheck(dumps, udp_rows, args, buf)
@@ -320,6 +358,9 @@ def main():
                         help="UART dump period in seconds (default 5)")
     parser.add_argument("--stall-threshold", type=int, default=10,
                         help="missed_periods burst marking a dump stall")
+    parser.add_argument("--stall-gap-s", type=float, default=0.1,
+                        help="host arrival gap marking a dump stall "
+                             "(catches mod-16-aliased stalls, default 0.1)")
     parser.add_argument("--align-skew", type=float, default=2.0,
                         help="max allowed UART-vs-stall clock skew in seconds")
     parser.add_argument("--counter-tol", type=int, default=1,

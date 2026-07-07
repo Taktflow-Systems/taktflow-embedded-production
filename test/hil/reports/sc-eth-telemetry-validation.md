@@ -235,7 +235,37 @@ S-UDP-05's scope. Note the E2E DataID check would reject M2-style leaks on
 non-HIL builds; the HIL force-accept (`sc_can.c`) removes that guard on
 the bench.
 
-### Run C — PENDING
+### Run C — DONE (2026-07-07)
+
+Image: `ETH=1 DBGDUMP=1 HIL=1` at `d73991c2`. One session: 240 s nominal
+load, then CVC dropout held 80 s. UART captured on the SC App UART
+(115200); UDP receiver ungated per procedure. Comparator:
+`tools/bench/sc_eth_uart_crosscheck.py`, report at
+`test/hil/reports/artifacts/sudp05_runC_crosscheck.md` — **exit 0, PASS**.
+
+- **State agreement: 48/48 dumps MATCH** — including the dropout
+  transition (`CVC=TIMEOUT ... RZC=TIMEOUT` on UART vs `ecu_health=0x2` on
+  UDP; the RZC token is finding F-DCAN-RX M1 reproducing identically on
+  both channels, itself evidence of channel agreement). Worst nearest-row
+  skew 0.1 s; well within one 5 s sampling period.
+- **Counter identities: 46/46 intervals PASS** — every inter-dump interval
+  carried exactly 500 UDP frames + 0 missed = 500 ticks, and `tx7
+  call/ok` advanced exactly 50 with `fail=0` (2400 status TX, 2400
+  accepted). 47 stall/dump pairs aligned, worst clock skew 0.97 s.
+- **Timebase slip, not loss**: each 500-tick interval spans 5.115 s wall —
+  the ~115 ms HIL-dump stall drops RTI periods (single-bit pending) so the
+  wall rate reads 97.994 Hz while the tick-indexed stream is complete
+  (23558 valid, 0 invalid, 0 sequence gaps). This is the same mechanism as
+  the S-UDP-03 pre-fix 95.23 Hz measurement and is why the rate gate is
+  waived for DBGDUMP builds only.
+- **Finding F-SEQ-WIDTH**: the mod-16 sequence aliases any real loss of
+  >= 16 consecutive periods (delta wraps to 0/1); `missed_periods` cannot
+  see it. Mitigated operationally by the receiver rate gate; a wider
+  sequence field is recommended for a future SCET format revision.
+
+Criterion 1 is met: UDP and UART agree on every sampled state within one
+sampling period, and the only true counters available on both channels
+(tx7 vs frame count) satisfy their tick-exact relation in every interval.
 
 ### Run A — PENDING
 
