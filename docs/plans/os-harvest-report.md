@@ -229,6 +229,22 @@ user-decision item.
   stm32g4xx_it.c or regenerate it from the .ioc without the PendSV
   handler. Until then the default (non-OSEK) build is unchanged and green
   (verified: byte-identical size 39480/160/7664).
+  - RESOLVED 2026-07-07 (decision 1, PendSV): user approved porting
+    fcf3188's stm32g4xx_it.c edit for this one file; applied as a
+    `USE_OSEK` compile guard (stub yields to Os_Port_Stm32_Asm.S in
+    OSEK builds, default build unchanged). Details in
+    os-migration-baseline.md, "S-OS-30 follow-up".
+  - RESOLVED 2026-07-07 (decision 2, SC3 hooks): the follow-up blocker
+    (undefined `Os_PortTimingProtElapsedUs` and sibling SC3 hook
+    families once PendSV anchored the kernel) was closed by user
+    decision to implement the STM32 SC3 port hooks per
+    plan-osek-sc3-backbone.md: DWT CYCCNT timebase + TIM7 one-shot
+    budget timer, Cortex-M4 MPU (8 regions, task slots 4-7),
+    BASEPRI/PRIMASK interrupt masking. New file
+    firmware/platform/stm32/src/Os_Port_Stm32_Sc3.c (OSEK=1 gate only);
+    3 new host suites (29 tests) green; all three OSEK=1 images now
+    LINK. Sizes and design assumptions recorded in
+    os-migration-baseline.md, "S-OS-30 closure" (2026-07-07).
 - Size delta: see os-migration-baseline.md, S-OS-30 note (~11.5 KB text
   once the kernel is actually referenced; currently gc-eliminated).
 - No ECU main.c was modified (scheduler cutover stays in Phase 2/3).

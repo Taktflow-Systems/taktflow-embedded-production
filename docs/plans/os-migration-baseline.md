@@ -128,6 +128,64 @@ recorded here as the next S-OS-30 user-decision item rather than
 improvised. Until resolved, `OSEK=1` compiles all TUs clean and fails
 only at final link on this hook family.
 
+## S-OS-30 closure: SC3 port hooks implemented, OSEK=1 links (appended 2026-07-07)
+
+User decision (2026-07-07): implement the STM32 SC3 port hooks per the
+documented backbone design (plan-osek-sc3-backbone.md) — DWT CYCCNT
+microsecond timebase for timing protection, Cortex-M4 MPU (8 regions) for
+memory protection, BASEPRI/PRIMASK interrupt-mask hooks. Implemented in
+`firmware/platform/stm32/src/Os_Port_Stm32_Sc3.c` (+ contract header
+`firmware/platform/stm32/include/Os_Port_Stm32_Sc3.h`), wired into
+`Makefile.stm32` under the existing `OSEK=1` gate only. Design decisions:
+
+- Budget timer: TIM7 one-shot (TIM6 is the HAL timebase in these images;
+  the backbone Phase-3B implementation note records "STM32: DWT + TIM7 —
+  BRINGUP-7 PASS"). Expiry ISR = `TIM7_DAC_IRQHandler` (IRQ 55, weak in
+  startup, no CubeMX collision), NVIC priority 0x40 (= bootstrap SysTick).
+- Elapsed-us: unsigned 32-bit CYCCNT delta — wrap-safe for intervals below
+  one wrap period (~25.2 s @ 170 MHz, per backbone risk register). ARR
+  rounds UP (ceil) so the budget timer never fires before the granted
+  budget; budgets > ~25.2 s saturate the 16-bit PSC/ARR pair and fire
+  early (safe direction).
+- DWT discipline: the port only ORs TRCENA/CYCCNTENA and never resets
+  CYCCNT; SchM_Timing.c (WCET measurement) zeroes CYCCNT once in
+  SchM_TimingInit at boot and never after — both users read wrap-safe
+  deltas, so the shared counter is safe.
+- MPU: regions 4-7 carry the per-task records (regions 0-3 reserved for
+  the static image map, to be programmed at scheduler cutover); RASR
+  normal memory TEX=1/C=1/B=1; AP mapping RO=0b010+XN, RW=0b011+XN,
+  RX=0b010, RWX=0b011, NONE=0b001+XN; PRIVDEFENA keeps the kernel on the
+  privileged background map; fail-closed re-validation (power-of-2, size
+  >= 32 B, size-aligned base, count <= 4) leaves rejected slots DISABLED.
+- MemManage: fault-handler BODY `Os_Port_Stm32_Sc3_MemManageHandler()` is
+  provided; the `MemManage_Handler` vector symbol remains the CubeMX
+  stub in `firmware/ecu/cvc/cfg/Core/Src/stm32g4xx_it.c` (hands-off
+  generated file; wiring it is a scheduler-cutover item needing the same
+  kind of user-approved edit as the PendSV guard). Until then a MemManage
+  fault lands in the CubeMX while(1) stub and escalates via watchdog.
+
+Host verification: 3 new suites (test_Os_Port_Stm32_sc3_timingprot 11,
+_memprot 14, _intmask 4 tests), full runner 32/32 suites PASS
+(488 tests, 0 failures, 3 pre-existing TMS570 ignores).
+
+Build matrix, arm-none-eabi-gcc 13.3.0, debug (-Og), clean builds:
+
+| Image | Variant | text | data | bss | Result |
+|---|---|---|---|---|---|
+| cvc | default | 39480 | 160 | 7664 | LINKS (byte-identical to baseline) |
+| fzc | default | 37780 | 160 | 7680 | LINKS (byte-identical to baseline) |
+| rzc | default | 36880 | 160 | 7552 | LINKS (byte-identical to baseline) |
+| cvc | OSEK=1 | 44344 | 180 | 9276 | LINKS |
+| fzc | OSEK=1 | 42640 | 180 | 9292 | LINKS |
+| rzc | OSEK=1 | 41740 | 180 | 9164 | LINKS |
+
+Kernel+port delta (OSEK=1 minus default): cvc +4864 text / +20 data /
++1612 bss; fzc +4860/+20/+1612; rzc +4860/+20/+1612 (~6.3 KB dec each).
+Note this is smaller than the ~13.9 KB full-kernel projection because no
+ECU main calls StartOS yet — `--gc-sections` keeps only the object graph
+anchored by the vector table (PendSV/SysTick/TIM7 paths + SC3 hooks);
+the remainder arrives at scheduler cutover.
+
 ## Baseline interpretation
 
 - The 8 kernel suites + 3 port smoke suites (Tms570/Stm32/Stm32L5
