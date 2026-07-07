@@ -71,9 +71,9 @@ extern const Os_ConfigType icu_os_config;
 /**
  * @brief   Start all period-group schedule tables (absolute start 0).
  * @return  E_OK, or the last non-OK status from StartScheduleTableAbs.
- * @note    Call once from a task context after StartOS (scheduler-cutover
- *          wiring): StartScheduleTableAbs is rejected outside TASK/ISR2
- *          call level by the SC3 service protection.
+ * @note    Called once by the generated idle task (the autostarted task
+ *          context) after StartOS: StartScheduleTableAbs is rejected
+ *          outside TASK/ISR2 call level by the SC3 service protection.
  */
 StatusType Icu_Os_StartScheduleTables(void);
 

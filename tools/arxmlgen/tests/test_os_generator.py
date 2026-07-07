@@ -399,6 +399,32 @@ class TestRenderedOutput:
         body = tcu_files["Rte_TaskBodies_Tcu.c"]
         assert "Swc_" not in body
 
+    def test_idle_body_starts_schedule_tables_then_runs_idle_hook(
+            self, icu_files):
+        """Scheduler-cutover wiring (S-OS-22 STM32): the generated idle
+        task is the autostarted task-context bootstrap. Its body must
+        (1) start the period-group schedule tables exactly once (task
+        call level — StartScheduleTableAbs is rejected outside TASK/ISR2
+        by SC3 service protection), then (2) loop forever running the
+        idle task-map hook so the per-ECU map can bind the platform
+        low-power idle action (e.g. Main_Hw_Wfi). With the weak-empty
+        map the loop degenerates to the previous bare spin."""
+        body = icu_files["Rte_TaskBodies_Icu.c"]
+        m = re.search(
+            r"void\s+Os_Task_Icu_Idle\(void\)\s*\{(.*?)\n\}", body, re.DOTALL
+        )
+        assert m, "idle task body not found"
+        idle = m.group(1)
+        start_pos = idle.find("Icu_Os_StartScheduleTables()")
+        loop_pos = idle.find("for (;;)")
+        hook_pos = idle.find("Os_TaskMap_RunMappedFunctions(OS_TASK_ICU_IDLE)")
+        assert start_pos != -1, "idle must start the schedule tables"
+        assert loop_pos != -1, "idle must never terminate"
+        assert hook_pos != -1, "idle must run the idle task-map hook"
+        # start once BEFORE the loop; hook INSIDE the loop
+        assert start_pos < loop_pos < hook_pos
+        assert "TerminateTask" not in idle
+
     def test_all_six_ecus_render(self, generator, config, engine, load_model):
         """Post re-band the equivalence gate passes for every RTE ECU —
         each renders exactly the three Os outputs (memo-rm-reband-trace.md,
