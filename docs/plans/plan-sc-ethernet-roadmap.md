@@ -180,8 +180,8 @@ Status markers: PENDING / IN PROGRESS / DONE.
   flag drops ~27 ticks per stall (~285 of 6000 frames = the 4.8% deficit).
   RTI calibration was ruled out: DCAN 500k shares VCLK with the RTI, so a 5%
   clock error would break CAN, and the compare math (93750 @ 9.375 MHz) is
-  exactly 10 ms. Fix applied (uncommitted): the dump is now opt-in via
-  `make DBGDUMP=1` → `SC_DEBUG_PERIODIC` in `sc_main.c` /
+  exactly 10 ms. Fix applied (committed as `87a73b1`): the dump is now
+  opt-in via `make DBGDUMP=1` → `SC_DEBUG_PERIODIC` in `sc_main.c` /
   `Makefile.tms570`. Remaining to close: rebuild + reflash `ETH=1`, rerun
   the 60 s receiver gate (< 1% rate error expected ~99.9 Hz), then the
   10-minute soak and loop-jitter evidence per the acceptance criteria.
@@ -196,7 +196,11 @@ Status markers: PENDING / IN PROGRESS / DONE.
   max 19.4 ms (single host-side receive artifact, no tick lost). Residual:
   a comparative default-build loop-jitter measurement has no in-firmware
   counter and was not taken with a scope; the equivalent cross-check (UDP
-  counters vs UART counters under HIL load) lands in S-UDP-05.
+  counters vs UART counters under HIL load) lands in S-UDP-05. An
+  independent 60 s gate rerun on a clean rebuild of committed `87a73b1`
+  (fresh ELF flash-verified to embed that hash) measured 100.000 Hz with
+  6001 valid frames, zero gaps, zero invalid, receiver exit 0
+  (`tmp/sc_eth_telemetry_sudp03_gate_rerun.csv`).
 
 #### S-UDP-04 — PC-side telemetry receiver — DONE
 - **Goal:** Decode and record the telemetry stream on the bench PC.
