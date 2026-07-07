@@ -211,6 +211,7 @@ OS_SRCS = \
     $(BSW)/os/bootstrap/src/Os_TaskMap.c \
     $(BSW)/os/bootstrap/port/src/Os_Port_TaskBinding.c \
     $(PLAT)/src/Os_Port_Stm32.c \
+    $(PLAT)/src/Os_Port_Stm32_Sc3.c \
     $(PLAT)/src/Os_Port_Stm32_Bringup.c
 
 OS_ASM_SRCS = $(PLAT)/src/Os_Port_Stm32_Asm.S
