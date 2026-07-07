@@ -80,6 +80,54 @@ STM32 cvc image, arm-none-eabi-gcc 13.3.0, debug (-Og) build:
   in `firmware/ecu/cvc/cfg/Core/Src/stm32g4xx_it.c` (hands-off generated
   file). See os-harvest-report.md section 7 for the blocker record.
 
+## S-OS-30 follow-up: PendSV unblock + OSEK=1 link status (appended 2026-07-07)
+
+User decision (2026-07-07): the PendSV collision is resolved by porting
+fcf3188's edit of `firmware/ecu/cvc/cfg/Core/Src/stm32g4xx_it.c` (user
+explicitly approved hand-editing this one CubeMX-owned file). Applied as a
+compile guard, not an unconditional removal: `OSEK=1` now defines
+`USE_OSEK` (Makefile.stm32) and the CubeMX `PendSV_Handler` stub is
+compiled only when `USE_OSEK` is absent, so PendSV yields to
+`Os_Port_Stm32_Asm.S` in OSEK builds while the default build is unchanged.
+fcf3188's other two hunks in that file were NOT taken (not needed to
+link): the HardFault CFSR/HFSR diagnostic dump (references bringup-only
+`Dbg_Uart_Print`/`bringup_put_hex`) and the SysTick OSEK tick wiring
+(`Os_PortEnterIsr2`/`Os_Port_Stm32_TickIsr`/`Os_PortExitIsr2` — runtime
+wiring that belongs to the Phase 2/3 main cutover, deferred).
+
+Build matrix, arm-none-eabi-gcc 13.3.0, debug (-Og), clean builds:
+
+| Image | Variant | text | data | bss | Result |
+|---|---|---|---|---|---|
+| cvc | default | 39480 | 160 | 7664 | LINKS (matches pre-change baseline exactly) |
+| fzc | default | 37780 | 160 | 7680 | LINKS |
+| rzc | default | 36880 | 160 | 7552 | LINKS |
+| cvc | OSEK=1 | — | — | — | LINK BLOCKED (new blocker, below) |
+| fzc | OSEK=1 | — | — | — | LINK BLOCKED (same symbol) |
+| rzc | OSEK=1 | — | — | — | LINK BLOCKED (same symbol) |
+
+NEW BLOCKER (unmasked, not introduced, by the PendSV fix): with
+`PendSV_Handler` now supplied by `Os_Port_Stm32_Asm.S`, the vector table
+anchors the port/kernel object graph, so `-Wl,--gc-sections` no longer
+discards the kernel. The link then fails on
+
+```
+Os_TimingProt.c:133: undefined reference to `Os_PortTimingProtElapsedUs'
+```
+
+identically for all three images. Root cause: the SC3 timing-protection
+port hooks declared in `port/include/Os_Port.h`
+(`Os_PortTimingProtArmBudget`/`Disarm`/`ElapsedUs`, and likewise the
+mem-prot and interrupt-control hook families) have implementations only
+in the POSIX port (`Os_Port_Posix.c`) and in UNIT_TEST host stubs
+(gated `!PLATFORM_STM32`). The harvested fix-branch STM32 port never
+implemented them because that branch had deleted the SC3 kernel modules
+entirely. Providing an STM32 microsecond timebase for timing protection
+is new port design (ASIL-relevant), out of scope of the PendSV decision —
+recorded here as the next S-OS-30 user-decision item rather than
+improvised. Until resolved, `OSEK=1` compiles all TUs clean and fails
+only at final link on this hook family.
+
 ## Baseline interpretation
 
 - The 8 kernel suites + 3 port smoke suites (Tms570/Stm32/Stm32L5
