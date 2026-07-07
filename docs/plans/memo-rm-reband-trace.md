@@ -210,6 +210,38 @@ Notes carried forward (pre-existing, out of scope, not worsened):
   FZC_SCHED_PRIO_HIGH while SWR-FZC-029 says Medium(3) — pre-existing
   mirror-table discrepancy, untouched by this change.
 
+## 5.1 Closure record (appended 2026-07-07, post-implementation)
+
+- Policy implemented: `tools/arxmlgen/policy.py`
+  (`apply_rate_monotonic_banding`), applied in `reader.py` after sidecar
+  overrides. Tests: `tools/arxmlgen/tests/test_policy.py` (banding
+  properties + reader integration), `test_os_generator.py` (equivalence
+  proof extended to ALL SIX ECUs from the committed regenerated tables;
+  refusal path kept alive with a synthetic non-banded model).
+- Two hand-carried drifts discovered during regeneration and wired into
+  the model instead of being silently reverted (project rule: fix the
+  pipeline, never the output):
+  - `Swc_FzcCom_Receive` (fix f22eb15, CanMon silence-counter reset) —
+    new sidecar `keep: true` opt-out of the legacy Com-bridge skip;
+    closes the `TODO:CODEGEN` notes in Rte_Cfg_Fzc.c / fzc Rte_PbCfg.h.
+  - `Can_MainFunction_Write` (cvc 1 ms TX pump, hand-added in b14cbc1) —
+    new sidecar entry; also fixes latent cvc `RTE_MAX_RUNNABLES` 9 vs 10
+    undersizing.
+  - NOT regenerated (out of re-band scope, would revert committed fixes
+    the pipeline cannot yet express): `CanIf_Cfg_Cvc.c`/`Com_Cfg_Cvc.c`
+    0x600/0x601 TX_MODE_NONE (4ef2bde) and `Com_Cfg_Fzc.c`
+    MOTOR_CUTOFF_REQ direct-mode (46629dc). These remain open codegen
+    gaps (candidate: sidecar tx-mode override), tracked for
+    plan-codegen-gap-closure.md.
+- Kernel `OS_MAX_SCHEDULE_TABLES` 4 -> 5 (Os.h + generator mirror), with
+  new bound tests in `test_Os_ScheduleTable.c`; OS suite 32/32 green.
+- Downstream scheduler suites (cvc/fzc/rzc) pass UNCHANGED — they assert
+  the Swc_*Scheduler mirror tables (section 4.1 point 3); dated @note
+  trace comments added to the three test files.
+- Evidence + required CI SIL parity gate recorded in
+  `docs/plans/os-migration-baseline.md` (2026-07-07 rm re-band section);
+  S-OS-11 status updated in `plan-osek-os-migration.md`.
+
 ## 6. Policy statement (implemented in tools/arxmlgen)
 
 For each ECU, over periodic non-init runnables as resolved after sidecar

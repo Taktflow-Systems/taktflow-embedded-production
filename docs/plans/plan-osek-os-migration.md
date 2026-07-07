@@ -236,6 +236,27 @@ merge is not viable; the port work must be harvested file-wise.
     mapping recorded in `tools/trace/` output.
   - Definition of done: `python -m tools.arxmlgen` emits compiling
     Os_Cfg + Rte task bodies for all 6 RTE ECUs.
+  - Status (2026-07-07): generator + gate landed (`2bc3804`/`0a51082`/
+    `015bc73`); order-equivalence gate REFUSED bcm/cvc/fzc/rzc
+    (cross-period priority interleaving) — only icu/tcu configs emitted.
+  - Status (2026-07-07, later): USER DECISION — conflict resolved by
+    rate-monotonic re-banding of runnable priorities in the model
+    (shorter period => strictly higher band; in-band order preserved).
+    Requirements trace + invariant analysis:
+    `docs/plans/memo-rm-reband-trace.md` (verdict: no safety invariant
+    violated). Implemented as `tools/arxmlgen/policy.py`
+    `apply_rate_monotonic_banding`, applied by the reader after sidecar
+    overrides, so legacy Rte_Cfg and Os_Cfg share one documented order.
+    Two hand-carried drifts wired into the model so regeneration is
+    faithful (sidecar `keep:` flag for `Swc_FzcCom_Receive`, new
+    `Can_MainFunction_Write` sidecar entry). Equivalence gate now passes
+    for ALL SIX RTE ECUs; Os_Cfg + Rte_TaskBodies committed for all six
+    (`chore(codegen)` commit). Kernel `OS_MAX_SCHEDULE_TABLES` raised
+    4 -> 5 (cvc/rzc period groups {1,10,50,100,5000}); OS suite 32/32
+    green. Legacy Rte_Cfg tables regenerated to the banded order —
+    default STM32 images are intentionally NO LONGER byte-identical to
+    the S-OS-00 baseline; Layer-4/6 SIL parity in CI is REQUIRED before
+    merge (see os-migration-baseline.md, 2026-07-07 rm re-band section).
 
 ### Phase 2 — POSIX/SIL ECU migration (Layers 3-6)
 

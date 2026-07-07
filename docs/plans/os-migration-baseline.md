@@ -186,6 +186,52 @@ ECU main calls StartOS yet — `--gc-sections` keeps only the object graph
 anchored by the vector table (PendSV/SysTick/TIM7 paths + SC3 hooks);
 the remainder arrives at scheduler cutover.
 
+## S-OS-11 rate-monotonic re-band: sizes + parity note (appended 2026-07-07)
+
+User decision (2026-07-07): the S-OS-11 order-equivalence refusals for
+bcm/cvc/fzc/rzc are resolved by rate-monotonic re-banding of runnable
+priorities in the model (trace: `docs/plans/memo-rm-reband-trace.md`).
+The legacy `Rte_Cfg_<Ecu>.c` tables regenerated under the banded order,
+so **the default STM32 images are intentionally NO LONGER byte-identical
+to the S-OS-00 baseline images** (runnable table order/priorities
+changed; section sizes below are coincidentally unchanged because the
+tables have identical entry counts and the new Os_Cfg/Rte_TaskBodies TUs
+are dropped by `--gc-sections` in default builds; cvc gains
+`RTE_MAX_RUNNABLES` 9 -> 10, a latent undersizing fixed by wiring
+`Can_MainFunction_Write` into the sidecar).
+
+Build matrix, arm-none-eabi-gcc 13.3.0, debug (-Og), clean builds:
+
+| Image | Variant | text | data | bss | Result |
+|---|---|---|---|---|---|
+| cvc | default | 39480 | 160 | 7664 | LINKS (same sizes, NOT byte-identical — re-banded Rte_Cfg) |
+| fzc | default | 37780 | 160 | 7680 | LINKS (same sizes, NOT byte-identical) |
+| rzc | default | 36880 | 160 | 7552 | LINKS (same sizes, NOT byte-identical) |
+| cvc | OSEK=1 | 44480 | 180 | 9316 | LINKS (+136 text / +40 bss vs prior OSEK=1: OS_MAX_SCHEDULE_TABLES 4 -> 5) |
+| fzc | OSEK=1 | 42780 | 180 | 9332 | LINKS (+140 text / +40 bss) |
+| rzc | OSEK=1 | 41880 | 180 | 9204 | LINKS (+140 text / +40 bss) |
+
+Verification gate before merge (REQUIRED, CI/Docker Linux — cannot run
+on this Windows host): Layer-4/6 SIL parity re-run of the full
+`test/sil/` suite against the re-banded images:
+
+- `test/sil/test_vsm_fault_transitions.py`
+- `test/sil/test_battery_chain.py`
+- `test/sil/test_overtemp_hops.py`
+- `test/sil/test_scenario_display.py`
+- scenario YAMLs `test/sil/scenarios/sil_001..sil_017` via
+  `test/sil/run_sil.sh` (incl. `sil_005_watchdog_timeout_cvc.yaml` and
+  `sil_009_e2e_corruption.yaml` — WdgM/E2E are the detection nets for
+  the intra-tick order change; memo section 4.1)
+
+Host evidence this session: OS kernel suite 32/32 (490 tests, 0
+failures, 3 pre-existing TMS570 ignores — includes the two new
+schedule-table bound tests); arxmlgen pytest 287 passed / 32 failed
+(failure set byte-for-byte identical to the pre-change 32 pre-existing
+failures); cvc/fzc/rzc scheduler mirror suites 6/3/4 tests, all PASS
+unchanged. Per-ECU full unit suites (`Makefile.posix TARGET=<ecu> test`)
+are SocketCAN/Linux-bound -> CI-deferred, same as the S-OS-00 baseline.
+
 ## Baseline interpretation
 
 - The 8 kernel suites + 3 port smoke suites (Tms570/Stm32/Stm32L5
