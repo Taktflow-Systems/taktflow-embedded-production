@@ -71,6 +71,13 @@ PORT_BINS   := $(addprefix $(BUILD)/test_Os_Port_,$(addsuffix _bootstrap,$(PORT_
 #    (shared support.c + _main.c runner registers the split suites)
 STM32_SPLIT_SUITES := $(notdir $(basename $(wildcard $(BOOT)/test/test_Os_Port_Stm32_bootstrap_*.c)))
 STM32_SPLIT_BINS   := $(addprefix $(BUILD)/,$(STM32_SPLIT_SUITES))
+# STM32 SC3 hook suites: link the REAL STM32 SC3 port hooks
+# (Os_Port_Stm32_Sc3.c), so — unlike every other STM32 suite — the
+# NO_PLATFORM_TUS exception does NOT apply: Os_Interrupt.c / Os_MemProt.c /
+# Os_TimingProt.c are compiled WITH -DPLATFORM_STM32 (their generic host
+# stubs vanish and the SC3 file provides the hooks). Single-shot compile.
+STM32_SC3_SUITES := $(notdir $(basename $(wildcard $(BOOT)/test/test_Os_Port_Stm32_sc3_*.c)))
+STM32_SC3_BINS   := $(addprefix $(BUILD)/,$(STM32_SC3_SUITES))
 TMS570_SPLIT_SRC   := $(wildcard $(BOOT)/test/test_Os_Port_Tms570_bootstrap_*.c)
 TMS570_SPLIT_BIN   := $(BUILD)/test_Os_Port_Tms570_bootstrap_split
 
@@ -117,10 +124,10 @@ endef
 
 all: run
 
-build: $(KERNEL_BINS) $(PORT_BINS) $(STM32_SPLIT_BINS) $(TMS570_SPLIT_BIN)
+build: $(KERNEL_BINS) $(PORT_BINS) $(STM32_SPLIT_BINS) $(STM32_SC3_BINS) $(TMS570_SPLIT_BIN)
 
 run: build $(RUNNER)
-	$(PYTHON) $(RUNNER) $(KERNEL_BINS) $(PORT_BINS) $(STM32_SPLIT_BINS) $(TMS570_SPLIT_BIN)
+	$(PYTHON) $(RUNNER) $(KERNEL_BINS) $(PORT_BINS) $(STM32_SPLIT_BINS) $(STM32_SC3_BINS) $(TMS570_SPLIT_BIN)
 
 $(BUILD):
 	$(PYTHON) -c "import os, sys; os.makedirs(sys.argv[1], exist_ok=True)" "$@"
@@ -189,6 +196,22 @@ $(BUILD)/$(1): $(BOOT)/test/$(1).c \
 endef
 
 $(foreach t,$(STM32_SPLIT_SUITES),$(eval $(call STM32_SPLIT_RULE,$(t))))
+
+# --- STM32 SC3 hook suites (real hooks, no NO_PLATFORM_TUS exception) --------
+define STM32_SC3_RULE
+$(BUILD)/$(1): $(BOOT)/test/$(1).c $(KERNEL_SRC) $(SUPPORT_SRC) \
+    $(ROOT)/firmware/platform/stm32/src/Os_Port_Stm32.c \
+    $(ROOT)/firmware/platform/stm32/src/Os_Port_Stm32_Sc3.c \
+    $(BOOT)/port/src/Os_Port_TaskBinding.c | $(BUILD)
+	$(CC) $(CFLAGS) -DUNIT_TEST -DPLATFORM_STM32 $(INC) -I$(ROOT)/firmware/platform/stm32/include \
+	  $(KERNEL_SRC) $(SUPPORT_SRC) \
+	  $(ROOT)/firmware/platform/stm32/src/Os_Port_Stm32.c \
+	  $(ROOT)/firmware/platform/stm32/src/Os_Port_Stm32_Sc3.c \
+	  $(BOOT)/port/src/Os_Port_TaskBinding.c \
+	  $$< -o $$@
+endef
+
+$(foreach t,$(STM32_SC3_SUITES),$(eval $(call STM32_SC3_RULE,$(t))))
 
 $(TMS570_SPLIT_BIN): $(TMS570_SPLIT_SRC) \
     $(ROOT)/firmware/platform/tms570/src/Os_Port_Tms570.c \
