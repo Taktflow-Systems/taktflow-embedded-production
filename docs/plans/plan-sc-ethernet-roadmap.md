@@ -218,7 +218,7 @@ Status markers: PENDING / IN PROGRESS / DONE.
   60 s bench stream into CSV with 5715 data rows, zero invalid frames, and zero
   sequence gaps.
 
-#### S-UDP-05 — Bench validation against a HIL scenario
+#### S-UDP-05 — Bench validation against a HIL scenario — IN PROGRESS
 - **Goal:** Prove the telemetry channel is trustworthy during real HIL load
   (CAN traffic + fault injection running).
 - **Inputs:** S-UDP-03 firmware, S-UDP-04 receiver, existing HIL scenarios in
@@ -231,6 +231,18 @@ Status markers: PENDING / IN PROGRESS / DONE.
   unchanged vs a run without ETH=1 (no interference).
 - **Gate / review:** development-discipline.md Layer 5 (multi-node bench).
 - **Definition of done:** report merged with all three criteria met.
+- **Current status (2026-07-07):** scenario plan approved; prep tooling ready,
+  bench runs pending. The SCET frame carries no absolute counter and the only
+  counter-bearing UART output is the DBGDUMP 5 s dump (whose stall causes
+  loss), so the criteria are split across three runs — B: loss-0 under load +
+  fault injection on the current `ETH=1` image; C: `ETH=1 DBGDUMP=1 HIL=1`
+  UART cross-check via `tools/bench/sc_eth_uart_crosscheck.py` (stall-aligned
+  tick-exact identities: d(tx7 call)=50, UDP frames+missed=500 per dump
+  interval); A: no-ETH baseline for the interference check. Procedure, run
+  matrix, and pre-checks in
+  `test/hil/reports/sc-eth-telemetry-validation.md`; CAN load + fault
+  injection driver `scripts/hil/sc_eth_hil_scenario.py` (Waveshare USB-CAN-A,
+  Windows bench PC), offline self-tests pass.
 
 ---
 
