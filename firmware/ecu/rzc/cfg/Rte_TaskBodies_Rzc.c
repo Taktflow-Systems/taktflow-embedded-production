@@ -27,8 +27,8 @@
  * the FIRST runnable of each unique valid seId in the group.
  *
  * Os_TaskMap_RunMappedFunctions() bridges the super-loop BSW slot
- * MainFunctions into the same period task (weak-empty map until the
- * scheduler-cutover step provides the per-ECU table).
+ * MainFunctions into the same period task (empty no-op map until the
+ * ECU main registers its table via Os_TaskMap_SetTable before StartOS).
  *
  * Basic-task pattern: every period task terminates via TerminateTask()
  * (schedule-table expiry points re-activate it each period).
@@ -130,11 +130,19 @@ void Os_Task_Rzc_5000ms(void)
 /**
  * @brief   Idle task — lowest priority, autostarted, never terminates
  * @note    Assumption of Use (kernel os_cfg_validate_idle_task): the
- *          idle body must not return. Platform low-power hooks (WFI)
- *          are a scheduler-cutover concern.
+ *          idle body must not return. As the autostarted task it is the
+ *          scheduler-cutover bootstrap context: it starts the period
+ *          schedule tables once (task call level, SC3 service
+ *          protection), then loops on the idle task-map hook so the
+ *          per-ECU map can bind the platform low-power idle action
+ *          (e.g. Main_Hw_Wfi). With the weak-empty map the loop is the
+ *          previous bare spin.
  */
 void Os_Task_Rzc_Idle(void)
 {
+    (void)Rzc_Os_StartScheduleTables();
+
     for (;;) {
+        Os_TaskMap_RunMappedFunctions(OS_TASK_RZC_IDLE);
     }
 }
