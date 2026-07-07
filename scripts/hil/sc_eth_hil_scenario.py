@@ -15,13 +15,25 @@ The SC relay kill LATCHES until power cycle (SWR-SC-011): run one injection
 phase per board power cycle.
 
 Phases:
-    nominal   heartbeats (+ optional rest-bus) for --duration seconds
-    dropout   nominal until --inject-at, then stop --target-ecu heartbeat,
-              keep the others, hold --hold seconds
-    corrupt   nominal until --inject-at, then send --target-ecu heartbeat
-              with corrupted E2E CRC (byte1 ^ 0xFF), hold --hold seconds
-              (only meaningful on non-HIL SC builds: PLATFORM_HIL bypasses
-              E2E validation, see hb_spoofer.py / sc_can.c)
+    nominal        heartbeats (+ optional rest-bus) for --duration seconds
+    dropout        nominal until --inject-at, then stop --target-ecu
+                   heartbeat, keep the others, hold --hold seconds
+    corrupt        nominal until --inject-at, then send --target-ecu
+                   heartbeat with corrupted E2E CRC (byte1 ^ 0xFF).
+                   Non-HIL builds reject these (kill); PLATFORM_HIL
+                   force-accepts them (negative check, no reaction).
+    content-fault  nominal until --inject-at, then send --target-ecu
+                   heartbeat with two FaultStatus bits set (byte3=0x31).
+                   SC_Heartbeat_ValidateContent latches a content fault
+                   after SC_HB_FAULT_ESCALATE_MAX (20) receptions — works
+                   on HIL builds too (runs after the E2E force-accept).
+
+HIL-build notes (PLATFORM_HIL, the only viable config on the LaunchPad
+bench — relay GPIO is muxed to LIN1TX, so non-HIL readback kills ~25 ms
+after energize): FZC monitoring is compiled out (target CVC or RZC),
+E2E is force-accepted, HB timeout is 500 ms + 10-tick confirm, and
+DeEnergize is a no-op so kills surface as mode=FAULT with fault_flags,
+never in relay_energized/fault_reason.
 
 Usage:
     # offline self-test, no serial port touched:
@@ -105,22 +117,45 @@ def crc8_sae_j1850(data: bytes) -> int:
 
 
 def build_heartbeat_data(ecu_cfg: dict, alive_counter: int,
-                         corrupt_crc: bool = False) -> bytes:
+                         variant: str = "ok") -> bytes:
     """Build the 4-byte heartbeat payload (layout per hb_spoofer.py).
 
     byte 0: [E2E_AliveCounter:4 | E2E_DataID:4]
-    byte 1: E2E_CRC8 over (byte2, byte3, DataId) — inverted when corrupting
+    byte 1: E2E_CRC8 over (byte2, byte3, DataId) — inverted for "corrupt"
     byte 2: ECU_ID
-    byte 3: [FaultStatus:4 | OperatingMode:4] = RUN(1), no faults
+    byte 3: [FaultStatus:4 | OperatingMode:4] — RUN(1) no faults, or
+            0x31 (two FaultStatus bits, mode RUN) for "content-fault"
     """
     data_id = ecu_cfg["data_id"] & 0x0F
     byte0 = ((alive_counter & 0x0F) << 4) | data_id
     byte2 = ecu_cfg["ecu_id"]
-    byte3 = 0x01
+    byte3 = 0x31 if variant == "content-fault" else 0x01
     byte1 = crc8_sae_j1850(bytes([byte2, byte3, data_id]))
-    if corrupt_crc:
+    if variant == "corrupt":
         byte1 ^= 0xFF
     return bytes([byte0, byte1, byte2, byte3])
+
+
+def adapter_settings_frame(emission: str, baud: int = 0x03,
+                           frame_type: int = 0x01, mode: int = 0x00) -> bytes:
+    """USB-CAN-A init command (Waveshare serial-conversion protocol).
+
+    AA 55 <proto> <baud> <type> filter[4] mask[4] <mode> 01 00 00 00 00 <sum>
+    proto byte selects the adapter->PC emission framing (bench-verified
+    2026-07-07: 0x12 switches emission to variable; persisted default was
+    fixed): "fixed" -> 0x02, "variable" -> 0x12. baud 0x03 = 500 kbps.
+    mode 0x00 = normal (0x01 loopback, 0x02 silent). checksum over [2:19].
+    """
+    frame = bytearray(20)
+    frame[0] = 0xAA
+    frame[1] = 0x55
+    frame[2] = 0x02 if emission == "fixed" else 0x12
+    frame[3] = baud
+    frame[4] = frame_type
+    frame[13] = mode
+    frame[14] = 0x01
+    frame[19] = sum(frame[2:19]) & 0xFF
+    return bytes(frame)
 
 
 # ----------------------------------------------------------------------
@@ -301,17 +336,17 @@ class Scenario:
         self.log_tx(can_id, data)
 
     def heartbeat_ecus(self, t_s):
-        """Which ECUs get a heartbeat at scenario time t_s, and whether the
-        target ECU's frame is CRC-corrupted."""
+        """Which ECUs get a heartbeat at scenario time t_s, and the payload
+        variant for the target ECU during injection."""
         injecting = (self.args.phase != "nominal"
                      and t_s >= self.args.inject_at)
         for key, cfg in ECU_HEARTBEATS.items():
             if injecting and key == self.args.target_ecu:
                 if self.args.phase == "dropout":
                     continue                    # omit target heartbeat
-                yield cfg, True                 # corrupt: bad CRC
+                yield cfg, self.args.phase      # corrupt / content-fault
             else:
-                yield cfg, False
+                yield cfg, "ok"
 
     def pump_rx(self, ser):
         chunk = ser.read(max(1, ser.in_waiting))
@@ -394,9 +429,9 @@ class Scenario:
                                    f"ecu={args.target_ecu} t={t_s:.3f}")
 
                 if tick % HB_PERIOD_TICKS == 0:
-                    for cfg, corrupt in self.heartbeat_ecus(t_s):
+                    for cfg, variant in self.heartbeat_ecus(t_s):
                         data = build_heartbeat_data(
-                            cfg, self.alive[cfg["id"]], corrupt)
+                            cfg, self.alive[cfg["id"]], variant)
                         self.send(ser, cfg["id"], data)
                         self.alive[cfg["id"]] = (self.alive[cfg["id"]] + 1) & 0x0F
 
@@ -408,7 +443,17 @@ class Scenario:
 
                 tick += 1
                 next_tick = t0 + tick * BASE_TICK_S
-                # sleep with a 2 ms spin guard — Windows timer granularity
+                # Resync after host stalls instead of bursting missed ticks:
+                # back-to-back same-ID frames overwrite the SC's DCAN mailbox
+                # between its 10 ms polls -> E2E alive-counter gap (observed
+                # on the bench 2026-07-07). Skipping ticks keeps real spacing.
+                behind = time.perf_counter() - next_tick
+                if behind > BASE_TICK_S:
+                    skipped = int(behind / BASE_TICK_S)
+                    tick += skipped
+                    next_tick = t0 + tick * BASE_TICK_S
+                    self.log_event("tick_resync",
+                                   f"skipped={skipped} t={t_s:.3f}")
                 remaining = next_tick - time.perf_counter()
                 if remaining > 0.002:
                     time.sleep(remaining - 0.002)
@@ -441,9 +486,18 @@ def self_test() -> int:
     if crc8_sae_j1850(bytes([hb[2], hb[3], hb[0] & 0x0F])) != hb[1]:
         print("FAIL: heartbeat CRC self-check")
         failures += 1
-    corrupted = build_heartbeat_data(ECU_HEARTBEATS["fzc"], 5, corrupt_crc=True)
+    corrupted = build_heartbeat_data(ECU_HEARTBEATS["fzc"], 5, "corrupt")
     if corrupted[1] == hb[1]:
-        print("FAIL: corrupt_crc did not change CRC byte")
+        print("FAIL: corrupt variant did not change CRC byte")
+        failures += 1
+    faulty = build_heartbeat_data(ECU_HEARTBEATS["cvc"], 5, "content-fault")
+    if not (faulty[3] == 0x31 and faulty[1] == crc8_sae_j1850(
+            bytes([faulty[2], 0x31, faulty[0] & 0x0F]))):
+        print("FAIL: content-fault variant byte3/CRC")
+        failures += 1
+    settings = adapter_settings_frame("fixed")
+    if not (settings[2] == 0x02 and settings[19] == sum(settings[2:19]) & 0xFF):
+        print("FAIL: adapter settings frame")
         failures += 1
 
     fixed = encode_fixed(0x011, hb)
@@ -493,8 +547,15 @@ def main():
                         help="Waveshare serial protocol mode (default: fixed)")
     parser.add_argument("--baud", type=int, default=2000000,
                         help="adapter serial baud (default: 2000000)")
-    parser.add_argument("--phase", choices=["nominal", "dropout", "corrupt"],
+    parser.add_argument("--phase",
+                        choices=["nominal", "dropout", "corrupt",
+                                 "content-fault"],
                         required=True)
+    parser.add_argument("--init-adapter", choices=["fixed", "variable", "none"],
+                        default="fixed",
+                        help="send a USB-CAN-A settings frame on connect "
+                             "(500k, normal mode, chosen emission framing); "
+                             "default fixed to match --proto default")
     parser.add_argument("--duration", type=float, default=600.0,
                         help="nominal phase length in seconds (default: 600)")
     parser.add_argument("--inject-at", type=float, default=60.0,
@@ -537,6 +598,12 @@ def main():
     except serial.SerialException as exc:
         print(f"ERROR: cannot open {args.port}: {exc}", file=sys.stderr)
         sys.exit(1)
+
+    if args.init_adapter != "none":
+        ser.write(adapter_settings_frame(args.init_adapter))
+        time.sleep(0.3)
+        scenario.log_event("adapter_init",
+                           f"emission={args.init_adapter} 500k normal")
 
     try:
         scenario.run(ser)
