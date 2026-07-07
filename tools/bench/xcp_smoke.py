@@ -123,6 +123,25 @@ class XcpUdpClient:
         self.sock.close()
 
 
+def resolve_symbol_a2l(a2l_path: str, symbol: str) -> int:
+    """Find a MEASUREMENT's ECU_ADDRESS in an A2L file (S-XCP-03).
+
+    Unlike the raw map lookup, this also resolves file-static symbols —
+    gen_a2l.py extracts them from the map's section-allocation rows.
+    """
+    in_block = False
+    with open(a2l_path, encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            parts = line.split()
+            if parts[:2] == ["/begin", "MEASUREMENT"] and len(parts) >= 3:
+                in_block = parts[2] == symbol
+            elif in_block and parts[:1] == ["ECU_ADDRESS"] and len(parts) >= 2:
+                return int(parts[1], 16)
+            elif parts[:2] == ["/end", "MEASUREMENT"]:
+                in_block = False
+    raise SystemExit(f"MEASUREMENT {symbol!r} not found in {a2l_path}")
+
+
 def resolve_symbol(map_path: str, symbol: str) -> int:
     """Find a symbol's address in a TI linker .map file."""
     with open(map_path, encoding="utf-8", errors="replace") as fh:
@@ -169,8 +188,9 @@ def main():
     parser.add_argument("--port", type=int, default=XCP_PORT)
     parser.add_argument("--addr", type=lambda s: int(s, 0),
                         help="memory address to read (SHORT_UPLOAD)")
-    parser.add_argument("--symbol", help="resolve address from --map instead")
+    parser.add_argument("--symbol", help="resolve address from --map/--a2l instead")
     parser.add_argument("--map", help="TI linker .map file for --symbol")
+    parser.add_argument("--a2l", help="A2L file (gen_a2l.py output) for --symbol")
     parser.add_argument("--size", type=int, default=1,
                         help="bytes to read, 1..7 (default 1)")
     parser.add_argument("--interval", type=float, default=1.0,
@@ -187,11 +207,14 @@ def main():
 
     addr = args.addr
     if addr is None:
-        if not (args.symbol and args.map):
-            print("ERROR: give --addr, or --symbol with --map",
+        if not (args.symbol and (args.map or args.a2l)):
+            print("ERROR: give --addr, or --symbol with --map or --a2l",
                   file=sys.stderr)
             sys.exit(2)
-        addr = resolve_symbol(args.map, args.symbol)
+        if args.a2l:
+            addr = resolve_symbol_a2l(args.a2l, args.symbol)
+        else:
+            addr = resolve_symbol(args.map, args.symbol)
         print(f"resolved {args.symbol} -> 0x{addr:08X}")
 
     client = XcpUdpClient(args.host, args.port, args.timeout)

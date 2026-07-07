@@ -8,16 +8,28 @@ and generates an A2L file that pyXCP can use for named access.
 Usage:
     python tools/xcp/gen_a2l.py firmware.elf --ecu CVC --output cvc.a2l
 
+    # TI linker map input + YAML symbol allowlist (TMS570 SC, big-endian):
+    python tools/xcp/gen_a2l.py --map build/tms570/sc.map \
+        --symbols tools/xcp/xcp_symbols.yaml --byte-order MSB_FIRST \
+        --ecu SC -o build/tms570/sc_xcp.a2l
+
 Variables are discovered by naming convention:
   - g_dbg_*          → MEASUREMENT (debug counters)
   - com_tx_send_*    → MEASUREMENT (Com TX counters)
   - com_rx_*         → MEASUREMENT (Com RX state)
   - Swc_*            → MEASUREMENT (SWC state)
   - *_Cfg*           → CHARACTERISTIC (calibration — read-only for now)
+or, with --symbols, taken exactly from the YAML allowlist (this also
+resolves file-static symbols, which TI maps list only as section names).
 
-Requires: arm-none-eabi-nm (for bare-metal ELF) or nm (for POSIX ELF)
+Requires: arm-none-eabi-nm (for bare-metal ELF) or nm (for POSIX ELF);
+the --map path needs no external tools.
+
+Tool qualification (ISO 26262-8): TCL1 — bench-only measurement tooling,
+output is human-reviewed before use; no safety decisions derive from it.
 
 @traces_to Phase 4: XCP measurement and calibration
+@traces_to docs/plans/plan-sc-ethernet-roadmap.md S-XCP-03
 """
 
 import argparse
@@ -48,6 +60,57 @@ SIZE_MAP = {
     2: ('UWORD', 'UWORD', 0, 65535),
     4: ('ULONG', 'ULONG', 0, 4294967295),
 }
+
+BYTE_ORDER_CHOICES = ('MSB_LAST', 'MSB_FIRST')  # little-endian / big-endian
+
+# TI linker map section-allocation rows carry address, size, and the
+# owning input section, e.g.:
+#   08005d88  00000001  sc_eth_telemetry.o (.data.g_sc_eth_telemetry_sequence)
+#   08005d4c  00000004  (.common:g_dbg_ethrx_polls)
+TI_MAP_SECTION_RE = re.compile(
+    r'^\s+([0-9a-fA-F]{8})\s+([0-9a-fA-F]{8})\s+\S*\s*'
+    r'\((?:\.(?:data|bss)\.([A-Za-z_]\w*)|\.common:([A-Za-z_]\w*))\)\s*$'
+)
+
+
+def parse_ti_map(map_text: str) -> list[dict]:
+    """Parse TI linker .map section-allocation rows into a symbol list.
+
+    Uses the per-input-section rows (not GLOBAL SYMBOLS) because they
+    carry sizes and include file-static objects.
+    """
+    symbols = []
+    seen = set()
+    for line in map_text.splitlines():
+        m = TI_MAP_SECTION_RE.match(line)
+        if not m:
+            continue
+        name = m.group(3) or m.group(4)
+        if name in seen:
+            continue
+        seen.add(name)
+        symbols.append({
+            'name': name,
+            'addr': int(m.group(1), 16),
+            'size': int(m.group(2), 16),
+            'type': 'D',
+        })
+    return symbols
+
+
+def load_allowlist(yaml_path: str) -> dict:
+    """Load the YAML symbol allowlist: {symbol_name: description}."""
+    import yaml
+    with open(yaml_path, encoding='utf-8') as fh:
+        doc = yaml.safe_load(fh)
+    entries = (doc or {}).get('symbols', [])
+    allow = {}
+    for entry in entries:
+        if isinstance(entry, str):
+            allow[entry] = 'Allowlisted measurement'
+        elif isinstance(entry, dict) and 'name' in entry:
+            allow[entry['name']] = entry.get('desc', 'Allowlisted measurement')
+    return allow
 
 
 def parse_nm_output(nm_output: str) -> list[dict]:
@@ -81,13 +144,23 @@ def match_measurement(name: str) -> str | None:
     return None
 
 
-def generate_a2l(symbols: list[dict], ecu_name: str) -> str:
-    """Generate A2L file content from symbol list."""
+def generate_a2l(symbols: list[dict], ecu_name: str,
+                 byte_order: str = 'MSB_LAST',
+                 allowlist: dict | None = None) -> str:
+    """Generate A2L file content from symbol list.
+
+    With an allowlist, exactly the allowlisted names are emitted (their
+    YAML descriptions win); otherwise the naming-convention patterns
+    select measurements.
+    """
     now = datetime.now().strftime('%Y-%m-%d %H:%M')
     measurements = []
 
     for sym in symbols:
-        desc = match_measurement(sym['name'])
+        if allowlist is not None:
+            desc = allowlist.get(sym['name'])
+        else:
+            desc = match_measurement(sym['name'])
         if desc is None:
             continue
         size = sym['size']
@@ -130,7 +203,7 @@ def generate_a2l(symbols: list[dict], ecu_name: str) -> str:
     lines.append('    /end MOD_PAR')
     lines.append('')
     lines.append('    /begin MOD_COMMON ""')
-    lines.append('      BYTE_ORDER MSB_LAST')  # Little-endian (STM32)
+    lines.append(f'      BYTE_ORDER {byte_order}')  # MSB_LAST=LE (STM32), MSB_FIRST=BE (TMS570)
     lines.append('    /end MOD_COMMON')
     lines.append('')
 
@@ -159,34 +232,65 @@ def generate_a2l(symbols: list[dict], ecu_name: str) -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Generate A2L from ELF')
-    parser.add_argument('elf', help='Path to ELF file')
+    parser = argparse.ArgumentParser(description='Generate A2L from ELF or TI map')
+    parser.add_argument('elf', nargs='?', default=None,
+                        help='Path to ELF file (or use --map)')
+    parser.add_argument('--map', dest='map_file', default=None,
+                        help='TI linker .map file (alternative to ELF+nm)')
+    parser.add_argument('--symbols', default=None,
+                        help='YAML symbol allowlist (see tools/xcp/xcp_symbols.yaml)')
+    parser.add_argument('--byte-order', choices=BYTE_ORDER_CHOICES,
+                        default='MSB_LAST',
+                        help='A2L BYTE_ORDER: MSB_LAST=little-endian (STM32), '
+                             'MSB_FIRST=big-endian (TMS570). Default: MSB_LAST')
     parser.add_argument('--ecu', default='CVC', help='ECU name (default: CVC)')
     parser.add_argument('--output', '-o', default=None, help='Output A2L file')
     parser.add_argument('--nm', default='nm', help='nm tool path (default: nm)')
     args = parser.parse_args()
 
-    # Run nm -S to get symbol sizes
-    try:
-        result = subprocess.run(
-            [args.nm, '-S', '--defined-only', args.elf],
-            capture_output=True, text=True, check=True
-        )
-    except FileNotFoundError:
-        print(f"Error: '{args.nm}' not found. Install binutils or specify --nm path.", file=sys.stderr)
-        return 1
-    except subprocess.CalledProcessError as e:
-        print(f"Error running nm: {e.stderr}", file=sys.stderr)
-        return 1
+    if (args.elf is None) == (args.map_file is None):
+        print("Error: give exactly one of ELF path or --map.", file=sys.stderr)
+        return 2
 
-    symbols = parse_nm_output(result.stdout)
-    print(f"Parsed {len(symbols)} symbols from {args.elf}")
+    if args.map_file:
+        with open(args.map_file, encoding='utf-8', errors='replace') as fh:
+            symbols = parse_ti_map(fh.read())
+        print(f"Parsed {len(symbols)} data symbols from {args.map_file}")
+    else:
+        # Run nm -S to get symbol sizes
+        try:
+            result = subprocess.run(
+                [args.nm, '-S', '--defined-only', args.elf],
+                capture_output=True, text=True, check=True
+            )
+        except FileNotFoundError:
+            print(f"Error: '{args.nm}' not found. Install binutils or specify --nm path.", file=sys.stderr)
+            return 1
+        except subprocess.CalledProcessError as e:
+            print(f"Error running nm: {e.stderr}", file=sys.stderr)
+            return 1
+        symbols = parse_nm_output(result.stdout)
+        print(f"Parsed {len(symbols)} symbols from {args.elf}")
 
-    # Filter to measurements
-    matched = [s for s in symbols if match_measurement(s['name'])]
+    allowlist = None
+    if args.symbols:
+        allowlist = load_allowlist(args.symbols)
+        found = {s['name'] for s in symbols}
+        missing = sorted(set(allowlist) - found)
+        for name in missing:
+            print(f"WARNING: allowlisted symbol not found: {name}",
+                  file=sys.stderr)
+        matched = [s for s in symbols if s['name'] in allowlist]
+        if not matched:
+            print("Error: no allowlisted symbol resolved — refusing to emit "
+                  "an empty A2L (fail-closed).", file=sys.stderr)
+            return 1
+    else:
+        matched = [s for s in symbols if match_measurement(s['name'])]
     print(f"Matched {len(matched)} measurement variables")
 
-    a2l = generate_a2l(symbols, args.ecu.upper())
+    a2l = generate_a2l(symbols, args.ecu.upper(),
+                       byte_order=args.byte_order, allowlist=allowlist)
 
     output = args.output or f"{args.ecu.lower()}.a2l"
     with open(output, 'w') as f:

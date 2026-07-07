@@ -318,7 +318,24 @@ Status markers: PENDING / IN PROGRESS / DONE.
 - **Definition of done:** smoke script output shows a changing counter value
   read over XCP twice, one second apart.
 
-#### S-XCP-03 — Measurement description (A2L) generation
+#### S-XCP-03 — Measurement description (A2L) generation — DONE
+<!-- 2026-07-07 closure: gen_a2l.py extended with --map (TI linker map
+     section-allocation parser — also resolves file-static symbols),
+     --symbols (YAML allowlist tools/xcp/xcp_symbols.yaml, fail-closed if
+     nothing resolves) and --byte-order MSB_FIRST for the big-endian
+     TMS570; Makefile.tms570 gained the `a2l` target emitting
+     $(BUILD_DIR)/sc_xcp.a2l; xcp_smoke.py gained --a2l symbol
+     resolution. Acceptance evidence: 6 allowlisted symbols resolved
+     (>= 5 required); regenerating from two different builds of the same
+     sources showed g_sc_eth_telemetry_sequence move (0x08005DA4 ->
+     0x08005D88), proving regeneration tracks relinks; live scripted
+     measurement session driven by the generated A2L (BYTE_ORDER
+     MSB_FIRST) read the counter twice 1 s apart with value CHANGED,
+     exit 0, against the flashed S-XCP-02 image. Caveat: the `make a2l`
+     invocation itself was validated at recipe level (the exact command
+     was run standalone); the end-to-end make run needs the tree to
+     build, which was blocked at closure time by unrelated
+     work-in-progress SC sources in the working tree. -->
 - **Goal:** Make XCP measurements tool-consumable without hand-maintained
   addresses.
 - **Inputs:** S-XCP-02; `build/tms570/sc.map` (symbol addresses);

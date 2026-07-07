@@ -191,7 +191,7 @@ CCXML  = $(SC_DIR)/TMS570LC43xx_XDS110.ccxml
 # Targets
 # =============================================================================
 
-.PHONY: all flash size clean check-halcogen blinky flash-blinky eth-ping flash-eth-ping
+.PHONY: all flash size clean check-halcogen blinky flash-blinky eth-ping flash-eth-ping a2l
 
 all: check-halcogen $(ELF)
 	@echo "=== Built $(ELF) ==="
@@ -317,6 +317,13 @@ $(BUILD_DIR)/eth/$(SC_DIR)/src/sc_startup.o: $(SC_DIR)/src/sc_startup.S | $(BUIL
 flash-eth-ping: $(ETH_PING_ELF)
 	@echo "=== Flashing Ethernet ping test via DSLite (XDS110) ==="
 	"$(DSLITE)" load -c "$(CCXML)" -f "$(ETH_PING_ELF)"
+
+# --- A2L generation (S-XCP-03: XCP measurement description from the map) ---
+a2l: $(ELF)
+	python tools/xcp/gen_a2l.py --map $(MAP) \
+		--symbols tools/xcp/xcp_symbols.yaml \
+		--byte-order MSB_FIRST --ecu SC \
+		-o $(BUILD_DIR)/sc_xcp.a2l
 
 # --- Firmware size report ---
 size: $(ELF)
