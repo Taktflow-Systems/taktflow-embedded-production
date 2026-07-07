@@ -125,6 +125,9 @@ CFLAGS += -I$(BSW)/services/FiM/include
 CFLAGS += -I$(BSW)/services/Xcp/include
 CFLAGS += -I$(BSW)/rte/include
 CFLAGS += -I$(BSW)/os/include
+CFLAGS += -I$(BSW)/os/bootstrap/include
+CFLAGS += -I$(BSW)/os/bootstrap/src
+CFLAGS += -I$(BSW)/os/bootstrap/port/include
 CFLAGS += -I$(PLAT)/include
 CFLAGS += -I$(ECU)/$(TARGET)/include
 
@@ -176,6 +179,46 @@ BSW_SRCS = \
     $(BSW)/services/Xcp/src/Xcp.c \
     $(BSW)/services/SchM/src/SchM_Timing.c \
     $(BSW)/rte/src/Rte.c
+
+# --- OSEK bootstrap kernel + STM32 hardware port (S-OS-30, pass OSEK=1) ---
+# Same kernel TU list Makefile.posix compiles; PLATFORM_STM32 (already in
+# CFLAGS) selects the hardware dispatch path and the port task binding.
+# Gated behind OSEK=1 (mirrors the THREADX gate) because the harvested
+# Os_Port_Stm32_Asm.S provides PendSV_Handler, which collides with the
+# CubeMX stub in firmware/ecu/cvc/cfg/Core/Src/stm32g4xx_it.c. That file is
+# CubeMX-owned (never hand-edit rule); enabling OSEK=1 unconditionally
+# requires regenerating it without the PendSV handler (or approving the
+# fcf3188 variant of it) -- tracked in docs/plans/os-harvest-report.md.
+ifdef OSEK
+OS_SRCS = \
+    $(BSW)/os/bootstrap/src/Os_Core.c \
+    $(BSW)/os/bootstrap/src/Os_Task.c \
+    $(BSW)/os/bootstrap/src/Os_Scheduler.c \
+    $(BSW)/os/bootstrap/src/Os_Resource.c \
+    $(BSW)/os/bootstrap/src/Os_Event.c \
+    $(BSW)/os/bootstrap/src/Os_Alarm.c \
+    $(BSW)/os/bootstrap/src/Os_Application.c \
+    $(BSW)/os/bootstrap/src/Os_Ioc.c \
+    $(BSW)/os/bootstrap/src/Os_Memory.c \
+    $(BSW)/os/bootstrap/src/Os_Stack.c \
+    $(BSW)/os/bootstrap/src/Os_ServiceProt.c \
+    $(BSW)/os/bootstrap/src/Os_TimingProt.c \
+    $(BSW)/os/bootstrap/src/Os_MemProt.c \
+    $(BSW)/os/bootstrap/src/Os_Interrupt.c \
+    $(BSW)/os/bootstrap/src/Os_ScheduleTable.c \
+    $(BSW)/os/bootstrap/src/Os_CounterDriver.c \
+    $(BSW)/os/bootstrap/src/Os_TaskMap.c \
+    $(BSW)/os/bootstrap/port/src/Os_Port_TaskBinding.c \
+    $(PLAT)/src/Os_Port_Stm32.c \
+    $(PLAT)/src/Os_Port_Stm32_Bringup.c
+
+OS_ASM_SRCS = $(PLAT)/src/Os_Port_Stm32_Asm.S
+
+BSW_SRCS += $(OS_SRCS)
+else
+OS_SRCS =
+OS_ASM_SRCS =
+endif
 
 # --- FZC additionally needs Uart MCAL ---
 ifeq ($(TARGET),fzc)
@@ -256,7 +299,8 @@ APP_SRCS = $(BSW_SRCS) $(HAL_SRCS) $(BSP_SRCS) $(CUBEMX_SRCS) $(ECU_SRCS) $(THRE
 APP_OBJS  = $(patsubst %.c,$(BUILD_DIR)/%.o,$(APP_SRCS))
 ASM_OBJS  = $(patsubst %.s,$(BUILD_DIR)/%.o,$(STARTUP))
 TX_ASM_OBJS = $(patsubst %.S,$(BUILD_DIR)/%.o,$(THREADX_ASM_SRCS))
-ALL_OBJS  = $(APP_OBJS) $(ASM_OBJS) $(TX_ASM_OBJS)
+OS_ASM_OBJS = $(patsubst %.S,$(BUILD_DIR)/%.o,$(OS_ASM_SRCS))
+ALL_OBJS  = $(APP_OBJS) $(ASM_OBJS) $(TX_ASM_OBJS) $(OS_ASM_OBJS)
 
 # --- Output files ---
 ELF = $(BUILD_DIR)/$(TARGET).elf
