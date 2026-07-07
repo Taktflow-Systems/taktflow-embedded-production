@@ -335,6 +335,21 @@ merge is not viable; the port work must be harvested file-wise.
     Os_PortStartFirstTask (see os-migration-baseline.md closure note for
     the design record and the S-OS-31 on-bench checklist). S-OS-31 is
     now UNBLOCKED pending the physical bench.
+  - Status update (2026-07-07, task-termination switchback): CLOSED at
+    build + host-test level. TerminateTask on a live PendSV dispatch now
+    stages the BRINGUP-6-validated switchback in the kernel
+    (os_terminate_switchback: resume preempted task WITHOUT frame
+    rebuild, else fresh dispatch of a higher-priority ready task WITH
+    rebuild, else fail-closed park) — a terminating period task no
+    longer returns into the poisoned frame LR. ChainTask on live
+    dispatch is rejected fail-closed (E_OS_CALLEVEL, documented
+    limitation — unvalidated on hardware; generated task bodies use
+    TerminateTask only). See os-migration-baseline.md closure note for
+    the BRINGUP-6 mapping table, limitations, sizes (+240 text per
+    image), and the REFRESHED S-OS-31 bench checklist (steady-state
+    periodic execution replaces the expected poisoned-LR fault). 35/35
+    OS suites (516 tests) green; default .bins byte-identical. S-OS-31
+    remains gated only on the physical bench.
 
 ### Phase 3 — STM32 hardware migration (CVC, FZC, RZC)
 

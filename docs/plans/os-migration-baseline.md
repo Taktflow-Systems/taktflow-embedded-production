@@ -374,6 +374,127 @@ S-OS-31 on-bench checklist (physical bench, no probe access this session):
 4. WdgM/E2E remain the detection nets for order/timing drift once the
    switchback lands (S-OS-11 memo section 4.1 list).
 
+## S-OS-31 task-termination switchback: CLOSED at build+host level (appended 2026-07-07)
+
+User decision (2026-07-07): wire the BRINGUP-6-validated switchback into
+the kernel termination path. On PLATFORM_STM32/STM32L5/TMS570, when the
+port PendSV dispatch is live (`Os_Port_IsConfiguredDispatchLive`, i.e.
+Os_PortStartFirstTask engaged), TerminateTask no longer returns into the
+task body (poisoned initial-frame LR 0xFFFFFFFF is never executed):
+`os_terminate_switchback` (Os_Scheduler.c) completes the task per OSEK
+and stages the next context through the port seam. Host-cooperative
+dispatch (POSIX builds, Os_TestConfigure*-driven suites, bringup builds
+before launch) is unchanged.
+
+What BRINGUP-6 validated manually vs what the kernel now does:
+
+| BRINGUP-6 (6/6 PASS on G474RE, manual harness step) | Kernel termination path now |
+|---|---|
+| task body calls `TerminateTask()` (kernel completes: SUSPENDED, preempted TaskA restored as current) | same `os_complete_running_task`, preceded by PostTaskHook + stack-monitor leave (OSEK: hook on leaving RUNNING — the host path runs it after Entry() returns, which never happens on hardware) |
+| `Os_Port_Stm32_SelectNextTask(TaskA)` — select WITHOUT rebuild (TaskA's saved context is live) | `Os_Port_StageConfiguredResume(resume)` — select WITHOUT rebuild, new task-binding seam |
+| `Os_PortRequestContextSwitch()` | inside `Os_Port_StageConfiguredResume` |
+| spin (WFI) until PendSV lands in TaskA | park loop after staging; PendSV (already pended at task level) preempts immediately |
+| next alarm activation: dispatcher rebuilds TaskB frame via `Os_Port_RequestConfiguredDispatch` before redispatch | unchanged — every fresh dispatch rebuilds (stale-frame lesson, stm32-bringup-p3.md) |
+
+Beyond the literal BRINGUP-6 shape, the switchback composes only the two
+hardware-validated staging sequences:
+
+- resume target present (preempted-task restore stack top): select
+  without rebuild + request (BRINGUP-6 sequence, above);
+- a READY task outranking the resume target (e.g. re-banded period-group
+  preemption chains): fresh dispatch via `Os_Port_RequestConfiguredDispatch`
+  (rebuild + select + request — the exact sequence every BRINGUP-5/6
+  alarm preemption exercised, ×10 per soak);
+- neither: fail closed — E_OS_STATE via Det/ErrorHook, nothing staged,
+  parked context starves the watchdog into the safe state. Unreachable
+  in production configurations (the autostarted idle task never
+  terminates).
+
+Multiple-activation interaction (BCC2): a task terminating with
+PendingActivations re-enters READY with a fresh ReadyStamp (pre-existing
+kernel logic, unchanged). The switchback deliberately does NOT
+self-redispatch the terminating task: rebuilding the initial frame of
+the stack still executing the TerminateTask call would corrupt live call
+frames (stm32-bringup-p3.md first lesson, same failure mode). The next
+tick's exit-ISR preemption dispatch runs the pending activation with a
+frame rebuilt while the task context is dead — verified by test.
+
+Limitations kept fail-closed (documented, NOT implemented — the bringup
+line never validated them):
+
+- ChainTask on a live PendSV dispatch: REJECTED with E_OS_CALLEVEL
+  (Det/ErrorHook) without terminating the caller. Rationale: the
+  pre-change behavior was worse than a clean fault — ChainTask's
+  activation path could re-enter `os_dispatch_task` from task level and
+  invoke the chained entry INLINE on the dying task's stack. Generated
+  task bodies (`Rte_TaskBodies_<Ecu>.c`) terminate via TerminateTask
+  only; no production caller exists.
+- Termination with an empty restore stack AND only the terminating task
+  ready (pending self-activation of a sole task): fail-closed park +
+  E_OS_STATE report; the pending run is lost to the watchdog reset. Not
+  a production shape (idle never terminates, so the restore stack is
+  never empty at a period-task termination).
+- ISR-context termination needs no new machinery: TerminateTask from
+  ISR2 was already rejected E_OS_CALLEVEL by service protection.
+
+Host evidence: OS kernel + port runner 35/35 suites PASS (516 tests, 0
+failures, 3 pre-existing TMS570 ignores — includes the new 8-test
+test_Os_Port_Stm32_bootstrap_termination_switchback suite: terminate →
+resume-preempted-without-rebuild, PostTaskHook ordering, terminate →
+next-ready-with-fresh-frame, fail-closed-when-nothing-to-run, repeated
+periodic cycle ×3 with per-round frame freshness, pending-activation
+re-queue + fresh redispatch, ChainTask live rejection, host-cooperative
+path unchanged). arxmlgen pytest 290 passed / 32 failed (pre-existing
+failure set; no generator files touched). cvc/fzc/rzc scheduler mirror
+suites 6/3/4 tests PASS unchanged.
+
+Build matrix, arm-none-eabi-gcc 13.3.0, debug (-Og), clean builds:
+
+| Image | Variant | text | data | bss | Result |
+|---|---|---|---|---|---|
+| cvc | default | 39480 | 160 | 7664 | LINKS, .bin BYTE-IDENTICAL to clean HEAD build (sha256) |
+| fzc | default | 37780 | 160 | 7680 | LINKS, .bin BYTE-IDENTICAL |
+| rzc | default | 36880 | 160 | 7552 | LINKS, .bin BYTE-IDENTICAL |
+| cvc | OSEK=1 | 49908 | 180 | 16336 | LINKS (+240 text vs launch seam: switchback path) |
+| fzc | OSEK=1 | 47992 | 180 | 15328 | LINKS (+240 text) |
+| rzc | OSEK=1 | 47152 | 180 | 16224 | LINKS (+240 text) |
+
+OSEK=1 flash worst case ~50.1 KB of the 409.6 KB budget (SYS-054).
+
+S-OS-31 on-bench checklist — REFRESHED (supersedes the earlier list: the
+"expected fault at first task termination" item is CLOSED; steady-state
+periodic execution is now the expectation):
+
+1. Re-run the harvested bringup suite (`OS_BOOTSTRAP_BRINGUP` image,
+   `Os_Port_Stm32_BringupAll`) on CVC G474RE — re-confirm 6/6 before any
+   production-launch attempt (hardware pass claims are not inherited).
+   Note BRINGUP-6 now exercises the kernel-side switchback (TerminateTask
+   stages the switch itself; the harness's manual SelectNextTask +
+   RequestContextSwitch after it is a harmless no-op) — expected count
+   unchanged (>= 5 preemptions in 500 ms).
+2. Flash order: cvc first (UART2 debug console), then rzc, then fzc.
+   `make -f firmware/platform/stm32/Makefile.stm32 TARGET=<ecu> OSEK=1
+   flash`.
+3. Observation points (debugger or XCP on the port state
+   `os_port_stm32_state` and kernel counters):
+   (a) StartOS reached (Det trace DET_E_DBG_SYSTICK_START precedes it);
+   (b) idle task entered on PSP — CONTROL.SPSEL=1 (BRINGUP-2 check) and
+       schedule tables started;
+   (c) first SysTick preemption: PendSvRequestCount/TaskSwitchCount
+       increment, SelectedNextTask staged to the 1ms-group task;
+   (d) STEADY STATE (replaces the poisoned-LR fault expectation): every
+       period-task termination re-stages a switch back to idle —
+       TaskSwitchCount grows by ~2 per period-task activation and
+       PendSvCompleteCount tracks PendSvRequestCount; no HardFault, no
+       CFSR/HFSR flags;
+   (e) WdgM checkpoints flow (no watchdog reset over a 30-minute soak)
+       and CAN traffic appears at the DBC periods (candump/PCAN trace vs
+       SIL parity capture) — WdgM/E2E remain the detection nets for
+       order/timing drift (S-OS-11 memo section 4.1 list);
+   (f) negative check: no E_OS_STATE/E_OS_CALLEVEL Det reports from the
+       termination path (would indicate the fail-closed limitations were
+       hit — neither is a production shape).
+
 ## Baseline interpretation
 
 - The 8 kernel suites + 3 port smoke suites (Tms570/Stm32/Stm32L5
