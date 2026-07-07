@@ -108,6 +108,15 @@ StatusType Os_Port_RebuildTaskFrame(TaskType TaskID)
 #endif
 }
 
+#if defined(UNIT_TEST)
+/* Distinguishes a staged RESUME (preempted task's saved context restored
+ * as-is) from a staged FRESH dispatch (rebuilt initial frame) so the host
+ * mock in Os_Port_CompleteConfiguredDispatch knows whether to invoke the
+ * task entry.  On hardware the distinction is physical: PendSV restores
+ * whatever frame the staging left in place. */
+static boolean os_port_binding_resume_staged = FALSE;
+#endif
+
 StatusType Os_Port_RequestConfiguredDispatch(TaskType TaskID)
 {
     StatusType status;
@@ -123,6 +132,30 @@ StatusType Os_Port_RequestConfiguredDispatch(TaskType TaskID)
         return status;
     }
 
+#if defined(UNIT_TEST)
+    os_port_binding_resume_staged = FALSE;
+#endif
+    Os_PortRequestContextSwitch();
+    return E_OK;
+}
+
+StatusType Os_Port_StageConfiguredResume(TaskType TaskID)
+{
+    StatusType status;
+
+    /* BRINGUP-6-validated switchback staging: select WITHOUT frame
+     * rebuild — the resumed task was preempted and its saved context is
+     * live; rebuilding would destroy it (docs/lessons-learned/
+     * stm32-bringup-p3.md records when rebuild is required instead). */
+    status = Os_Port_SelectConfiguredTask(TaskID);
+
+    if (status != E_OK) {
+        return status;
+    }
+
+#if defined(UNIT_TEST)
+    os_port_binding_resume_staged = TRUE;
+#endif
     Os_PortRequestContextSwitch();
     return E_OK;
 }
@@ -132,12 +165,28 @@ StatusType Os_Port_CompleteConfiguredDispatch(void)
 #if defined(PLATFORM_STM32)
     const Os_Port_Stm32_StateType* state = Os_Port_Stm32_GetBootstrapState();
     TaskType target;
+#if defined(UNIT_TEST)
+    boolean resume_staged;
+#endif
 
     if (state->PendSvPending == FALSE) {
         return E_OS_NOFUNC;
     }
 
+#if defined(UNIT_TEST)
+    resume_staged = os_port_binding_resume_staged;
+    os_port_binding_resume_staged = FALSE;
+#endif
+
     Os_Port_Stm32_PendSvHandler();
+
+#if defined(UNIT_TEST)
+    /* A resume lands mid-body in the restored task on hardware: the mock
+     * must NOT re-invoke the task entry from the top. */
+    if (resume_staged == TRUE) {
+        return E_OK;
+    }
+#endif
 
     /* On hardware, PendSV restores the task context and branches to its
      * saved PC (Entry for a new task).  In unit tests, simulate this by
@@ -194,6 +243,19 @@ StatusType Os_Port_CompleteConfiguredDispatch(void)
     return E_OK;
 #else
     return E_OS_STATE;
+#endif
+}
+
+boolean Os_Port_IsConfiguredDispatchLive(void)
+{
+#if defined(PLATFORM_STM32)
+    return Os_Port_Stm32_GetBootstrapState()->FirstTaskStarted;
+#elif defined(PLATFORM_STM32L5)
+    return Os_Port_Stm32L5_GetBootstrapState()->FirstTaskStarted;
+#elif defined(PLATFORM_TMS570)
+    return Os_Port_Tms570_GetBootstrapState()->FirstTaskStarted;
+#else
+    return FALSE;
 #endif
 }
 

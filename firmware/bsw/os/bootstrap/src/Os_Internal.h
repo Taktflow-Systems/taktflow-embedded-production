@@ -207,6 +207,9 @@ void os_report_service_error(uint8 ApiId, uint8 DetErrorId, StatusType Status);
 StatusType os_activate_task_internal(TaskType TaskID, boolean AllowPreemption);
 TaskType os_select_next_ready_task(void);
 void os_complete_running_task(void);
+#if defined(PLATFORM_STM32) || defined(PLATFORM_STM32L5) || defined(PLATFORM_TMS570)
+void os_terminate_switchback(void);
+#endif
 StatusType os_dispatch_one(void);
 StatusType os_run_ready_tasks(void);
 StatusType os_maybe_dispatch_preemption(void);

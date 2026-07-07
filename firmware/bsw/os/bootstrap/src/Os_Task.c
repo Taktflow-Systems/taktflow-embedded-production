@@ -5,6 +5,10 @@
  */
 #include "Os_Internal.h"
 
+#if defined(PLATFORM_STM32) || defined(PLATFORM_STM32L5) || defined(PLATFORM_TMS570)
+#include "Os_Port_TaskBinding.h"
+#endif
+
 StatusType os_activate_task_internal(TaskType TaskID, boolean AllowPreemption)
 {
     Os_TaskControlBlockType* tcb_ptr;
@@ -85,6 +89,16 @@ StatusType TerminateTask(void)
         return E_OS_RESOURCE;
     }
 
+#if defined(PLATFORM_STM32) || defined(PLATFORM_STM32L5) || defined(PLATFORM_TMS570)
+    if (Os_Port_IsConfiguredDispatchLive() == TRUE) {
+        /* Live PendSV dispatch: the BRINGUP-6-validated switchback.  On
+         * hardware this does not return; the UNIT_TEST mock returns so
+         * suites can assert the staged switch. */
+        os_terminate_switchback();
+        return E_OK;
+    }
+#endif
+
     os_complete_running_task();
     return E_OK;
 }
@@ -122,6 +136,18 @@ StatusType ChainTask(TaskType TaskID)
         os_report_service_error(OS_DET_API_CHAIN_TASK, DET_E_PARAM_VALUE, E_OS_LIMIT);
         return E_OS_LIMIT;
     }
+
+#if defined(PLATFORM_STM32) || defined(PLATFORM_STM32L5) || defined(PLATFORM_TMS570)
+    if (Os_Port_IsConfiguredDispatchLive() == TRUE) {
+        /* The bringup line validated only the TerminateTask switchback;
+         * ChainTask semantics on a live PendSV dispatch are unvalidated.
+         * Fail closed: reject without terminating the caller (documented
+         * limitation, docs/plans/os-migration-baseline.md).  Generated
+         * task bodies terminate via TerminateTask only. */
+        os_report_service_error(OS_DET_API_CHAIN_TASK, DET_E_PARAM_VALUE, E_OS_CALLEVEL);
+        return E_OS_CALLEVEL;
+    }
+#endif
 
     os_complete_running_task();
     return os_activate_task_internal(TaskID, TRUE);
