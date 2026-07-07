@@ -48,7 +48,8 @@ KERNEL_SUITES := test_Os_asild \
                  test_Os_ScheduleTable \
                  test_Os_ServiceProt \
                  test_Os_TimingProt \
-                 test_Os_Conformance_Sched
+                 test_Os_Conformance_Sched \
+                 test_Os_TaskMap
 
 # Port suites: <suite-stem> <platform-dir> <platform-define>
 PORT_SPECS := Tms570:tms570:PLATFORM_TMS570 \
@@ -142,6 +143,13 @@ $(RUNNER): | $(BUILD)
 # --- kernel-only suites: single-shot compile, -DUNIT_TEST only ---------------
 $(BUILD)/test_Os_%: $(BOOT)/test/test_Os_%.c $(KERNEL_SRC) $(SUPPORT_SRC) | $(BUILD)
 	$(CC) $(CFLAGS) -DUNIT_TEST $(INC) \
+	  $(KERNEL_SRC) $(SUPPORT_SRC) $< -o $@
+
+# Os_TaskMap suite is compiled WITH optimization: it regression-guards the
+# weak-default constant-folding hazard (see test file header), which only
+# manifests when the optimizer folds a same-TU weak `os_task_map_count = 0`.
+$(BUILD)/test_Os_TaskMap: $(BOOT)/test/test_Os_TaskMap.c $(KERNEL_SRC) $(SUPPORT_SRC) | $(BUILD)
+	$(CC) $(CFLAGS) -O2 -DUNIT_TEST $(INC) \
 	  $(KERNEL_SRC) $(SUPPORT_SRC) $< -o $@
 
 # --- port suites: split-TU compile -------------------------------------------

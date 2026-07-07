@@ -34,6 +34,19 @@ typedef struct {
 } Os_TaskMapEntryType;
 
 /**
+ * @brief   Register the per-ECU task map (call once before StartOS).
+ * @param   Table  Per-ECU const table (must outlive the scheduler —
+ *                 static const in the ECU main).
+ * @param   Count  Number of entries in Table.
+ *
+ * Fail-closed: a NULL table or zero count clears the registration so
+ * dispatch degenerates to a no-op (the pre-cutover behavior). Replaces
+ * the former weak-symbol override pattern — see the design note in
+ * Os_TaskMap.c.
+ */
+void Os_TaskMap_SetTable(const Os_TaskMapEntryType* Table, uint8 Count);
+
+/**
  * @brief   Call all BSW main functions mapped to the given task.
  * @param   TaskID  The OSEK task that just ran.
  *
