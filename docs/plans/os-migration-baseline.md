@@ -324,7 +324,7 @@ Design points:
   the sidecar stack budgets + the task-stack table; all 6 RTE ECUs
   regenerated (`chore(codegen)`), ICU golden updated.
 
-Host evidence: OS kernel + port runner 34/34 suites PASS (515 tests, 0
+Host evidence: OS kernel + port runner 34/34 suites PASS (508 tests, 0
 failures, 3 pre-existing TMS570 ignores — includes the new 7-test
 test_Os_Port_Stm32_bootstrap_production_launch suite and 5 new
 test_Os_ConfigValidation stack tests); arxmlgen pytest 290 passed / 32
