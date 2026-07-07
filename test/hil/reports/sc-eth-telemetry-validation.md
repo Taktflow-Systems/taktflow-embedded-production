@@ -177,7 +177,63 @@ this bench) and verify 60 s of 100 Hz telemetry with the receiver gates.
 
 ## Evidence
 
-### Run B — PENDING
+### Run B — DONE (2026-07-07)
+
+Image: `ETH=1 HIL=1` at `d73991c2`, fresh build; boot banner on COM8
+confirmed `=== SC Boot [d73991c2] ===`, `BIST: 7/7 PASS`, relay energized
+into MONITORING at grace end (+10 s). Board reloaded via DSLite between
+phases (clears the latched confirmations). CAN load: 3 heartbeats @ 50 ms
+valid E2E + rest-bus 0x600/0x601 @ 10 ms from
+`scripts/hil/sc_eth_hil_scenario.py` (adapter init frame, tick-resync
+enabled). Receiver gates: `--expect-rate-hz 100 --rate-tolerance 0.01
+--fail-on-gap`.
+
+| Phase | Valid frames | Rate (Hz) | Gaps | Invalid | Exit | Result |
+|---|---|---|---|---|---|---|
+| B0 boot probe | 1000 | 100.000 | 0 | 0 | 0 | MONITORING, health=7 |
+| B1 nominal 600 s | 60001 | 99.999 | 0 | 0 | 0 | uniform `(mode=1, flags=0, health=7, relay=1)` for all 60001 rows |
+| B2 CVC dropout | 12001 | 100.000 | 0 | 0 | 0 | CVC fault flag + health bit clear **+447 ms** after drop edge; `mode=FAULT` |
+| B3 CVC content fault | 12001 | 100.000 | 0 | 0 | 0 | CVC content fault `flags=0x1, health=7` **+1.51 s** (~20 receptions + latency); no timeout |
+| B3b CVC corrupt CRC (negative) | 10000 | 100.000 | 0 | 0 | 0 | force-accepted, **no reaction for ~4.8 s** (expected HIL bypass), see M3 below |
+
+The stream stayed at 100.000 Hz with zero sequence gaps and zero invalid
+frames through boot, reloads at phase boundaries excluded, and through every
+fault injection — including while the SC transitioned MONITORING->FAULT.
+Reaction latencies measured driver-injection-event -> first changed UDP row,
+same host clock. Raw artifacts: `tmp/sc_eth_sudp05_runB*.csv` (+ `_tx`/`_rx`
+driver logs), gitignored.
+
+#### Finding F-DCAN-RX: mailbox read-path defect (three manifestations)
+
+In every injection phase a **secondary, un-injected fault** appeared on
+another ECU, each time ~1 s or later after the primary fault, with the
+driver TX proven continuous (tick-resync events <= 30 ms, SC 0x013 stream
+uninterrupted in the driver RX log):
+
+- **M1 (B2)**: RZC heartbeat timeout latched +1.05 s after CVC's dropout
+  fault, persisting until reset — RZC frames were still on the bus.
+- **M2 (B3)**: FZC **content** fault latched +1.05 s after CVC's content
+  fault. JTAG snapshot mid-load: `hb_timed_out=[0,0,0]`,
+  `hb_counter=[4,0,4]` (frames flowing/accepted), `hb_content_fault=[1,1,0]`,
+  `NWDAT21=0x0A`, `ERRC=0`. FZC frames carried no fault bits (and FZC
+  monitoring is compiled out under HIL) — the SC must have evaluated
+  **CVC's faulted payload against FZC's mailbox slot** >= 20 times:
+  a cross-mailbox payload leak in the IF2-based read path
+  (`sc_hw_tms570.c dcan1_read_message_object` / `dcan1_wait_if2_ready`).
+- **M3 (B3b)**: CVC and RZC timeout latched **simultaneously** (same 10 ms
+  status row) ~4.8 s after corrupt-CRC injection began — consistent with a
+  wedged IF2 transfer starving all monitored mailbox reads at once.
+
+All three manifestations failed **closed** (spurious faults, mode=FAULT).
+However, M2 proves payload leakage across mailbox reads is possible, and
+the mirror-image case — a healthy payload leaking into a dead ECU's slot,
+resetting its timeout counter and masking a real failure — would be a
+**false negative** on the ASIL D heartbeat-monitoring path. A dedicated fix
++ regression task on `dcan1_read_message_object`/`dcan1_wait_if2_ready`
+(IF2 busy handling, per-read register hygiene) is required outside
+S-UDP-05's scope. Note the E2E DataID check would reject M2-style leaks on
+non-HIL builds; the HIL force-accept (`sc_can.c`) removes that guard on
+the bench.
 
 ### Run C — PENDING
 
