@@ -218,49 +218,59 @@ class TestPeriodGroups:
 # Real-model tests (skip when the ARXML model cannot load)
 # ===================================================================
 
+ALL_ECUS = ("bcm", "cvc", "fzc", "rzc", "icu", "tcu")
+
+#: Per-ECU BSW slot periods from model/ecu_sidecar.yaml `os:` sections —
+#: mirrored here so the committed-table proofs use the same period groups
+#: as generation (cross-checked against the model by
+#: test_sidecar_os_sections_loaded below).
+SIDECAR_BSW_SLOTS = {
+    "cvc": [10, 100, 5000], "fzc": [10, 100, 5000], "rzc": [10, 100, 5000],
+    "bcm": [1, 10], "icu": [1, 10], "tcu": [1, 10],
+}
+
+
 class TestRealModel:
-    def test_bcm_equivalence_proof_from_committed_rte_cfg(self):
-        """The plan's table-equivalence proof for BCM, driven from the
-        committed generated Rte_Cfg_Bcm.c: simulate Rte_DispatchRunnables
-        tick-by-tick over the LCM window and compare with the task-body +
-        schedule-table execution. The BCM table has the 100ms runnable at
-        index 0 with priority equal to the 10ms runnables, so the legacy
-        order at tick 100 is NOT reproducible under the mandated
-        shorter-period -> higher-priority task derivation: the proof must
-        detect exactly that divergence and the generator must refuse."""
+    """After the rate-monotonic re-band (memo-rm-reband-trace.md, user
+    decision 2026-07-07) the committed Rte_Cfg tables are period-banded,
+    so the one-task-per-period-group design reproduces the legacy order
+    for ALL SIX ECUs — the equivalence gate must pass everywhere."""
+
+    def test_bcm_committed_table_is_banded(self):
+        """BCM tick-100 tie-order counterexample resolved by the re-band:
+        the 100ms runnable now sits below the 10ms band
+        (memo-rm-reband-trace.md, BCM table)."""
         table = _parse_rte_cfg_table("bcm")
         assert [r.name for r in table] == [
-            "Swc_DoorLock_100ms", "Swc_Indicators_10ms", "Swc_Lights_10ms",
+            "Swc_Indicators_10ms", "Swc_Lights_10ms", "Swc_DoorLock_100ms",
         ]
-        cex = verify_order_equivalence(table)
-        assert cex is not None, (
-            "BCM tick-100 tie-order divergence disappeared — if the model "
-            "was re-prioritized, re-evaluate generation for BCM"
-        )
-        assert cex.tick == 100
 
-    def test_icu_equivalence_holds(self):
-        table = _parse_rte_cfg_table("icu")
-        assert verify_order_equivalence(table) is None
+    @pytest.mark.parametrize("ecu_name", ALL_ECUS)
+    def test_equivalence_proof_from_committed_rte_cfg(self, ecu_name):
+        """The plan's table-equivalence proof, driven from the committed
+        generated Rte_Cfg_<Ecu>.c for every RTE ECU: simulate
+        Rte_DispatchRunnables tick-by-tick over the LCM window and compare
+        with the task-body + schedule-table execution."""
+        table = _parse_rte_cfg_table(ecu_name)
+        cex = verify_order_equivalence(table, SIDECAR_BSW_SLOTS[ecu_name])
+        assert cex is None, (
+            f"{ecu_name} diverged — the committed Rte_Cfg table is no "
+            f"longer rate-monotonically banded: {cex}"
+        )
 
     def test_tcu_equivalence_holds_trivially(self):
         table = _parse_rte_cfg_table("tcu")
         assert table == []
         assert verify_order_equivalence(table) is None
 
-    def test_cvc_fzc_rzc_are_refused_with_interleaving(self):
-        for ecu in ("cvc", "fzc", "rzc"):
-            table = _parse_rte_cfg_table(ecu)
-            cex = verify_order_equivalence(table)
-            assert cex is not None, f"{ecu} unexpectedly equivalent"
-
-    def test_model_table_matches_committed_rte_cfg_for_bcm(self, load_model):
-        """The generator's collected table must equal the committed
-        Rte_Cfg_Bcm.c runnable table (same collection semantics as the
-        rte generator)."""
+    @pytest.mark.parametrize("ecu_name", ALL_ECUS)
+    def test_model_table_matches_committed_rte_cfg(self, ecu_name, load_model):
+        """The generator's collected (banded) table must equal the
+        committed Rte_Cfg_<Ecu>.c runnable table (same collection
+        semantics as the rte generator)."""
         model = load_model
-        collected = collect_legacy_runnable_table(model.ecus["bcm"])
-        committed = _parse_rte_cfg_table("bcm")
+        collected = collect_legacy_runnable_table(model.ecus[ecu_name])
+        committed = _parse_rte_cfg_table(ecu_name)
         assert [(r.name, r.period, r.priority, r.se_id) for r in collected] == \
                [(r.name, r.period, r.priority, r.se_id) for r in committed]
 
@@ -389,19 +399,39 @@ class TestRenderedOutput:
         body = tcu_files["Rte_TaskBodies_Tcu.c"]
         assert "Swc_" not in body
 
-    def test_refused_ecus_render_nothing(self, generator, config, engine, load_model):
-        for ecu_name in ("bcm", "cvc", "fzc", "rzc"):
+    def test_all_six_ecus_render(self, generator, config, engine, load_model):
+        """Post re-band the equivalence gate passes for every RTE ECU —
+        each renders exactly the three Os outputs (memo-rm-reband-trace.md,
+        gate re-check section 3)."""
+        for ecu_name in ("bcm", "cvc", "fzc", "rzc", "icu", "tcu"):
             files = _render(generator, config, engine, load_model, ecu_name)
-            assert files == {}, (
-                f"{ecu_name} must be refused (order-equivalence counterexample) "
-                f"but rendered {list(files)}"
-            )
+            pascal = ecu_name.capitalize()
+            assert set(files.keys()) == {
+                f"Os_Cfg_{pascal}.c", f"Os_Cfg_{pascal}.h",
+                f"Rte_TaskBodies_{pascal}.c",
+            }, f"{ecu_name} refused or incomplete: {list(files)}"
+        assert generator.refusals == {}
 
-    def test_refusal_reason_is_recorded(self, generator, config, engine, load_model):
-        _render(generator, config, engine, load_model, "bcm")
-        reason = generator.refusals.get("bcm")
+    def test_gate_still_refuses_synthetic_conflicting_model(
+            self, generator, config, engine):
+        """The fail-closed refusal path stays alive: a synthetic ECU whose
+        table interleaves a 10ms runnable between 1ms runnables (i.e. NOT
+        banded — the reader policy was bypassed) must be refused with no
+        output."""
+        from tools.arxmlgen.model import Ecu, Runnable, Swc
+        ecu = Ecu(name="synth", prefix="SYN", swcs=[Swc(
+            name="Swc_Synth",
+            runnables=[
+                Runnable("Fast_A", period_ms=1, priority=9),
+                Runnable("Mid_A", period_ms=10, priority=8),
+                Runnable("Fast_B", period_ms=1, priority=7),
+            ],
+        )])
+        files = generator.render(ecu, config.generators.get("os"), engine)
+        assert files == {}
+        reason = generator.refusals.get("synth")
         assert reason is not None
-        assert "tick 100" in str(reason)
+        assert "tick 10" in str(reason)
 
 
 # ===================================================================

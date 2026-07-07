@@ -16,6 +16,7 @@ import yaml
 
 from .config import ProjectConfig
 from .model import Ecu, Pdu, Port, ProjectModel, Runnable, Signal, Swc
+from .policy import apply_rate_monotonic_banding
 
 
 class ArxmlReadError(Exception):
@@ -87,6 +88,12 @@ class ArxmlReader:
         # Load sidecar data (always load for DTC, enums, thresholds, runnables)
         if self.config.sidecar_path:
             self._read_sidecar(ecus)
+
+        # Rate-monotonic re-banding of runnable priorities — applied to
+        # the resolved model so every generator (rte_cfg, os_cfg) shares
+        # one documented order (docs/plans/memo-rm-reband-trace.md).
+        for ecu in ecus.values():
+            apply_rate_monotonic_banding(ecu)
 
         # Apply E2E data IDs based on configured source
         if self.config.e2e_source == "arxml":
