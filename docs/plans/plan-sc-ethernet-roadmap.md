@@ -251,7 +251,11 @@ Status markers: PENDING / IN PROGRESS / DONE.
 
 ## Phase 2 — XCP over Ethernet (UDP transport) — PENDING
 
-#### S-XCP-01 — XCP transport abstraction assessment
+#### S-XCP-01 — XCP transport abstraction assessment — IN PROGRESS
+<!-- 2026-07-07: memo delivered (docs/plans/memo-sc-xcp-eth-transport.md),
+     decision "minimal-slave" recommended; awaiting reviewer approval per
+     the plan-review gate. -->
+
 - **Goal:** Determine how the existing CAN-based Xcp module can accept a
   UDP transport, or whether a minimal SC-side XCP slave is a better fit
   (SC has no BSW stack by design).
