@@ -73,6 +73,11 @@ class XcpUdpClient:
     def __init__(self, host, port, timeout=1.0):
         self.addr = (host, port)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # The SC has IP 0.0.0.0 and no ARP responder; the request is
+        # broadcast (EMAC accepts broadcast, dispatch matches on port) and
+        # the SC replies unicast to the requester's learned MAC/IP/port.
+        if host.endswith(".255") or host == "<broadcast>":
+            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.sock.settimeout(timeout)
         self.ctr = 0
 
