@@ -251,10 +251,9 @@ Status markers: PENDING / IN PROGRESS / DONE.
 
 ## Phase 2 — XCP over Ethernet (UDP transport) — PENDING
 
-#### S-XCP-01 — XCP transport abstraction assessment — IN PROGRESS
-<!-- 2026-07-07: memo delivered (docs/plans/memo-sc-xcp-eth-transport.md),
-     decision "minimal-slave" recommended; awaiting reviewer approval per
-     the plan-review gate. -->
+#### S-XCP-01 — XCP transport abstraction assessment — DONE
+<!-- 2026-07-07: memo delivered (docs/plans/memo-sc-xcp-eth-transport.md);
+     decision "minimal-slave" approved by the reviewer same day. -->
 
 - **Goal:** Determine how the existing CAN-based Xcp module can accept a
   UDP transport, or whether a minimal SC-side XCP slave is a better fit
@@ -273,7 +272,15 @@ Status markers: PENDING / IN PROGRESS / DONE.
   plan -> approve -> code).
 - **Definition of done:** memo merged and decision approved.
 
-#### S-XCP-02 — UDP RX dispatch + XCP slave connect/read
+#### S-XCP-02 — UDP RX dispatch + XCP slave connect/read — IN PROGRESS
+<!-- 2026-07-07: code + Layer-1 done (16 XCP unit tests + 6 encoder
+     regression green; ETH build has the symbols, default build has zero;
+     smoke client self-test passes). Remaining: Layer-4 bench DoD (live
+     counter read over XCP), needs a board flash — awaiting bench window.
+     Files: sc_eth_rx_dispatch.[ch], sc_xcp_eth.[ch], Sc_EthUdp_ParseFrame
+     + Sc_EthUdp_SendTo in sc_eth_udp, main-loop Step 1b, tools/bench/
+     xcp_smoke.py. Design note: broadcast request -> unicast reply to the
+     requester's learned MAC (no ARP responder needed). -->
 - **Goal:** Implement the memo's chosen architecture far enough that an XCP
   master can CONNECT and read one measurement over Ethernet.
 - **Inputs:** S-XCP-01 memo (blocking: do not start without it).
