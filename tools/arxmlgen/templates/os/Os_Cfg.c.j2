@@ -66,6 +66,28 @@ static const Os_StackMonitorConfigType {{ ecu.name }}_os_stack_cfg[OS_TASK_COUNT
 {% endfor %}
     { {{ idle_task_define }}, {{ idle_stack_bytes }}u },
 };
+
+/* ==================================================================
+ * Task stack storage (Os_TaskStackConfigType) — S-OS-31 launch seam.
+ * StartOS builds each task's initial PSP frame at the top of these
+ * arrays via the port task-binding seam and launches the first task
+ * through Os_PortStartFirstTask. 8-byte aligned (AAPCS); sizes equal
+ * the monitor budgets above (kernel os_cfg_apply_task_stacks requires
+ * budget <= storage).
+ * ================================================================== */
+
+{% for g in groups %}
+static uint8 {{ ecu.name }}_os_stack_{{ g.period }}ms[{{ g.stack_bytes }}] __attribute__((aligned(8)));
+{% endfor %}
+static uint8 {{ ecu.name }}_os_stack_idle[{{ idle_stack_bytes }}] __attribute__((aligned(8)));
+
+static const Os_TaskStackConfigType {{ ecu.name }}_os_task_stack_cfg[OS_TASK_COUNT_{{ prefix_upper }}] = {
+    /* TaskID, StackBase, SizeBytes */
+{% for g in groups %}
+    { {{ g.task_define }}, {{ ecu.name }}_os_stack_{{ g.period }}ms, {{ g.stack_bytes }}u },
+{% endfor %}
+    { {{ idle_task_define }}, {{ ecu.name }}_os_stack_idle, {{ idle_stack_bytes }}u },
+};
 {% if applications %}
 
 /* ==================================================================
@@ -111,6 +133,8 @@ const Os_ConfigType {{ ecu.name }}_os_config = {
     .MemoryRegionCount = 0u,
     .MemProtTasks = NULL_PTR,
     .MemProtTaskCount = 0u,
+    .TaskStacks = {{ ecu.name }}_os_task_stack_cfg,
+    .TaskStackCount = OS_TASK_COUNT_{{ prefix_upper }},
 };
 
 /**

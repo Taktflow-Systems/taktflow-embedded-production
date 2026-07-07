@@ -368,6 +368,41 @@ class TestRenderedOutput:
         # Default stack budget from sidecar os section (default 1024)
         assert "1024u" in c
 
+    def test_task_stack_storage_emitted(self, icu_files):
+        """S-OS-31 first-task launch seam: the config must carry PHYSICAL
+        stack storage (static, 8-byte aligned per AAPCS) plus an
+        Os_TaskStackConfigType table wired into the aggregate config —
+        StartOS builds each task's initial PSP frame at the top of these
+        arrays and launches the first task through the port."""
+        c = icu_files["Os_Cfg_Icu.c"]
+        assert "Os_TaskStackConfigType" in c
+        # One aligned storage array per period-group task + idle
+        for sym in ("icu_os_stack_1ms", "icu_os_stack_10ms",
+                    "icu_os_stack_50ms", "icu_os_stack_idle"):
+            assert re.search(
+                r"static uint8 " + sym +
+                r"\[\d+\] __attribute__\(\(aligned\(8\)\)\);", c
+            ), sym
+        # Table binds every task (incl. idle) to its storage
+        assert re.search(
+            r"Os_TaskStackConfigType icu_os_task_stack_cfg\[OS_TASK_COUNT_ICU\]", c)
+        assert re.search(r"\{ OS_TASK_ICU_IDLE, icu_os_stack_idle, \d+u \}", c)
+        # Aggregate config wires the new area
+        assert ".TaskStacks = icu_os_task_stack_cfg" in c
+        assert ".TaskStackCount = OS_TASK_COUNT_ICU" in c
+
+    def test_task_stack_size_matches_budget(self, icu_files):
+        """Storage size must equal the sidecar stack budget so the kernel
+        budget-fits-storage validation (os_cfg_apply_task_stacks) holds."""
+        c = icu_files["Os_Cfg_Icu.c"]
+        m = re.search(r"static uint8 icu_os_stack_idle\[(\d+)\]", c)
+        assert m
+        size = int(m.group(1))
+        assert size % 8 == 0
+        # Budget table carries the same number for the idle task
+        assert re.search(
+            r"\{ OS_TASK_ICU_IDLE, " + str(size) + r"u \}", c)
+
     def test_counter_config_defines(self, icu_files):
         h = icu_files["Os_Cfg_Icu.h"]
         assert "ICU_OS_COUNTER_MAXALLOWEDVALUE" in h

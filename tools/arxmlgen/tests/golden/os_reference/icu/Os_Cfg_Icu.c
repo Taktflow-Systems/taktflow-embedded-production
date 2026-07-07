@@ -83,6 +83,28 @@ static const Os_StackMonitorConfigType icu_os_stack_cfg[OS_TASK_COUNT_ICU] = {
 };
 
 /* ==================================================================
+ * Task stack storage (Os_TaskStackConfigType) — S-OS-31 launch seam.
+ * StartOS builds each task's initial PSP frame at the top of these
+ * arrays via the port task-binding seam and launches the first task
+ * through Os_PortStartFirstTask. 8-byte aligned (AAPCS); sizes equal
+ * the monitor budgets above (kernel os_cfg_apply_task_stacks requires
+ * budget <= storage).
+ * ================================================================== */
+
+static uint8 icu_os_stack_1ms[1024] __attribute__((aligned(8)));
+static uint8 icu_os_stack_10ms[1024] __attribute__((aligned(8)));
+static uint8 icu_os_stack_50ms[1024] __attribute__((aligned(8)));
+static uint8 icu_os_stack_idle[1024] __attribute__((aligned(8)));
+
+static const Os_TaskStackConfigType icu_os_task_stack_cfg[OS_TASK_COUNT_ICU] = {
+    /* TaskID, StackBase, SizeBytes */
+    { OS_TASK_ICU_1MS, icu_os_stack_1ms, 1024u },
+    { OS_TASK_ICU_10MS, icu_os_stack_10ms, 1024u },
+    { OS_TASK_ICU_50MS, icu_os_stack_50ms, 1024u },
+    { OS_TASK_ICU_IDLE, icu_os_stack_idle, 1024u },
+};
+
+/* ==================================================================
  * Aggregate kernel configuration
  * ================================================================== */
 
@@ -107,6 +129,8 @@ const Os_ConfigType icu_os_config = {
     .MemoryRegionCount = 0u,
     .MemProtTasks = NULL_PTR,
     .MemProtTaskCount = 0u,
+    .TaskStacks = icu_os_task_stack_cfg,
+    .TaskStackCount = OS_TASK_COUNT_ICU,
 };
 
 /**
