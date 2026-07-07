@@ -97,4 +97,33 @@ Std_ReturnType Sc_EthUdp_Send(const uint8 *dst_ip,
                               const uint8 *payload,
                               uint16 payload_len);
 
+/** RX metadata extracted by Sc_EthUdp_ParseFrame. */
+typedef struct sc_eth_udp_rx_meta {
+    uint8  src_ip[SC_ETH_UDP_IPV4_ADDR_LEN];
+    uint16 src_port;
+    uint16 dst_port;
+} sc_eth_udp_rx_meta_t;
+
+/**
+ * @brief  Decode one received Ethernet II + IPv4 + UDP frame (S-XCP-02).
+ *
+ * Mirror of Sc_EthUdp_BuildFrame. Fail-closed: rejects frames that are not
+ * plain IPv4/UDP (EtherType 0x0800, IHL 5, protocol 17), whose length
+ * fields are inconsistent with the received frame, or whose IPv4 header
+ * checksum does not verify. Trailing Ethernet padding is tolerated (payload
+ * length comes from the UDP header). No reassembly, no options, no IPv6.
+ *
+ * @param  frame        Received Ethernet frame.
+ * @param  frame_len    Received frame length in bytes.
+ * @param  meta         Output source/destination addressing.
+ * @param  payload      Output pointer into frame at the UDP payload.
+ * @param  payload_len  Output UDP payload length in bytes.
+ * @return TRUE when the frame parsed as valid IPv4/UDP; FALSE otherwise.
+ */
+boolean Sc_EthUdp_ParseFrame(const uint8 *frame,
+                             uint16 frame_len,
+                             sc_eth_udp_rx_meta_t *meta,
+                             const uint8 **payload,
+                             uint16 *payload_len);
+
 #endif /* SC_ETH_UDP_H */

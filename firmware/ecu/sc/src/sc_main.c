@@ -29,6 +29,10 @@
 #include "sc_gio.h"
 #include "sc_monitoring.h"     /* SWR-SC-029/030: SC_Status broadcast (GAP-1/2) */
 #include "sc_eth_telemetry.h"  /* S-UDP-03: QM Ethernet telemetry producer */
+#ifdef SC_ETH_ENABLE
+#include "sc_eth_rx_dispatch.h" /* S-XCP-02: QM UDP RX port dispatch */
+#include "sc_xcp_eth.h"        /* S-XCP-02: QM XCP-on-Ethernet slave */
+#endif
 #include "sc_state.h"         /* GAP-SC-006: authoritative state machine */
 #include "sc_uds_shim.h"
 
@@ -165,6 +169,8 @@ int main(void)
     } else {
         sc_sci_puts("ETH telemetry: unavailable\r\n");
     }
+    Sc_EthRx_Init();            /* S-XCP-02: UDP port dispatch table */
+    Sc_XcpEth_Init();           /* S-XCP-02: XCP-on-Ethernet slave (UDP 55002) */
 #endif
     SC_State_Init();            /* GAP-SC-006: state machine starts in INIT */
     SC_UdsShim_Init();          /* HIL-only direct UDS shim for Phase 5 SC routing */
@@ -224,6 +230,11 @@ int main(void)
 
         /* ---- Step 1a: HIL diagnostic shim ---- */
         SC_UdsShim_Poll();
+
+#ifdef SC_ETH_ENABLE
+        /* ---- Step 1b: QM Ethernet RX dispatch (XCP-on-UDP slave) ---- */
+        Sc_EthRx_Poll();
+#endif
 
         /* ---- Step 2: Heartbeat Monitor ---- */
         SC_Heartbeat_Monitor();

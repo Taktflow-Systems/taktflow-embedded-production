@@ -301,4 +301,71 @@ static uint16 sc_eth_udp_udp_checksum(const sc_eth_udp_config_t *config,
     return checksum;
 }
 
+boolean Sc_EthUdp_ParseFrame(const uint8 *frame,
+                             uint16 frame_len,
+                             sc_eth_udp_rx_meta_t *meta,
+                             const uint8 **payload,
+                             uint16 *payload_len)
+{
+    uint16 ip_total_len;
+    uint16 udp_len;
+    uint32 sum;
+    uint8 i;
+
+    if ((frame == NULL_PTR) || (meta == NULL_PTR) ||
+        (payload == NULL_PTR) || (payload_len == NULL_PTR)) {
+        return FALSE;
+    }
+
+    if (frame_len < SC_ETH_UDP_FRAME_HDR_LEN) {
+        return FALSE;
+    }
+
+    /* EtherType IPv4, version 4 / IHL 5 (no options), protocol UDP */
+    if ((frame[12] != 0x08u) || (frame[13] != 0x00u)) {
+        return FALSE;
+    }
+    if (frame[14] != 0x45u) {
+        return FALSE;
+    }
+    if (frame[23] != SC_ETH_UDP_IPV4_PROTO_UDP) {
+        return FALSE;
+    }
+
+    /* Length consistency — the frame may carry Ethernet padding beyond
+     * ip_total_len, so only require that the claimed lengths fit. */
+    ip_total_len = (uint16)(((uint16)frame[16] << 8u) | (uint16)frame[17]);
+    udp_len      = (uint16)(((uint16)frame[38] << 8u) | (uint16)frame[39]);
+    if (ip_total_len < (SC_ETH_UDP_IPV4_HDR_LEN + SC_ETH_UDP_UDP_HDR_LEN)) {
+        return FALSE;
+    }
+    if (((uint32)SC_ETH_UDP_ETH_HDR_LEN + (uint32)ip_total_len) >
+        (uint32)frame_len) {
+        return FALSE;
+    }
+    if (udp_len != (uint16)(ip_total_len - SC_ETH_UDP_IPV4_HDR_LEN)) {
+        return FALSE;
+    }
+
+    /* IPv4 header checksum: the ones-complement sum over the 20 header
+     * bytes (checksum field included) must be all-ones, i.e. the folded
+     * complement returned by sc_eth_udp_finish_checksum() must be zero. */
+    sum = sc_eth_udp_add_bytes(0u, &frame[SC_ETH_UDP_ETH_HDR_LEN],
+                               SC_ETH_UDP_IPV4_HDR_LEN);
+    if (sc_eth_udp_finish_checksum(sum) != SC_ETH_UDP_CHECKSUM_ZERO) {
+        return FALSE;
+    }
+
+    for (i = 0u; i < SC_ETH_UDP_IPV4_ADDR_LEN; i++) {
+        meta->src_ip[i] = frame[26u + i];
+    }
+    meta->src_port = (uint16)(((uint16)frame[34] << 8u) | (uint16)frame[35]);
+    meta->dst_port = (uint16)(((uint16)frame[36] << 8u) | (uint16)frame[37]);
+
+    *payload     = &frame[SC_ETH_UDP_FRAME_HDR_LEN];
+    *payload_len = (uint16)(udp_len - SC_ETH_UDP_UDP_HDR_LEN);
+
+    return TRUE;
+}
+
 #endif /* SC_ETH_ENABLE */
