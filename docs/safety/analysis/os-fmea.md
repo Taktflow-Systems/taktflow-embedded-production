@@ -257,3 +257,27 @@ The OS hosts ASIL D runnables on CVC, FZC, RZC (STM32G474RE). SC (TMS570) runs l
 | OS Module Owner | | | |
 | Safety Manager | | | |
 | Independent Reviewer | | | |
+
+## 10. Finding Status Updates (append-only)
+
+### 2026-07-07 — S-OS-10 production configuration path closes three findings
+
+Closed by the init-time validation in `Os_Configure()` (production,
+non-UNIT_TEST config entry; `firmware/bsw/os/bootstrap/src/Os_Core.c`,
+commit `edf6971`), verified by suite
+`firmware/bsw/os/bootstrap/test/test_Os_ConfigValidation.c`
+(commit `85db7c3`; 10 tests, part of the 29-binary kernel run,
+459 tests 0 failures):
+
+| ID | Status | Closing mechanism | Closing test(s) |
+|----|--------|-------------------|-----------------|
+| OS-T-05 | CLOSED | Null task entry rejected at init with E_OS_VALUE; kernel left unconfigured (fail-closed) | `test_Configure_NullTaskEntry_Rejected`, `test_Configure_FailedConfig_RefusesToStart` |
+| OS-R-04 | CLOSED | For each resource, ceiling validated at init against every statically-derived accessor task (OS-Application masks; all tasks when no applications configured); violation rejected with E_OS_RESOURCE, out-of-range ceiling with E_OS_VALUE | `test_Configure_CeilingBelowAccessor_NoApps_Rejected`, `test_Configure_CeilingBelowAccessor_AppScoped_Rejected`, `test_Configure_CeilingOutOfRange_ReturnsE_OS_VALUE` |
+| OS-C-03 | CLOSED | Mandatory idle task enforced at init (convention: priority OS_MAX_PRIORITIES-1, autostarted, Schedule FULL; "never terminates" is an Assumption of Use on the task body); absence rejected with E_OS_NOFUNC | `test_Configure_MissingIdleTask_Rejected`, `test_Configure_IdleTaskNotAutostarted_Rejected`, `test_Configure_IdleTaskNonPreemptive_Rejected` |
+
+Note: the closures apply to configurations injected through
+`Os_Configure()`. The UNIT_TEST-only `Os_TestConfigure*` family is now a
+set of thin wrappers over the same per-area apply path, so its per-area
+validation (incl. the OS-T-05 null-entry check) is shared; the OS-R-04
+and OS-C-03 cross-area checks run only in the full-config
+`Os_Configure()` path.
