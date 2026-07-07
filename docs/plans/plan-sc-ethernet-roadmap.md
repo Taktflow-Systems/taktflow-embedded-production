@@ -272,7 +272,7 @@ Status markers: PENDING / IN PROGRESS / DONE.
   plan -> approve -> code).
 - **Definition of done:** memo merged and decision approved.
 
-#### S-XCP-02 — UDP RX dispatch + XCP slave connect/read — IN PROGRESS
+#### S-XCP-02 — UDP RX dispatch + XCP slave connect/read — DONE
 <!-- 2026-07-07: code + Layer-1 done (16 XCP unit tests + 6 encoder
      regression green; ETH build has the symbols, default build has zero;
      smoke client self-test passes). Remaining: Layer-4 bench DoD (live
@@ -281,6 +281,26 @@ Status markers: PENDING / IN PROGRESS / DONE.
      + Sc_EthUdp_SendTo in sc_eth_udp, main-loop Step 1b, tools/bench/
      xcp_smoke.py. Design note: broadcast request -> unicast reply to the
      requester's learned MAC (no ARP responder needed). -->
+<!-- 2026-07-07 closure: bench DoD MET. Bring-up session with temporary
+     volatile g_dbg_* counters (added, used, removed per
+     development-discipline rule 8) localized the CONNECT timeout: the
+     board received, dispatched, and answered every request (frames
+     polled / parsed / dispatched / replies-ok all incremented; EMAC RX
+     path healthy in production), but the unicast XCP reply carried
+     source IP 0.0.0.0 and was dropped by the PC IP stack as a martian
+     (the broadcast telemetry from 0.0.0.0 passes; unicast does not).
+     Fix: new Makefile.tms570 var ETH_IP=a.b.c.d injects the SC bench
+     source IP at build time via the existing SC_ETH_TELEMETRY_SRC_IP*
+     override hooks (privacy rule: the literal bench IP is never
+     committed). DoD evidence on the clean, de-instrumented ETH=1 HIL=1
+     image: xcp_smoke.py CONNECT ok -> Seed&Key UNLOCK ok -> SHORT_UPLOAD
+     of g_sc_eth_telemetry_sequence twice 1.0 s apart read 0x0D then
+     0x02 (value CHANGED, exit 0). Instrumented-run counter evidence:
+     six XCP transactions (CONNECT, GET_SEED, UNLOCK, 2x SHORT_UPLOAD,
+     DISCONNECT) -> d=6 q=6 ok=6 er=0. Known limitation: xcp_smoke.py
+     --symbol cannot resolve file-static symbols from the TI map (they
+     only appear as section names); use --addr, or the S-XCP-03 A2L
+     flow. -->
 - **Goal:** Implement the memo's chosen architecture far enough that an XCP
   master can CONNECT and read one measurement over Ethernet.
 - **Inputs:** S-XCP-01 memo (blocking: do not start without it).
