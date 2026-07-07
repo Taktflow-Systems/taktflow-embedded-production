@@ -287,6 +287,93 @@ Runtime validation is PENDING — this closure is build-level only:
 - Linux CI SIL parity (Layer 4/6 re-run of `test/sil/`, unchanged list
   from the S-OS-11 note above) remains REQUIRED before merge.
 
+## S-OS-31 first-task launch seam: CLOSED at build+host level (appended 2026-07-07)
+
+User decision (2026-07-07): implement the production launch path — on
+PLATFORM_STM32 (and identically STM32L5/TMS570 via the shared seam),
+StartOS prepares per-task stacks from the configured stack table through
+the task-binding seam and launches the first task through
+Os_PortStartFirstTask, engaging the hardware-validated PendSV dispatch.
+Host-cooperative behavior (POSIX builds, UNIT_TEST suites) unchanged.
+
+What the bringup line did manually vs what StartOS now does:
+
+| Bringup (6/6 PASS on G474RE) | Production StartOS now |
+|---|---|
+| static aligned(8) stack arrays in the test TU | generated stack arrays in `Os_Cfg_<Ecu>.c` (new `Os_TaskStackConfigType` table, `Os_ConfigType.TaskStacks`) |
+| `Os_Port_PrepareConfiguredTask` per task | same call for every configured task, stack top from `os_task_stack_top_cfg` |
+| `Os_Port_PrepareConfiguredFirstTask` on the launch task | same, on the highest-priority ready autostart task (`os_select_next_ready_task`) |
+| `Os_PortStartFirstTask` (PendSV pops frame, PSP thread mode) | same, after kernel dispatch bookkeeping (RUNNING state, ready bitmap, dispatch count, PreTaskHook) |
+
+Design points:
+
+- `os_cfg_apply_task_stacks` (Os_Core.c) validates each entry: valid
+  task, non-NULL 8-byte-aligned base (AAPCS), non-zero size multiple of
+  8, monitor budget <= storage size. On the three hardware platforms
+  Os_Configure additionally REJECTS (E_OS_VALUE, fail-closed wipe) any
+  configuration where a task lacks a stack entry.
+- StartOS launch is gated on a configured task-stack table: without one
+  (bringup builds, Os_TestConfigure*-driven suites) the pre-existing
+  host-cooperative dispatch runs unchanged. If stacks are configured but
+  the launch cannot engage, StartOS reports via Det/ErrorHook and parks
+  without dispatching anything (watchdog-starvation safe state).
+- Stack-corruption lesson respected (stm32-bringup-p3.md): frames are
+  written only into the dedicated static arrays, never into the live
+  boot (MSP) stack.
+- Generator: `fix(arxmlgen)` emits per-task static stack arrays sized by
+  the sidecar stack budgets + the task-stack table; all 6 RTE ECUs
+  regenerated (`chore(codegen)`), ICU golden updated.
+
+Host evidence: OS kernel + port runner 34/34 suites PASS (515 tests, 0
+failures, 3 pre-existing TMS570 ignores — includes the new 7-test
+test_Os_Port_Stm32_bootstrap_production_launch suite and 5 new
+test_Os_ConfigValidation stack tests); arxmlgen pytest 290 passed / 32
+failed (failure set identical to the pre-existing 32, verified against a
+clean worktree at the same HEAD; +2 new passing stack-storage tests).
+
+Build matrix, arm-none-eabi-gcc 13.3.0, debug (-Og), clean builds:
+
+| Image | Variant | text | data | bss | Result |
+|---|---|---|---|---|---|
+| cvc | default | 39480 | 160 | 7664 | LINKS, .bin BYTE-IDENTICAL to clean HEAD build |
+| fzc | default | 37780 | 160 | 7680 | LINKS, .bin BYTE-IDENTICAL |
+| rzc | default | 36880 | 160 | 7552 | LINKS, .bin BYTE-IDENTICAL |
+| cvc | OSEK=1 | 49668 | 180 | 16336 | LINKS (+752 text / +6180 bss vs S-OS-22: launch path + 6x1024 B task stacks) |
+| fzc | OSEK=1 | 47752 | 180 | 15328 | LINKS (+740 / +5148: 5 task stacks) |
+| rzc | OSEK=1 | 46912 | 180 | 16224 | LINKS (+752 / +6180) |
+
+OSEK=1 flash worst case ~49.9 KB of the 409.6 KB budget (SYS-054).
+
+Known follow-on design item (NOT closed here, next user-decision item in
+the PendSV/SC3/launch pattern): the task-termination switchback. On
+hardware, a period task that calls TerminateTask() returns into its body
+and then to the poisoned frame LR (0xFFFFFFFF -> fault) because nothing
+re-stages a PendSV back to the restored (preempted) task. BRINGUP-6
+validated the sequence manually (TerminateTask; SelectNextTask(restored);
+RequestContextSwitch; spin) — wiring that sequence into the kernel
+termination path (Select WITHOUT frame rebuild + request + never-return)
+is new kernel behavior needing user approval before S-OS-31 hardware
+runs. Until decided, on-target soak beyond first-launch + first
+preemption is expected to fault at the first task termination.
+
+S-OS-31 on-bench checklist (physical bench, no probe access this session):
+
+1. Re-run the harvested bringup suite (`OS_BOOTSTRAP_BRINGUP` image,
+   `Os_Port_Stm32_BringupAll`) on CVC G474RE — re-confirm 6/6 before any
+   production-launch attempt (hardware pass claims are not inherited).
+2. Flash order: cvc first (UART2 debug console), then rzc, then fzc.
+   `make -f firmware/platform/stm32/Makefile.stm32 TARGET=<ecu> OSEK=1
+   flash`.
+3. Observation points: (a) StartOS reached (Det trace
+   DET_E_DBG_SYSTICK_START precedes it); (b) idle task entered on PSP —
+   CONTROL.SPSEL=1 (BRINGUP-2 check) and schedule tables started; (c)
+   first SysTick preemption: port state PendSvRequestCount/TaskSwitchCount
+   via debugger or XCP; (d) EXPECTED FAULT at first task termination
+   until the switchback decision lands — capture CFSR/HFSR + stacked PC
+   to confirm the poisoned-LR signature (0xFFFFFFFF).
+4. WdgM/E2E remain the detection nets for order/timing drift once the
+   switchback lands (S-OS-11 memo section 4.1 list).
+
 ## Baseline interpretation
 
 - The 8 kernel suites + 3 port smoke suites (Tms570/Stm32/Stm32L5

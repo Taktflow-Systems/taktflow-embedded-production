@@ -326,6 +326,15 @@ merge is not viable; the port work must be harvested file-wise.
     Os_Port_PrepareConfiguredTask). Recorded as the blocking design item
     for S-OS-31 on-target bringup; runtime validation (S-OS-31 + Linux
     CI SIL parity) remains the gate before merge.
+  - Status update (2026-07-07, first-task launch seam): CLOSED at build +
+    host-test level. StartOS on PLATFORM_STM32/STM32L5/TMS570 now
+    prepares every configured task's initial PSP frame from the new
+    generated task-stack storage (Os_ConfigType.TaskStacks,
+    os_cfg_apply_task_stacks) and launches the highest-priority
+    autostart task through Os_Port_PrepareConfiguredFirstTask +
+    Os_PortStartFirstTask (see os-migration-baseline.md closure note for
+    the design record and the S-OS-31 on-bench checklist). S-OS-31 is
+    now UNBLOCKED pending the physical bench.
 
 ### Phase 3 — STM32 hardware migration (CVC, FZC, RZC)
 
