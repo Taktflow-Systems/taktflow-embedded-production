@@ -41,6 +41,7 @@ SUPPORT_SRC := $(UNITY)/unity.c $(DET)/src/Det.c
 NO_PLATFORM_TUS := Os_Interrupt Os_MemProt Os_TimingProt
 
 KERNEL_SUITES := test_Os_asild \
+                 test_Os_ConfigValidation \
                  test_Os_Interrupt \
                  test_Os_MemProt \
                  test_Os_ProtectionHook \
