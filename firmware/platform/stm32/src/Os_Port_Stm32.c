@@ -1,21 +1,18 @@
 /**
  * @file    Os_Port_Stm32.c
- * @brief   STM32 Cortex-M4 bootstrap OS port skeleton
- * @date    2026-03-13
+ * @brief   STM32 Cortex-M4/M33 OSEK bootstrap OS port
+ * @date    2026-03-14
  *
- * @details This is the first concrete STM32 OS port scaffold. It is not yet
- *          linked into the live OS build. Its job is to capture the port
- *          boundary and the bootstrapping state model we will later wire to
- *          real PendSV, SysTick, and first-task launch code.
+ * @details Phase 1 (P1) of OSEK STM32 port — plan-osek-stm32-port.md.
+ *          Provides the C-side of the PendSV context switch, NVIC priority
+ *          setup, and SysTick tick ISR wiring for all STM32 variants
+ *          (G474RE, F413ZH, L552ZE, F4).
  *
- *          Verified ThreadX references from d:\Compressed\threadx-master.zip:
- *          - threadx-master/ports/cortex_m4/gnu/inc/tx_port.h
- *          - threadx-master/ports/cortex_m4/gnu/src/tx_thread_schedule.S
- *          - threadx-master/ports/cortex_m4/gnu/src/tx_thread_context_save.S
- *          - threadx-master/ports/cortex_m4/gnu/src/tx_thread_context_restore.S
- *          - threadx-master/ports/cortex_m4/gnu/src/tx_thread_stack_build.S
- *          - threadx-master/ports/cortex_m4/gnu/src/tx_timer_interrupt.S
- *          - threadx-master/ports/cortex_m4/gnu/example_build/tx_initialize_low_level.S
+ *          Assembly counterpart: Os_Port_Stm32_Asm.S
+ *          ThreadX Cortex-M4 port used as structural reference.
+ *
+ * @standard OSEK/VDX, ISO 26262 Part 6
+ * @copyright Taktflow Systems 2026
  */
 #include "Os_Port_Stm32.h"
 
@@ -31,6 +28,18 @@
 #define OS_PORT_STM32_PENDSV_LOWEST_PRIORITY     0xFFu
 #define OS_PORT_STM32_SYSTICK_BOOTSTRAP_PRIORITY 0x40u
 
+/* ==================================================================
+ * NVIC / SCB register access (hardware builds only)
+ * ================================================================== */
+
+#if !defined(UNIT_TEST)
+/* SHPR3: PendSV priority [23:16], SysTick priority [31:24] */
+#define OS_PORT_SCB_SHPR3       (*(volatile uint32*)0xE000ED20u)
+/* ICSR: Interrupt Control and State Register */
+#define OS_PORT_SCB_ICSR        (*(volatile uint32*)0xE000ED04u)
+#define OS_PORT_ICSR_PENDSVSET  ((uint32)1u << 28u)
+#endif
+
 static Os_Port_Stm32_StateType os_port_stm32_state;
 static Os_Port_Stm32_TaskContextType os_port_stm32_task_context[OS_MAX_TASKS];
 
@@ -44,14 +53,36 @@ static boolean os_port_stm32_is_valid_task(TaskType TaskID)
     return (boolean)(TaskID < OS_MAX_TASKS);
 }
 
+/**
+ * @brief Build initial task stack frame in STMDB {r4-r11, lr} order.
+ *
+ * Layout (17 words, low address first):
+ *   [0..7]  R4-R11          (software-saved, zeroed)
+ *   [8]     LR(EXC_RETURN)  (0xFFFFFFFD = thread mode, PSP, no FPU)
+ *   [9..12] R0-R3           (hardware-saved, zeroed)
+ *   [13]    R12             (hardware-saved, zeroed)
+ *   [14]    LR              (poisoned 0xFFFFFFFF)
+ *   [15]    PC              (task entry address)
+ *   [16]    xPSR            (Thumb bit set)
+ *
+ * This layout matches ARM LDMIA/STMDB {r4-r11, lr} register ordering
+ * so the PendSV handler uses a single instruction pair for save/restore.
+ */
 static void os_port_stm32_build_initial_frame(uintptr_t FrameBase, Os_TaskEntryType Entry)
 {
     uint32* frame = (uint32*)FrameBase;
     uint32 index;
 
-    frame[0] = OS_PORT_STM32_INITIAL_EXC_RETURN;
+    /* R4-R11 (indices 0..7) */
+    for (index = 0u; index <= 7u; index++) {
+        frame[index] = 0u;
+    }
 
-    for (index = 1u; index <= 13u; index++) {
+    /* EXC_RETURN at index 8 — matches STMDB {r4-r11, lr} where lr=R14 is highest */
+    frame[8] = OS_PORT_STM32_INITIAL_EXC_RETURN;
+
+    /* Hardware auto-saved frame: R0-R3, R12 (zeroed) */
+    for (index = 9u; index <= 13u; index++) {
         frame[index] = 0u;
     }
 
@@ -69,6 +100,7 @@ static uintptr_t os_port_stm32_get_restore_psp(uintptr_t SavedPsp)
     return SavedPsp + (uintptr_t)OS_PORT_STM32_SOFTWARE_RESTORE_BYTES;
 }
 
+#if defined(UNIT_TEST)
 static uintptr_t os_port_stm32_get_saved_psp(uintptr_t ActivePsp)
 {
     if (ActivePsp < (uintptr_t)OS_PORT_STM32_SOFTWARE_RESTORE_BYTES) {
@@ -78,11 +110,11 @@ static uintptr_t os_port_stm32_get_saved_psp(uintptr_t ActivePsp)
     return ActivePsp - (uintptr_t)OS_PORT_STM32_SOFTWARE_RESTORE_BYTES;
 }
 
-__attribute__((unused))
 static uintptr_t os_port_stm32_get_first_task_restore_psp(void)
 {
     return os_port_stm32_get_restore_psp(os_port_stm32_state.FirstTaskPsp);
 }
+#endif
 
 static void os_port_stm32_reset_task_contexts(void)
 {
@@ -117,41 +149,62 @@ uint32 Os_Port_Stm32_IsFirstTaskStarted(void)
     return (os_port_stm32_state.FirstTaskStarted != FALSE) ? 1u : 0u;
 }
 
-uintptr_t Os_Port_Stm32_ResolvePendSvTarget(uintptr_t CurrentActivePsp)
+/**
+ * @brief Resolve PendSV context switch target.
+ *
+ * @param CurrentSavedPsp  PSP of current task after STMDB {r4-r11, lr}.
+ *                         This is where the software frame starts.
+ * @return SavedPsp of the next task (for LDMIA {r4-r11, lr}), or 0 on error.
+ *
+ * Called from PendSV assembly handler with interrupts disabled.
+ * Saves current task PSP to task context, selects next task, updates state.
+ */
+uintptr_t Os_Port_Stm32_ResolvePendSvTarget(uintptr_t CurrentSavedPsp)
 {
-    uintptr_t current_saved_psp;
     uintptr_t target_saved_psp;
+    TaskType current_task;
     TaskType target_task;
 
     if (os_port_stm32_state.FirstTaskStarted == FALSE) {
         return (uintptr_t)0u;
     }
 
-    current_saved_psp = os_port_stm32_get_saved_psp(CurrentActivePsp);
-    if (current_saved_psp == (uintptr_t)0u) {
-        return (uintptr_t)0u;
+    current_task = os_port_stm32_state.CurrentTask;
+
+    /* Save current task's PSP back to its context */
+    if (os_port_stm32_is_valid_task(current_task) &&
+        (os_port_stm32_task_context[current_task].Prepared == TRUE)) {
+        os_port_stm32_task_context[current_task].SavedPsp = CurrentSavedPsp;
+        os_port_stm32_task_context[current_task].RestorePsp =
+            CurrentSavedPsp + (uintptr_t)OS_PORT_STM32_SOFTWARE_RESTORE_BYTES;
     }
 
-    target_saved_psp = current_saved_psp;
-    target_task = os_port_stm32_state.CurrentTask;
-    if (os_port_stm32_state.SelectedNextTaskPsp != (uintptr_t)0u) {
-        target_saved_psp = os_port_stm32_state.SelectedNextTaskPsp;
-    }
+    /* Select target: next task if selected, else stay on current */
+    target_saved_psp = CurrentSavedPsp;
+    target_task = current_task;
 
     if (os_port_stm32_state.SelectedNextTask != INVALID_TASK) {
         target_task = os_port_stm32_state.SelectedNextTask;
+        target_saved_psp = os_port_stm32_task_context[target_task].SavedPsp;
     }
 
-    os_port_stm32_state.LastSavedPsp = current_saved_psp;
-    os_port_stm32_state.LastSavedTask = os_port_stm32_state.CurrentTask;
-    if (target_saved_psp != current_saved_psp) {
+    /* State bookkeeping */
+    os_port_stm32_state.LastSavedPsp = CurrentSavedPsp;
+    os_port_stm32_state.LastSavedTask = current_task;
+    if (target_saved_psp != CurrentSavedPsp) {
         os_port_stm32_state.TaskSwitchCount++;
     }
 
     os_port_stm32_state.CurrentTask = target_task;
     os_port_stm32_state.SelectedNextTask = INVALID_TASK;
     os_port_stm32_state.SelectedNextTaskPsp = (uintptr_t)0u;
-    return os_port_stm32_get_restore_psp(target_saved_psp);
+    os_port_stm32_state.PendSvPending = FALSE;
+    os_port_stm32_state.DeferredPendSv = FALSE;
+    os_port_stm32_state.PendSvCompleteCount++;
+    os_port_stm32_state.ActivePsp =
+        target_saved_psp + (uintptr_t)OS_PORT_STM32_SOFTWARE_RESTORE_BYTES;
+
+    return target_saved_psp;
 }
 
 void Os_Port_Stm32_MarkFirstTaskStarted(uintptr_t ActivePsp)
@@ -174,55 +227,6 @@ void Os_Port_Stm32_MarkPendSvComplete(uintptr_t ActivePsp)
     os_port_stm32_state.DeferredPendSv = FALSE;
     os_port_stm32_state.ActivePsp = ActivePsp;
     os_port_stm32_state.PendSvCompleteCount++;
-}
-
-/**
- * @brief   Save current task's PSP after r4-r11 + EXC_RETURN push
- * @param   SavedPsp  Task stack pointer after software context push
- * @note    Called from PendSV assembly after STMDB
- */
-void Os_Port_Stm32_PendSvSaveContext(uintptr_t SavedPsp)
-{
-    TaskType current = os_port_stm32_state.CurrentTask;
-
-    if ((current < OS_MAX_TASKS) &&
-        (os_port_stm32_task_context[current].Prepared == TRUE)) {
-        os_port_stm32_task_context[current].SavedPsp = SavedPsp;
-    }
-}
-
-/**
- * @brief   Get next task's SavedPsp for context restore
- * @return  SavedPsp of next task (or current if no switch), 0 on error
- * @note    Called from PendSV assembly before LDMIA
- */
-uintptr_t Os_Port_Stm32_PendSvGetNextContext(void)
-{
-    TaskType next = os_port_stm32_state.SelectedNextTask;
-    TaskType current = os_port_stm32_state.CurrentTask;
-
-    if ((next != INVALID_TASK) && (next < OS_MAX_TASKS) &&
-        (os_port_stm32_task_context[next].Prepared == TRUE) &&
-        (next != current)) {
-        os_port_stm32_state.LastSavedTask = current;
-        os_port_stm32_state.LastSavedPsp =
-            (current < OS_MAX_TASKS) ? os_port_stm32_task_context[current].SavedPsp : (uintptr_t)0u;
-        os_port_stm32_state.CurrentTask = next;
-        os_port_stm32_state.SelectedNextTask = INVALID_TASK;
-        os_port_stm32_state.SelectedNextTaskPsp = (uintptr_t)0u;
-        os_port_stm32_state.TaskSwitchCount++;
-        return os_port_stm32_task_context[next].SavedPsp;
-    }
-
-    os_port_stm32_state.SelectedNextTask = INVALID_TASK;
-    os_port_stm32_state.SelectedNextTaskPsp = (uintptr_t)0u;
-
-    if ((current < OS_MAX_TASKS) &&
-        (os_port_stm32_task_context[current].Prepared == TRUE)) {
-        return os_port_stm32_task_context[current].SavedPsp;
-    }
-
-    return (uintptr_t)0u;
 }
 
 static void os_port_stm32_reset_state(void)
@@ -264,17 +268,22 @@ const Os_Port_Stm32_StateType* Os_Port_Stm32_GetBootstrapState(void)
 
 void Os_PortTargetInit(void)
 {
-    /*
-     * ThreadX study hook:
-     * - tx_port.h shows what should live in the port boundary
-     * - tx_initialize_low_level.S shows low-level timer/vector bring-up split
-     *
-     * Later work:
-     * - configure SysTick or GPT-backed system tick
-     * - configure PendSV priority to lowest exception level
-     * - prepare first-task launch contract with the portable scheduler
-     */
     os_port_stm32_reset_state();
+
+#if !defined(UNIT_TEST)
+    {
+        /* Configure NVIC exception priorities via SHPR3 (0xE000ED20):
+         *   [23:16] = PendSV priority  → 0xFF (lowest, tail-chains after all ISRs)
+         *   [31:24] = SysTick priority → 0x40 (above PendSV, below fault handlers)
+         * Reference: ThreadX tx_initialize_low_level.S lines 128-137 */
+        uint32 shpr3 = OS_PORT_SCB_SHPR3;
+        shpr3 &= ~((uint32)0xFFFF0000u);
+        shpr3 |= ((uint32)OS_PORT_STM32_SYSTICK_BOOTSTRAP_PRIORITY << 24u)
+                | ((uint32)OS_PORT_STM32_PENDSV_LOWEST_PRIORITY << 16u);
+        OS_PORT_SCB_SHPR3 = shpr3;
+    }
+#endif
+
     os_port_stm32_state.TargetInitialized = TRUE;
     os_port_stm32_state.SysTickConfigured = TRUE;
 }
@@ -375,16 +384,6 @@ void Os_Port_Stm32_ObserveKernelDispatch(TaskType TaskID)
 
 void Os_PortStartFirstTask(void)
 {
-    /*
-     * ThreadX study hook:
-     * - tx_thread_schedule.S
-     * - tx_thread_stack_build.S
-     *
-     * Later work:
-     * - build the first synthetic exception frame
-     * - switch from MSP bootstrap context to PSP thread context
-     * - branch into the first runnable OSEK task
-     */
     if ((os_port_stm32_state.TargetInitialized == FALSE) ||
         (os_port_stm32_state.FirstTaskPrepared == FALSE) ||
         (os_port_stm32_state.FirstTaskStarted == TRUE)) {
@@ -396,15 +395,6 @@ void Os_PortStartFirstTask(void)
 
 void Os_PortRequestContextSwitch(void)
 {
-    /*
-     * ThreadX study hook:
-     * - tx_thread_context_save.S
-     * - tx_thread_context_restore.S
-     *
-     * Later work:
-     * - pend PendSV
-     * - leave actual register save/restore in assembly
-     */
     if ((os_port_stm32_state.TargetInitialized == FALSE) ||
         (os_port_stm32_state.FirstTaskStarted == FALSE)) {
         return;
@@ -421,6 +411,11 @@ void Os_PortRequestContextSwitch(void)
 
     os_port_stm32_state.PendSvPending = TRUE;
     os_port_stm32_state.PendSvRequestCount++;
+
+#if !defined(UNIT_TEST)
+    /* Pend PendSV — will tail-chain after current ISR at lowest priority */
+    OS_PORT_SCB_ICSR = OS_PORT_ICSR_PENDSVSET;
+#endif
 }
 
 void Os_PortEnterIsr2(void)
@@ -451,16 +446,15 @@ void Os_PortExitIsr2(void)
         os_port_stm32_state.DeferredPendSv = FALSE;
         os_port_stm32_state.PendSvPending = TRUE;
         os_port_stm32_state.PendSvRequestCount++;
+#if !defined(UNIT_TEST)
+        OS_PORT_SCB_ICSR = OS_PORT_ICSR_PENDSVSET;
+#endif
     }
+}
 
-    /*
-     * ThreadX study hook:
-     * - tx_timer_interrupt.S
-     * - tx_thread_schedule.S
-     *
-     * Later work:
-     * - trigger deferred dispatch after ISR exit if a higher-priority task is ready
-     */
+boolean Os_PortIsInIsrContext(void)
+{
+    return (boolean)(os_port_stm32_state.Isr2Nesting > 0u);
 }
 
 void Os_Port_Stm32_TickIsr(void)
@@ -469,12 +463,6 @@ void Os_Port_Stm32_TickIsr(void)
         return;
     }
 
-    /*
-     * Later work:
-     * - acknowledge SysTick or GPT source
-     * - advance the OSEK system counter
-     * - request dispatch if an alarm/task became ready
-     */
     os_port_stm32_state.TickInterruptCount++;
 
     if (Os_BootstrapProcessCounterTick() == TRUE) {
@@ -490,29 +478,18 @@ void Os_Port_Stm32_StartFirstTaskAsm(void)
 
 void Os_Port_Stm32_PendSvHandler(void)
 {
-    uintptr_t next_psp;
+    uintptr_t current_saved_psp;
 
-    if (os_port_stm32_state.FirstTaskStarted == FALSE) {
-        /* First task launch — use prepared frame directly */
-        Os_Port_Stm32_MarkFirstTaskStarted(os_port_stm32_get_first_task_restore_psp());
+    if ((os_port_stm32_state.FirstTaskStarted == FALSE) ||
+        (os_port_stm32_state.PendSvPending == FALSE)) {
         return;
     }
 
-    if (os_port_stm32_state.PendSvPending == FALSE) {
-        return;
-    }
+    /* Simulate assembly: ActivePsp - SOFTWARE_RESTORE_BYTES = SavedPsp */
+    current_saved_psp = os_port_stm32_get_saved_psp(os_port_stm32_state.ActivePsp);
 
-    /* Simulate save: STMDB pushes r4-r11 + EXC_RETURN below the active PSP */
-    Os_Port_Stm32_PendSvSaveContext(os_port_stm32_get_saved_psp(os_port_stm32_state.ActivePsp));
-
-    /* Resolve next task */
-    next_psp = Os_Port_Stm32_PendSvGetNextContext();
-    if (next_psp == (uintptr_t)0u) {
-        return;
-    }
-
-    /* Simulate restore: LDMIA pops the software frame before exception return */
-    Os_Port_Stm32_MarkPendSvComplete(os_port_stm32_get_restore_psp(next_psp));
+    /* ResolvePendSvTarget now handles all state management internally */
+    (void)Os_Port_Stm32_ResolvePendSvTarget(current_saved_psp);
 }
 
 void Os_Port_Stm32_SysTickHandler(void)
