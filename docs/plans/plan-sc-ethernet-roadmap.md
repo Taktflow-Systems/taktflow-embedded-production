@@ -218,7 +218,7 @@ Status markers: PENDING / IN PROGRESS / DONE.
   60 s bench stream into CSV with 5715 data rows, zero invalid frames, and zero
   sequence gaps.
 
-#### S-UDP-05 — Bench validation against a HIL scenario — IN PROGRESS
+#### S-UDP-05 — Bench validation against a HIL scenario — DONE
 - **Goal:** Prove the telemetry channel is trustworthy during real HIL load
   (CAN traffic + fault injection running).
 - **Inputs:** S-UDP-03 firmware, S-UDP-04 receiver, existing HIL scenarios in
@@ -231,18 +231,21 @@ Status markers: PENDING / IN PROGRESS / DONE.
   unchanged vs a run without ETH=1 (no interference).
 - **Gate / review:** development-discipline.md Layer 5 (multi-node bench).
 - **Definition of done:** report merged with all three criteria met.
-- **Current status (2026-07-07):** scenario plan approved; prep tooling ready,
-  bench runs pending. The SCET frame carries no absolute counter and the only
-  counter-bearing UART output is the DBGDUMP 5 s dump (whose stall causes
-  loss), so the criteria are split across three runs — B: loss-0 under load +
-  fault injection on the current `ETH=1` image; C: `ETH=1 DBGDUMP=1 HIL=1`
-  UART cross-check via `tools/bench/sc_eth_uart_crosscheck.py` (stall-aligned
-  tick-exact identities: d(tx7 call)=50, UDP frames+missed=500 per dump
-  interval); A: no-ETH baseline for the interference check. Procedure, run
-  matrix, and pre-checks in
-  `test/hil/reports/sc-eth-telemetry-validation.md`; CAN load + fault
-  injection driver `scripts/hil/sc_eth_hil_scenario.py` (Waveshare USB-CAN-A,
-  Windows bench PC), offline self-tests pass.
+- **Current status (2026-07-07): CLOSED.** All three acceptance criteria
+  met; evidence in `test/hil/reports/sc-eth-telemetry-validation.md` (v1.0,
+  status complete). Criterion 1: Run C cross-check 48/48 state dumps MATCH +
+  46/46 tick-exact counter intervals (`tools/bench/sc_eth_uart_crosscheck.py`
+  exit 0). Criterion 2: six gated captures (96 002 valid frames) at
+  100.000 Hz, zero gaps/invalid, through boot, CVC dropout, content-fault
+  and corrupt-CRC injection. Criterion 3: no-ETH baseline statistically
+  identical (0x013 cadence 100.00 ms sigma 0.04 ms both builds, dropout
+  reaction +520 ms both). All runs used `HIL=1` builds at `d73991c2`
+  (approved deviation — the LaunchPad cannot hold MONITORING non-HIL).
+  Two findings handed to follow-up work: **F-DCAN-RX** (IF2 mailbox
+  read-path defect, three manifestations incl. cross-mailbox payload leak;
+  reproduces without ETH; fix task required — ASIL D relevance) and
+  **F-SEQ-WIDTH** (mod-16 SCET sequence aliases losses >= 16 periods).
+  Bench parked on the `ETH=1 HIL=1` image, restore gate exit 0.
 
 ---
 

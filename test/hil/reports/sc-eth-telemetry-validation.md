@@ -1,8 +1,8 @@
 ---
 document_id: HIL-RPT-SC-ETH-01
 title: "SC Ethernet Telemetry Bench Validation (S-UDP-05)"
-version: "0.1"
-status: in-progress
+version: "1.0"
+status: complete
 aspice_process: SWE.6
 ---
 
@@ -267,15 +267,56 @@ Criterion 1 is met: UDP and UART agree on every sampled state within one
 sampling period, and the only true counters available on both channels
 (tx7 vs frame count) satisfy their tick-exact relation in every interval.
 
-### Run A — PENDING
+### Run A — DONE (2026-07-07)
+
+Image: `HIL=1` default build at `d73991c2` (no `ETH`, no `DBGDUMP`); boot
+banner confirmed the hash and — as expected — carried no `ETH telemetry`
+init line, so the delta vs Run B's image is exactly `SC_ETH_ENABLE`.
+Observables: SC_Status 0x013 decoded in the driver RX log (10 Hz).
+
+Comparison vs Run B (same phases, same driver commands, same measurement
+windows — post-boot MONITORING to injection):
+
+| Measure | Run B (`ETH=1`) | Run A (no ETH) |
+|---|---|---|
+| 0x013 period mean / stdev | 100.00 ms / 0.04 ms | 100.00 ms / 0.04 ms |
+| 0x013 period p99 / max | 100.1 / 100.2 ms | 100.1 / 100.3 ms |
+| Alive-counter continuity | 100.000 % | 100.000 % |
+| CVC dropout -> fault flag (0x013-observed) | +520 ms | +520 ms |
+| Dropout fault signature | `mode=FAULT, flags=0x1, health=0x6` | identical |
+| Content fault (CVC) | +1.51 s, `flags=0x1, health=7` | +1.14 s, identical signature |
+| F-DCAN-RX follow-on | M1 RZC +1.05 s (B2); M2 FZC +1.05 s (B3) | M1 RZC +0.60 s (A2); M2 FZC +3.8 s (A3b) |
+
+The content-fault latch (count-based: 20 consecutive flagged receptions)
+varies by a few tenths of a second on both builds — attributable to
+F-DCAN-RX leak interference with the consecutive counters, present
+identically on both. **No measurable behavioral delta is attributable to
+`ETH=1`**: cadence identical to 0.04 ms stdev, deterministic reaction paths
+identical to the 0x013 sampling resolution, fault signatures identical, and
+the F-DCAN-RX defect reproduces on the no-ETH build (proving it
+pre-existing, not ETH interference). An initial A3 attempt without the
+inter-phase reload was discarded and rerun (A3b); its data incidentally
+confirmed M2 on the latched state as well.
+
+### Restore — DONE (2026-07-07)
+
+`ETH=1 HIL=1` image at `d73991c2` reflashed as the resident bench image;
+60 s gated verification (exit 0, 100 Hz, zero gaps) — see final summary
+in Criteria evaluation.
 
 ## Criteria evaluation
 
-| # | Criterion | Verdict |
-|---|---|---|
-| 1 | UDP vs UART within one sampling period | PENDING |
-| 2 | Packet loss 0 | PENDING |
-| 3 | No ETH=1 interference | PENDING |
+| # | Criterion | Verdict | Evidence |
+|---|---|---|---|
+| 1 | UDP vs UART within one sampling period | **PASS** | Run C: 48/48 state dumps MATCH, 46/46 tick-exact counter intervals (`500+0=500`, `d(tx7)=50`), comparator exit 0 |
+| 2 | Packet loss 0 over the scenario run | **PASS** | Runs B0/B1/B2/B3/B3b + restore: 6 gated captures, exit 0, 96 002 valid frames total, 0 gaps, 0 invalid, 100.000 Hz — through boot, dropout, content-fault and corrupt-CRC injection |
+| 3 | CAN scenario results unchanged vs no-ETH | **PASS** | Run A vs Run B: cadence/continuity/reaction/signatures identical (table above); F-DCAN-RX reproduces on both builds |
+
+All three criteria are met; S-UDP-05's definition of done is satisfied by
+this report. Findings F-DCAN-RX (mailbox read-path defect — fix task
+required, ASIL D relevance via the potential masked-timeout leak) and
+F-SEQ-WIDTH (mod-16 sequence aliases >= 16-period losses) are handed to
+follow-up work outside this step's scope.
 
 ## Deviations and notes
 
