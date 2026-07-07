@@ -159,8 +159,14 @@ SC_ETH_SRCS = $(SC_DIR)/src/sc_eth.c \
               $(SC_DIR)/src/sc_eth_telemetry.c \
               $(SC_DIR)/src/sc_eth_rx_dispatch.c \
               $(SC_DIR)/src/sc_xcp_eth.c
+# OSEK bootstrap config: needs the OS kernel include/link integration that
+# the OSEK migration plan schedules AFTER the STM32 build phase
+# (docs/plans/plan-osek-os-migration.md). Excluded until that phase wires
+# the kernel into this Makefile; the SC image still runs the bare-metal
+# scheduler.
+SC_OS_WIP_SRCS = $(SC_DIR)/src/sc_os_cfg.c
 SC_HW_TMS570 = $(PLAT)/src/sc_hw_tms570.c
-SC_SRCS = $(filter-out %_posix.c $(SC_ETH_SRCS),$(SC_SRCS_ALL)) $(SC_HW_TMS570)
+SC_SRCS = $(filter-out %_posix.c $(SC_ETH_SRCS) $(SC_OS_WIP_SRCS),$(SC_SRCS_ALL)) $(SC_HW_TMS570)
 
 ifdef ETH
   SC_SRCS += $(SC_ETH_SRCS)
