@@ -213,6 +213,36 @@ Std_ReturnType Sc_EthUdp_Send(const uint8 *dst_ip,
     return Sc_Eth_Tx(g_sc_eth_udp_tx_frame, frame_len);
 }
 
+Std_ReturnType Sc_EthUdp_SendTo(const uint8 *dst_mac,
+                                const uint8 *dst_ip,
+                                uint16 dst_port,
+                                const uint8 *payload,
+                                uint16 payload_len)
+{
+    uint16 frame_len = 0u;
+
+    if ((g_sc_eth_udp_configured == FALSE) || (dst_mac == NULL_PTR)) {
+        return E_NOT_OK;
+    }
+
+    if (Sc_EthUdp_BuildFrame(g_sc_eth_udp_tx_frame,
+                             SC_ETH_FRAME_MAX_LEN,
+                             &g_sc_eth_udp_config,
+                             dst_ip,
+                             dst_port,
+                             payload,
+                             payload_len,
+                             &frame_len) != E_OK) {
+        return E_NOT_OK;
+    }
+
+    /* Override the destination MAC (not covered by any checksum). */
+    sc_eth_udp_copy(&g_sc_eth_udp_tx_frame[SC_ETH_UDP_DST_MAC_OFF],
+                    dst_mac, SC_ETH_UDP_MAC_ADDR_LEN);
+
+    return Sc_Eth_Tx(g_sc_eth_udp_tx_frame, frame_len);
+}
+
 /* ==================================================================
  * Static helpers
  * ================================================================== */
@@ -356,6 +386,9 @@ boolean Sc_EthUdp_ParseFrame(const uint8 *frame,
         return FALSE;
     }
 
+    for (i = 0u; i < SC_ETH_UDP_MAC_ADDR_LEN; i++) {
+        meta->src_mac[i] = frame[6u + i];        /* Ethernet source MAC */
+    }
     for (i = 0u; i < SC_ETH_UDP_IPV4_ADDR_LEN; i++) {
         meta->src_ip[i] = frame[26u + i];
     }

@@ -356,8 +356,10 @@ void test_xcp_connect_response_layout(void)
     TEST_ASSERT_EQUAL_UINT8(0u, resp[5]);              /* MAX_DTO hi */
     TEST_ASSERT_EQUAL_UINT8(1u, resp[6]);              /* protocol ver */
     TEST_ASSERT_EQUAL_UINT8(1u, resp[7]);              /* transport ver */
-    /* Response goes back to the requester */
+    /* Response goes back to the requester's port and learned MAC */
     TEST_ASSERT_EQUAL_UINT16(61000u, meta.dst_port);
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(master_cfg.src_mac,
+                                  &mock_tx_frame[0], 6u);
 }
 
 void test_xcp_commands_require_connection(void)

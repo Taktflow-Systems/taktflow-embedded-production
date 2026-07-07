@@ -99,10 +99,32 @@ Std_ReturnType Sc_EthUdp_Send(const uint8 *dst_ip,
 
 /** RX metadata extracted by Sc_EthUdp_ParseFrame. */
 typedef struct sc_eth_udp_rx_meta {
+    uint8  src_mac[SC_ETH_UDP_MAC_ADDR_LEN];
     uint8  src_ip[SC_ETH_UDP_IPV4_ADDR_LEN];
     uint16 src_port;
     uint16 dst_port;
 } sc_eth_udp_rx_meta_t;
+
+/**
+ * @brief  Build and transmit one frame to an explicit destination MAC.
+ *
+ * Like Sc_EthUdp_Send but overrides the destination MAC instead of using
+ * config->unicast_dst_mac — used to reply to a request whose sender MAC
+ * was learned from Sc_EthUdp_ParseFrame (no ARP responder needed on the
+ * bench). The MAC is not covered by any checksum.
+ *
+ * @param  dst_mac      Destination MAC (non-NULL, 6 bytes).
+ * @param  dst_ip       Destination IPv4 address, network byte order.
+ * @param  dst_port     Destination UDP port, host integer value.
+ * @param  payload      UDP payload. May be NULL only when payload_len is 0.
+ * @param  payload_len  UDP payload length in bytes.
+ * @return E_OK when Sc_Eth_Tx accepted the frame; E_NOT_OK otherwise.
+ */
+Std_ReturnType Sc_EthUdp_SendTo(const uint8 *dst_mac,
+                                const uint8 *dst_ip,
+                                uint16 dst_port,
+                                const uint8 *payload,
+                                uint16 payload_len);
 
 /**
  * @brief  Decode one received Ethernet II + IPv4 + UDP frame (S-XCP-02).

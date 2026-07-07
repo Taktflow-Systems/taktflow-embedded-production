@@ -103,9 +103,11 @@ static void sc_xcp_send_response(const uint8 *packet, uint16 packet_len)
         xcp_tx_payload[SC_XCP_ETH_HDR_LEN + i] = packet[i];
     }
 
-    (void)Sc_EthUdp_Send(xcp_req_meta.src_ip, xcp_req_meta.src_port,
-                         xcp_tx_payload,
-                         (uint16)(SC_XCP_ETH_HDR_LEN + packet_len));
+    /* Reply to the requester's learned MAC/IP/port — the SC has no ARP
+     * responder, so it cannot resolve the master by IP alone. */
+    (void)Sc_EthUdp_SendTo(xcp_req_meta.src_mac, xcp_req_meta.src_ip,
+                           xcp_req_meta.src_port, xcp_tx_payload,
+                           (uint16)(SC_XCP_ETH_HDR_LEN + packet_len));
 }
 
 static void sc_xcp_send_error(uint8 err_code)
