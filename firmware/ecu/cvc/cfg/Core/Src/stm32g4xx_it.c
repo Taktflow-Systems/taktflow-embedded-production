@@ -22,6 +22,11 @@
 #include "stm32g4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#if defined(USE_OSEK)
+/* OSEK tick + Cat2 ISR wrappers (user-approved hand edit, fcf3188
+ * harvest, guarded — default build unchanged). */
+#include "Os_Port_Stm32.h"
+#endif /* USE_OSEK */
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -203,7 +208,17 @@ void SysTick_Handler(void)
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
-
+#if defined(USE_OSEK)
+  /* OSEK system counter tick (user-approved hand edit, ported from the
+   * hardware-validated bringup line fcf3188 and guarded so the default
+   * build stays byte-identical): Cat2 ISR wrap -> counter/alarm/
+   * schedule-table processing -> deferred PendSV request on ISR exit.
+   * Safe before kernel boot: every call no-ops until Os_PortTargetInit
+   * has run (TargetInitialized gate in Os_Port_Stm32.c). */
+  Os_PortEnterIsr2();
+  Os_Port_Stm32_TickIsr();
+  Os_PortExitIsr2();
+#endif /* USE_OSEK */
   /* USER CODE END SysTick_IRQn 1 */
 }
 
