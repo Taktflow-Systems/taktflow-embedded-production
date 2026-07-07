@@ -205,7 +205,35 @@ PLATFORM_STM32/TMS570 except the Os_TestSetCurrentTaskRunning signature
 change, which is UNIT_TEST-only and does not enter the POSIX production
 binary; Os_Port.h gained only a declaration.
 
-## 7. Open issues
+## 7. S-OS-30 (pulled forward): STM32 image wiring — status
+
+Per user direction (2026-07-07) S-OS-30 was executed immediately after
+S-OS-01. Outcome: BUILT WITH ADAPTATIONS, LINK BLOCKED behind one
+user-decision item.
+
+- `firmware/platform/stm32/Makefile.stm32` now carries the full bootstrap
+  kernel TU list (same as Makefile.posix), the bootstrap include paths,
+  the harvested port sources (Os_Port_Stm32.c / _Asm.S / _Bringup.c) and
+  Os_Port_TaskBinding.c, gated behind `OSEK=1` (same pattern as the
+  existing `THREADX=1` gate).
+- `make -f firmware/platform/stm32/Makefile.stm32 TARGET=cvc OSEK=1`
+  (arm-none-eabi-gcc 13.3.0): every kernel and port TU compiles clean
+  under the image's `-Werror` flags. Link fails with exactly ONE error:
+  `PendSV_Handler` multiple definition — harvested Os_Port_Stm32_Asm.S
+  vs the CubeMX stub in firmware/ecu/cvc/cfg/Core/Src/stm32g4xx_it.c:178.
+- The validated bringup line resolved this in fcf3188 by editing that
+  CubeMX file (removing the PendSV stub, adding a HardFault diagnostic
+  handler). That file is under firmware/ecu/*/cfg/ (never-hand-edit rule)
+  and was outside the approved harvest scope, so the collision was NOT
+  fixed here. USER DECISION NEEDED: either approve harvesting fcf3188's
+  stm32g4xx_it.c or regenerate it from the .ioc without the PendSV
+  handler. Until then the default (non-OSEK) build is unchanged and green
+  (verified: byte-identical size 39480/160/7664).
+- Size delta: see os-migration-baseline.md, S-OS-30 note (~11.5 KB text
+  once the kernel is actually referenced; currently gc-eliminated).
+- No ECU main.c was modified (scheduler cutover stays in Phase 2/3).
+
+## 8. Open issues
 
 1. TMS570 host-model entry-run simulation missing (3 ignored tests, 3.5).
 2. POSIX/SIL build verification deferred to CI (section 6).

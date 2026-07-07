@@ -63,6 +63,23 @@ Per-suite raw outputs are written by the runner to
   no OS sources at HEAD, so the kernel suites above are the relevant OS
   baseline.
 
+## S-OS-30 flash/RAM budget note (appended 2026-07-07, step pulled forward)
+
+STM32 cvc image, arm-none-eabi-gcc 13.3.0, debug (-Og) build:
+
+- Pre-change baseline: text 39480, data 160, bss 7664 (dec 47304).
+- With OSEK kernel + port wired (`OSEK=1`): identical 39480/160/7664 —
+  `-Wl,--gc-sections` removes the entire kernel because no ECU main calls
+  `StartOS` yet (scheduler cutover is a later step by design).
+- Potential footprint once referenced (sum of kernel + port object
+  sections): text 11471, data 17, bss 2393 (~13.9 KB). Projected flash
+  after cutover: ~50.9 KB of the 409.6 KB budget (SYS-054) — ample margin.
+- All kernel + port TUs compile clean under the image's `-Werror` flag set.
+- The `OSEK=1` image does not LINK yet: single collision, `PendSV_Handler`
+  defined by both the harvested `Os_Port_Stm32_Asm.S` and the CubeMX stub
+  in `firmware/ecu/cvc/cfg/Core/Src/stm32g4xx_it.c` (hands-off generated
+  file). See os-harvest-report.md section 7 for the blocker record.
+
 ## Baseline interpretation
 
 - The 8 kernel suites + 3 port smoke suites (Tms570/Stm32/Stm32L5
