@@ -144,6 +144,20 @@ typedef struct {
     uint16 BudgetBytes;
 } Os_StackMonitorConfigType;
 
+/**
+ * @brief   Physical task-stack binding (S-OS-31 first-task launch seam)
+ * @note    StackBase is the LOWEST address of the stack storage and must
+ *          be 8-byte aligned (AAPCS); SizeBytes must be a non-zero
+ *          multiple of 8 and at least the task's monitor budget. The
+ *          port builds the initial exception frame at
+ *          StackBase + SizeBytes (stack grows down).
+ */
+typedef struct {
+    TaskType TaskID;
+    uint8* StackBase;
+    uint32 SizeBytes;
+} Os_TaskStackConfigType;
+
 typedef struct {
     const char* Name;
     ApplicationType Application;

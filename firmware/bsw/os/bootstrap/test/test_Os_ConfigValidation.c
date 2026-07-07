@@ -90,6 +90,18 @@ static const Os_MemoryRegionConfigType valid_memory_regions[] = {
     { "RegionSys", 0u, (MemoryStartAddressType)0x1000u, 64u }
 };
 
+/* Physical task-stack storage (S-OS-31 launch seam) — same shape the
+ * generated Os_Cfg_<Ecu>.c emits (static, 8-byte aligned). */
+static uint8 stack_safety[256] __attribute__((aligned(8)));
+static uint8 stack_work[256]   __attribute__((aligned(8)));
+static uint8 stack_idle[256]   __attribute__((aligned(8)));
+
+static const Os_TaskStackConfigType valid_task_stacks[] = {
+    { CFG_TASK_SAFETY, stack_safety, 256u },
+    { CFG_TASK_WORK,   stack_work,   256u },
+    { CFG_TASK_IDLE,   stack_idle,   256u }
+};
+
 static Os_ConfigType make_valid_config(void)
 {
     Os_ConfigType cfg;
@@ -114,6 +126,8 @@ static Os_ConfigType make_valid_config(void)
     cfg.MemoryRegionCount = 1u;
     cfg.MemProtTasks = NULL_PTR;
     cfg.MemProtTaskCount = 0u;
+    cfg.TaskStacks = valid_task_stacks;
+    cfg.TaskStackCount = 3u;
     return cfg;
 }
 
@@ -236,6 +250,10 @@ void test_Configure_MissingIdleTask_Rejected(void)
     cfg.TaskCount = 2u;
     cfg.Stacks = NULL_PTR;
     cfg.StackCount = 0u;
+    /* Stacks reference task 2 (removed here) — drop them like the
+     * budget table so the idle check is what rejects this config. */
+    cfg.TaskStacks = NULL_PTR;
+    cfg.TaskStackCount = 0u;
 
     TEST_ASSERT_EQUAL(E_OS_NOFUNC, Os_Configure(&cfg));
 }
@@ -278,6 +296,119 @@ void test_Configure_IdleTaskNonPreemptive_Rejected(void)
     cfg.Tasks = bad_tasks;
 
     TEST_ASSERT_EQUAL(E_OS_NOFUNC, Os_Configure(&cfg));
+}
+
+/**
+ * @requirement Task-stack entries (S-OS-31 launch seam) shall be rejected
+ *              with E_OS_VALUE when the base address is not 8-byte
+ *              aligned (AAPCS port frame alignment).
+ */
+void test_Configure_TaskStack_MisalignedBase_Rejected(void)
+{
+    static const Os_TaskStackConfigType bad_stacks[] = {
+        { CFG_TASK_SAFETY, &stack_safety[4], 248u },
+        { CFG_TASK_WORK,   stack_work,       256u },
+        { CFG_TASK_IDLE,   stack_idle,       256u }
+    };
+    Os_ConfigType cfg = make_valid_config();
+
+    cfg.TaskStacks = bad_stacks;
+
+    TEST_ASSERT_EQUAL(E_OS_VALUE, Os_Configure(&cfg));
+}
+
+/**
+ * @requirement Task-stack entries with zero size, or a size that is not a
+ *              multiple of 8, shall be rejected with E_OS_VALUE.
+ */
+void test_Configure_TaskStack_BadSize_Rejected(void)
+{
+    static const Os_TaskStackConfigType zero_stacks[] = {
+        { CFG_TASK_SAFETY, stack_safety, 0u },
+        { CFG_TASK_WORK,   stack_work,   256u },
+        { CFG_TASK_IDLE,   stack_idle,   256u }
+    };
+    static const Os_TaskStackConfigType odd_stacks[] = {
+        { CFG_TASK_SAFETY, stack_safety, 252u },
+        { CFG_TASK_WORK,   stack_work,   256u },
+        { CFG_TASK_IDLE,   stack_idle,   256u }
+    };
+    Os_ConfigType cfg = make_valid_config();
+
+    cfg.TaskStacks = zero_stacks;
+    TEST_ASSERT_EQUAL(E_OS_VALUE, Os_Configure(&cfg));
+
+    cfg = make_valid_config();
+    cfg.TaskStacks = odd_stacks;
+    TEST_ASSERT_EQUAL(E_OS_VALUE, Os_Configure(&cfg));
+}
+
+/**
+ * @requirement A task stack smaller than the task's configured monitor
+ *              budget shall be rejected with E_OS_VALUE (the monitor
+ *              budget must fit inside the physical storage).
+ */
+void test_Configure_TaskStack_SizeBelowBudget_Rejected(void)
+{
+    static const Os_TaskStackConfigType small_stacks[] = {
+        { CFG_TASK_SAFETY, stack_safety, 128u },   /* budget is 256 */
+        { CFG_TASK_WORK,   stack_work,   256u },
+        { CFG_TASK_IDLE,   stack_idle,   256u }
+    };
+    Os_ConfigType cfg = make_valid_config();
+
+    cfg.TaskStacks = small_stacks;
+
+    TEST_ASSERT_EQUAL(E_OS_VALUE, Os_Configure(&cfg));
+}
+
+/**
+ * @requirement Task-stack entries referencing an invalid task, a NULL
+ *              base, or a NULL table with non-zero count shall be
+ *              rejected with E_OS_VALUE.
+ */
+void test_Configure_TaskStack_InvalidReference_Rejected(void)
+{
+    static const Os_TaskStackConfigType bad_task_stacks[] = {
+        { 7u, stack_safety, 256u },
+        { CFG_TASK_WORK, stack_work, 256u },
+        { CFG_TASK_IDLE, stack_idle, 256u }
+    };
+    static const Os_TaskStackConfigType null_base_stacks[] = {
+        { CFG_TASK_SAFETY, NULL_PTR, 256u },
+        { CFG_TASK_WORK,   stack_work, 256u },
+        { CFG_TASK_IDLE,   stack_idle, 256u }
+    };
+    Os_ConfigType cfg = make_valid_config();
+
+    cfg.TaskStacks = bad_task_stacks;
+    TEST_ASSERT_EQUAL(E_OS_VALUE, Os_Configure(&cfg));
+
+    cfg = make_valid_config();
+    cfg.TaskStacks = null_base_stacks;
+    TEST_ASSERT_EQUAL(E_OS_VALUE, Os_Configure(&cfg));
+
+    cfg = make_valid_config();
+    cfg.TaskStacks = NULL_PTR;
+    cfg.TaskStackCount = 3u;
+    TEST_ASSERT_EQUAL(E_OS_VALUE, Os_Configure(&cfg));
+}
+
+/**
+ * @requirement On host (no hardware platform define) a configuration
+ *              WITHOUT a task-stack table remains valid: host-cooperative
+ *              dispatch needs no physical task stacks. (The per-platform
+ *              completeness check is verified in the STM32 port suite
+ *              test_Os_Port_Stm32_bootstrap_production_launch.c.)
+ */
+void test_Configure_NoTaskStacks_AcceptedOnHost(void)
+{
+    Os_ConfigType cfg = make_valid_config();
+
+    cfg.TaskStacks = NULL_PTR;
+    cfg.TaskStackCount = 0u;
+
+    TEST_ASSERT_EQUAL(E_OK, Os_Configure(&cfg));
 }
 
 /**
@@ -339,6 +470,11 @@ int main(void)
     RUN_TEST(test_Configure_MissingIdleTask_Rejected);
     RUN_TEST(test_Configure_IdleTaskNotAutostarted_Rejected);
     RUN_TEST(test_Configure_IdleTaskNonPreemptive_Rejected);
+    RUN_TEST(test_Configure_TaskStack_MisalignedBase_Rejected);
+    RUN_TEST(test_Configure_TaskStack_BadSize_Rejected);
+    RUN_TEST(test_Configure_TaskStack_SizeBelowBudget_Rejected);
+    RUN_TEST(test_Configure_TaskStack_InvalidReference_Rejected);
+    RUN_TEST(test_Configure_NoTaskStacks_AcceptedOnHost);
     RUN_TEST(test_Configure_FailedConfig_RefusesToStart);
     RUN_TEST(test_Configure_FullConfig_BootsAndRunsAutostartTasks);
     return UNITY_END();

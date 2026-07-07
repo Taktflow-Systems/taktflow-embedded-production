@@ -60,6 +60,12 @@ typedef struct {
     uint8 MemoryRegionCount;
     const Os_MemProtTaskConfigType* MemProtTasks;
     uint8 MemProtTaskCount;
+    /* S-OS-31 first-task launch seam: physical per-task stack storage.
+     * Optional on host builds; on PLATFORM_STM32/STM32L5/TMS570 every
+     * configured task MUST have a stack entry (StartOS launches the
+     * first task on its own PSP stack through the port). */
+    const Os_TaskStackConfigType* TaskStacks;
+    uint8 TaskStackCount;
 } Os_ConfigType;
 
 /**
