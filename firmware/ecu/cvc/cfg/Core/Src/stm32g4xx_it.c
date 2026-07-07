@@ -164,6 +164,7 @@ void DebugMon_Handler(void)
   /* USER CODE END DebugMonitor_IRQn 1 */
 }
 
+#if !defined(USE_OSEK)
 /**
   * @brief This function handles Pendable request for system service.
   */
@@ -176,6 +177,13 @@ void PendSV_Handler(void)
 
   /* USER CODE END PendSV_IRQn 1 */
 }
+#else
+/* PendSV_Handler is provided by Os_Port_Stm32_Asm.S (OSEK context switch).
+ * User-approved hand edit of this CubeMX-owned file (2026-07-07), ported
+ * from the hardware-validated bringup line (fcf3188), which removed the
+ * stub unconditionally; here it is guarded so the default (non-OSEK)
+ * build stays byte-identical. */
+#endif /* !USE_OSEK */
 
 /**
   * @brief This function handles System tick timer.

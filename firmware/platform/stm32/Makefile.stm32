@@ -183,13 +183,14 @@ BSW_SRCS = \
 # --- OSEK bootstrap kernel + STM32 hardware port (S-OS-30, pass OSEK=1) ---
 # Same kernel TU list Makefile.posix compiles; PLATFORM_STM32 (already in
 # CFLAGS) selects the hardware dispatch path and the port task binding.
-# Gated behind OSEK=1 (mirrors the THREADX gate) because the harvested
-# Os_Port_Stm32_Asm.S provides PendSV_Handler, which collides with the
-# CubeMX stub in firmware/ecu/cvc/cfg/Core/Src/stm32g4xx_it.c. That file is
-# CubeMX-owned (never hand-edit rule); enabling OSEK=1 unconditionally
-# requires regenerating it without the PendSV handler (or approving the
-# fcf3188 variant of it) -- tracked in docs/plans/os-harvest-report.md.
+# Gated behind OSEK=1 (mirrors the THREADX gate). The harvested
+# Os_Port_Stm32_Asm.S provides PendSV_Handler; USE_OSEK makes the CubeMX
+# stub in firmware/ecu/cvc/cfg/Core/Src/stm32g4xx_it.c yield to it
+# (user-approved hand edit, fcf3188 provenance -- see
+# docs/plans/os-harvest-report.md section 7). Default build is unchanged.
+# OSEK=1 and THREADX=1 are mutually exclusive (both ports own PendSV).
 ifdef OSEK
+CFLAGS += -DUSE_OSEK
 OS_SRCS = \
     $(BSW)/os/bootstrap/src/Os_Core.c \
     $(BSW)/os/bootstrap/src/Os_Task.c \
