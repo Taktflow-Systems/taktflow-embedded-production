@@ -14,6 +14,14 @@ verification, `.claude/rules/development-discipline.md`). Codegen rules live
 in `.claude/rules/global.md` (never hand-edit `firmware/ecu/*/cfg/`). Safety
 gates reference ISO 26262-6 and the OS safety docs listed in Phase 0 inputs.
 
+**Reordering note (2026-07-07, user direction):** S-OS-30 (wire OSEK kernel
+into `Makefile.stm32`) executes immediately after S-OS-01, BEFORE Phase 2
+(POSIX ECU migration). Phase 2 and Phase 3 ordering is swapped accordingly:
+the STM32 rebuild of the OS comes first, then the POSIX/SIL migration.
+Step IDs are unchanged. S-OS-30 execution status is recorded in
+`docs/plans/os-harvest-report.md` (section 7) and the flash/RAM note in
+`docs/plans/os-migration-baseline.md`.
+
 ## 1. Current state (review findings, 2026-07-07)
 
 ### 1.1 What "free-style OS" means today
