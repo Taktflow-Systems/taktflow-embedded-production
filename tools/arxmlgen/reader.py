@@ -868,12 +868,18 @@ class ArxmlReader:
 
                 # Create runnables from sidecar when ARXML has none
                 # Skip legacy Com bridge runnables (replaced by auto-pull/push)
+                # unless the sidecar entry carries `keep: true` — used for
+                # load-bearing bridge runnables (Swc_FzcCom_Receive resets
+                # the CanMon silence counter; commit f22eb15).
                 _skip_com_bridge = lambda n: n.endswith("Com_Receive") or n.endswith("Com_TransmitSchedule")
+                _kept = lambda d: isinstance(d, dict) and bool(d.get("keep", False))
                 missing = set(runnable_overrides.keys()) - found_names
                 if missing:
                     sidecar_runnables = []
                     for rname in runnable_overrides:
-                        if rname not in found_names and not _skip_com_bridge(rname):
+                        if rname not in found_names and (
+                                not _skip_com_bridge(rname)
+                                or _kept(runnable_overrides[rname])):
                             rdata = runnable_overrides[rname]
                             sidecar_runnables.append(Runnable(
                                 name=rname,

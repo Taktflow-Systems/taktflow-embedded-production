@@ -97,6 +97,12 @@ ecus:
         period_ms: 1
         priority: 9
         wdgm_se_id: 0xFF
+      # 1 ms TX mailbox pump — was hand-carried in Rte_Cfg_Cvc.c (b14cbc1)
+      # without a sidecar entry; wired here so regeneration preserves it.
+      Can_MainFunction_Write:
+        period_ms: 1
+        priority: 8
+        wdgm_se_id: 0xFF
       Com_MainFunction_Rx:
         period_ms: 10
         priority: 8
@@ -233,7 +239,16 @@ ecus:
         period_ms: 10
         priority: 13
         wdgm_se_id: 0xFF
-      # Swc_FzcCom_Receive: REMOVED — RX auto-push handles all signal bridging
+      # Swc_FzcCom_Receive is NOT plain signal bridging (that is RX
+      # auto-push): it also resets the CanMon silence counter. Without it
+      # FZC spuriously declares BUS_OFF and forces brake=100 (fix
+      # f22eb15, formerly hand-carried in Rte_Cfg_Fzc.c as TODO:CODEGEN).
+      # `keep: true` opts it out of the legacy Com-bridge skip.
+      Swc_FzcCom_Receive:
+        period_ms: 10
+        priority: 12
+        wdgm_se_id: 0xFF
+        keep: true
       Swc_FzcSensorFeeder_MainFunction:
         period_ms: 10
         priority: 11

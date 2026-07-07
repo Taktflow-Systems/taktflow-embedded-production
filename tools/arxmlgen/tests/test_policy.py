@@ -140,6 +140,34 @@ class TestReaderIntegration:
                   if r.name == "Swc_Heartbeat_MainFunction")
         assert hb.priority == 0
 
+    def test_fzc_com_receive_wired_via_sidecar_keep(self, load_model):
+        """Swc_FzcCom_Receive is load-bearing (resets the CanMon silence
+        counter; commit f22eb15 — without it FZC spuriously declares
+        BUS_OFF and forces brake=100). It must be generated from the
+        sidecar `keep: true` entry, in its committed slot: third in the
+        10 ms band, between Com_MainFunction_Rx and
+        Swc_FzcSensorFeeder_MainFunction (closes the TODO:CODEGEN note
+        formerly hand-carried in Rte_Cfg_Fzc.c)."""
+        fzc = load_model.ecus["fzc"]
+        table = _table(fzc)
+        names = [r.name for r in table]
+        assert "Swc_FzcCom_Receive" in names
+        idx = names.index("Swc_FzcCom_Receive")
+        assert names[idx - 1] == "Com_MainFunction_Rx"
+        assert names[idx + 1] == "Swc_FzcSensorFeeder_MainFunction"
+
+    def test_cvc_can_write_in_one_ms_band(self, load_model):
+        """Can_MainFunction_Write (1 ms TX mailbox pump) was hand-carried
+        in Rte_Cfg_Cvc.c (commit b14cbc1) without a sidecar entry; it must
+        now regenerate from the sidecar, second in the 1 ms band after
+        Can_MainFunction_Read (memo-rm-reband-trace.md, CVC table)."""
+        cvc = load_model.ecus["cvc"]
+        table = _table(cvc)
+        names = [r.name for r in table]
+        assert names[0] == "Can_MainFunction_Read"
+        assert names[1] == "Can_MainFunction_Write"
+        assert table[1].period_ms == 1
+
     def test_rzc_can_read_above_ten_ms_band(self, load_model):
         """RZC: Can_MainFunction_Read (1 ms) must outrank the 10 ms band
         (SWR-RZC-028 Highest(1) > High(2) structure; memo RZC table)."""
