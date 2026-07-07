@@ -304,6 +304,28 @@ merge is not viable; the port work must be harvested file-wise.
     - `grep` check from development-discipline rule 1 still returns zero
   - Gate: Layer 6 Docker SIL + WdgM supervision evidence.
   - Definition of done: entire 7-ECU SIL (SC still legacy) is green on OSEK.
+  - Status (2026-07-07): STM32 portion of the main cutover done at BUILD
+    level (pulled forward with S-OS-30 per the reordering note):
+    cvc/fzc/rzc `main.c` gained a `USE_OSEK` boot path (Os_PortTargetInit
+    -> Os_TaskMap_SetTable(per-ECU map) -> Os_Configure(<ecu>_os_config)
+    fail-closed -> StartOS), the CubeMX SysTick handler ticks the OSEK
+    counter under the same `USE_OSEK` guard (fcf3188 hunk, user-approved
+    IT-file edit), the generated idle task now starts the schedule
+    tables and runs the task-map idle hook (template fix + regeneration),
+    and the legacy super-loop BSW slots are bridged via per-ECU
+    Os_TaskMap tables (weak-symbol override pattern replaced by
+    Os_TaskMap_SetTable after a constant-folding defect — see
+    firmware/bsw/os/bootstrap/src/Os_TaskMap.c design note and
+    test_Os_TaskMap.c regression guard). Default builds byte-identical;
+    OSEK=1 sizes in os-migration-baseline.md. NOT closed by this work:
+    the POSIX/SIL migration of this step (Layer 6 gate), and the STM32
+    first-task launch seam — in production builds StartOS direct-calls
+    the autostarted idle task on MSP and never invokes
+    Os_PortStartFirstTask, so PendSV-based dispatch cannot engage until
+    that kernel/port seam is designed (with per-task stack binding via
+    Os_Port_PrepareConfiguredTask). Recorded as the blocking design item
+    for S-OS-31 on-target bringup; runtime validation (S-OS-31 + Linux
+    CI SIL parity) remains the gate before merge.
 
 ### Phase 3 — STM32 hardware migration (CVC, FZC, RZC)
 

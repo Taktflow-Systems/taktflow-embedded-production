@@ -232,6 +232,61 @@ failures); cvc/fzc/rzc scheduler mirror suites 6/3/4 tests, all PASS
 unchanged. Per-ECU full unit suites (`Makefile.posix TARGET=<ecu> test`)
 are SocketCAN/Linux-bound -> CI-deferred, same as the S-OS-00 baseline.
 
+## S-OS-22 STM32 main cutover: sizes + parity (appended 2026-07-07)
+
+STM32 mains now boot the OSEK kernel under `OSEK=1` (`USE_OSEK`):
+SysTick -> OSEK counter (guarded CubeMX IT-file hunk, fcf3188
+provenance), `Os_PortTargetInit` -> `Os_TaskMap_SetTable` ->
+`Os_Configure(<ecu>_os_config)` fail-closed -> `StartOS`; the generated
+idle task starts the period schedule tables and runs the task-map idle
+hook (`Main_Hw_Wfi`). Legacy super-loop remains the default path.
+
+Defect found and fixed during cutover: the Os_TaskMap weak-symbol
+override pattern was silently dead — with the weak-empty
+`os_task_map_count = 0` defined in the consumer TU, arm-none-eabi-gcc
+13.3.0 constant-folded the count at -Og/-O2 and compiled
+`Os_TaskMap_RunMappedFunctions` to `bx lr`, so a strong per-ECU table
+was never read (and MinGW COFF hosts do not link weak data at all).
+Replaced by an explicit registration API `Os_TaskMap_SetTable()`;
+regression guard `test_Os_TaskMap` is compiled at -O2.
+
+Build matrix, arm-none-eabi-gcc 13.3.0, debug (-Og), clean builds:
+
+| Image | Variant | text | data | bss | Result |
+|---|---|---|---|---|---|
+| cvc | default | 39480 | 160 | 7664 | LINKS, .bin BYTE-IDENTICAL to HEAD-clean build |
+| fzc | default | 37780 | 160 | 7680 | LINKS, .bin BYTE-IDENTICAL |
+| rzc | default | 36880 | 160 | 7552 | LINKS, .bin BYTE-IDENTICAL |
+| cvc | OSEK=1 | 48916 | 180 | 10156 | LINKS (StartOS + task map anchor the full kernel/BSW slot graph) |
+| fzc | OSEK=1 | 47012 | 180 | 10180 | LINKS |
+| rzc | OSEK=1 | 46160 | 180 | 10044 | LINKS |
+
+Byte-identity method: default `.bin` sha256 of the edited tree vs a
+clean worktree at the same HEAD (same embedded GIT_HASH) — all three
+pairs identical. OSEK=1 flash use ~49.1 KB worst case of the 409.6 KB
+budget (SYS-054) — ample margin.
+
+Host evidence this session: OS kernel + port runner 33/33 suites PASS
+(496 tests, 0 failures, 3 pre-existing TMS570 ignores — includes the
+new 6-test `test_Os_TaskMap` suite); arxmlgen pytest 288 passed / 32
+failed (failure set identical to the 32 pre-existing failures; +1 new
+passing idle-body contract test); cvc/fzc/rzc scheduler mirror suites
+6/3/4 tests all PASS unchanged.
+
+Runtime validation is PENDING — this closure is build-level only:
+
+- S-OS-31 on-target bringup is OPEN and needs the physical bench. Known
+  blocking design item recorded there: the production `StartOS` dispatch
+  loop direct-calls the autostarted idle task on MSP and never calls
+  `Os_PortStartFirstTask`, so PendSV-based preemptive dispatch cannot
+  engage; the kernel/port first-task-launch seam plus per-task stack
+  binding (`Os_Port_PrepareConfiguredTask` with real stack memory,
+  budgets from the generated stack table) must be designed and
+  user-approved before on-target runs — same decision-item pattern as
+  the earlier PendSV and SC3-hook items.
+- Linux CI SIL parity (Layer 4/6 re-run of `test/sil/`, unchanged list
+  from the S-OS-11 note above) remains REQUIRED before merge.
+
 ## Baseline interpretation
 
 - The 8 kernel suites + 3 port smoke suites (Tms570/Stm32/Stm32L5
