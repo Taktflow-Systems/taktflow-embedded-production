@@ -54,6 +54,13 @@ ifdef ETH
   COMMON_CFLAGS += -DSC_ETH_ENABLE
 endif
 
+# --- Periodic 5s SCI debug dump (pass DBGDUMP=1 to opt in) ---
+# Blocks the 10ms loop ~280ms per dump at the SCI3 9600-baud bottleneck;
+# bring-up diagnostics only, never for timing-sensitive runs.
+ifdef DBGDUMP
+  COMMON_CFLAGS += -DSC_DEBUG_PERIODIC
+endif
+
 # --- Directories (production layout) ---
 FW           = firmware
 ECU          = $(FW)/ecu

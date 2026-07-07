@@ -108,7 +108,9 @@ int main(void)
 {
     uint8 startup_result;
     boolean all_checks_ok;
+#ifdef SC_DEBUG_PERIODIC
     uint16 dbg_tick_counter = 0u;  /* 5s periodic debug print */
+#endif
 #ifndef SC_ETH_ENABLE
     uint8 hb_blink_counter = 0u;  /* heartbeat LED blink (GIOB[6:7]) */
 #endif
@@ -329,6 +331,11 @@ int main(void)
         }
 
         /* ---- Step 8b: Periodic debug status (every 5 seconds) ---- */
+        /* Opt-in only (DBGDUMP=1): the dump is ~270 chars mirrored to
+         * SCI3 at 9600 baud, which blocks the loop ~280 ms and swallows
+         * ~27 RTI ticks — measured as the 95.2 Hz telemetry cadence in
+         * the 2026-07-06 S-UDP-03 bench capture. Bring-up use only. */
+#ifdef SC_DEBUG_PERIODIC
         dbg_tick_counter++;
         if (dbg_tick_counter >= 500u) {  /* 500 * 10ms = 5s */
             dbg_tick_counter = 0u;
@@ -347,6 +354,7 @@ int main(void)
             /* DCAN ES/NEWDAT + CCM/ESM snapshot (MMIO on target, no-op on POSIX) */
             sc_hw_debug_periodic();
         }
+#endif /* SC_DEBUG_PERIODIC */
 
         /* ---- Step 9: Watchdog Feed ---- */
         SC_Watchdog_Feed(all_checks_ok);

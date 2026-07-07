@@ -146,7 +146,7 @@ Status markers: PENDING / IN PROGRESS / DONE.
   XDS110 and a PC-side UDP receiver accepted 1000 consecutive S-UDP-02 probe
   datagrams with zero gaps and zero invalid payloads.
 
-#### S-UDP-03 — SC telemetry producer integration — IN PROGRESS
+#### S-UDP-03 — SC telemetry producer integration — DONE
 - **Goal:** Emit the S-UDP-01 packet from the SC main loop at a fixed
   cadence without violating loop timing.
 - **Inputs:** S-UDP-02 encoder; `sc_main.c` scheduler structure;
@@ -170,9 +170,33 @@ Status markers: PENDING / IN PROGRESS / DONE.
   proven, but the configured-rate gate is still open. The integrated `ETH=1`
   image streams valid `SCET` packets through the S-UDP-04 receiver with zero
   sequence gaps and zero CRC or shape errors over a 60 s window, but the
-  measured rate is about 95.23 Hz against the nominal 100 Hz cadence. Next work
-  is RTI/main-loop timing diagnosis or an explicit cadence change before
-  marking this step done.
+  measured rate is about 95.23 Hz against the nominal 100 Hz cadence.
+  2026-07-07 diagnosis: inter-arrival analysis of the 60 s capture shows the
+  tick period itself is sound (median 9.999 ms, p25–p75 = 9.984–10.015 ms);
+  the deficit comes from eleven ~279 ms stalls spaced exactly 500 frames
+  (5 s) apart. Root cause is the previously unconditional 5 s debug status
+  dump in `sc_main.c` (~270 chars, each mirrored to SCI3 at 9600 baud with a
+  per-char TXRDY busy-wait ≈ 280 ms per dump); the single-bit RTI pending
+  flag drops ~27 ticks per stall (~285 of 6000 frames = the 4.8% deficit).
+  RTI calibration was ruled out: DCAN 500k shares VCLK with the RTI, so a 5%
+  clock error would break CAN, and the compare math (93750 @ 9.375 MHz) is
+  exactly 10 ms. Fix applied (uncommitted): the dump is now opt-in via
+  `make DBGDUMP=1` → `SC_DEBUG_PERIODIC` in `sc_main.c` /
+  `Makefile.tms570`. Remaining to close: rebuild + reflash `ETH=1`, rerun
+  the 60 s receiver gate (< 1% rate error expected ~99.9 Hz), then the
+  10-minute soak and loop-jitter evidence per the acceptance criteria.
+  2026-07-07 closure: both variants rebuilt with the gated dump (map check:
+  dump code absent from both images, no Ethernet symbols in the default
+  build), `ETH=1` reflashed over XDS110, then a 10-minute soak against the
+  receiver gates `--expect-rate-hz 100 --rate-tolerance 0.01 --fail-on-gap`
+  passed with exit 0: 60001 valid frames over 600.003 s = 99.9995 Hz
+  (0.0005% rate error; each of the ten 60 s windows measured 100.000 Hz),
+  zero sequence gaps, zero invalid frames, zero watchdog resets. ETH=1
+  loop-period statistics from the stream: stdev 0.158 ms, p99 10.25 ms,
+  max 19.4 ms (single host-side receive artifact, no tick lost). Residual:
+  a comparative default-build loop-jitter measurement has no in-firmware
+  counter and was not taken with a scope; the equivalent cross-check (UDP
+  counters vs UART counters under HIL load) lands in S-UDP-05.
 
 #### S-UDP-04 — PC-side telemetry receiver — DONE
 - **Goal:** Decode and record the telemetry stream on the bench PC.
