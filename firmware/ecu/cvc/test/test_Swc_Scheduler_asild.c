@@ -9,6 +9,13 @@
  * safety tasks preempt QM tasks.
  *
  * Mocks: None required (pure configuration)
+ *
+ * @note 2026-07-07 rate-monotonic re-band (docs/plans/memo-rm-reband-trace.md):
+ *       this suite asserts the Swc_Scheduler mirror table of SWR-CVC-032,
+ *       which is already period-monotonic and untouched by the re-band of
+ *       the generated Rte_Cfg runnable priorities. Expectations are
+ *       intentionally UNCHANGED; the generated-table order is verified by
+ *       tools/arxmlgen/tests/test_policy.py and test_os_generator.py.
  */
 #include "unity.h"
 

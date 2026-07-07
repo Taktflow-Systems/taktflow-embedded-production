@@ -8,6 +8,14 @@
  * Tests runnable count, CurrentMonitor at 1kHz highest priority,
  * safety runnables preempting QM, and total WCET under 80%.
  *
+ * @note 2026-07-07 rate-monotonic re-band (docs/plans/memo-rm-reband-trace.md):
+ *       this suite asserts the Swc_RzcScheduler mirror table of
+ *       SWR-RZC-028, already period-monotonic (CurrentMonitor 1 ms
+ *       Highest) and untouched by the re-band of the generated Rte_Cfg
+ *       priorities. Expectations are intentionally UNCHANGED; the
+ *       generated-table order is verified by
+ *       tools/arxmlgen/tests/test_policy.py and test_os_generator.py.
+ *
  * Mocks: Rte_Read, Rte_Write, all SWC MainFunctions, WdgM_MainFunction
  *
  * @standard AUTOSAR SWC pattern, ISO 26262 Part 6

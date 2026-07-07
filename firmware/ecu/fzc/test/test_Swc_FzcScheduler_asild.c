@@ -9,6 +9,13 @@
  * runnables at High priority, above QM), and WCET total utilization
  * under 80% of the shortest period.
  *
+ * @note 2026-07-07 rate-monotonic re-band (docs/plans/memo-rm-reband-trace.md):
+ *       this suite asserts the Swc_FzcScheduler mirror table of
+ *       SWR-FZC-029, already period-monotonic and untouched by the
+ *       re-band of the generated Rte_Cfg priorities. Expectations are
+ *       intentionally UNCHANGED; the generated-table order is verified by
+ *       tools/arxmlgen/tests/test_policy.py and test_os_generator.py.
+ *
  * No mocks needed — scheduler is a pure data table with accessors.
  */
 #include "unity.h"
