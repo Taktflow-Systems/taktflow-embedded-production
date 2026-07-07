@@ -191,6 +191,12 @@ BSW_SRCS = \
 # OSEK=1 and THREADX=1 are mutually exclusive (both ports own PendSV).
 ifdef OSEK
 CFLAGS += -DUSE_OSEK
+# Generated Os_Cfg_<Ecu>.h lives in the ECU cfg dir; the generated
+# Os_Cfg_<Ecu>.c / Rte_TaskBodies_<Ecu>.c TUs are already compiled by the
+# ECU_SRCS cfg wildcard in every variant (and dropped by --gc-sections in
+# default builds); only the header include path is OSEK-gated so the
+# default preprocessing environment is untouched.
+CFLAGS += -I$(ECU)/$(TARGET)/cfg
 OS_SRCS = \
     $(BSW)/os/bootstrap/src/Os_Core.c \
     $(BSW)/os/bootstrap/src/Os_Task.c \
