@@ -138,4 +138,5 @@ option is signed below and must not start before sign-off.
 
 ## Sign-off
 
-User decision: ____________________ (A / B), date: ____________
+User decision (2026-07-07): DEFERRED — revisit after STM32 cutover
+(S-OS-31) is complete and proven. Phase 4 remains blocked until then.

@@ -181,6 +181,9 @@ merge is not viable; the port work must be harvested file-wise.
     governing SC timing; each option lists audit-surface delta in LOC.
   - Gate: user approval (blocking for Phase 4 scope).
   - Definition of done: user has approved one option in the memo.
+  - Status (2026-07-07): user decision DEFERRED — revisit after the STM32
+    cutover (S-OS-31) is complete and proven; Phase 4 remains blocked
+    until then (recorded in decision-sc-osek-adoption.md sign-off).
 
 ### Phase 1 — Production OS configuration codegen (closes G1)
 
@@ -329,6 +332,9 @@ merge is not viable; the port work must be harvested file-wise.
   - Gate: SC safety case review (docs/safety/) + HIL report.
   - Definition of done: SC scheduling matches the approved option with
     evidence attached.
+  - Status (2026-07-07): blocked — S-OS-02 decision DEFERRED until after
+    S-OS-31 is complete and proven; do not start this step before a
+    signed A/B decision exists in decision-sc-osek-adoption.md.
 
 ### Phase 5 — Legacy retirement + safety documentation (closes G3)
 
