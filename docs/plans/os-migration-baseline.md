@@ -487,7 +487,7 @@ periodic execution is now the expectation):
        TaskSwitchCount grows by ~2 per period-task activation and
        PendSvCompleteCount tracks PendSvRequestCount; no HardFault, no
        CFSR/HFSR flags;
-   (e) WdgM checkpoints flow (no watchdog reset over a 30-minute soak)
+   (e) WdgM checkpoints flow (no watchdog reset over a 5-minute soak)
        and CAN traffic appears at the DBC periods (candump/PCAN trace vs
        SIL parity capture) — WdgM/E2E remain the detection nets for
        order/timing drift (S-OS-11 memo section 4.1 list);

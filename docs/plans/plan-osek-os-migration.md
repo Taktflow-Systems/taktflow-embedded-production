@@ -366,7 +366,8 @@ merge is not viable; the port work must be harvested file-wise.
   - Definition of done: all three STM32 images build with the kernel in.
 
 - **S-OS-31 STM32 on-target bringup of migrated mains**
-  - Goal: run the OSEK-scheduled mains on physical G474RE/F413ZH boards.
+  - Goal: run the OSEK-scheduled mains on the physical 3x G474RE boards
+    (CVC, FZC, RZC — all build STM32G474RETx per Makefile.stm32:89).
   - Inputs: S-OS-22 mains; S-OS-01 bringup tests; HIL bench.
   - Deliverables: HIL report `test/hil/reports/os-migration-stm32.md`
     (per-board: boot, task activation trace, ISR preemption check,
@@ -374,12 +375,46 @@ merge is not viable; the port work must be harvested file-wise.
     `SchM.h` STM32 branch delegating to `SuspendOSInterrupts`/
     `ResumeOSInterrupts` with its nesting test updated.
   - Acceptance criteria: the 6 bringup checks from `stm32-bringup-p3.md`
-    pass on CVC and RZC boards (two different STM32 families); 30-minute
+    pass on all three boards (CVC, FZC, RZC); 5-minute
     HIL soak with no HardFault, no WdgM reset, no E2E CRC faults at the
     receiving ECUs.
   - Gate: HIL soak report (Layer 4 hardware analogue).
   - Definition of done: mixed bench (physical STM32 + POSIX vECUs) runs
     the standard HIL scenario set green.
+
+- **S-OS-32 STM32F4 OSEK port bringup (F413ZH) — spare-board track**
+  - Goal: extend the OSEK kernel + STM32 Cortex-M4 port to build, link,
+    and run on the physical F413ZH board (currently NOT on the OSEK path).
+  - Inputs:
+    - `firmware/platform/stm32/` Cortex-M4 port (G474-validated, `fcf3188`)
+    - `firmware/platform/stm32f4/` (existing F4 CAN/diag bringup +
+      CubeMX/HAL: `Can_Hw_STM32F4.c`, `rzc_f4_hw_stm32f4.c`,
+      `Makefile.stm32f4`)
+    - `docs/lessons-learned/2026-03-23-hil-bringup-stm32f4-systick.md`
+    - F413ZH SYSCLK (RM0430) for the SC3 timebase override
+  - Deliverables:
+    - F4 OSEK build target: `firmware/platform/stm32f4/Makefile.stm32f4`
+      extended (or an `MCU=f4` variant of `Makefile.stm32`) compiling the
+      bootstrap kernel + Cortex-M4 port with `-DPLATFORM_STM32`, the F4
+      CubeMX config, `STM32F413xx` linker script, F4 HAL, startup/vectors
+    - SC3 timing-protection clock override
+      `-DOS_PORT_STM32_SC3_CPU_MHZ=<f413-sysclk>` wired into the F4
+      makefile (`Os_Port_Stm32_Sc3.c:55` default is 170 = G474)
+    - one migrated ECU main on the board — RZC (the F4 dir already carries
+      `rzc_f4_hw_stm32f4.c`); its `main.c` `USE_OSEK` path reused unchanged
+    - HIL report `test/hil/reports/os-migration-stm32f4.md`
+    - flash/RAM delta appended to `docs/plans/os-migration-baseline.md`
+  - Acceptance criteria:
+    - F413ZH image links within its flash/RAM budget; size delta recorded
+    - the 6 bringup checks from `stm32-bringup-p3.md` pass on the F413ZH
+      board (hardware pass is NOT inherited from G474RE)
+    - 5-minute HIL soak: no HardFault, no WdgM reset, no E2E CRC faults
+  - Gate: HIL soak report (Layer 4 hardware analogue).
+  - Definition of done: F413ZH board runs its OSEK-scheduled main green on
+    the mixed bench.
+  - Status (2026-07-08): OPEN, off the critical path. The 3x G474RE bench
+    (S-OS-31) is the primary target; F4 is a spare board and this step is
+    net-new port-adaptation work, not a flag flip.
 
 ### Phase 4 — SC (TMS570) per S-OS-02 decision
 
@@ -465,8 +500,9 @@ merge is not viable; the port work must be harvested file-wise.
 - Timing behavior shift: OSEK preemptive dispatch on STM32 changes WCET
   interleavings vs the cooperative loop; WdgM windows and E2E deadline
   checks are the detection net (S-OS-22/31 soak criteria).
-- Flash/RAM growth on F413ZH/G474RE (kernel + stacks per task) — measured
-  at S-OS-30 before committing further.
+- Flash/RAM growth on G474RE (kernel + stacks per task) — measured
+  at S-OS-30 before committing further. (STM32F4/F413ZH is not on the
+  OSEK path yet — see S-OS-32.)
 - `RTE_PERIOD_MS`-derived constants (e.g. RZC heartbeat cycles) assume
   the 1 ms tick survives; the OSEK system counter must keep a 1 ms base
   tick (encoded in S-OS-11 schedule-table design).
