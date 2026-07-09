@@ -26,6 +26,7 @@ from pipeline_diagnostics import (
     DiagnosticSeverity,
     PipelineDiagnostic,
     PipelineDiagnosticError,
+    portable_path,
 )
 
 
@@ -39,7 +40,7 @@ def parse_defines(filepath):
     if not os.path.isfile(filepath):
         return defines
     with open(filepath, "r", encoding="utf-8", errors="replace") as f:
-        for line in f:
+        for line_number, line in enumerate(f, start=1):
             line = line.strip()
             # Match: #define NAME value  or  #define NAME (expr)
             m = re.match(
@@ -61,6 +62,9 @@ def parse_defines(filepath):
                         severity=DiagnosticSeverity.ERROR,
                         source="C macro '%s' in '%s'" % (name, os.path.basename(filepath)),
                         message="numeric literal '%s' is invalid: %s" % (val, exc),
+                        path=portable_path(filepath),
+                        line=line_number,
+                        column=line.find(name) + 1,
                     )
                     raise PipelineDiagnosticError([diagnostic]) from exc
     return defines

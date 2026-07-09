@@ -21,6 +21,7 @@ import sys
 import os
 import json
 import re
+import tempfile
 from collections import Counter
 
 TOOLS_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -30,7 +31,12 @@ if TOOLS_DIR not in sys.path:
 import cantools
 import autosar_data as asr
 import autosar_data.abstraction as abst
-from pipeline_diagnostics import DiagnosticBag, PipelineDiagnosticError
+from pipeline_diagnostics import (
+    DiagnosticBag,
+    PipelineDiagnosticError,
+    locate_text,
+    portable_path,
+)
 from autosar_data.abstraction.communication import (
     CanAddressingMode, CanFrameType, CyclicTiming, IpduTiming,
     TransmissionModeTiming,
@@ -52,7 +58,30 @@ def dbc_byte_order(signal):
         return abst.ByteOrder.MostSignificantByteLast
     return abst.ByteOrder.MostSignificantByteFirst
 
-def get_msg_attr_value(msg, attr_name, default=None, diagnostics=None):
+def _location(path, *needles):
+    if not path:
+        return "", None, None
+    for needle in needles:
+        location = locate_text(path, str(needle))
+        if location[1] is not None:
+            return location
+    return portable_path(path), None, None
+
+
+def _portable_error(exc, *paths):
+    message = str(exc)
+    for path in paths:
+        if not path:
+            continue
+        replacement = portable_path(path)
+        message = message.replace(str(path), replacement)
+        message = message.replace(str(path).replace("\\", "/"), replacement)
+    return message
+
+
+def get_msg_attr_value(
+    msg, attr_name, default=None, diagnostics=None, source_path=None
+):
     """Get a message attribute or fail explicitly when its container is malformed."""
     try:
         attrs = msg.dbc.attributes
@@ -63,7 +92,11 @@ def get_msg_attr_value(msg, attr_name, default=None, diagnostics=None):
         if diagnostics is None:
             raise
         source = "DBC message '%s' attribute '%s'" % (msg.name, attr_name)
-        raise diagnostics.error("DBC001", source, "cannot read value: %s" % exc)
+        path, line, column = _location(source_path, msg.name, attr_name)
+        raise diagnostics.error(
+            "DBC001", source, "cannot read value: %s" % exc,
+            path=path, line=line, column=column,
+        )
     return default
 
 
@@ -71,7 +104,7 @@ KNOWN_GEN_ATTRIBUTES = {"GenMsgCycleTime", "GenMsgSendType"}
 SUPPORTED_SEND_TYPES = {"cyclic", "event", "nomsgsendtype"}
 
 
-def validate_dbc_input(database, diagnostics):
+def validate_dbc_input(database, diagnostics, source_path=None):
     """Reject ambiguous names and values before any AUTOSAR object is created."""
     normalized_messages = {}
     normalized_signals = {}
@@ -81,8 +114,10 @@ def validate_dbc_input(database, diagnostics):
         if previous is not None and previous != msg.name:
             names = sorted((previous, msg.name))
             source = "DBC messages '%s', '%s'" % tuple(names)
+            path, line, column = _location(source_path, *names)
             raise diagnostics.error(
-                "DBC002", source, "normalize to the same SHORT-NAME '%s'" % normalized
+                "DBC002", source, "normalize to the same SHORT-NAME '%s'" % normalized,
+                path=path, line=line, column=column,
             )
         normalized_messages[normalized] = msg.name
 
@@ -90,42 +125,53 @@ def validate_dbc_input(database, diagnostics):
             if getattr(sig, "is_multiplexer", False) or getattr(
                 sig, "multiplexer_ids", None
             ):
+                path, line, column = _location(source_path, sig.name, msg.name)
                 raise diagnostics.error(
                     "DBC007",
                     "DBC message '%s' signal '%s'" % (msg.name, sig.name),
                     "multiplexing requires a MULTIPLEXED-I-PDU representation",
+                    path=path, line=line, column=column,
                 )
             signal_name = safe_name(sig.name)
             previous_signal = normalized_signals.get(signal_name)
             if previous_signal is not None and previous_signal != sig.name:
                 names = sorted((previous_signal, sig.name))
                 source = "DBC signals '%s', '%s'" % tuple(names)
+                path, line, column = _location(source_path, *names)
                 raise diagnostics.error(
                     "DBC002",
                     source,
                     "normalize to the same SHORT-NAME '%s'" % signal_name,
+                    path=path, line=line, column=column,
                 )
             normalized_signals[signal_name] = sig.name
 
         send_type = get_msg_attr_value(
-            msg, "GenMsgSendType", None, diagnostics=diagnostics
+            msg, "GenMsgSendType", None, diagnostics=diagnostics,
+            source_path=source_path,
         )
         if send_type is not None:
             normalized_send_type = str(send_type).strip().lower()
             if normalized_send_type not in SUPPORTED_SEND_TYPES:
                 source = "DBC message '%s' attribute 'GenMsgSendType'" % msg.name
+                path, line, column = _location(
+                    source_path, '"GenMsgSendType"', msg.name
+                )
                 raise diagnostics.error(
-                    "DBC003", source, "unsupported value '%s'" % send_type
+                    "DBC003", source, "unsupported value '%s'" % send_type,
+                    path=path, line=line, column=column,
                 )
 
     dbc_specifics = getattr(database, "dbc", None)
     definitions = getattr(dbc_specifics, "attribute_definitions", {}) or {}
     for name in sorted(definitions):
         if name.startswith("Gen") and name not in KNOWN_GEN_ATTRIBUTES:
+            path, line, column = _location(source_path, name)
             diagnostics.warning(
                 "DBC004",
                 "DBC attribute definition '%s'" % name,
                 "convention is not interpreted by this pipeline",
+                path=path, line=line, column=column,
             )
 
 def signal_idt_name(sig):
@@ -172,13 +218,16 @@ class Dbc2Arxml:
 
     def __init__(self, dbc_path, ecu_model_path=None):
         self.diagnostics = DiagnosticBag()
+        self.source_path = dbc_path
         try:
             self.db = cantools.database.load_file(dbc_path)
         except Exception as exc:
             raise self.diagnostics.error(
-                "DBC000", "DBC input", "cannot parse input: %s" % exc
+                "DBC000", "DBC input",
+                "cannot parse input: %s" % _portable_error(exc, dbc_path),
+                path=portable_path(dbc_path),
             ) from exc
-        validate_dbc_input(self.db, self.diagnostics)
+        validate_dbc_input(self.db, self.diagnostics, dbc_path)
         for diagnostic in self.diagnostics.items:
             print(str(diagnostic), file=sys.stderr)
         self._signal_name_counts = Counter(
@@ -227,7 +276,9 @@ class Dbc2Arxml:
                     self.ecu_model = json.load(f)
             except (OSError, TypeError, ValueError) as exc:
                 raise self.diagnostics.error(
-                    "MODEL001", "ECU model", "cannot read JSON: %s" % exc
+                    "MODEL001", "ECU model",
+                    "cannot read JSON: %s" % _portable_error(exc, ecu_model_path),
+                    path=portable_path(ecu_model_path),
                 ) from exc
 
         self._build_routing_maps()
@@ -269,25 +320,64 @@ class Dbc2Arxml:
         self.convert_base()
         self.convert_enrich()
 
-    def _fail(self, code, source, action, exc):
+    def _fail(self, code, source, action, exc, location_path=None):
         """Stop conversion with one stable, object-addressed diagnostic."""
+        source_path = location_path or getattr(self, "source_path", "")
+        needles = re.findall(r"'([^']+)'", source)
+        normalized_needles = [item.rsplit("/", 1)[-1] for item in needles]
+        path, line, column = _location(source_path, *reversed(normalized_needles))
+        detail = _portable_error(exc, source_path)
         raise self.diagnostics.error(
-            code, source, "%s: %s" % (action, exc)
+            code, source, "%s: %s" % (action, detail),
+            path=path, line=line, column=column,
         ) from exc
 
     def _message_attr(self, msg, name, default=None):
-        return get_msg_attr_value(msg, name, default, self.diagnostics)
+        return get_msg_attr_value(
+            msg, name, default, self.diagnostics, self.source_path
+        )
 
     def write(self, output_dir, output_name="TaktflowSystem.arxml"):
-        """Write ARXML file to output directory."""
+        """Atomically replace the output after complete serialization."""
         self.diagnostics.raise_if_errors()
         os.makedirs(output_dir, exist_ok=True)
         files = self.am.model.serialize_files()
-        for _fn, content in files.items():
-            filepath = os.path.join(output_dir, output_name)
-            with open(filepath, "w", encoding="utf-8") as f:
-                f.write(content)
-            print("  Written: %s (%d bytes)" % (filepath, len(content)))
+        if len(files) != 1:
+            raise self.diagnostics.error(
+                "ARXML018", "serialized ARXML model",
+                "expected one output file, got %d" % len(files),
+            )
+        content = next(iter(files.values()))
+        filepath = os.path.join(output_dir, output_name)
+        temp_path = None
+        try:
+            fd, temp_path = tempfile.mkstemp(
+                prefix=".%s." % output_name,
+                suffix=".tmp",
+                dir=output_dir,
+                text=True,
+            )
+            with os.fdopen(fd, "w", encoding="utf-8", newline="") as stream:
+                stream.write(content)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temp_path, filepath)
+            temp_path = None
+        except (OSError, UnicodeError) as exc:
+            cleanup_error = None
+            if temp_path and os.path.exists(temp_path):
+                try:
+                    os.unlink(temp_path)
+                except OSError as cleanup_exc:
+                    cleanup_error = cleanup_exc
+            action = "atomic write failed"
+            if cleanup_error is not None:
+                action += "; temporary-file cleanup also failed"
+            self._fail(
+                "IO001", "ARXML output '%s'" % output_name,
+                action, exc, location_path=output_name,
+            )
+        print("  Written: %s (%d bytes)" % (portable_path(filepath), len(content)))
 
     # -- Platform data types ------------------------------------------------
 
@@ -749,6 +839,8 @@ class Dbc2Arxml:
                         run_map.get(swc_info["name"], []),
                         tx_sigs, rx_sigs,
                     )
+                except PipelineDiagnosticError:
+                    raise
                 except Exception as exc:
                     self._fail(
                         "ARXML014", "SWC '%s/%s'" % (eu, swc_info["name"]),
@@ -907,9 +999,9 @@ def main():
         print("Error: DBC file not found: %s" % args.dbc)
         return 1
 
-    print("Converting %s -> ARXML (step=%s)..." % (args.dbc, args.step))
+    print("Converting %s -> ARXML (step=%s)..." % (portable_path(args.dbc), args.step))
     if args.model:
-        print("  ECU model: %s" % args.model)
+        print("  ECU model: %s" % portable_path(args.model))
     else:
         print("  WARNING: no ECU model JSON given — SWC model will NOT be "
               "merged.\n"

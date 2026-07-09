@@ -8,6 +8,7 @@ with any ARXML layout that follows the R4.0+ schema.
 from __future__ import annotations
 
 import os
+import re
 import sys
 from collections import defaultdict
 
@@ -19,6 +20,8 @@ try:
         DiagnosticSeverity,
         PipelineDiagnostic,
         PipelineDiagnosticError,
+        locate_text,
+        portable_path,
     )
 except ModuleNotFoundError:
     from pipeline_diagnostics import (
@@ -26,6 +29,8 @@ except ModuleNotFoundError:
         DiagnosticSeverity,
         PipelineDiagnostic,
         PipelineDiagnosticError,
+        locate_text,
+        portable_path,
     )
 
 from .config import ProjectConfig
@@ -68,8 +73,18 @@ class ArxmlReader:
         """Read all ARXML files and build the project model."""
         # Load ARXML
         for arxml_path in self.config.arxml_paths:
-            self.model.load_file(arxml_path)
+            try:
+                self.model.load_file(arxml_path)
+            except Exception as exc:
+                self._fail(
+                    "ARXML100", "ARXML input",
+                    "cannot parse or load model", exc,
+                    location_path=arxml_path,
+                )
             _info(f"  Loaded: {os.path.basename(arxml_path)}")
+
+        self._reject_unsupported_pdu_constructs()
+        self._reject_broken_references()
 
         # Load DBC for TX/RX routing (optional but recommended)
         if self.config.dbc_path:
@@ -168,6 +183,44 @@ class ArxmlReader:
                 _info(f"    ... and {len(self.warnings) - 10} more")
 
         return project
+
+    def _reject_unsupported_pdu_constructs(self):
+        """Reject valid AUTOSAR PDU kinds that this C model cannot represent."""
+        unsupported = {
+            "CONTAINER-I-PDU",
+            "DCM-I-PDU",
+            "GENERAL-PURPOSE-I-PDU",
+            "MULTIPLEXED-I-PDU",
+            "NM-PDU",
+            "N-PDU",
+            "SECURED-I-PDU",
+        }
+        for item in self.model.elements_dfs:
+            elem = item[1] if isinstance(item, tuple) else item
+            element_name = str(getattr(elem, "element_name", ""))
+            if element_name not in unsupported:
+                continue
+            object_path = getattr(elem, "path", "") or element_name
+            self._fail(
+                "ARXML111",
+                "%s '%s'" % (element_name, object_path),
+                "construct is unsupported by the generated C communication model",
+                element=elem,
+            )
+
+    def _reject_broken_references(self):
+        """Reject every unresolved AUTOSAR reference before model extraction."""
+        errors = self.model.check_references()
+        if not errors:
+            return
+        element = errors[0]
+        target = getattr(element, "character_data", "") or "<missing target>"
+        self._fail(
+            "ARXML102",
+            "ARXML reference '%s'" % target,
+            "%d unresolved reference(s) prevent C generation" % len(errors),
+            element=element,
+        )
 
     # ------------------------------------------------------------------
     # DBC routing
@@ -412,7 +465,7 @@ class ArxmlReader:
                         except (TypeError, ValueError) as exc:
                             self._fail(
                                 "ARXML101", "CAN frame triggering '%s' identifier" % path,
-                                "value is not an integer", exc,
+                                "value is not an integer", exc, element=elem,
                             )
                     elif sub.element_name == "FRAME-REF" and sub.is_reference:
                         try:
@@ -420,17 +473,27 @@ class ArxmlReader:
                         except Exception as exc:
                             self._fail(
                                 "ARXML102", "CAN frame triggering '%s' FRAME-REF" % path,
-                                "reference cannot be resolved", exc,
+                                "reference cannot be resolved", exc, element=elem,
                             )
 
-                if frame_ref_path and can_id is not None:
-                    self._frame_can_ids[frame_ref_path] = can_id
+                if can_id is None:
+                    self._fail(
+                        "ARXML112", "CAN frame triggering '%s'" % path,
+                        "required IDENTIFIER is missing", element=elem,
+                    )
+                if frame_ref_path is None:
+                    self._fail(
+                        "ARXML102", "CAN frame triggering '%s'" % path,
+                        "required FRAME-REF is missing or unresolved", element=elem,
+                    )
+                self._frame_can_ids[frame_ref_path] = can_id
 
     def _extract_frames(self):
         """Extract CAN frames to get DLC and PDU-to-frame mapping."""
         for path, elem in self.model.identifiable_elements:
             if elem.element_name in ("CAN-FRAME", "FRAME"):
-                dlc = 8
+                dlc = None
+                mapped_pdu = False
                 for sub in elem.sub_elements:
                     if sub.element_name == "FRAME-LENGTH":
                         try:
@@ -438,24 +501,48 @@ class ArxmlReader:
                         except (TypeError, ValueError) as exc:
                             self._fail(
                                 "ARXML103", "CAN frame '%s' length" % path,
-                                "value is not an integer", exc,
+                                "value is not an integer", exc, element=elem,
                             )
                     elif sub.element_name == "PDU-TO-FRAME-MAPPINGS":
                         for mapping in sub.sub_elements:
                             if mapping.element_name == "PDU-TO-FRAME-MAPPING":
+                                mapping_has_pdu = False
                                 for m_sub in mapping.sub_elements:
                                     if m_sub.element_name == "PDU-REF" and m_sub.is_reference:
                                         try:
                                             pdu_path = m_sub.reference_target.path
                                             self._pdu_to_frame[pdu_path] = path
                                             self._frame_to_pdu[path] = pdu_path
+                                            mapping_has_pdu = True
+                                            mapped_pdu = True
                                         except Exception as exc:
                                             self._fail(
                                                 "ARXML102",
                                                 "CAN frame '%s' PDU-REF" % path,
                                                 "reference cannot be resolved", exc,
+                                                element=mapping,
                                             )
+                                    elif m_sub.element_name == "PDU-REF":
+                                        self._fail(
+                                            "ARXML102", "CAN frame '%s' PDU-REF" % path,
+                                            "reference cannot be resolved", element=mapping,
+                                        )
+                                if not mapping_has_pdu:
+                                    self._fail(
+                                        "ARXML102", "CAN frame '%s' mapping" % path,
+                                        "required PDU-REF is missing", element=mapping,
+                                    )
 
+                if dlc is None:
+                    self._fail(
+                        "ARXML112", "CAN frame '%s'" % path,
+                        "required FRAME-LENGTH is missing", element=elem,
+                    )
+                if not mapped_pdu:
+                    self._fail(
+                        "ARXML113", "CAN frame '%s'" % path,
+                        "has no PDU-to-frame routing", element=elem,
+                    )
                 self._frame_dlcs[path] = dlc
 
         # Resolve PDU → CAN ID via PDU → frame → CAN ID
@@ -487,7 +574,7 @@ class ArxmlReader:
                 continue
 
             pdu_name = elem.item_name
-            pdu_length = 8
+            pdu_length = None
 
             signals = []
             for sub in elem.sub_elements:
@@ -497,7 +584,7 @@ class ArxmlReader:
                     except (TypeError, ValueError) as exc:
                         self._fail(
                             "ARXML104", "I-PDU '%s' length" % path,
-                            "value is not an integer", exc,
+                            "value is not an integer", exc, element=elem,
                         )
                 elif sub.element_name in ("I-SIGNAL-TO-PDU-MAPPINGS", "I-SIGNAL-TO-I-PDU-MAPPINGS"):
                     for mapping in sub.sub_elements:
@@ -505,8 +592,18 @@ class ArxmlReader:
                         if sig:
                             signals.append(sig)
 
-            can_id = self._pdu_to_can_id.get(path, 0)
-            dlc = self._pdu_to_dlc.get(path, pdu_length)
+            if pdu_length is None:
+                self._fail(
+                    "ARXML112", "I-PDU '%s'" % path,
+                    "required LENGTH is missing", element=elem,
+                )
+            if path not in self._pdu_to_can_id or path not in self._pdu_to_dlc:
+                self._fail(
+                    "ARXML113", "I-PDU '%s'" % path,
+                    "has no complete CAN frame routing", element=elem,
+                )
+            can_id = self._pdu_to_can_id[path]
+            dlc = self._pdu_to_dlc[path]
 
             # Check E2E: if any signal name contains E2E_DataID, mark PDU
             e2e = any("E2E_DataID" in s.name for s in signals)
@@ -668,8 +765,9 @@ class ArxmlReader:
     def _parse_signal_mapping(self, mapping_elem) -> Signal | None:
         """Parse an I-SIGNAL-TO-I-PDU-MAPPING element into a Signal."""
         name = ""
-        bit_pos = 0
-        sig_length = 8
+        bit_pos = None
+        sig_length = None
+        signal_ref_seen = False
         byte_order = "little_endian"
 
         for sub in mapping_elem.sub_elements:
@@ -681,13 +779,18 @@ class ArxmlReader:
                 except (TypeError, ValueError) as exc:
                     self._fail(
                         "ARXML105", "signal mapping '%s' start position" % name,
-                        "value is not an integer", exc,
+                        "value is not an integer", exc, element=mapping_elem,
                     )
             elif sub.element_name == "PACKING-BYTE-ORDER":
                 if sub.character_data and "MOST-SIGNIFICANT-BYTE-FIRST" in sub.character_data:
                     byte_order = "big_endian"
-            elif sub.element_name == "I-SIGNAL-REF" and sub.is_reference:
-                # Get signal length from the ISignal element
+            elif sub.element_name == "I-SIGNAL-REF":
+                signal_ref_seen = True
+                if not sub.is_reference:
+                    self._fail(
+                        "ARXML102", "signal mapping '%s' I-SIGNAL-REF" % name,
+                        "reference cannot be resolved", element=mapping_elem,
+                    )
                 try:
                     isignal = sub.reference_target
                     for isub in isignal.sub_elements:
@@ -696,11 +799,29 @@ class ArxmlReader:
                 except Exception as exc:
                     self._fail(
                         "ARXML102", "signal mapping '%s' I-SIGNAL-REF" % name,
-                        "reference or signal length cannot be resolved", exc,
+                        "reference cannot be resolved", exc, element=mapping_elem,
                     )
 
         if not name:
-            return None
+            self._fail(
+                "ARXML112", "I-SIGNAL mapping",
+                "required SHORT-NAME is missing", element=mapping_elem,
+            )
+        if bit_pos is None:
+            self._fail(
+                "ARXML112", "signal mapping '%s'" % name,
+                "required START-POSITION is missing", element=mapping_elem,
+            )
+        if not signal_ref_seen:
+            self._fail(
+                "ARXML102", "signal mapping '%s'" % name,
+                "required I-SIGNAL-REF is missing", element=mapping_elem,
+            )
+        if sig_length is None:
+            self._fail(
+                "ARXML112", "signal mapping '%s' referenced I-SIGNAL" % name,
+                "required LENGTH is missing", element=mapping_elem,
+            )
 
         # Determine C data type from bit size
         data_type = _bits_to_c_type(sig_length)
@@ -1309,15 +1430,123 @@ class ArxmlReader:
     # ------------------------------------------------------------------
 
     def _warn(self, msg: str, code: str = "PIPELINE001", source: str = "ARXML reader"):
-        diagnostic = self.diagnostics.warning(code, source, msg)
+        path, line, column = self._source_location(source)
+        diagnostic = self.diagnostics.warning(
+            code, source, msg, path=path, line=line, column=column
+        )
         self.warnings.append(str(diagnostic))
 
-    def _fail(self, code: str, source: str, message: str, exc=None):
+    def _element_location(self, element):
+        if element is None:
+            return "", None, None
+        membership = getattr(element, "file_membership", (False, frozenset()))
+        files = membership[1] if len(membership) > 1 else frozenset()
+        filenames = sorted(
+            str(getattr(item, "filename", "")) for item in files
+            if getattr(item, "filename", "")
+        )
+        if not filenames:
+            return "", None, None
+
+        cursor = element
+        needle = ""
+        while cursor is not None:
+            try:
+                needle = getattr(cursor, "item_name", "") or ""
+            except Exception as exc:
+                needle = ""
+                _ = exc
+            if needle:
+                break
+            cursor = getattr(cursor, "parent", None)
+
+        filename = filenames[0]
+        if needle:
+            location = locate_text(
+                filename, "<SHORT-NAME>%s</SHORT-NAME>" % needle
+            )
+            if location[1] is not None:
+                return location
+            return locate_text(filename, needle)
+        return portable_path(filename), None, None
+
+    def _source_location(self, source, element=None, location_path=None):
+        element_location = self._element_location(element)
+        if element_location[0]:
+            return element_location
+
+        if location_path:
+            candidate = location_path
+        elif source.lower().startswith("sidecar") and self.config.sidecar_path:
+            candidate = self.config.sidecar_path
+        elif source.startswith("DBC") and self.config.dbc_path:
+            candidate = self.config.dbc_path
+        elif self.config.arxml_paths:
+            candidate = self.config.arxml_paths[0]
+        else:
+            return "", None, None
+
+        quoted = re.findall(r"'([^']+)'", source)
+        needle = quoted[-1].rsplit("/", 1)[-1] if quoted else ""
+        if needle:
+            location = locate_text(candidate, needle)
+            if location[1] is not None:
+                return location
+        return portable_path(candidate), None, None
+
+    def _portable_exception(self, exc):
+        message = str(exc)
+        paths = list(self.config.arxml_paths)
+        paths.extend(
+            path for path in (self.config.dbc_path, self.config.sidecar_path) if path
+        )
+        for path in paths:
+            replacement = portable_path(path)
+            message = message.replace(str(path), replacement)
+            message = message.replace(str(path).replace("\\", "/"), replacement)
+        return message
+
+    def _fail(
+        self,
+        code: str,
+        source: str,
+        message: str,
+        exc=None,
+        *,
+        element=None,
+        location_path=None,
+    ):
+        path, line, column = self._source_location(
+            source, element=element, location_path=location_path
+        )
+        detail = self._portable_exception(exc) if exc is not None else ""
+        if exc is not None and line is None:
+            coordinates = re.search(
+                r"line\s+(\d+)(?:,|:)\s*column\s+(\d+)", detail,
+                flags=re.IGNORECASE,
+            )
+            if coordinates:
+                line = int(coordinates.group(1))
+                column = int(coordinates.group(2))
+            else:
+                coordinates = re.search(
+                    r"\b[^:\s]+:(\d+)(?::(\d+))?:", detail
+                )
+                if coordinates:
+                    line = int(coordinates.group(1))
+                    column = (
+                        int(coordinates.group(2))
+                        if coordinates.group(2) is not None
+                        else None
+                    )
         diagnostic = PipelineDiagnostic(
             code=code,
             severity=DiagnosticSeverity.ERROR,
             source=source,
-            message="%s: %s" % (message, exc) if exc is not None else message,
+            message="%s: %s" % (message, detail) if exc is not None else message,
+            path=path,
+            line=line,
+            column=column,
         )
         self.diagnostics.add(diagnostic)
         error = ArxmlReadError([diagnostic])

@@ -268,8 +268,19 @@ autosar-data API. Extended CAN identifiers are emitted with extended
 addressing, repeated public-corpus signal names are deterministically
 namespaced, and unsupported multiplexing exits with `DBC007` before emission.
 The corpus harness recognizes only that allowlisted typed rejection as a skip:
-three fixtures convert, two skip with reasons and none crash. All 335 combined
-tests pass.
+three fixtures convert, two skip with reasons and none crash.
+
+A read-only side review then identified six P3 gaps. The corrective pass now
+rejects every unresolved AUTOSAR reference before extraction with `ARXML102`,
+rejects unsupported `MULTIPLEXED-I-PDU` and other unmodeled PDU kinds with
+`ARXML111`, requires frame/PDU/signal lengths, start positions and routing,
+preserves nested `ARXML015`/`ARXML016`/`ARXML017` failures, and atomically
+replaces ARXML output without damaging a previous valid file. Diagnostics now
+carry portable path, line and column fields with best-effort source lookup and
+path-scrubbed exception text. Positive E2E coverage again verifies the 16
+explicit DBC IDs, all heartbeat IDs, RX/TX inheritance, ECU/PDU parity and
+DBC-versus-sidecar equality using a completed-DBC test fixture. All 345
+combined tests pass after the corrective review.
 
 ### P4 - Strict schema validation gate - PENDING
 

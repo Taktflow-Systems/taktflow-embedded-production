@@ -20,7 +20,7 @@ from pipeline_diagnostics import (  # noqa: E402
     PipelineDiagnostic,
     PipelineDiagnosticError,
 )
-from arxml.dbc2arxml import validate_dbc_input  # noqa: E402
+from arxml.dbc2arxml import Dbc2Arxml, validate_dbc_input  # noqa: E402
 from arxml.swc_extractor import parse_defines  # noqa: E402
 from arxmlgen.config import ProjectConfig  # noqa: E402
 from arxmlgen.model import Ecu  # noqa: E402
@@ -49,6 +49,22 @@ def test_diagnostic_rendering_is_stable():
     assert str(diagnostic) == (
         "[DBC003] error DBC message 'BrakeCmd' attribute "
         "'GenMsgSendType': unsupported value 'sporadic'"
+    )
+
+
+def test_diagnostic_renders_portable_coordinates():
+    diagnostic = PipelineDiagnostic(
+        code="ARXML102",
+        severity=DiagnosticSeverity.ERROR,
+        source="ARXML reference '/Communication/Missing'",
+        message="reference cannot be resolved",
+        path="fixtures/broken.arxml",
+        line=42,
+        column=17,
+    )
+
+    assert str(diagnostic).startswith(
+        "[ARXML102] error fixtures/broken.arxml:42:17 ARXML reference"
     )
 
 
@@ -127,7 +143,10 @@ BA_ \"GenMsgSendType\" BO_ 1 \"sporadic\";
     )
 
     assert completed.returncode == 2
-    assert "[DBC003] error DBC message 'BrakeCmd' attribute 'GenMsgSendType'" in (
+    assert (
+        "[DBC003] error unsupported-send-type.dbc:7:13 "
+        "DBC message 'BrakeCmd' attribute 'GenMsgSendType'"
+    ) in (
         completed.stdout + completed.stderr
     )
     assert not (output_dir / "TaktflowSystem.arxml").exists()
@@ -163,7 +182,10 @@ BA_ \"GenMsgCycleTime\" BO_ 1 \"fast\";
     )
 
     assert completed.returncode == 2
-    assert "[DBC001] error DBC message 'BrakeCmd' attribute 'GenMsgCycleTime'" in (
+    assert (
+        "[DBC001] error malformed-cycle.dbc:7:14 "
+        "DBC message 'BrakeCmd' attribute 'GenMsgCycleTime'"
+    ) in (
         completed.stdout + completed.stderr
     )
     assert not (output_dir / "TaktflowSystem.arxml").exists()
@@ -220,6 +242,91 @@ def test_reader_rejects_broken_signal_reference():
         reader._parse_signal_mapping(mapping)
 
     assert exc_info.value.diagnostics[0].code == "ARXML102"
+
+
+def test_reader_rejects_missing_signal_reference():
+    reader = ArxmlReader(ProjectConfig())
+    mapping = SimpleNamespace(
+        sub_elements=[
+            SimpleNamespace(element_name="SHORT-NAME", character_data="BrakeRequest"),
+            SimpleNamespace(element_name="START-POSITION", character_data="0"),
+        ]
+    )
+
+    with pytest.raises(ArxmlReadError) as exc_info:
+        reader._parse_signal_mapping(mapping)
+
+    assert exc_info.value.diagnostics[0].code == "ARXML102"
+
+
+def test_reader_rejects_unsupported_pdu_construct():
+    reader = ArxmlReader(ProjectConfig())
+    multiplexed = SimpleNamespace(
+        element_name="MULTIPLEXED-I-PDU",
+        path="/Communication/MuxPdu",
+    )
+    reader.model = SimpleNamespace(elements_dfs=[multiplexed])
+
+    with pytest.raises(ArxmlReadError) as exc_info:
+        reader._reject_unsupported_pdu_constructs()
+
+    assert exc_info.value.diagnostics[0].code == "ARXML111"
+
+
+def test_swc_nested_diagnostic_code_is_preserved():
+    converter = Dbc2Arxml.__new__(Dbc2Arxml)
+    converter.ecu_model = {
+        "ecus": {
+            "brake": {
+                "runnables": [],
+                "swcs": [{"name": "Swc_Brake", "functions": []}],
+            }
+        }
+    }
+    converter.am = SimpleNamespace(get_or_create_package=lambda _path: object())
+    converter.ecu_tx_signals = {}
+    converter.ecu_rx_signals = {}
+    nested = PipelineDiagnostic(
+        "ARXML015",
+        DiagnosticSeverity.ERROR,
+        "SWC 'BRK_Swc_Brake' P-port 'BrakeRequest'",
+        "cannot create port",
+    )
+
+    def fail_with_nested_code(*_args):
+        raise PipelineDiagnosticError([nested])
+
+    converter._create_one_swc = fail_with_nested_code
+
+    with pytest.raises(PipelineDiagnosticError) as exc_info:
+        converter._create_swc_types()
+
+    assert exc_info.value.diagnostics[0].code == "ARXML015"
+
+
+def test_atomic_write_failure_preserves_existing_output(tmp_path, monkeypatch):
+    output = tmp_path / "TaktflowSystem.arxml"
+    output.write_text("known-good", encoding="utf-8")
+    converter = Dbc2Arxml.__new__(Dbc2Arxml)
+    converter.diagnostics = DiagnosticBag()
+    converter.source_path = "input.dbc"
+    converter.am = SimpleNamespace(
+        model=SimpleNamespace(
+            serialize_files=lambda: {"generated.arxml": "replacement"}
+        )
+    )
+
+    def fail_replace(_source, _target):
+        raise OSError("simulated replace failure")
+
+    monkeypatch.setattr("arxml.dbc2arxml.os.replace", fail_replace)
+
+    with pytest.raises(PipelineDiagnosticError) as exc_info:
+        converter.write(tmp_path)
+
+    assert exc_info.value.diagnostics[0].code == "IO001"
+    assert output.read_text(encoding="utf-8") == "known-good"
+    assert not list(tmp_path.glob(".*.tmp"))
 
 
 def test_extractor_rejects_malformed_numeric_macro(tmp_path):
