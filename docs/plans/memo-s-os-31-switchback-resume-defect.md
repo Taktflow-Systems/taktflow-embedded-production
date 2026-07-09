@@ -280,13 +280,53 @@ POSIX paths unchanged).
   (no HardFault), PendSvReq==PendSvCplt (CVC 639060 / FZC 69059 / RZC 639059).
   The CVC scenario that deterministically INVSTATE-HardFaulted at the first
   5000ms activation before the fix now soaks 5 min clean. Report:
-  `test/hil/reports/os-migration-stm32.md`. PARTIAL: CAN-parity-vs-SIL
-  (candump can0 on the HIL Pi) + E2E-CRC checks at receiving ECUs remain OPEN
-  for a follow-up full-bench HIL run (boards verified standalone via SWD).
-  Note: the CVC ST-Link SWD session wedged once (LIBUSB_ERROR_TIMEOUT) under
-  aggressive repeated connect-under-reset + a hard-killed gdb; recovered after
-  clearing handles + ~15 s USB settle. Prefer one clean st-util session per
-  board.
+  `test/hil/reports/os-migration-stm32.md`. Note: the CVC ST-Link SWD session
+  wedged once (LIBUSB_ERROR_TIMEOUT) under aggressive repeated
+  connect-under-reset + a hard-killed gdb; recovered after clearing handles +
+  ~15 s USB settle. Prefer one clean st-util session per board.
+
+- **S-OS-31 REOPENED (2026-07-09) — FIX-05 on-target PASS was a gdb-breakpoint
+  FALSE PASS; free-running RZC still HardFaults (INVSTATE).** During the
+  CAN-parity + E2E HIL run, observing the boards FREE-RUNNING (no debugger)
+  revealed the switchback defect is NOT resolved on target:
+  - The FIX-05 "5-min soak PASS" was captured with a gdb breakpoint on
+    `Os_Task_<Ecu>_5000ms`. That halt at the 5000ms activation — the race onset
+    (§7) — freezes the watchdog and reorders interrupts, MASKING the fault.
+  - **RZC free-running HardFaults with the SAME INVSTATE signature** as the
+    original bug (§2.4): `CFSR=0x00020000` (UFSR INVSTATE), `HFSR=0x40000000`
+    (FORCED), `EXC_RETURN=0xFFFFFFFD`, `SelectedNextTask=255` (INVALID). gdb
+    caught the core parked in `HardFault_Handler`, backtrace
+    `HardFault_Handler ← Os_Port_Stm32_StartFirstTaskAsm (Os_Port_Stm32_Asm.S:58)
+    ← Os_PortStartFirstTask (Os_Port_Stm32.c:495) ← StartOS ← main` — i.e. in
+    the FIRST-TASK-LAUNCH path (not only the terminate path). RZC boots into
+    `BSWM_RUN` (bswm=1), emits a ~200 ms window of normal 50 ms 0x012
+    heartbeats, then faults and goes silent. `RCC_CSR=0x1C000000` (SFTRSTF +
+    BORRSTF + PINRSTF; NO IWDG/WWDG) — software/fault-driven resets.
+  - **FZC also resets free-running** (ran the 60 s parity soak, later caught at
+    `Reset_Handler`, `wdgm=FAILED`). Only CVC sustained continuous TX.
+  - CORRECTION to an earlier draft: the "RZC self-test fails on absent physical
+    motor sensors → no BSWM_RUN" framing was WRONG. The STM32 sensor self-tests
+    are STUBS returning `E_OK` (`rzc_hw_stm32.c:295-370`; only the CAN
+    internal-loopback item is real), RZC PASSES self-test and reaches RUN, and
+    its silence is the INVSTATE HardFault above.
+  - What IS real evidence: CVC + FZC CAN frame-set/period parity at the exact
+    DBC periods (60 s soak, 43 274 frames) and advancing E2E senders on-bus —
+    but the acceptance ("no HardFault over a soak") is NOT met.
+  - NEXT: (1) reproduce on a clean single-flash free-run (this session heavily
+    perturbed the bench); (2) re-open FIX-03/04 — the launch path
+    `Os_PortStartFirstTask`/`StartFirstTaskAsm` INVSTATE means the first-task
+    initial frame or its `SavedContextValid`/resume gate is bad at launch, not
+    only at terminate; (3) re-run the soak FREE-RUNNING / bus-observed, never
+    with a per-activation breakpoint.
+  - Bench lessons: killing an st-util/gdb handle wedges that board's SWD
+    (chip-ID 0 on next `--no-reset`); `st-flash --connect-under-reset` recovers
+    it. OSEK idle-task WFI blocks a `--no-reset` attach (use connect-under-reset
+    on a running board); a board parked in `HardFault_Handler while(1)` IS
+    `--no-reset`-attachable (core awake). gdb `continue` from a
+    connect-under-reset `Reset_Handler` does not re-run the schedule like a
+    hardware `st-flash reset` (period-task breakpoints never hit). gdb
+    attachment FREEZES the watchdog — a soak under gdb can hide a
+    watchdog/fault reset that occurs free-running.
 
 ## 6. Risks / open questions
 - Exact desync locus (F-C) not yet pinned to a single push/pop; catching the
@@ -371,3 +411,171 @@ CAVEAT (carried to FIX-05): host-green is necessary but NOT sufficient. The
 on-target 3x G474RE soak remains the acceptance gate — the host model does not
 stack real registers (`ResolvePendSvTarget` moves pointers, it does not run
 STMDB), so the literal zeroed-byte outcome is only reproducible on silicon.
+
+## 8. Reopened-defect static triage (2026-07-09, session 2 — post-free-run)
+
+Follow-up static review of the free-run reopen (section 5a last entry). Scope:
+re-examine the "first-task-launch path" localization, audit every stage/consume
+seam of the FIX-02/03/04 gates, and derive the next implementation steps.
+No firmware was changed in this session (plan-first; steps in 8.5).
+
+### 8.1 The "launch path" localization is UNSOUND — gdb MSP-unwind artifact
+
+The reopen entry localized the RZC INVSTATE to the first-task-launch path from
+the gdb backtrace (`HardFault_Handler <- Os_Port_Stm32_StartFirstTaskAsm <-
+Os_PortStartFirstTask <- StartOS`). That backtrace is expected for ANY
+thread-mode HardFault and carries no localization information:
+
+- `Os_Port_Stm32_StartFirstTaskAsm` parks a Thread/MSP WFI loop
+  (`Os_Port_Stm32_Asm.S:60-62`). The launch PendSV stacks its exception frame
+  onto MSP (thread was on MSP, SPSEL=0) and exception-returns to the first
+  task on PSP. That MSP frame — return address inside the WFI loop — is never
+  popped and parks on MSP for the lifetime of the boot.
+- Every later HardFault taken from Thread/PSP (`EXC_RETURN=0xFFFFFFFD`) runs
+  its handler on MSP, directly above that stale frame. gdb unwinds the handler
+  into `StartFirstTaskAsm` regardless of where the fault actually occurred.
+- RZC emitted ~200 ms of normal 50 ms heartbeats before faulting: StartOS,
+  launch, schedule-table start, and multiple task dispatches demonstrably
+  succeeded. The fault is MID-RUN — the same INVSTATE family as sections 2.4/7,
+  not a distinct launch defect.
+
+Consequence: do NOT spend bench time instrumenting the launch assembly on the
+basis of the backtrace. Localization must come from a persistent fault record
+(stacked PC/LR of the faulting context — 8.5 FIX-07), not from MSP unwinds.
+
+### 8.2 RCC_CSR evidence is contaminated — no software-reset source in the image
+
+Audit of software reset sources in the OSEK runtime: the ONLY
+`NVIC_SystemReset` call is the Dcm ECU-reset service 0x11
+(`firmware/ecu/cvc/src/Swc_CvcDcm.c:293`); the WdgM fail reaction is
+starvation of the EXTERNAL TPS3823 (`firmware/bsw/services/WdgM/src/WdgM.c:134`)
+which is absent on the Nucleo bench; the linked production `HardFault_Handler`
+is a bare `while(1)` (`firmware/ecu/cvc/cfg/Core/Src/stm32g4xx_it.c:89`).
+Therefore the observed RZC `RCC_CSR=0x1C000000` (SFTRSTF) cannot have been
+produced by the firmware's fault reactions. SFTRSTF is sticky until RMVF and
+is set by debugger/st-flash SYSRESETREQ — this session's heavy
+connect-under-reset traffic is the probable source. The FZC "reset-cycling"
+observation has the same contamination risk, and with no external watchdog on
+the bench a "WdgM-driven reset" is not even physically available. The clean
+repro (FIX-08) must log RCC_CSR at boot, then set RMVF, so each run's flags
+are its own.
+
+### 8.3 Verified structural gaps (host-source audit, pinned lines)
+
+Ranked; none is yet PROVEN to be the RZC mechanism (8.4), all are real
+robustness holes:
+
+- **GAP-A — consume-time TOCTOU (primary hardening target).** All resume
+  gates are stage-time only: `Os_Port_Stm32_SelectNextTask` validates
+  `SavedContextValid` + `frame_is_resumable` (`Os_Port_Stm32.c:425-426`), but
+  `Os_Port_Stm32_ResolvePendSvTarget` re-reads the target's `SavedPsp` at
+  consume time (`Os_Port_Stm32.c:202-204`) and exception-returns into it with
+  NO re-validation. Anything that invalidates the staged frame between staging
+  and PendSV entry defeats every FIX-02/03 guard. FIX-06 closes the class.
+- **GAP-B — launch seam does not consume the first task's context.** PendSV
+  Path 1 (`Os_Port_Stm32_Asm.S:89-113`) + `Os_Port_Stm32_MarkFirstTaskStarted`
+  (`Os_Port_Stm32.c:232-240`) neither clear `SavedContextValid[first]` nor
+  `SelectedNextTask`/`SelectedNextTaskPsp`. After launch the idle task's slot
+  stays `SavedContextValid=TRUE` with `SavedPsp` pointing into its now-live
+  (being-clobbered) stack. Masked today because the first preemption saves
+  idle before any resume-stage can target it; one desync away from a
+  stale-valid resume off clobbered bytes.
+- **GAP-C — tick-route stage/request decoupling.** `Os_BootstrapProcessCounterTick`
+  void-drops a staging rejection (`Os_Alarm.c:343`) while `Os_Port_Stm32_TickIsr`
+  still requests PendSV — a PendSV with `SelectedNextTask=INVALID` then
+  saves+restores the interrupted context (benign self-restore) and, if a
+  `SaveSuppressed` one-shot is armed, consumes it EARLY. All interleavings
+  hand-traced this session stayed consistent, but the "suppression pairs with
+  exactly the intended PendSV" invariant is not machine-checked; the spurious
+  PendSV also burns latency at every rejected tick staging.
+- **GAP-D — FPU-blind byte guard (latent).** `os_port_stm32_frame_is_resumable`
+  indexes PC/xPSR at fixed no-FPU offsets 15/16 (`Os_Port_Stm32.c:31-32`); the
+  build is `-mfloat-abi=hard -mfpu=fpv4-sp-d16` (`Makefile.stm32:29`). A frame
+  saved with FPCA active inserts S16-S31 and shifts the hardware frame, so the
+  guard would read S-register bytes as PC/xPSR (false accept OR false reject).
+  Not the current diagnosis — zero `float`/`double` usage exists in
+  `firmware/bsw` and `firmware/ecu/*/src` today — but the guard must decode
+  the frame layout from the stored EXC_RETURN bit 4 (word [8]) before this
+  ever changes.
+
+### 8.4 What static analysis could NOT produce
+
+No concrete interleaving was found that defeats the FIX-02/03/04 gates in the
+host-visible model: every hand-traced coalescing/termination/tick interleaving
+(including SysTick landing inside `os_complete_running_task`, inside the
+switchback staging gap, and PendSV late-arrival re-entry) converged to
+consistent kernel/port state. Conclusion unchanged from section 7's caveat but
+sharpened: the reopened INVSTATE requires ON-TARGET forensics with persistent
+fault records. Further armchair derivation is not the cost-effective path.
+
+### 8.5 Implementation steps (continuation of section 5)
+
+#### S-OS-31-FIX-06 — Consume-time resume gate in ResolvePendSvTarget (GAP-A)
+- Goal: PendSV never exception-returns into a frame that fails the resume
+  gates, regardless of what happened between staging and consumption.
+- Inputs: `firmware/platform/stm32/src/Os_Port_Stm32.c`
+  (`Os_Port_Stm32_ResolvePendSvTarget`);
+  `firmware/bsw/os/bootstrap/test/test_Os_Port_Stm32_bootstrap_switchback_resume_frame.c`.
+- Deliverables:
+  - re-validation of `SelectedNextTask` (`SavedContextValid` +
+    `os_port_stm32_frame_is_resumable`) inside `Os_Port_Stm32_ResolvePendSvTarget`
+    before the target is adopted; on failure stay on the interrupted context
+    (`target = current`) and increment a new `DesyncFailClosedCount` state
+    counter (visible to gdb + FIX-07 record).
+  - unit tests: stage-valid → invalidate (clear flag / zero frame) → PendSV →
+    asserts no switch + counter increment (red on unfixed HEAD).
+  - GAP-B closure in the same change: `Os_Port_Stm32_MarkFirstTaskStarted`
+    clears `SavedContextValid[FirstTaskTaskID]`, `SelectedNextTask`,
+    `SelectedNextTaskPsp`; unit test extends the first-task suite.
+- Acceptance: new tests red-then-green; full OS runner green (>= 36 suites,
+  0 new failures); cvc/fzc/rzc `OSEK=1` cross-build clean, no generated files
+  touched.
+- Gate: Layer 1-3; asil-d fail-closed rule.
+- Definition of done: no PendSV code path can load PC from a frame failing the
+  resume gate, host-proven.
+
+#### S-OS-31-FIX-07 — Persistent fault forensics (noinit fault record)
+- Goal: every free-running fault leaves a machine-readable record that
+  survives reset, removing gdb (and its watchdog-freezing, race-masking
+  side effects) from the soak methodology.
+- Inputs: 8.1/8.2 findings; `firmware/ecu/cvc/cfg/Core/Src/stm32g4xx_it.c`
+  (USE_OSEK-guarded handler idiom already approved 2026-07-07); linker script
+  RAM layout.
+- Deliverables:
+  - `firmware/platform/stm32/include/Os_FaultRecord.h` +
+    `firmware/platform/stm32/src/Os_FaultRecord.c`: `.noinit` record (magic,
+    CFSR/HFSR/MMFAR/BFAR, stacked PC/LR/xPSR of the faulting context,
+    EXC_RETURN, `os_port_stm32_state` counter snapshot, kernel
+    `os_current_task`, port `CurrentTask`/`SelectedNextTask`,
+    `DesyncFailClosedCount`) + capture API callable from fault handlers.
+  - USE_OSEK-guarded `HardFault_Handler` capture path in the three G4 ECU
+    `stm32g4xx_it.c` files (capture, then park `while(1)` — no self-reset, the
+    bench has no watchdog; parked cores are `--no-reset`-attachable).
+  - boot-time UART dump of a valid record + `RCC_CSR` value, then RMVF clear
+    (ECU `main.c` early init, before StartOS).
+  - `.noinit` section entry in the G474 linker script(s).
+- Acceptance: deliberate injected fault (bringup image or test hook) produces
+  a correct record readable both over UART after the next hardware reset and
+  via gdb attach to the parked core.
+- Gate: prerequisite for FIX-08 (S-OS-31 re-verification evidence).
+- Definition of done: a free-running INVSTATE on any G4 board yields stacked
+  PC/LR + scheduler state without any debugger attached at fault time.
+
+#### S-OS-31-FIX-08 — Clean-bench free-run reproduction + revised soak
+- Goal: uncontaminated failure-rate characterization of the reopened defect,
+  and the S-OS-31 acceptance soak rerun with the corrected methodology.
+- Inputs: FIX-06 + FIX-07 images; 3x G474RE bench + HIL Pi (`candump can0`);
+  bench lessons in section 5a (one clean st-util session per board, no
+  hard-killed gdb, connect-under-reset only for recovery).
+- Deliverables: `test/hil/reports/os-migration-stm32.md` new run section —
+  per board: 5 runs x 5-min free-run soak (one `st-flash write` + hardware
+  reset each, NO debugger attached during the soak), USART2 log + heartbeat
+  cadence, `candump` frame-set/period parity, boot-time RCC_CSR + fault-record
+  dump, failure-rate table; for any fault: the FIX-07 record contents.
+- Acceptance (S-OS-31 rerun): all three boards 5x5-min free-running clean
+  (no fault record, no unexplained reset, CAN parity held) — or the defect
+  reproduced with a full forensic record feeding the next fix iteration.
+- Gate: S-OS-31 acceptance (plan-osek-os-migration.md Phase 3); supersedes the
+  FIX-05 gdb-breakpoint methodology, which is retired (section 5a false-PASS).
+- Definition of done: S-OS-31 closed on free-running bus-observed evidence
+  only, or a root-cause record exists for the surviving fault.

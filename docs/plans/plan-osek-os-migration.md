@@ -390,11 +390,29 @@ merge is not viable; the port work must be harvested file-wise.
     cvc/fzc/rzc OSEK=1 cross-build clean. ON-TARGET RE-VERIFIED
     (`test/hil/reports/os-migration-stm32.md`): all three G474RE boards pass a
     5-minute soak — Tick 300000 (no WdgM reset), CFSR/HFSR=0 (no HardFault),
-    PendSvReq==PendSvCplt (CVC 639060 / FZC 69059 / RZC 639059), including the
-    CVC scenario that deterministically faulted before the fix. PARTIAL — the
-    HardFault/soak criterion is MET; the CAN-parity-vs-SIL + E2E-CRC checks
-    (candump can0 on the HIL Pi + peer ECUs) remain OPEN for a follow-up full-
-    bench HIL run. UNCOMMITTED.
+    PendSvReq==PendSvCplt (CVC 639060 / FZC 69059 / RZC 639059) — BUT that soak
+    was run UNDER GDB with a breakpoint on Os_Task_<Ecu>_5000ms, which freezes
+    the watchdog and alters timing at the race onset and MASKED the defect.
+    CAN-parity attempt (2026-07-09, candump can0 on the HIL Pi): CVC and FZC
+    transmit their COMPLETE frame set at the exact DBC periods (60 s soak,
+    43 274 frames — 0x001/0x100-0x103/0x220 @10 ms, 0x010/0x011/0x200/0x201
+    @50 ms, 0x350 @100 ms); E2E senders advance on-bus; no E2E/bus-off/timeout
+    DTCs. **CRITICAL — S-OS-31 NOT DONE, REOPENED:** observed FREE-RUNNING (no
+    debugger), RZC reproduces the INVSTATE switchback HardFault
+    (CFSR=0x00020000 / HFSR=0x40000000 / EXC_RETURN=0xFFFFFFFD, SelectedNextTask
+    INVALID) in the FIRST-TASK-LAUNCH path (HardFault_Handler ←
+    Os_Port_Stm32_StartFirstTaskAsm ← Os_PortStartFirstTask ← StartOS), then
+    goes silent after a ~200 ms TX window; FZC also resets (RCC_CSR SFTRSTF on
+    RZC; no IWDG/WWDG flag). Only CVC sustains continuous TX. The FIX-03/04
+    switchback fix is therefore NOT confirmed robust on target — the prior PASS
+    was a gdb-breakpoint false-pass. The earlier "self-test/sensor gate" framing
+    was WRONG (STM32 sensor self-tests are stubs that pass; RZC reaches
+    BSWM_RUN). NEXT: re-run the soak free-running / bus-observed (no
+    per-activation breakpoint) and re-examine the switchback fix against the
+    launch path as well as terminate. Report:
+    `test/hil/reports/os-migration-stm32.md` (CRITICAL FINDING section).
+    Bench was heavily perturbed this session — confirm failure rate on a clean
+    single-flash free-run before final triage. UNCOMMITTED. STATUS: OPEN.
 
 - **S-OS-32 STM32F4 OSEK port bringup (F413ZH) — spare-board track**
   - Goal: extend the OSEK kernel + STM32 Cortex-M4 port to build, link,
