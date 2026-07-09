@@ -1,6 +1,6 @@
 # Plan: DBC-to-ARXML Pipeline Hardening
 
-**Status:** IN PROGRESS - P2 NEXT
+**Status:** P2 DONE - P3 PENDING
 **Created:** 2026-07-09
 **Branch:** `feat/pipeline-hardening`
 **Scope:** `gateway/taktflow_vehicle.dbc` -> `tools/arxml/dbc2arxml.py` ->
@@ -202,7 +202,7 @@ hand-edited.
 against current BSW headers and documented multi-sender/E2E source contracts;
 no generator or generated ECU configuration changed.
 
-### P2 - Public DBC corpus and regression harness - PENDING
+### P2 - Public DBC corpus and regression harness - DONE
 
 **Step ID:** PH-P2
 **Inputs:** first-hand upstream license files/pages for comma.ai opendbc,
@@ -226,6 +226,12 @@ extended multiplexing and extended IDs; must-not-crash is green; report rows
 are stable and path-scrubbed.
 **Gate:** green pre-existing arxmlgen baseline or explicit owner disposition of
 all 35 failures; all licenses clear; commit P2 before P3.
+**Result:** five fixtures with retained MIT/BSD-2-Clause notices cover signal
+groups, floats, cascaded extended multiplexing, extended IDs and a parser
+overlap rejection. `--must-not-crash` and `--strict` both report four
+converted, one skipped with a typed reason and zero crashes. The committed
+must-not-crash report is byte-identical across repeated runs. CSS Electronics
+files remain unvendored because no explicit redistribution grant was found.
 
 ### P3 - Fail-closed error handling - PENDING
 
