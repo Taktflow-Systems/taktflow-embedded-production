@@ -160,6 +160,21 @@ StatusType Os_Port_StageConfiguredResume(TaskType TaskID)
     return E_OK;
 }
 
+void Os_Port_SuppressTaskSave(TaskType TaskID)
+{
+    if (os_is_valid_task(TaskID) == FALSE) {
+        return;
+    }
+
+#if defined(PLATFORM_STM32)
+    Os_Port_Stm32_SuppressTaskSave(TaskID);
+#else
+    /* STM32L5/TMS570: the coalescing save-clobber (S-OS-31 FIX-04) has not been
+     * reproduced on those ports; no suppression machinery yet. */
+    (void)TaskID;
+#endif
+}
+
 StatusType Os_Port_CompleteConfiguredDispatch(void)
 {
 #if defined(PLATFORM_STM32)

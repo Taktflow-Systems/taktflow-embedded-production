@@ -15,6 +15,7 @@ void Os_Port_SynchronizeConfiguredTask(TaskType TaskID);
 StatusType Os_Port_RebuildTaskFrame(TaskType TaskID);
 StatusType Os_Port_RequestConfiguredDispatch(TaskType TaskID);
 StatusType Os_Port_StageConfiguredResume(TaskType TaskID);
+void Os_Port_SuppressTaskSave(TaskType TaskID);
 StatusType Os_Port_CompleteConfiguredDispatch(void);
 void Os_Port_ObserveConfiguredDispatch(TaskType TaskID);
 boolean Os_Port_IsConfiguredDispatchLive(void);

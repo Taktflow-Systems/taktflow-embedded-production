@@ -232,11 +232,139 @@ void test_switchback_resume_with_valid_frame_unaffected(void)
     TEST_ASSERT_EQUAL(TASK_IDLE, state->SelectedNextTask);   /* idle resume staged */
 }
 
+/* ==================================================================
+ * S-OS-31-FIX-03 (F-B) + FIX-04 (F-C): per-task saved-context-valid
+ * invariant and terminated-task save suppression.
+ *
+ * Root mechanism (memo section 7): the port advances its own CurrentTask
+ * only inside ResolvePendSvTarget (one PendSV = one save), while the kernel
+ * advances os_current_task and pushes to os_preempted_task_stack
+ * speculatively.  Under the terminate->PendSV park-gap coalescing race a
+ * single PendSV can save an outgoing (terminated/dead) task's frame OVER a
+ * frame just rebuilt for its re-dispatch, or leave a pushed task without a
+ * live saved frame.  F-B adds a per-task SavedContextValid flag (the resume
+ * gate becomes authoritative, not a byte heuristic); F-C suppresses the save
+ * of a terminated task's dead frame so the coalesced save cannot clobber a
+ * rebuilt frame.
+ *
+ * HOST-MODEL LIMITATION (documented, memo section 3/5a/7 caveat): the mock's
+ * ResolvePendSvTarget moves pointers and never runs STMDB, and every task
+ * uses one fixed prepared_psp, so the literal clobbered-frame / zeroed-frame
+ * HardFault is NOT host-reproducible — only the 3x G474RE on-target soak
+ * (FIX-05) proves the silicon fix.  These tests are unit-level guards on the
+ * new invariant and the suppress API, not an end-to-end fault reproduction.
+ * ================================================================== */
+
+static const Os_Port_Stm32_TaskContextType* ctx_of(TaskType TaskID)
+{
+    const Os_Port_Stm32_TaskContextType* ctx = Os_Port_Stm32_GetTaskContext(TaskID);
+    TEST_ASSERT_NOT_NULL(ctx);
+    return ctx;
+}
+
+/**
+ * @requirement The port shall track, per task, whether its SavedPsp holds a
+ *              live saved context (SavedContextValid): TRUE once a fresh
+ *              initial frame is built or the task's live frame is saved by
+ *              PendSV; FALSE once the task is restored (running on the CPU,
+ *              its saved frame consumed).
+ * @verify After the 1ms task is dispatched over idle and the PendSV
+ *         completes, the preempted (saved) idle task reports
+ *         SavedContextValid TRUE while the running 1ms task reports FALSE.
+ */
+void test_saved_context_valid_tracks_save_and_restore(void)
+{
+    start_production_os();
+    TEST_ASSERT_EQUAL(E_OK, StartScheduleTableAbs(TABLE_1MS, 0u));
+
+    /* Freshly prepared, not yet run: initial frame is a valid resume point. */
+    TEST_ASSERT_TRUE(ctx_of(TASK_10MS)->SavedContextValid);
+
+    /* Tick stages the 1ms dispatch over idle; PendSV saves idle, restores 1ms. */
+    Os_Port_Stm32_SysTickHandler();
+    TEST_ASSERT_EQUAL(E_OK, Os_Port_CompleteConfiguredDispatch());
+    TEST_ASSERT_EQUAL_UINT8(1u, runs_1ms);
+
+    /* idle was preempted -> its saved frame is live; 1ms ran -> no live save. */
+    TEST_ASSERT_TRUE(ctx_of(TASK_IDLE)->SavedContextValid);
+    TEST_ASSERT_FALSE(ctx_of(TASK_1MS)->SavedContextValid);
+}
+
+/**
+ * @requirement Os_Port_SuppressTaskSave shall mark a task's NEXT PendSV save
+ *              as suppressed (one-shot): the following ResolvePendSvTarget
+ *              shall NOT overwrite that task's SavedPsp and shall NOT mark its
+ *              context valid (its frame is dead / a re-dispatch may have
+ *              rebuilt over it), then shall clear the suppression.
+ * @verify After suppressing the running 1ms task and completing a PendSV that
+ *         switches to idle, 1ms reports SaveSuppressed cleared and
+ *         SavedContextValid FALSE (the skipped save did not mark it valid).
+ */
+void test_suppress_task_save_skips_next_save_one_shot(void)
+{
+    start_production_os();
+    TEST_ASSERT_EQUAL(E_OK, StartScheduleTableAbs(TABLE_1MS, 0u));
+
+    /* 1ms running over the (saved) idle task. */
+    Os_Port_Stm32_SysTickHandler();
+    TEST_ASSERT_EQUAL(E_OK, Os_Port_CompleteConfiguredDispatch());
+    TEST_ASSERT_EQUAL(TASK_1MS, Os_Port_Stm32_GetBootstrapState()->CurrentTask);
+    TEST_ASSERT_FALSE(ctx_of(TASK_1MS)->SavedContextValid);
+
+    /* Suppress the terminated task's dead-frame save. */
+    Os_Port_SuppressTaskSave(TASK_1MS);
+    TEST_ASSERT_TRUE(ctx_of(TASK_1MS)->SaveSuppressed);
+
+    /* Stage a resume back to the (still valid) idle frame and complete PendSV. */
+    TEST_ASSERT_EQUAL(E_OK, Os_Port_StageConfiguredResume(TASK_IDLE));
+    TEST_ASSERT_EQUAL(E_OK, Os_Port_CompleteConfiguredDispatch());
+
+    /* Suppression consumed; the skipped save did NOT mark 1ms context valid. */
+    TEST_ASSERT_FALSE(ctx_of(TASK_1MS)->SaveSuppressed);
+    TEST_ASSERT_FALSE(ctx_of(TASK_1MS)->SavedContextValid);
+    TEST_ASSERT_EQUAL(TASK_IDLE, Os_Port_Stm32_GetBootstrapState()->CurrentTask);
+}
+
+/**
+ * @requirement The terminate switchback shall suppress the terminated task's
+ *              next save (F-C) so that, even when a re-dispatch of that task
+ *              interposes before the switchback PendSV runs (coalescing race),
+ *              no spurious fail-closed occurs and the kernel stays runnable.
+ * @verify With 1ms running over idle, 1ms terminates (switchback stages a
+ *         resume of idle and suppresses the 1ms save); completing the PendSV
+ *         resumes idle with no E_OS_STATE report and the 1ms save suppressed.
+ */
+void test_terminate_switchback_suppresses_terminated_save(void)
+{
+    start_production_os();
+    TEST_ASSERT_EQUAL(E_OK, StartScheduleTableAbs(TABLE_1MS, 0u));
+
+    Os_Port_Stm32_SysTickHandler();
+
+    /* Completing this dispatch runs the 1ms entry -> TerminateTask ->
+     * os_terminate_switchback, which must suppress the terminated 1ms save
+     * and stage the idle resume without reporting a fail-closed error. */
+    TEST_ASSERT_EQUAL(E_OK, Os_Port_CompleteConfiguredDispatch());
+    TEST_ASSERT_EQUAL_UINT8(1u, runs_1ms);
+    TEST_ASSERT_EQUAL_UINT8(0u, error_hook_count);
+    TEST_ASSERT_EQUAL(TASK_IDLE, Os_Port_Stm32_GetBootstrapState()->SelectedNextTask);
+
+    /* Complete the switchback PendSV: idle resumes, no fail-closed, and the
+     * terminated task's save stayed suppressed through the resolve (consumed). */
+    TEST_ASSERT_EQUAL(E_OK, Os_Port_CompleteConfiguredDispatch());
+    TEST_ASSERT_EQUAL_UINT8(0u, error_hook_count);
+    TEST_ASSERT_EQUAL(TASK_IDLE, Os_Port_Stm32_GetBootstrapState()->CurrentTask);
+    TEST_ASSERT_FALSE(ctx_of(TASK_1MS)->SaveSuppressed);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
     RUN_TEST(test_select_next_task_rejects_invalid_frame);
     RUN_TEST(test_switchback_resume_into_stale_frame_fails_closed);
     RUN_TEST(test_switchback_resume_with_valid_frame_unaffected);
+    RUN_TEST(test_saved_context_valid_tracks_save_and_restore);
+    RUN_TEST(test_suppress_task_save_skips_next_save_one_shot);
+    RUN_TEST(test_terminate_switchback_suppresses_terminated_save);
     return UNITY_END();
 }

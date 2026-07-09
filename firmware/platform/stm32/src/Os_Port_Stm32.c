@@ -127,6 +127,8 @@ static void os_port_stm32_reset_task_contexts(void)
 
     for (idx = 0u; idx < OS_MAX_TASKS; idx++) {
         os_port_stm32_task_context[idx].Prepared = FALSE;
+        os_port_stm32_task_context[idx].SavedContextValid = FALSE;
+        os_port_stm32_task_context[idx].SaveSuppressed = FALSE;
         os_port_stm32_task_context[idx].TaskID = idx;
         os_port_stm32_task_context[idx].StackTop = (uintptr_t)0u;
         os_port_stm32_task_context[idx].SavedPsp = (uintptr_t)0u;
@@ -176,12 +178,21 @@ uintptr_t Os_Port_Stm32_ResolvePendSvTarget(uintptr_t CurrentSavedPsp)
 
     current_task = os_port_stm32_state.CurrentTask;
 
-    /* Save current task's PSP back to its context */
+    /* Save current task's PSP back to its context — unless the switchback
+     * suppressed it (S-OS-31 FIX-04): the terminating task's dead/parked frame
+     * must NOT be written over its slot, which a re-dispatch under the
+     * coalescing race may have rebuilt with a fresh initial frame. The
+     * suppression is a one-shot consumed here. */
     if (os_port_stm32_is_valid_task(current_task) &&
         (os_port_stm32_task_context[current_task].Prepared == TRUE)) {
-        os_port_stm32_task_context[current_task].SavedPsp = CurrentSavedPsp;
-        os_port_stm32_task_context[current_task].RestorePsp =
-            CurrentSavedPsp + (uintptr_t)OS_PORT_STM32_SOFTWARE_RESTORE_BYTES;
+        if (os_port_stm32_task_context[current_task].SaveSuppressed == TRUE) {
+            os_port_stm32_task_context[current_task].SaveSuppressed = FALSE;
+        } else {
+            os_port_stm32_task_context[current_task].SavedPsp = CurrentSavedPsp;
+            os_port_stm32_task_context[current_task].RestorePsp =
+                CurrentSavedPsp + (uintptr_t)OS_PORT_STM32_SOFTWARE_RESTORE_BYTES;
+            os_port_stm32_task_context[current_task].SavedContextValid = TRUE;
+        }
     }
 
     /* Select target: next task if selected, else stay on current */
@@ -201,6 +212,12 @@ uintptr_t Os_Port_Stm32_ResolvePendSvTarget(uintptr_t CurrentSavedPsp)
     }
 
     os_port_stm32_state.CurrentTask = target_task;
+    /* The restored task is now running on the CPU: its saved frame is consumed
+     * and no longer an authoritative resume point until the next save
+     * (S-OS-31 FIX-03). */
+    if (os_port_stm32_is_valid_task(target_task)) {
+        os_port_stm32_task_context[target_task].SavedContextValid = FALSE;
+    }
     os_port_stm32_state.SelectedNextTask = INVALID_TASK;
     os_port_stm32_state.SelectedNextTaskPsp = (uintptr_t)0u;
     os_port_stm32_state.PendSvPending = FALSE;
@@ -322,6 +339,11 @@ StatusType Os_Port_Stm32_PrepareTaskContext(
     os_port_stm32_task_context[TaskID].RestorePsp = os_port_stm32_get_restore_psp(prepared_psp);
     os_port_stm32_task_context[TaskID].Entry = Entry;
     os_port_stm32_build_initial_frame(prepared_psp, Entry);
+    /* A freshly built initial frame IS a valid resume point (PC=Entry, Thumb).
+     * A rebuild for a fresh dispatch must NOT clear a pending save suppression:
+     * the terminated task's re-dispatch rebuilds here while its suppression is
+     * still armed for the next PendSV (S-OS-31 FIX-04). */
+    os_port_stm32_task_context[TaskID].SavedContextValid = TRUE;
     return E_OK;
 }
 
@@ -393,16 +415,48 @@ StatusType Os_Port_Stm32_SelectNextTask(TaskType TaskID)
     saved_psp = os_port_stm32_task_context[TaskID].SavedPsp;
 
     /* Fail closed: never stage a context switch into a frame that is not a
-     * live resume context (S-OS-31 switchback resume-frame guard). Fresh
-     * dispatch rebuilds the frame before selecting, so only a stale resume
-     * can fail here. */
-    if (os_port_stm32_frame_is_resumable(saved_psp) == FALSE) {
+     * live resume context (S-OS-31 switchback resume-frame guard). The
+     * SavedContextValid flag (FIX-03/F-B) is the authoritative gate — a task
+     * on the preempted stack that was never live-saved (kernel/port desync)
+     * fails here; the byte-level frame check (FIX-02/F-A) is retained as
+     * defense-in-depth against memory corruption. Fresh dispatch rebuilds the
+     * frame (which sets the flag) before selecting, so only a stale resume can
+     * fail. */
+    if ((os_port_stm32_task_context[TaskID].SavedContextValid == FALSE) ||
+        (os_port_stm32_frame_is_resumable(saved_psp) == FALSE)) {
         return E_OS_STATE;
     }
 
     os_port_stm32_state.SelectedNextTask = TaskID;
     os_port_stm32_state.SelectedNextTaskPsp = saved_psp;
     return E_OK;
+}
+
+/**
+ * @brief Suppress the NEXT PendSV save of a task's context (one-shot).
+ *
+ * Called by the kernel task-termination switchback (S-OS-31 FIX-04/F-C): the
+ * terminating task's live/parked frame must not be saved over its context
+ * slot by the next (possibly coalesced) PendSV, because a re-dispatch of that
+ * task may have rebuilt a fresh initial frame there. The suppression is
+ * consumed by the next ResolvePendSvTarget in which the task is the outgoing
+ * (CurrentTask) context.
+ *
+ * @note ISR/critical context safe: a single flag write.
+ */
+void Os_Port_Stm32_SuppressTaskSave(TaskType TaskID)
+{
+    if ((os_port_stm32_state.TargetInitialized == FALSE) ||
+        (os_port_stm32_is_valid_task(TaskID) == FALSE) ||
+        (os_port_stm32_task_context[TaskID].Prepared == FALSE)) {
+        return;
+    }
+
+    os_port_stm32_task_context[TaskID].SaveSuppressed = TRUE;
+    /* The task's currently-saved frame is about to be dead: drop its
+     * authoritative-resume status so a stray resume before the next save/
+     * rebuild fails closed. */
+    os_port_stm32_task_context[TaskID].SavedContextValid = FALSE;
 }
 
 void Os_Port_Stm32_SynchronizeCurrentTask(TaskType TaskID)

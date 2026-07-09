@@ -182,6 +182,12 @@ void os_terminate_switchback(void)
     os_stack_monitor_leave_task(terminated);
     os_complete_running_task();
 
+    /* S-OS-31 FIX-04 (F-C): the terminating task's frame is now dead. Suppress
+     * its next PendSV save so a re-dispatch that rebuilds a fresh frame in its
+     * slot (coalescing race, memo section 7) is not clobbered by a save of the
+     * parked/dead context. */
+    Os_Port_SuppressTaskSave(terminated);
+
     resume = os_current_task;
     ready = os_select_next_ready_task();
 

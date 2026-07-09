@@ -25,6 +25,17 @@
 
 typedef struct {
     boolean Prepared;
+    /* S-OS-31-FIX-03 (F-B): SavedPsp holds a live resume context — TRUE once a
+     * fresh initial frame is built (PrepareTaskContext) or the task's live
+     * frame is saved by PendSV (ResolvePendSvTarget); FALSE once the task is
+     * restored (running, its saved frame consumed). The switchback resume gate
+     * requires it TRUE, else fails closed. */
+    boolean SavedContextValid;
+    /* S-OS-31-FIX-04 (F-C): one-shot — the NEXT PendSV save of this task is
+     * suppressed (its frame is dead after TerminateTask; a re-dispatch may have
+     * rebuilt over it). Set by Os_Port_Stm32_SuppressTaskSave, consumed by the
+     * next ResolvePendSvTarget in which this task is the outgoing context. */
+    boolean SaveSuppressed;
     TaskType TaskID;
     uintptr_t StackTop;
     uintptr_t SavedPsp;
@@ -70,6 +81,7 @@ StatusType Os_Port_Stm32_PrepareTaskContext(
     uintptr_t StackTop);
 StatusType Os_Port_Stm32_PrepareFirstTask(TaskType TaskID, Os_TaskEntryType Entry, uintptr_t StackTop);
 StatusType Os_Port_Stm32_SelectNextTask(TaskType TaskID);
+void Os_Port_Stm32_SuppressTaskSave(TaskType TaskID);
 void Os_Port_Stm32_SynchronizeCurrentTask(TaskType TaskID);
 void Os_Port_Stm32_TickIsr(void);
 void Os_Port_Stm32_ObserveKernelDispatch(TaskType TaskID);
