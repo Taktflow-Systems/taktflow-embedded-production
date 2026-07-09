@@ -30,6 +30,13 @@
  * R0,R1,R2,R3,R12,LR,PC,xPSR at [9..16]. */
 #define OS_PORT_STM32_FRAME_PC_INDEX             15u
 #define OS_PORT_STM32_FRAME_XPSR_INDEX           16u
+/* S-OS-31 FIX-09 (GAP-D): the PendSV asm saves S16-S31 between EXC_RETURN and
+ * the hardware frame when EXC_RETURN bit 4 is clear (extended/FPU frame,
+ * Os_Port_Stm32_Asm.S), shifting PC/xPSR to words [31]/[32]. */
+#define OS_PORT_STM32_FRAME_EXC_RETURN_INDEX     8u
+#define OS_PORT_STM32_FRAME_EXTENDED_PC_INDEX    31u
+#define OS_PORT_STM32_FRAME_EXTENDED_XPSR_INDEX  32u
+#define OS_PORT_STM32_EXC_RETURN_BASIC_FRAME_BIT 0x00000010u
 #define OS_PORT_STM32_PENDSV_LOWEST_PRIORITY     0xFFu
 #define OS_PORT_STM32_SYSTICK_BOOTSTRAP_PRIORITY 0x40u
 
@@ -396,31 +403,84 @@ StatusType Os_Port_Stm32_PrepareFirstTask(TaskType TaskID, Os_TaskEntryType Entr
 }
 
 /**
+ * @brief Accept only the EXC_RETURN values the PendSV save path can store.
+ *
+ * A saved frame's word [8] must be one of the six architectural EXC_RETURN
+ * codes (handler/thread x MSP/PSP x basic/extended). Anything else means the
+ * frame was not written by the context-save path (stale, clobbered, or
+ * mis-tracked) and its layout cannot be decoded (S-OS-31 FIX-09).
+ */
+static boolean os_port_stm32_exc_return_is_plausible(uint32 ExcReturn)
+{
+    boolean plausible;
+
+    switch (ExcReturn) {
+    case 0xFFFFFFE1u:   /* handler, MSP, extended */
+    case 0xFFFFFFE9u:   /* thread,  MSP, extended */
+    case 0xFFFFFFEDu:   /* thread,  PSP, extended */
+    case 0xFFFFFFF1u:   /* handler, MSP, basic    */
+    case 0xFFFFFFF9u:   /* thread,  MSP, basic    */
+    case 0xFFFFFFFDu:   /* thread,  PSP, basic    */
+        plausible = TRUE;
+        break;
+    default:
+        plausible = FALSE;
+        break;
+    }
+
+    return plausible;
+}
+
+/**
  * @brief Reject a saved frame that cannot be safely resumed by PendSV.
  *
- * A live resume context has a non-null stacked PC and the Thumb bit set in
- * the stacked xPSR. A stale/zeroed frame (PC=0 or xPSR Thumb bit clear) would
- * make the PendSV exception return load an invalid PC/EPSR -> INVSTATE
+ * A live resume context has a plausible EXC_RETURN at word [8], a non-null
+ * stacked PC and the Thumb bit set in the stacked xPSR. A stale/zeroed frame
+ * would make the PendSV exception return load an invalid PC/EPSR -> INVSTATE
  * UsageFault -> HardFault. This guard is the S-OS-31 on-target fix (fail
  * closed): the bench found the termination switchback resuming a task from
  * such a frame under nested preemption
  * (docs/plans/memo-s-os-31-switchback-resume-defect.md).
+ *
+ * S-OS-31 FIX-09 (GAP-D): PC/xPSR are validated at the offsets the exception
+ * return will actually pop, decoded from EXC_RETURN bit 4 — basic frame ->
+ * words [15]/[16], extended (FPU) frame -> words [31]/[32] (the asm inserts
+ * S16-S31 at [9..24]). The build is hard-float with lazy stacking enabled, so
+ * extended frames are architecturally reachable even with no explicit float
+ * usage in the source.
  *
  * @note ISR/critical context safe: pure read of the target frame, no writes.
  */
 static boolean os_port_stm32_frame_is_resumable(uintptr_t SavedPsp)
 {
     const uint32* frame;
+    uint32 exc_return;
+    uint32 pc_index;
+    uint32 xpsr_index;
 
     if (SavedPsp == (uintptr_t)0u) {
         return FALSE;
     }
 
     frame = (const uint32*)SavedPsp;
-    if (frame[OS_PORT_STM32_FRAME_PC_INDEX] == 0u) {
+    exc_return = frame[OS_PORT_STM32_FRAME_EXC_RETURN_INDEX];
+
+    if (os_port_stm32_exc_return_is_plausible(exc_return) == FALSE) {
         return FALSE;
     }
-    if ((frame[OS_PORT_STM32_FRAME_XPSR_INDEX] & OS_PORT_STM32_XPSR_THUMB) == 0u) {
+
+    if ((exc_return & OS_PORT_STM32_EXC_RETURN_BASIC_FRAME_BIT) != 0u) {
+        pc_index = OS_PORT_STM32_FRAME_PC_INDEX;
+        xpsr_index = OS_PORT_STM32_FRAME_XPSR_INDEX;
+    } else {
+        pc_index = OS_PORT_STM32_FRAME_EXTENDED_PC_INDEX;
+        xpsr_index = OS_PORT_STM32_FRAME_EXTENDED_XPSR_INDEX;
+    }
+
+    if (frame[pc_index] == 0u) {
+        return FALSE;
+    }
+    if ((frame[xpsr_index] & OS_PORT_STM32_XPSR_THUMB) == 0u) {
         return FALSE;
     }
     return TRUE;

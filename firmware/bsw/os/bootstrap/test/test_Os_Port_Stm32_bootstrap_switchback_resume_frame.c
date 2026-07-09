@@ -41,6 +41,16 @@
 #define FRAME_XPSR_INDEX       16u
 #define XPSR_THUMB_BIT         0x01000000u
 
+/* S-OS-31-FIX-09 (GAP-D): EXC_RETURN-aware frame layout.  The PendSV asm
+ * saves S16-S31 between EXC_RETURN and the hardware frame when EXC_RETURN
+ * bit 4 is clear (extended/FPU frame), shifting PC/xPSR from words [15]/[16]
+ * to [31]/[32] (Os_Port_Stm32_Asm.S frame doc). */
+#define FRAME_EXC_RETURN_INDEX 8u
+#define FRAME_EXT_PC_INDEX     31u
+#define FRAME_EXT_XPSR_INDEX   32u
+#define EXC_RETURN_THREAD_PSP_BASIC    0xFFFFFFFDu
+#define EXC_RETURN_THREAD_PSP_EXTENDED 0xFFFFFFEDu
+
 #define TASK_1MS               ((TaskType)0u)
 #define TASK_10MS              ((TaskType)1u)
 #define TASK_IDLE              ((TaskType)2u)
@@ -458,6 +468,143 @@ void test_pendsv_adopts_valid_target_without_fail_closed(void)
     TEST_ASSERT_EQUAL_UINT32(0u, state->DesyncFailClosedCount);
 }
 
+/* ==================================================================
+ * S-OS-31-FIX-09 (GAP-D, memo section 8.7): EXC_RETURN-aware frame
+ * validation.
+ *
+ * The resume gate (os_port_stm32_frame_is_resumable) indexed PC/xPSR at the
+ * fixed no-FPU offsets [15]/[16].  The build is hard-float with lazy stacking
+ * enabled (FPCCR ASPEN+LSPEN confirmed on target, FIX-08 forensics), and the
+ * PendSV asm inserts S16-S31 into the saved frame when EXC_RETURN bit 4 is
+ * clear — an extended frame's PC/xPSR live at [31]/[32] and the gate would
+ * read S-register bytes instead (false accept OR false reject).  FIX-09 makes
+ * the gate decode the layout from the stored EXC_RETURN at word [8] and
+ * reject any frame whose word [8] is not a plausible EXC_RETURN
+ * (0xFFFFFFE1/E9/ED/F1/F9/FD family).
+ * ================================================================== */
+
+/**
+ * @brief Re-prepare a task with a StackTop deep enough inside its stack
+ *        array that a manually crafted EXTENDED frame (33 words) stays
+ *        inside valid test memory above SavedPsp.
+ */
+static uint32* prepare_deep_frame(TaskType TaskID, uint8* Stack, Os_TaskEntryType Entry)
+{
+    TEST_ASSERT_EQUAL(E_OK, Os_Port_Stm32_PrepareTaskContext(
+        TaskID, Entry, (uintptr_t)&Stack[160]));
+    return task_frame(TaskID);
+}
+
+/**
+ * @requirement The resume gate shall decode the saved frame layout from the
+ *              stored EXC_RETURN (word [8], bit 4): for an EXTENDED (FPU)
+ *              frame it shall validate PC/xPSR at words [31]/[32] — the words
+ *              the exception return will actually pop — not the basic-layout
+ *              offsets [15]/[16] (which hold S-register bytes).
+ * @verify A valid extended-layout frame (zeroed S-registers at the basic
+ *         offsets, live PC/xPSR at the extended offsets) is accepted.
+ */
+void test_select_accepts_extended_layout_frame(void)
+{
+    uint32* frame;
+
+    start_production_os();
+    frame = prepare_deep_frame(TASK_10MS, res_stack_10ms, Task_10ms_Entry);
+
+    frame[FRAME_EXC_RETURN_INDEX] = EXC_RETURN_THREAD_PSP_EXTENDED;
+    frame[FRAME_PC_INDEX]         = 0u;   /* now S22: zeroed S-register bytes */
+    frame[FRAME_XPSR_INDEX]       = 0u;   /* now S23 */
+    frame[FRAME_EXT_PC_INDEX]     = ((uint32)(uintptr_t)Task_10ms_Entry) | 1u;
+    frame[FRAME_EXT_XPSR_INDEX]   = XPSR_THUMB_BIT;
+
+    TEST_ASSERT_EQUAL(E_OK, Os_Port_Stm32_SelectNextTask(TASK_10MS));
+}
+
+/**
+ * @requirement For an EXTENDED frame the gate shall reject a dead resume
+ *              context (PC==0 / xPSR T-bit clear at words [31]/[32]) even
+ *              when the S-register bytes at the basic offsets [15]/[16]
+ *              happen to look like a valid PC/xPSR (false-accept hazard —
+ *              on target the exception return pops the zeroed words ->
+ *              INVSTATE HardFault, the FIX-08 RZC run-4 record class).
+ * @verify An extended-layout frame with plausible-looking S-register bytes
+ *         at [15]/[16] but zeroed PC/xPSR at [31]/[32] is rejected and no
+ *         selection is staged.
+ */
+void test_select_rejects_extended_frame_with_dead_pc(void)
+{
+    uint32* frame;
+    const Os_Port_Stm32_StateType* state;
+
+    start_production_os();
+    frame = prepare_deep_frame(TASK_10MS, res_stack_10ms, Task_10ms_Entry);
+
+    frame[FRAME_EXC_RETURN_INDEX] = EXC_RETURN_THREAD_PSP_EXTENDED;
+    frame[FRAME_PC_INDEX]         = 0x08001235u;     /* S22 bytes mimic a PC   */
+    frame[FRAME_XPSR_INDEX]       = XPSR_THUMB_BIT;  /* S23 bytes mimic xPSR   */
+    frame[FRAME_EXT_PC_INDEX]     = 0u;              /* the words HW will pop  */
+    frame[FRAME_EXT_XPSR_INDEX]   = 0u;
+
+    TEST_ASSERT_EQUAL(E_OS_STATE, Os_Port_Stm32_SelectNextTask(TASK_10MS));
+    state = Os_Port_Stm32_GetBootstrapState();
+    TEST_ASSERT_EQUAL(INVALID_TASK, state->SelectedNextTask);
+}
+
+/**
+ * @requirement The gate shall reject a frame whose word [8] is not a
+ *              plausible EXC_RETURN (0xFFFFFFE1/E9/ED/F1/F9/FD family): such
+ *              a frame was not saved by the PendSV save path and its layout
+ *              cannot be decoded — resuming it is undefined.
+ * @verify A frame with valid PC/xPSR at the basic offsets but a junk word [8]
+ *         is rejected.
+ */
+void test_select_rejects_junk_exc_return(void)
+{
+    uint32* frame;
+
+    start_production_os();
+    frame = task_frame(TASK_10MS);   /* fresh initial frame: PC/xPSR valid */
+
+    frame[FRAME_EXC_RETURN_INDEX] = 0x20001000u;  /* RAM address, not EXC_RETURN */
+    TEST_ASSERT_EQUAL(E_OS_STATE, Os_Port_Stm32_SelectNextTask(TASK_10MS));
+
+    frame[FRAME_EXC_RETURN_INDEX] = 0u;           /* zeroed frame word */
+    TEST_ASSERT_EQUAL(E_OS_STATE, Os_Port_Stm32_SelectNextTask(TASK_10MS));
+}
+
+/**
+ * @requirement The gate shall accept every plausible EXC_RETURN family member
+ *              (0xFFFFFFF1/F9/FD basic; 0xFFFFFFE1/E9/ED extended) when the
+ *              layout-correct PC/xPSR words hold a live resume context.
+ * @verify Each basic family value validates at [15]/[16]; each extended
+ *         family value validates at [31]/[32].
+ */
+void test_select_accepts_all_plausible_exc_return_family(void)
+{
+    static const uint32 basic_family[3]    = { 0xFFFFFFF1u, 0xFFFFFFF9u, 0xFFFFFFFDu };
+    static const uint32 extended_family[3] = { 0xFFFFFFE1u, 0xFFFFFFE9u, 0xFFFFFFEDu };
+    uint32* frame;
+    uint8 idx;
+
+    start_production_os();
+    frame = prepare_deep_frame(TASK_10MS, res_stack_10ms, Task_10ms_Entry);
+
+    for (idx = 0u; idx < 3u; idx++) {
+        frame[FRAME_EXC_RETURN_INDEX] = basic_family[idx];
+        TEST_ASSERT_EQUAL(E_OK, Os_Port_Stm32_SelectNextTask(TASK_10MS));
+    }
+
+    frame[FRAME_PC_INDEX]       = 0u;
+    frame[FRAME_XPSR_INDEX]     = 0u;
+    frame[FRAME_EXT_PC_INDEX]   = ((uint32)(uintptr_t)Task_10ms_Entry) | 1u;
+    frame[FRAME_EXT_XPSR_INDEX] = XPSR_THUMB_BIT;
+
+    for (idx = 0u; idx < 3u; idx++) {
+        frame[FRAME_EXC_RETURN_INDEX] = extended_family[idx];
+        TEST_ASSERT_EQUAL(E_OK, Os_Port_Stm32_SelectNextTask(TASK_10MS));
+    }
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -470,5 +617,9 @@ int main(void)
     RUN_TEST(test_pendsv_rejects_target_invalidated_after_staging);
     RUN_TEST(test_pendsv_rejects_target_frame_corrupted_after_staging);
     RUN_TEST(test_pendsv_adopts_valid_target_without_fail_closed);
+    RUN_TEST(test_select_accepts_extended_layout_frame);
+    RUN_TEST(test_select_rejects_extended_frame_with_dead_pc);
+    RUN_TEST(test_select_rejects_junk_exc_return);
+    RUN_TEST(test_select_accepts_all_plausible_exc_return_family);
     return UNITY_END();
 }
