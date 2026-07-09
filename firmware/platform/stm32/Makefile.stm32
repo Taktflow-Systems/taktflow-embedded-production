@@ -68,6 +68,17 @@ ifdef HIL
   CFLAGS += -DPLATFORM_HIL
 endif
 
+# --- OS bootstrap bring-up suite (pass BRINGUP=1; S-OS-31) ---
+# Enables the Os_Port_Stm32_BringupAll() entry in main.c (reports 6 port
+# smoke tests over USART2). The bring-up TU itself is compiled only under
+# OSEK=1 (see OS_SRCS below), so BRINGUP=1 must be combined with OSEK=1 to
+# produce a runnable image:
+#   make -f firmware/platform/stm32/Makefile.stm32 TARGET=cvc OSEK=1 BRINGUP=1
+# Not a production build.
+ifdef BRINGUP
+  CFLAGS += -DOS_BOOTSTRAP_BRINGUP
+endif
+
 # --- Validate TARGET ---
 ifndef TARGET
   $(error TARGET is required. Usage: make -f firmware/platform/stm32/Makefile.stm32 TARGET=cvc|fzc|rzc)

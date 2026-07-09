@@ -423,6 +423,15 @@ static const Os_TaskMapEntryType cvc_os_task_map[] = {
  * @safety_req SWR-CVC-029 to SWR-CVC-035
  * @traces_to  SSR-CVC-029 to SSR-CVC-035, TSR-046, TSR-047, TSR-048
  */
+#ifdef OS_BOOTSTRAP_BRINGUP
+/* S-OS-31 on-target bring-up image entry (built with OSEK=1 BRINGUP=1).
+ * Defined in firmware/platform/stm32/src/Os_Port_Stm32_Bringup.c; no public
+ * header. Runs the 6 port smoke tests over USART2 and never returns on
+ * success (test 2 launches the first task; tests 3-6 run in task context).
+ * Not linked into any production build. */
+extern void Os_Port_Stm32_BringupAll(void);
+#endif
+
 int main(void)
 {
 #if !defined(USE_THREADX) && !defined(USE_OSEK)
@@ -435,6 +444,20 @@ int main(void)
 
     /* ---- Step 1: Hardware initialization ---- */
     Main_Hw_SystemClockInit();
+
+#ifdef OS_BOOTSTRAP_BRINGUP
+    /* S-OS-31: run the port bring-up suite immediately after clock init (per
+     * the suite's contract: after Main_Hw_SystemClockInit, before BSW init)
+     * and stop here. On success control transfers to the launched task and
+     * never returns; if test 2 fails to launch, park in WFI without bringing
+     * up any BSW module or scheduler. */
+    Os_Port_Stm32_BringupAll();
+    for (;;)
+    {
+        Main_Hw_Wfi();
+    }
+#endif
+
     Main_Hw_MpuConfig();
 
     /* ---- Step 2: BSW module initialization (order matters) ---- */
