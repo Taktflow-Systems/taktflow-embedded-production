@@ -429,6 +429,20 @@ merge is not viable; the port work must be harvested file-wise.
     Report: `test/hil/reports/os-migration-stm32.md` (FIX-08 section).
     STATUS: OPEN (containment + forensics done; root desync elimination
     pending FIX-10).
+  - 2026-07-10 UPDATE - FIX-09/10 implemented and verified: 37/37 host
+    suites green (zero failures, three expected TMS570 ignores), clean
+    CVC/FZC/RZC `OSEK=1` cross-builds, and post-commit image rebuilds.
+    FIX-10c replayed FIX-08 exactly: 5x300 s free-running, fresh flash per
+    run, USART2 plus full-bus CAN capture, then flashless harvest. All 15
+    board-runs had clean UART, one boot, zero fault records, zero silent
+    parks, and no unexplained resets. CVC/FZC held complete cyclic DBC
+    parity in all five captures. RZC remained OS/UART-alive but its complete
+    cyclic TX set died early in every run; 0x012 produced only 40-54 frames
+    and then had a 292.3-294.0 s dead tail. This rejects memo 8.8.1 as the
+    wedge mechanism and classifies the survivor as an independent STM32G4
+    FDCAN transmit-path defect (`plan-rzc-fdcan-tx-wedge.md`). **STATUS:
+    OPEN** - FIX-10 scheduler acceptance is clean, but S-OS-31 cannot close
+    because its unchanged full-window RZC CAN-parity gate is not met.
 
 - **S-OS-32 STM32F4 OSEK port bringup (F413ZH) — spare-board track**
   - Goal: extend the OSEK kernel + STM32 Cortex-M4 port to build, link,

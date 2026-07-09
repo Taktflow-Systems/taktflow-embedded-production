@@ -340,3 +340,71 @@ restore path outside ResolvePendSvTarget.
 All three boards free-running the FIX-06/07 image (CVC reset after the gdb
 attach; FZC/RZC untouched since harvest). can0 UP on the Pi. No debugger
 handles left attached. Raw logs archived in the session scratchpad (os31/).
+
+## FIX-10c free-run re-verification (2026-07-10 - FIX-09/10 images)
+
+### Method
+
+- Images: CVC/FZC/RZC `OSEK=1`, rebuilt after commits `8bf23f3` (FIX-09),
+  `87919e1` (FIX-10), and `8aaa830` (memo 8.8). Each boot banner reported
+  build ID `8aaa830f`.
+- Host gate: 37/37 bootstrap suites passed with zero failures and three
+  expected TMS570 ignores. Clean CVC/FZC/RZC cross-builds passed with
+  compiler `-Werror`.
+- Protocol: five runs x 300 s FREE-RUNNING on all three boards. Every run
+  used a fresh `st-flash --connect-under-reset write`, then hands-off USART2
+  and full-bus `candump` capture. No debugger was attached during a soak
+  window. After run 5, one flashless reset per board harvested FIX-07 retained
+  records.
+- Probe-accounting note: an inadvertent pre-protocol tooling invocation had
+  already consumed the one-session allowance on CVC and FZC, so neither was
+  probed again. The single permitted post-soak RZC `--no-reset` attempt
+  refused the running/WFI target and was not retried. No probe overlapped a
+  soak window.
+
+### Results - 15 board-runs
+
+| Run | CVC | FZC | RZC UART/OS | RZC 0x012 frames | RZC 0x012 dead tail |
+|---|---|---|---|---:|---:|
+| 1 | clean; cyclic CAN parity | clean; cyclic CAN parity | clean 300 s | 54 | 292.3 s |
+| 2 | clean; cyclic CAN parity | clean; cyclic CAN parity | clean 300 s | 54 | 292.5 s |
+| 3 | clean; cyclic CAN parity | clean; cyclic CAN parity | clean 300 s | 43 | 293.9 s |
+| 4 | clean; cyclic CAN parity | clean; cyclic CAN parity | clean 300 s | 40 | 294.0 s |
+| 5 | clean; cyclic CAN parity | clean; cyclic CAN parity | clean 300 s | 40 | 293.9 s |
+
+- All 15 board-runs had exactly one post-flash boot banner, zero printed fault
+  records, and no end-window UART silence. The final flashless harvest
+  reported `no fault record` on CVC, FZC, and RZC. RCC_CSR was
+  `0x14000000` only at the controlled flash/reset boots and was cleared by
+  the FIX-07 report; no unexplained reset or repeated boot occurred in a
+  free-running window.
+- Across five 305 s CAN captures, CVC/FZC cyclic traffic held the DBC rates:
+  0x001, 0x100-0x103, and 0x220 at 100.16-100.20 Hz; 0x010, 0x011,
+  0x200, and 0x201 at 20.03-20.04 Hz; 0x350 at 10.02 Hz. No cyclic ID had a
+  dead tail.
+- RZC failed the full-window bus criterion 5/5. The complete RZC cyclic set
+  (0x012, 0x300-0x303) appeared briefly and then disappeared together. In
+  run 5, for example, 0x012 had 40 frames, 0x300 had 20, 0x301 had 11,
+  0x302 had 10, and 0x303 had 2; their periodic traffic was absent for the
+  remaining capture.
+- RZC was not parked: USART2 status continued through 300 s, the application
+  heartbeat counter advanced, and TEC=0, REC=0, ERR=0, HAL state 2 remained
+  stable. `TXbusy` froze at 23 and 14 in runs 1-2 but remained 0 in runs 3-5,
+  so the existing software busy counter alone does not localize the wedge.
+- The RZC no-reset probe produced no register snapshot because the running/WFI
+  target refused attachment. Per bench rules, it was not retried and the
+  board was not reset for forensics.
+
+### Verdict - NOT MET; independent CAN blocker
+
+FIX-10 eliminated the prior scheduler manifestations on target: 15/15
+board-runs had no HardFault record, no fail-closed silent park, and no
+unexplained reset. The RZC CAN-TX wedge nevertheless survived in all five
+runs while the OS remained alive. It is therefore not the memo section 8.8.1
+mis-keyed-save mechanism; it is classified as an independent STM32G4 FDCAN
+transmit-path defect and tracked in `docs/plans/plan-rzc-fdcan-tx-wedge.md`.
+
+S-OS-31 remains **OPEN**. Its unchanged acceptance requires RZC 0x012 at
+20 Hz for the full window and complete CVC/FZC/RZC frame-set and period
+parity. A clean UART with dead bus IDs is a failure, so the scheduler result
+does not override the failed CAN gate.

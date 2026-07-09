@@ -839,3 +839,59 @@ sweep missed because it is not an interleaving — it is a plain call path:
 - Gate: S-OS-31 acceptance (plan-osek-os-migration.md Phase 3).
 - Definition of done: S-OS-31 closed, or the surviving defect has a full
   forensic record and a named next step.
+
+## 8.9 FIX-09/10 verification and FIX-10c result (2026-07-10)
+
+FIX-09 and FIX-10 are implemented and committed. The full bootstrap host
+runner passed 37/37 suites with zero failures and the three expected TMS570
+ignores. Clean CVC/FZC/RZC `OSEK=1` cross-builds passed with compiler
+`-Werror`; the post-commit images reported build ID `8aaa830f`. The scoped
+implementation commits are:
+
+- `8bf23f3` - FIX-09 EXC_RETURN-aware resume-frame guard and tests.
+- `87919e1` - FIX-10 kernel/port dispatch-commit seam, fuzz, and switchback
+  tests.
+- `8aaa830` - section 8.8 design record.
+
+FIX-10c then replayed the FIX-08 protocol unchanged: five fresh-flash runs,
+each 300 s free-running with per-board USART2 and full-bus CAN capture,
+followed by a flashless retained-record harvest. No debugger was attached
+during any soak window.
+
+| Run | CVC UART/faults | FZC UART/faults | RZC UART/faults | RZC 0x012 | Dead tail |
+|---|---|---|---|---:|---:|
+| 1 | clean / 0 | clean / 0 | clean / 0 | 54 | 292.3 s |
+| 2 | clean / 0 | clean / 0 | clean / 0 | 54 | 292.5 s |
+| 3 | clean / 0 | clean / 0 | clean / 0 | 43 | 293.9 s |
+| 4 | clean / 0 | clean / 0 | clean / 0 | 40 | 294.0 s |
+| 5 | clean / 0 | clean / 0 | clean / 0 | 40 | 293.9 s |
+
+All 15 board-runs had one boot banner, zero retained fault records, zero
+silent parks, and no unexplained reset. The final flashless harvest reported
+`no fault record` on all three boards. The only RCC flags were
+`0x14000000` at controlled flash/reset boots, reported and cleared by FIX-07;
+no boot repeated inside a free-running window.
+
+CVC and FZC held their complete cyclic frame sets at the DBC periods for all
+five 305 s CAN captures (10 ms traffic at 100.16-100.20 Hz, 50 ms traffic at
+20.03-20.04 Hz, and 100 ms traffic at 10.02 Hz). RZC failed identically in
+every run: 0x012 and the 0x300-0x303 set transmitted briefly and then all
+disappeared for the rest of the capture. RZC USART2 remained alive through
+300 s, its heartbeat counter advanced, and it continued to report TEC=0,
+REC=0, ERR=0, and HAL state 2. A single post-soak RZC `st-util --no-reset`
+attempt refused the running/WFI target; it was not retried or reset, so no
+CCCR/ECR/PSR/IR/TXFQS snapshot was available.
+
+### 8.9.1 Classification and gate decision
+
+The section 8.8.1 scheduler-desynchronization candidate is rejected as the
+mechanism for the RZC CAN-TX wedge. FIX-10 removed the prior scheduler
+manifestations (fault records and silent parks) across 15/15 board-runs, but
+the CAN-TX wedge survived 5/5 with the OS and UART alive. It is therefore an
+independent STM32G4 FDCAN transmit-path defect, tracked in
+`plan-rzc-fdcan-tx-wedge.md`.
+
+FIX-10c acceptance is **NOT MET** because RZC 0x012 did not remain at 20 Hz
+for the full window and the RZC cyclic frame set did not maintain DBC period
+parity. Per the unchanged gate, S-OS-31 remains **OPEN**. The scheduler fix is
+verified, but a clean UART with dead bus IDs is explicitly a failure.
