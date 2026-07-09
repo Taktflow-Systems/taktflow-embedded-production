@@ -11,6 +11,7 @@ An opendbc checkout is included only when explicitly supplied with
 from __future__ import annotations
 
 import argparse
+import re
 import subprocess
 import sys
 import tempfile
@@ -46,6 +47,19 @@ class CorpusResult:
     reason: str
 
 
+@dataclass(frozen=True)
+class ConverterRun:
+    """Captured converter result used to classify typed rejections."""
+
+    returncode: int
+    output: str
+
+
+EXPECTED_REJECTIONS = {
+    "DBC007": "multiplexing is not represented in emitted ARXML",
+}
+
+
 def discover_inputs(corpus_dir: Path, opendbc_dir: Path | None = None) -> list[CorpusInput]:
     """Discover vendored and explicitly enabled opendbc files deterministically."""
     inputs = [
@@ -79,8 +93,8 @@ def preflight_reason(path: Path) -> str | None:
     return None
 
 
-def run_converter(converter: Path, dbc: Path, output_dir: Path, timeout: int) -> int:
-    """Run the production converter and return its process exit status."""
+def run_converter(converter: Path, dbc: Path, output_dir: Path, timeout: int) -> ConverterRun:
+    """Run the production converter and capture portable diagnostic codes."""
     completed = subprocess.run(
         [sys.executable, str(converter), str(dbc), str(output_dir)],
         cwd=REPO_ROOT,
@@ -90,7 +104,19 @@ def run_converter(converter: Path, dbc: Path, output_dir: Path, timeout: int) ->
         timeout=timeout,
         check=False,
     )
-    return completed.returncode
+    return ConverterRun(completed.returncode, completed.stdout)
+
+
+def expected_rejection_reason(output: str) -> str | None:
+    """Map an allowlisted typed diagnostic to a stable skip reason."""
+    match = re.search(r"\[([A-Z]+\d+)\]\s+error\b", output)
+    if match is None:
+        return None
+    code = match.group(1)
+    description = EXPECTED_REJECTIONS.get(code)
+    if description is None:
+        return None
+    return f"{code}: {description}"
 
 
 def strict_validation_reason(path: Path) -> str | None:
@@ -124,7 +150,7 @@ def run_input(
     output_dir = work_root / label
 
     try:
-        returncode = run_converter(converter, item.path, output_dir, timeout)
+        converter_run = run_converter(converter, item.path, output_dir, timeout)
     except subprocess.TimeoutExpired:
         return CorpusResult(
             item.source,
@@ -140,12 +166,20 @@ def run_input(
             f"converter launch failed: {type(exc).__name__}",
         )
 
-    if returncode != 0:
+    if converter_run.returncode != 0:
+        rejection_reason = expected_rejection_reason(converter_run.output)
+        if rejection_reason is not None:
+            return CorpusResult(
+                item.source,
+                item.name,
+                "skipped-with-reason",
+                rejection_reason,
+            )
         return CorpusResult(
             item.source,
             item.name,
             "crashed",
-            f"converter exited {returncode}",
+            f"converter exited {converter_run.returncode}",
         )
 
     arxml_path = output_dir / "TaktflowSystem.arxml"

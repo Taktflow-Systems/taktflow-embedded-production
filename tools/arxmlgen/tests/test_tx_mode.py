@@ -50,10 +50,10 @@ def test_generated_estop_row_stays_periodic(com_cfg_c):
     assert re.search(r",\s*10u,\s*COM_TX_MODE_PERIODIC", row), row
 
 
-def test_cyclic_messages_keep_legacy_heuristic(load_model):
-    """Plain cyclic messages carry no explicit tx_mode (template heuristic)."""
+def test_cyclic_messages_map_explicitly_to_periodic(load_model):
+    """Cyclic messages map explicitly instead of falling through."""
     pdu = _tx_pdu(load_model, "cvc", "CVC_Heartbeat")
-    assert pdu.tx_mode == ""
+    assert pdu.tx_mode == "PERIODIC"
     assert pdu.cycle_ms > 0
 
 

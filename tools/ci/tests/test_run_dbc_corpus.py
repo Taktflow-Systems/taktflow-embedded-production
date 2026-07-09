@@ -50,7 +50,7 @@ def test_successful_conversion_is_reported(tmp_path, monkeypatch):
     def fake_converter(_converter, _dbc, output_dir, _timeout):
         output_dir.mkdir(parents=True, exist_ok=True)
         (output_dir / "TaktflowSystem.arxml").write_text("<AUTOSAR/>", encoding="utf-8")
-        return 0
+        return corpus.ConverterRun(0, "")
 
     monkeypatch.setattr(corpus, "run_converter", fake_converter)
 
@@ -69,7 +69,7 @@ def test_strict_mode_surfaces_validation_failure(tmp_path, monkeypatch):
     def fake_converter(_converter, _dbc, output_dir, _timeout):
         output_dir.mkdir(parents=True, exist_ok=True)
         (output_dir / "TaktflowSystem.arxml").write_text("<AUTOSAR/>", encoding="utf-8")
-        return 0
+        return corpus.ConverterRun(0, "")
 
     monkeypatch.setattr(corpus, "run_converter", fake_converter)
     monkeypatch.setattr(corpus, "strict_validation_reason", lambda _path: "strict load failed: AutosarDataError")
@@ -112,3 +112,25 @@ def test_exit_code_fails_only_for_crashes():
 
     assert corpus.exit_code_for(green) == 0
     assert corpus.exit_code_for(red) == 1
+
+
+def test_typed_unsupported_feature_is_a_named_skip(tmp_path, monkeypatch):
+    dbc = tmp_path / "multiplexed.dbc"
+    dbc.write_text("VERSION \"\"\n", encoding="utf-8")
+    item = corpus.CorpusInput(source="vendored", name=dbc.name, path=dbc)
+    monkeypatch.setattr(corpus, "preflight_reason", lambda _path: None)
+    monkeypatch.setattr(
+        corpus,
+        "run_converter",
+        lambda *_args: corpus.ConverterRun(
+            2,
+            "[DBC007] error DBC message 'Mux' signal 'Selector': unsupported",
+        ),
+    )
+
+    result = corpus.run_input(
+        item, "must-not-crash", tmp_path, Path("converter.py"), 5
+    )
+
+    assert result.status == "skipped-with-reason"
+    assert result.reason == "DBC007: multiplexing is not represented in emitted ARXML"

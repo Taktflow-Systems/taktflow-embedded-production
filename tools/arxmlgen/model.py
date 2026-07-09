@@ -41,8 +41,8 @@ class Pdu:
     direction: str = "TX"
     cycle_ms: int = 0
     timeout_ms: int = 0
-    tx_mode: str = ""      # "" = derive from cycle_ms; else DIRECT/PERIODIC/NONE
-                           # (sidecar message_tx_mode > DBC GenMsgSendType=event)
+    tx_mode: str = ""      # "" = explicitly unspecified; else DIRECT/PERIODIC/NONE
+                           # (sidecar override > validated DBC send-type mapping)
     signals: list[Signal] = field(default_factory=list)
     e2e_protected: bool = False
     e2e_data_id: int | None = None

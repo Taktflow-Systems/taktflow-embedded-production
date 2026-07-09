@@ -1,44 +1,15 @@
-"""
-Tests for --e2e-source option: DBC vs sidecar E2E data ID sourcing.
+"""Tests for fail-closed selection of the E2E parameter source."""
 
-Verifies that:
-- DBC mode reads E2E_DataID attribute from DBC and applies CAN-matrix-aligned IDs
-- Sidecar mode reads pdu_e2e_map from ecu_sidecar.yaml (existing behavior)
-- Both modes produce valid E2E config with correct data IDs
-- Config and CLI parsing works for e2e_source
-"""
+from __future__ import annotations
 
 import os
-import re
 
 import pytest
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(TESTS_DIR)))
 
-
-def _load_model_with_e2e_source(e2e_source: str):
-    """Load model with a specific e2e_source override."""
-    from tools.arxmlgen.config import load_config
-    from tools.arxmlgen.reader import ArxmlReader
-
-    config_path = os.path.join(PROJECT_ROOT, "project.yaml")
-    if not os.path.exists(config_path):
-        pytest.skip("project.yaml not found")
-
-    config = load_config(config_path)
-    config.e2e_source = e2e_source
-    reader = ArxmlReader(config)
-    return reader.read()
-
-
-# Explicit E2E_DataID assignments in the DBC. Messages that rely on another
-# source (ARXML or sidecar) are intentionally absent from DBC-source tests.
 EXPLICIT_DBC_E2E_IDS = {
     "EStop_Broadcast": 0x01,
     "CVC_Heartbeat": 0x02,
@@ -59,196 +30,104 @@ EXPLICIT_DBC_E2E_IDS = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
+def _load_model_with_e2e_source(e2e_source: str):
+    from tools.arxmlgen.config import load_config
+    from tools.arxmlgen.reader import ArxmlReader
 
-@pytest.fixture(scope="module")
-def model_dbc():
-    """Model loaded with e2e_source=dbc."""
-    return _load_model_with_e2e_source("dbc")
+    config = load_config(os.path.join(PROJECT_ROOT, "project.yaml"))
+    config.e2e_source = e2e_source
+    return ArxmlReader(config).read()
+
+
+def test_project_uses_arxml_source():
+    from tools.arxmlgen.config import load_config
+
+    config = load_config(os.path.join(PROJECT_ROOT, "project.yaml"))
+    assert config.e2e_source == "arxml"
+
+
+def test_config_rejects_invalid_source(tmp_path):
+    from tools.arxmlgen.config import ConfigError, load_config
+
+    (tmp_path / "dummy.arxml").write_text("<AUTOSAR/>", encoding="utf-8")
+    (tmp_path / "project.yaml").write_text(
+        """project:
+  name: Test
+input:
+  arxml: [dummy.arxml]
+  e2e_source: invalid
+ecus:
+  test: {prefix: TST}
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="e2e_source"):
+        load_config(str(tmp_path / "project.yaml"))
+
+
+def test_config_accepts_dbc():
+    from tools.arxmlgen.config import load_config
+
+    config = load_config(os.path.join(PROJECT_ROOT, "project.yaml"))
+    config.e2e_source = "dbc"
+    assert config.e2e_source == "dbc"
+
+
+def test_incomplete_dbc_e2e_source_fails_closed():
+    from tools.arxmlgen.reader import ArxmlReadError
+
+    with pytest.raises(ArxmlReadError) as exc_info:
+        _load_model_with_e2e_source("dbc")
+
+    diagnostic = exc_info.value.diagnostics[0]
+    assert diagnostic.code == "DBC006"
+    assert diagnostic.source == "E2E PDU 'ICU_Heartbeat'"
+
+
+def test_explicit_dbc_e2e_ids_are_read_exactly():
+    from tools.arxmlgen.config import load_config
+    from tools.arxmlgen.reader import ArxmlReader
+
+    config = load_config(os.path.join(PROJECT_ROOT, "project.yaml"))
+    reader = ArxmlReader(config)
+    reader._load_dbc_routing()
+
+    assert reader._dbc_e2e_map == EXPLICIT_DBC_E2E_IDS
+
+
+def test_complete_dbc_e2e_mapping_is_applied():
+    from tools.arxmlgen.config import ProjectConfig
+    from tools.arxmlgen.model import Ecu, Pdu
+    from tools.arxmlgen.reader import ArxmlReader
+
+    reader = ArxmlReader(ProjectConfig())
+    reader._dbc_e2e_map = {"BrakeStatus": 9}
+    reader._dbc_e2e_max_delta = {"BrakeStatus": 4}
+    pdu = Pdu(name="BrakeStatus", e2e_protected=True)
+    ecu = Ecu(name="brake", prefix="BRK", tx_pdus=[pdu])
+
+    reader._apply_dbc_e2e({"brake": ecu})
+
+    assert pdu.e2e_data_id == 9
+    assert pdu.e2e_max_delta == 4
 
 
 @pytest.fixture(scope="module")
 def model_sidecar():
-    """Model loaded with e2e_source=sidecar."""
     return _load_model_with_e2e_source("sidecar")
 
 
-# ===================================================================
-# Config / CLI tests
-# ===================================================================
-
-class TestE2ESourceConfig:
-    """Verify e2e_source config and CLI parsing."""
-
-    def test_project_uses_arxml_source(self):
-        """Project config must use the structured ARXML protection set."""
-        from tools.arxmlgen.config import load_config
-
-        config_path = os.path.join(PROJECT_ROOT, "project.yaml")
-        config = load_config(config_path)
-        assert config.e2e_source == "arxml"
-
-    def test_config_rejects_invalid_source(self, tmp_path):
-        """Invalid e2e_source must raise ConfigError."""
-        from tools.arxmlgen.config import ConfigError, load_config
-
-        # Create a minimal project.yaml with invalid e2e_source
-        yaml_content = """
-project:
-  name: Test
-input:
-  arxml:
-    - dummy.arxml
-  e2e_source: invalid
-ecus:
-  test: { prefix: "TST" }
-"""
-        yaml_path = tmp_path / "project.yaml"
-        yaml_path.write_text(yaml_content)
-        # Also create a dummy arxml file
-        (tmp_path / "dummy.arxml").write_text("<AUTOSAR/>")
-
-        with pytest.raises(ConfigError, match="e2e_source"):
-            load_config(str(yaml_path))
-
-    def test_config_accepts_dbc(self, tmp_path):
-        """e2e_source=dbc must be accepted."""
-        from tools.arxmlgen.config import load_config
-
-        config_path = os.path.join(PROJECT_ROOT, "project.yaml")
-        config = load_config(config_path)
-        config.e2e_source = "dbc"
-        assert config.e2e_source == "dbc"
+def test_sidecar_source_populates_protected_tx_pdus(model_sidecar):
+    for pdu in model_sidecar.ecus["cvc"].tx_pdus:
+        if pdu.e2e_protected:
+            assert pdu.e2e_data_id is not None
 
 
-# ===================================================================
-# DBC E2E source tests
-# ===================================================================
-
-class TestE2ESourceDbc:
-    """Verify DBC-based E2E data ID assignment."""
-
-    def test_cvc_matrix_pdus_have_data_ids(self, model_dbc):
-        """CVC PDUs listed in CAN matrix must have data IDs from DBC.
-        PDUs with E2E signals but no matrix entry (QM heartbeats) are excluded."""
-        cvc = model_dbc.ecus["cvc"]
-        for pdu in cvc.tx_pdus + cvc.rx_pdus:
-            if pdu.name in EXPLICIT_DBC_E2E_IDS:
-                assert pdu.e2e_data_id is not None, \
-                    f"PDU {pdu.name} has no data ID in DBC mode"
-
-    def test_dbc_data_ids_match_can_matrix(self, model_dbc):
-        """DBC-sourced data IDs must match CAN message matrix exactly."""
-        cvc = model_dbc.ecus["cvc"]
-        for pdu in cvc.tx_pdus + cvc.rx_pdus:
-            if pdu.name in EXPLICIT_DBC_E2E_IDS:
-                expected = EXPLICIT_DBC_E2E_IDS[pdu.name]
-                assert pdu.e2e_data_id == expected, \
-                    f"PDU {pdu.name}: expected data ID 0x{expected:02X}, " \
-                    f"got 0x{pdu.e2e_data_id:02X}"
-
-    def test_estop_data_id_is_0x01(self, model_dbc):
-        """EStop_Broadcast must have data ID 0x01 (CAN matrix row 1)."""
-        cvc = model_dbc.ecus["cvc"]
-        estop = next(p for p in cvc.tx_pdus if p.name == "EStop_Broadcast")
-        assert estop.e2e_data_id == 0x01
-
-    def test_heartbeat_data_ids_sequential(self, model_dbc):
-        """Heartbeat data IDs: CVC=0x02, FZC=0x03, RZC=0x04."""
-        cvc = model_dbc.ecus["cvc"]
-        hb = next(p for p in cvc.tx_pdus if p.name == "CVC_Heartbeat")
-        assert hb.e2e_data_id == 0x02
-
-        fzc = model_dbc.ecus["fzc"]
-        hb = next(p for p in fzc.tx_pdus if p.name == "FZC_Heartbeat")
-        assert hb.e2e_data_id == 0x03
-
-        rzc = model_dbc.ecus["rzc"]
-        hb = next(p for p in rzc.tx_pdus if p.name == "RZC_Heartbeat")
-        assert hb.e2e_data_id == 0x04
-
-    def test_all_16_e2e_messages_have_ids(self, model_dbc):
-        """Every explicit DBC E2E assignment must reach a TX PDU."""
-        all_pdus = {}
-        for ecu in model_dbc.ecus.values():
-            for pdu in ecu.tx_pdus:
-                if pdu.name in EXPLICIT_DBC_E2E_IDS:
-                    all_pdus[pdu.name] = pdu.e2e_data_id
-
-        for msg_name, expected_id in EXPLICIT_DBC_E2E_IDS.items():
-            assert msg_name in all_pdus, f"Message {msg_name} not found as TX PDU"
-            assert all_pdus[msg_name] == expected_id, \
-                f"{msg_name}: expected 0x{expected_id:02X}, got 0x{all_pdus[msg_name]:02X}"
-
-    def test_rx_pdus_inherit_tx_data_ids(self, model_dbc):
-        """RX PDUs must get the same data ID as the TX side."""
-        cvc = model_dbc.ecus["cvc"]
-        # CVC receives FZC_Heartbeat — should have data ID 0x03
-        fzc_hb_rx = [p for p in cvc.rx_pdus if p.name == "FZC_Heartbeat"]
-        assert len(fzc_hb_rx) == 1
-        assert fzc_hb_rx[0].e2e_data_id == 0x03
-
-
-# ===================================================================
-# Sidecar E2E source tests
-# ===================================================================
-
-class TestE2ESourceSidecar:
-    """Verify sidecar-based E2E data ID assignment (existing behavior)."""
-
-    def test_cvc_e2e_pdus_have_data_ids(self, model_sidecar):
-        """All E2E-protected CVC PDUs must have data IDs from sidecar."""
-        cvc = model_sidecar.ecus["cvc"]
-        for pdu in cvc.tx_pdus:
-            if pdu.e2e_protected:
-                assert pdu.e2e_data_id is not None, \
-                    f"PDU {pdu.name} has no data ID in sidecar mode"
-
-    def test_estop_data_id_is_0x01(self, model_sidecar):
-        """EStop_Broadcast data ID is 0x01 in sidecar (matches matrix)."""
-        cvc = model_sidecar.ecus["cvc"]
-        estop = next(p for p in cvc.tx_pdus if p.name == "EStop_Broadcast")
-        assert estop.e2e_data_id == 0x01
-
-
-# ===================================================================
-# Comparison tests
-# ===================================================================
-
-class TestE2ESourceComparison:
-    """Compare DBC vs sidecar E2E outputs to verify both work."""
-
-    def test_both_modes_produce_same_ecu_set(self, model_dbc, model_sidecar):
-        """Both modes must produce the same set of ECUs."""
-        assert set(model_dbc.ecus.keys()) == set(model_sidecar.ecus.keys())
-
-    def test_both_modes_have_e2e_protected_pdus(self, model_dbc, model_sidecar):
-        """Both modes must identify the same PDUs as E2E-protected."""
-        for ecu_name in model_dbc.ecus:
-            dbc_e2e = {p.name for p in model_dbc.ecus[ecu_name].tx_pdus
-                       if p.e2e_protected}
-            sidecar_e2e = {p.name for p in model_sidecar.ecus[ecu_name].tx_pdus
-                           if p.e2e_protected}
-            assert dbc_e2e == sidecar_e2e, \
-                f"ECU {ecu_name}: E2E PDU mismatch between DBC and sidecar modes"
-
-    def test_dbc_ids_match_sidecar_for_shared_pdus(self, model_dbc, model_sidecar):
-        """Duplicated DBC and sidecar assignments must remain consistent."""
-        cvc_dbc = model_dbc.ecus["cvc"]
-        cvc_sc = model_sidecar.ecus["cvc"]
-
-        dbc_ids = {p.name: p.e2e_data_id for p in cvc_dbc.tx_pdus
-                   if p.e2e_protected}
-        sc_ids = {p.name: p.e2e_data_id for p in cvc_sc.tx_pdus
-                  if p.e2e_protected}
-
-        shared = sorted(set(dbc_ids) & set(sc_ids))
-        assert shared, "DBC and sidecar have no shared E2E PDUs"
-        differences = {
-            name: (dbc_ids[name], sc_ids[name])
-            for name in shared
-            if dbc_ids[name] != sc_ids[name]
-        }
-        assert not differences, f"DBC/sidecar E2E DataID drift: {differences}"
+def test_sidecar_estop_data_id(model_sidecar):
+    pdu = next(
+        item
+        for item in model_sidecar.ecus["cvc"].tx_pdus
+        if item.name == "EStop_Broadcast"
+    )
+    assert pdu.e2e_data_id == 0x01

@@ -1,6 +1,6 @@
 # Plan: DBC-to-ARXML Pipeline Hardening
 
-**Status:** P2 DONE - P3 PENDING
+**Status:** P3 DONE - P4 PENDING
 **Created:** 2026-07-09
 **Branch:** `feat/pipeline-hardening`
 **Scope:** `gateway/taktflow_vehicle.dbc` -> `tools/arxml/dbc2arxml.py` ->
@@ -233,7 +233,7 @@ converted, one skipped with a typed reason and zero crashes. The committed
 must-not-crash report is byte-identical across repeated runs. CSS Electronics
 files remain unvendored because no explicit redistribution grant was found.
 
-### P3 - Fail-closed error handling - PENDING
+### P3 - Fail-closed error handling - DONE
 
 **Step ID:** PH-P3
 **Inputs:** P1 exception inventory and P2 corpus outcomes.
@@ -256,6 +256,20 @@ partial output after hard failure; `rg -n "except.*pass|except Exception:"
 tools/arxml tools/arxmlgen` finds no swallowing handler; corpus
 must-not-crash remains green.
 **Gate:** tests fail before implementation and pass after; commit P3 before P4.
+**Result:** the converter, extractor and reader now share stable diagnostics
+with code, severity, source object and message. Every P1 downgrade handler
+either raises a typed hard failure or records an explicit warning; error paths
+cannot reach ARXML emission or C generation. Seeded tests cover malformed
+attributes, normalized-name collisions, unsupported send types, multiplexing,
+broken references, invalid mappings and foreign SWCs. The fail-closed run also
+exposed and fixed two previously hidden in-house defects: physical units now
+use AUTOSAR UNIT references and I-PDU cyclic timing uses the installed
+autosar-data API. Extended CAN identifiers are emitted with extended
+addressing, repeated public-corpus signal names are deterministically
+namespaced, and unsupported multiplexing exits with `DBC007` before emission.
+The corpus harness recognizes only that allowlisted typed rejection as a skip:
+three fixtures convert, two skip with reasons and none crash. All 335 combined
+tests pass.
 
 ### P4 - Strict schema validation gate - PENDING
 

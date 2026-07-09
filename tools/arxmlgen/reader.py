@@ -13,13 +13,27 @@ from collections import defaultdict
 
 import autosar_data as ad
 import yaml
+try:
+    from tools.pipeline_diagnostics import (
+        DiagnosticBag,
+        DiagnosticSeverity,
+        PipelineDiagnostic,
+        PipelineDiagnosticError,
+    )
+except ModuleNotFoundError:
+    from pipeline_diagnostics import (
+        DiagnosticBag,
+        DiagnosticSeverity,
+        PipelineDiagnostic,
+        PipelineDiagnosticError,
+    )
 
 from .config import ProjectConfig
 from .model import Ecu, Pdu, Port, ProjectModel, Runnable, Signal, Swc
 from .policy import apply_rate_monotonic_banding
 
 
-class ArxmlReadError(Exception):
+class ArxmlReadError(PipelineDiagnosticError):
     """Failed to parse or extract data from ARXML."""
 
 
@@ -29,6 +43,7 @@ class ArxmlReader:
     def __init__(self, config: ProjectConfig):
         self.config = config
         self.model = ad.AutosarModel()
+        self.diagnostics = DiagnosticBag()
         self.warnings: list[str] = []
 
         # Internal lookup tables built during reading
@@ -162,11 +177,20 @@ class ArxmlReader:
         """Load DBC to determine which ECU transmits which message."""
         try:
             import cantools
-        except ImportError:
-            self._warn("cantools not installed — DBC routing unavailable")
-            return
+        except ImportError as exc:
+            self._fail(
+                "DBC100", "DBC routing", "cantools dependency is unavailable", exc
+            )
 
         db = cantools.database.load_file(self.config.dbc_path)
+        definitions = getattr(getattr(db, "dbc", None), "attribute_definitions", {}) or {}
+        for name in sorted(definitions):
+            if name.startswith("Gen") and name not in ("GenMsgCycleTime", "GenMsgSendType"):
+                self._warn(
+                    "convention is not interpreted by this pipeline",
+                    code="DBC004",
+                    source="DBC attribute definition '%s'" % name,
+                )
         for msg in db.messages:
             senders = msg.senders or []
             if senders:
@@ -183,36 +207,79 @@ class ArxmlReader:
                     e2e_val = int(e2e_attr.value if hasattr(e2e_attr, 'value') else e2e_attr)
                     if e2e_val >= 0:
                         self._dbc_e2e_map[msg.name] = e2e_val
-            except (AttributeError, TypeError, ValueError):
-                pass
+                    else:
+                        self._fail(
+                            "DBC001", "DBC message '%s' attribute 'E2E_DataID'" % msg.name,
+                            "value must be non-negative",
+                        )
+            except (AttributeError, TypeError, ValueError) as exc:
+                self._fail(
+                    "DBC001", "DBC message '%s' attribute 'E2E_DataID'" % msg.name,
+                    "value is not a non-negative integer", exc,
+                )
 
             # Extract E2E_MaxDeltaCounter attribute (default 2 if not present)
             try:
                 maxd_attr = msg.dbc.attributes.get("E2E_MaxDeltaCounter")
                 if maxd_attr is not None:
                     maxd_val = int(maxd_attr.value if hasattr(maxd_attr, 'value') else maxd_attr)
+                    if maxd_val < 0:
+                        self._fail(
+                            "DBC001", "DBC message '%s' attribute 'E2E_MaxDeltaCounter'" % msg.name,
+                            "value must be non-negative",
+                        )
                     self._dbc_e2e_max_delta[msg.name] = maxd_val
-            except (AttributeError, TypeError, ValueError):
-                pass
+            except (AttributeError, TypeError, ValueError) as exc:
+                self._fail(
+                    "DBC001",
+                    "DBC message '%s' attribute 'E2E_MaxDeltaCounter'" % msg.name,
+                    "value is not an integer", exc,
+                )
 
             # Extract GenMsgCycleTime attribute (TX cycle period in ms)
             try:
                 cycle_attr = msg.dbc.attributes.get("GenMsgCycleTime")
                 if cycle_attr is not None:
                     cycle_val = int(cycle_attr.value if hasattr(cycle_attr, 'value') else cycle_attr)
+                    if cycle_val < 0:
+                        self._fail(
+                            "DBC001", "DBC message '%s' attribute 'GenMsgCycleTime'" % msg.name,
+                            "value must be non-negative",
+                        )
                     if cycle_val > 0:
                         self._dbc_cycle_map[msg.name] = cycle_val
-            except (AttributeError, TypeError, ValueError):
-                pass
+            except (AttributeError, TypeError, ValueError) as exc:
+                self._fail(
+                    "DBC001", "DBC message '%s' attribute 'GenMsgCycleTime'" % msg.name,
+                    "value is not a positive integer", exc,
+                )
 
             # Extract GenMsgSendType attribute ("event" → COM_TX_MODE_DIRECT)
             try:
                 st_attr = msg.dbc.attributes.get("GenMsgSendType")
                 if st_attr is not None:
                     st_val = st_attr.value if hasattr(st_attr, 'value') else st_attr
-                    self._dbc_send_type_map[msg.name] = str(st_val).strip().lower()
-            except (AttributeError, TypeError, ValueError):
-                pass
+                    normalized = str(st_val).strip().lower()
+                    if normalized not in ("cyclic", "event", "nomsgsendtype"):
+                        self._fail(
+                            "DBC003",
+                            "DBC message '%s' attribute 'GenMsgSendType'" % msg.name,
+                            "unsupported value '%s'" % st_val,
+                        )
+                    self._dbc_send_type_map[msg.name] = normalized
+                    if normalized == "nomsgsendtype":
+                        self._warn(
+                            "value is intentionally unspecified; cycle-time heuristic applies",
+                            code="DBC005",
+                            source="DBC message '%s' attribute 'GenMsgSendType'" % msg.name,
+                        )
+            except ArxmlReadError:
+                raise
+            except (AttributeError, TypeError, ValueError) as exc:
+                self._fail(
+                    "DBC001", "DBC message '%s' attribute 'GenMsgSendType'" % msg.name,
+                    "cannot read value", exc,
+                )
 
             # Extract Satisfies attribute (requirement traceability)
             try:
@@ -221,8 +288,11 @@ class ArxmlReader:
                     sat_val = str(sat_attr.value if hasattr(sat_attr, 'value') else sat_attr)
                     if sat_val:
                         self._dbc_satisfies_map[msg.name] = sat_val
-            except (AttributeError, TypeError, ValueError):
-                pass
+            except (AttributeError, TypeError, ValueError) as exc:
+                self._fail(
+                    "DBC001", "DBC message '%s' attribute 'Satisfies'" % msg.name,
+                    "cannot read value", exc,
+                )
 
             # Extract ASIL attribute
             try:
@@ -231,8 +301,11 @@ class ArxmlReader:
                     asil_val = str(asil_attr.value if hasattr(asil_attr, 'value') else asil_attr)
                     if asil_val:
                         self._dbc_asil_map[msg.name] = asil_val
-            except (AttributeError, TypeError, ValueError):
-                pass
+            except (AttributeError, TypeError, ValueError) as exc:
+                self._fail(
+                    "DBC001", "DBC message '%s' attribute 'ASIL'" % msg.name,
+                    "cannot read value", exc,
+                )
 
         e2e_count = len(self._dbc_e2e_map)
         sat_count = len(self._dbc_satisfies_map)
@@ -259,16 +332,20 @@ class ArxmlReader:
                 for msg_name, mode in tx_modes.items():
                     mode_up = str(mode).strip().upper()
                     if mode_up not in ("NONE", "DIRECT", "PERIODIC"):
-                        self._warn(
-                            f"Sidecar message_tx_mode[{msg_name}] = '{mode}' "
-                            f"invalid — expected none|direct|periodic; ignored"
+                        self._fail(
+                            "SIDECAR001",
+                            "sidecar message_tx_mode[%s]" % msg_name,
+                            "unsupported value '%s'; expected none, direct, or periodic" % mode,
                         )
-                        continue
                     self._tx_mode_overrides[msg_name] = mode_up
                 if self._tx_mode_overrides:
                     _info(f"  TX-mode overrides: {len(self._tx_mode_overrides)} messages")
+            except ArxmlReadError:
+                raise
             except Exception as exc:
-                self._warn(f"Failed to read sidecar routing: {exc}")
+                self._fail(
+                    "SIDECAR002", "sidecar routing", "cannot read overrides", exc
+                )
 
     # ------------------------------------------------------------------
     # Platform types
@@ -332,13 +409,19 @@ class ArxmlReader:
                     if sub.element_name == "IDENTIFIER":
                         try:
                             can_id = int(sub.character_data)
-                        except (TypeError, ValueError):
-                            pass
+                        except (TypeError, ValueError) as exc:
+                            self._fail(
+                                "ARXML101", "CAN frame triggering '%s' identifier" % path,
+                                "value is not an integer", exc,
+                            )
                     elif sub.element_name == "FRAME-REF" and sub.is_reference:
                         try:
                             frame_ref_path = sub.reference_target.path
-                        except Exception:
-                            pass
+                        except Exception as exc:
+                            self._fail(
+                                "ARXML102", "CAN frame triggering '%s' FRAME-REF" % path,
+                                "reference cannot be resolved", exc,
+                            )
 
                 if frame_ref_path and can_id is not None:
                     self._frame_can_ids[frame_ref_path] = can_id
@@ -352,8 +435,11 @@ class ArxmlReader:
                     if sub.element_name == "FRAME-LENGTH":
                         try:
                             dlc = int(sub.character_data)
-                        except (TypeError, ValueError):
-                            pass
+                        except (TypeError, ValueError) as exc:
+                            self._fail(
+                                "ARXML103", "CAN frame '%s' length" % path,
+                                "value is not an integer", exc,
+                            )
                     elif sub.element_name == "PDU-TO-FRAME-MAPPINGS":
                         for mapping in sub.sub_elements:
                             if mapping.element_name == "PDU-TO-FRAME-MAPPING":
@@ -363,8 +449,12 @@ class ArxmlReader:
                                             pdu_path = m_sub.reference_target.path
                                             self._pdu_to_frame[pdu_path] = path
                                             self._frame_to_pdu[path] = pdu_path
-                                        except Exception:
-                                            pass
+                                        except Exception as exc:
+                                            self._fail(
+                                                "ARXML102",
+                                                "CAN frame '%s' PDU-REF" % path,
+                                                "reference cannot be resolved", exc,
+                                            )
 
                 self._frame_dlcs[path] = dlc
 
@@ -404,8 +494,11 @@ class ArxmlReader:
                 if sub.element_name == "LENGTH":
                     try:
                         pdu_length = int(sub.character_data)
-                    except (TypeError, ValueError):
-                        pass
+                    except (TypeError, ValueError) as exc:
+                        self._fail(
+                            "ARXML104", "I-PDU '%s' length" % path,
+                            "value is not an integer", exc,
+                        )
                 elif sub.element_name in ("I-SIGNAL-TO-PDU-MAPPINGS", "I-SIGNAL-TO-I-PDU-MAPPINGS"):
                     for mapping in sub.sub_elements:
                         sig = self._parse_signal_mapping(mapping)
@@ -446,8 +539,10 @@ class ArxmlReader:
             pdu_tx_mode = self._msg_attr_lookup(pdu_name, self._tx_mode_overrides) or ""
             if not pdu_tx_mode:
                 send_type = self._msg_attr_lookup(pdu_name, self._dbc_send_type_map) or ""
-                if send_type.startswith("event"):
+                if send_type == "event":
                     pdu_tx_mode = "DIRECT"
+                elif send_type == "cyclic":
+                    pdu_tx_mode = "PERIODIC"
 
             pdu = Pdu(
                 name=pdu_name,
@@ -583,8 +678,11 @@ class ArxmlReader:
             elif sub.element_name == "START-POSITION":
                 try:
                     bit_pos = int(sub.character_data)
-                except (TypeError, ValueError):
-                    bit_pos = 0
+                except (TypeError, ValueError) as exc:
+                    self._fail(
+                        "ARXML105", "signal mapping '%s' start position" % name,
+                        "value is not an integer", exc,
+                    )
             elif sub.element_name == "PACKING-BYTE-ORDER":
                 if sub.character_data and "MOST-SIGNIFICANT-BYTE-FIRST" in sub.character_data:
                     byte_order = "big_endian"
@@ -595,8 +693,11 @@ class ArxmlReader:
                     for isub in isignal.sub_elements:
                         if isub.element_name == "LENGTH":
                             sig_length = int(isub.character_data)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    self._fail(
+                        "ARXML102", "signal mapping '%s' I-SIGNAL-REF" % name,
+                        "reference or signal length cannot be resolved", exc,
+                    )
 
         if not name:
             return None
@@ -632,8 +733,10 @@ class ArxmlReader:
                     break
 
             if not ecu_name:
-                self._warn(f"SWC '{short_name}' doesn't match any ECU prefix — skipped")
-                continue
+                self._fail(
+                    "ARXML106", "SWC '%s'" % short_name,
+                    "does not match a configured ECU prefix",
+                )
 
             # Strip ECU prefix to get clean SWC name
             swc_name = short_name
@@ -685,8 +788,11 @@ class ArxmlReader:
             if sub.element_name in ref_names and sub.is_reference:
                 try:
                     interface_name = sub.reference_target.item_name
-                except Exception:
-                    interface_name = sub.character_data or ""
+                except Exception as exc:
+                    self._fail(
+                        "ARXML102", "port '%s' interface reference" % name,
+                        "reference cannot be resolved", exc,
+                    )
 
         # Derive signal name from interface: "SRI_PedalRaw1" → "PedalRaw1"
         signal_name = interface_name.replace("SRI_", "") if interface_name.startswith("SRI_") else interface_name
@@ -721,13 +827,19 @@ class ArxmlReader:
                         if evt_sub.element_name == "START-ON-EVENT-REF" and evt_sub.is_reference:
                             try:
                                 runnable_ref_path = evt_sub.reference_target.path
-                            except Exception:
-                                pass
+                            except Exception as exc:
+                                self._fail(
+                                    "ARXML102", "event '%s' runnable reference" % evt.path,
+                                    "reference cannot be resolved", exc,
+                                )
                         elif evt_sub.element_name == "PERIOD":
                             try:
                                 period = float(evt_sub.character_data)
-                            except (TypeError, ValueError):
-                                pass
+                            except (TypeError, ValueError) as exc:
+                                self._fail(
+                                    "ARXML107", "event '%s' period" % evt.path,
+                                    "value is not numeric", exc,
+                                )
 
                     if runnable_ref_path and runnable_ref_path in runnables_map:
                         r = runnables_map[runnable_ref_path]
@@ -786,8 +898,9 @@ class ArxmlReader:
             sidecar = yaml.safe_load(f)
 
         if not isinstance(sidecar, dict):
-            self._warn("Sidecar file is not a YAML mapping — ignored")
-            return
+            self._fail(
+                "SIDECAR003", "sidecar root", "expected a YAML mapping"
+            )
 
         sidecar_ecus = sidecar.get("ecus", {})
 
@@ -797,8 +910,10 @@ class ArxmlReader:
 
         for ecu_name, ecu_data in sidecar_ecus.items():
             if ecu_name not in ecus:
-                self._warn(f"Sidecar ECU '{ecu_name}' not in config — skipped")
-                continue
+                self._fail(
+                    "SIDECAR004", "sidecar ECU '%s'" % ecu_name,
+                    "ECU is not present in project configuration",
+                )
 
             ecu = ecus[ecu_name]
 
@@ -882,11 +997,10 @@ class ArxmlReader:
                 }
                 scheduling = str(os_data.get("scheduling", "FULL")).upper()
                 if scheduling not in ("FULL", "NON"):
-                    self._warn(
-                        f"os.scheduling '{scheduling}' for '{ecu_name}' "
-                        f"invalid — using FULL"
+                    self._fail(
+                        "SIDECAR005", "sidecar ECU '%s' os.scheduling" % ecu_name,
+                        "unsupported value '%s'; expected FULL or NON" % scheduling,
                     )
-                    scheduling = "FULL"
                 ecu.os.scheduling = scheduling
                 ecu.os.applications = list(os_data.get("applications") or [])
 
@@ -966,7 +1080,10 @@ class ArxmlReader:
             if pdu.name in pdu_map:
                 pdu.e2e_data_id = pdu_map[pdu.name]
             elif pdu.e2e_protected and pdu.e2e_data_id is None:
-                self._warn(f"E2E PDU '{pdu.name}' has no data ID in sidecar pdu_e2e_map")
+                self._fail(
+                    "SIDECAR006", "E2E PDU '%s'" % pdu.name,
+                    "has no data ID in sidecar pdu_e2e_map",
+                )
 
     def _apply_arxml_e2e(self, ecus: dict[str, Ecu]):
         """Apply E2E data IDs from ARXML END-TO-END-PROTECTION-SET.
@@ -989,8 +1106,9 @@ class ArxmlReader:
 
         model = self.model
         if model is None:
-            self._warn("No ARXML model loaded — cannot read E2E from ARXML")
-            return
+            self._fail(
+                "ARXML110", "ARXML E2E model", "no model is loaded"
+            )
 
         count = 0
         for item in model.elements_dfs:
@@ -1028,13 +1146,19 @@ class ArxmlReader:
                                 if dsname == "DATA-ID":
                                     try:
                                         data_id = int(did_sub.character_data)
-                                    except (TypeError, ValueError):
-                                        pass
+                                    except (TypeError, ValueError) as exc:
+                                        self._fail(
+                                            "ARXML108", "E2E protection '%s' DATA-ID" % (pdu_name or short_name),
+                                            "value is not an integer", exc,
+                                        )
                         elif psname == "MAX-DELTA-COUNTER-INIT":
                             try:
                                 max_delta = int(prof_sub.character_data)
-                            except (TypeError, ValueError):
-                                pass
+                            except (TypeError, ValueError) as exc:
+                                self._fail(
+                                    "ARXML109", "E2E protection '%s' MAX-DELTA-COUNTER-INIT" % (pdu_name or short_name),
+                                    "value is not an integer", exc,
+                                )
 
             if pdu_name and data_id is not None:
                 e2e_map[pdu_name] = data_id
@@ -1066,9 +1190,9 @@ class ArxmlReader:
                     pdu.e2e_data_id = self._dbc_e2e_map[pdu.name]
                     pdu.e2e_max_delta = self._dbc_e2e_max_delta.get(pdu.name, 2)
                 elif pdu.e2e_protected and pdu.e2e_data_id is None:
-                    self._warn(
-                        f"E2E PDU '{pdu.name}' has no E2E_DataID in DBC — "
-                        f"add BA_ \"E2E_DataID\" BO_ {pdu.can_id} <id>;"
+                    self._fail(
+                        "DBC006", "E2E PDU '%s'" % pdu.name,
+                        "has no E2E_DataID attribute in the DBC",
                     )
 
     def _compute_e2e_params(self, ecus: dict[str, Ecu]):
@@ -1184,8 +1308,22 @@ class ArxmlReader:
     # Helpers
     # ------------------------------------------------------------------
 
-    def _warn(self, msg: str):
-        self.warnings.append(msg)
+    def _warn(self, msg: str, code: str = "PIPELINE001", source: str = "ARXML reader"):
+        diagnostic = self.diagnostics.warning(code, source, msg)
+        self.warnings.append(str(diagnostic))
+
+    def _fail(self, code: str, source: str, message: str, exc=None):
+        diagnostic = PipelineDiagnostic(
+            code=code,
+            severity=DiagnosticSeverity.ERROR,
+            source=source,
+            message="%s: %s" % (message, exc) if exc is not None else message,
+        )
+        self.diagnostics.add(diagnostic)
+        error = ArxmlReadError([diagnostic])
+        if exc is None:
+            raise error
+        raise error from exc
 
 
 def _bits_to_c_type(bits: int) -> str:

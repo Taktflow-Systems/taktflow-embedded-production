@@ -20,11 +20,20 @@ Usage:
 import sys
 import os
 import json
+import re
+from collections import Counter
+
+TOOLS_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if TOOLS_DIR not in sys.path:
+    sys.path.insert(0, TOOLS_DIR)
+
 import cantools
 import autosar_data as asr
 import autosar_data.abstraction as abst
+from pipeline_diagnostics import DiagnosticBag, PipelineDiagnosticError
 from autosar_data.abstraction.communication import (
-    CanAddressingMode, CanFrameType, CycleRepetition,
+    CanAddressingMode, CanFrameType, CyclicTiming, IpduTiming,
+    TransmissionModeTiming,
 )
 from autosar_data.abstraction.datatype import (
     BaseTypeEncoding, CompuMethodContent_TextTable, CompuMethodContent_Linear,
@@ -43,16 +52,81 @@ def dbc_byte_order(signal):
         return abst.ByteOrder.MostSignificantByteLast
     return abst.ByteOrder.MostSignificantByteFirst
 
-def get_msg_attr_value(msg, attr_name, default=None):
-    """Get attribute value from message, handling DBC attribute objects."""
+def get_msg_attr_value(msg, attr_name, default=None, diagnostics=None):
+    """Get a message attribute or fail explicitly when its container is malformed."""
     try:
         attrs = msg.dbc.attributes
         if attrs and attr_name in attrs:
             attr = attrs[attr_name]
             return attr.value if hasattr(attr, "value") else attr
-    except (AttributeError, TypeError):
-        pass
+    except (AttributeError, TypeError) as exc:
+        if diagnostics is None:
+            raise
+        source = "DBC message '%s' attribute '%s'" % (msg.name, attr_name)
+        raise diagnostics.error("DBC001", source, "cannot read value: %s" % exc)
     return default
+
+
+KNOWN_GEN_ATTRIBUTES = {"GenMsgCycleTime", "GenMsgSendType"}
+SUPPORTED_SEND_TYPES = {"cyclic", "event", "nomsgsendtype"}
+
+
+def validate_dbc_input(database, diagnostics):
+    """Reject ambiguous names and values before any AUTOSAR object is created."""
+    normalized_messages = {}
+    normalized_signals = {}
+    for msg in database.messages:
+        normalized = safe_name(msg.name)
+        previous = normalized_messages.get(normalized)
+        if previous is not None and previous != msg.name:
+            names = sorted((previous, msg.name))
+            source = "DBC messages '%s', '%s'" % tuple(names)
+            raise diagnostics.error(
+                "DBC002", source, "normalize to the same SHORT-NAME '%s'" % normalized
+            )
+        normalized_messages[normalized] = msg.name
+
+        for sig in msg.signals:
+            if getattr(sig, "is_multiplexer", False) or getattr(
+                sig, "multiplexer_ids", None
+            ):
+                raise diagnostics.error(
+                    "DBC007",
+                    "DBC message '%s' signal '%s'" % (msg.name, sig.name),
+                    "multiplexing requires a MULTIPLEXED-I-PDU representation",
+                )
+            signal_name = safe_name(sig.name)
+            previous_signal = normalized_signals.get(signal_name)
+            if previous_signal is not None and previous_signal != sig.name:
+                names = sorted((previous_signal, sig.name))
+                source = "DBC signals '%s', '%s'" % tuple(names)
+                raise diagnostics.error(
+                    "DBC002",
+                    source,
+                    "normalize to the same SHORT-NAME '%s'" % signal_name,
+                )
+            normalized_signals[signal_name] = sig.name
+
+        send_type = get_msg_attr_value(
+            msg, "GenMsgSendType", None, diagnostics=diagnostics
+        )
+        if send_type is not None:
+            normalized_send_type = str(send_type).strip().lower()
+            if normalized_send_type not in SUPPORTED_SEND_TYPES:
+                source = "DBC message '%s' attribute 'GenMsgSendType'" % msg.name
+                raise diagnostics.error(
+                    "DBC003", source, "unsupported value '%s'" % send_type
+                )
+
+    dbc_specifics = getattr(database, "dbc", None)
+    definitions = getattr(dbc_specifics, "attribute_definitions", {}) or {}
+    for name in sorted(definitions):
+        if name.startswith("Gen") and name not in KNOWN_GEN_ATTRIBUTES:
+            diagnostics.warning(
+                "DBC004",
+                "DBC attribute definition '%s'" % name,
+                "convention is not interpreted by this pipeline",
+            )
 
 def signal_idt_name(sig):
     """Choose ImplementationDataType name based on signal bit length."""
@@ -97,7 +171,21 @@ class Dbc2Arxml:
     """Convert a DBC file to ARXML using autosar-data abstraction layer."""
 
     def __init__(self, dbc_path, ecu_model_path=None):
-        self.db = cantools.database.load_file(dbc_path)
+        self.diagnostics = DiagnosticBag()
+        try:
+            self.db = cantools.database.load_file(dbc_path)
+        except Exception as exc:
+            raise self.diagnostics.error(
+                "DBC000", "DBC input", "cannot parse input: %s" % exc
+            ) from exc
+        validate_dbc_input(self.db, self.diagnostics)
+        for diagnostic in self.diagnostics.items:
+            print(str(diagnostic), file=sys.stderr)
+        self._signal_name_counts = Counter(
+            safe_name(sig.name)
+            for msg in self.db.messages
+            for sig in msg.signals
+        )
         self.am = abst.AutosarModelAbstraction.create("AUTOSAR_00051")
         self.system = None
         self.cluster = None
@@ -111,6 +199,7 @@ class Dbc2Arxml:
         self.frames = {}
         self.sys_signals = {}
         self.compu_methods = {}
+        self.units = {}
         self.e2e_messages = []
 
         # Platform types
@@ -133,8 +222,13 @@ class Dbc2Arxml:
         # ECU model (optional)
         self.ecu_model = None
         if ecu_model_path and os.path.isfile(ecu_model_path):
-            with open(ecu_model_path, "r", encoding="utf-8") as f:
-                self.ecu_model = json.load(f)
+            try:
+                with open(ecu_model_path, "r", encoding="utf-8") as f:
+                    self.ecu_model = json.load(f)
+            except (OSError, TypeError, ValueError) as exc:
+                raise self.diagnostics.error(
+                    "MODEL001", "ECU model", "cannot read JSON: %s" % exc
+                ) from exc
 
         self._build_routing_maps()
 
@@ -175,8 +269,18 @@ class Dbc2Arxml:
         self.convert_base()
         self.convert_enrich()
 
+    def _fail(self, code, source, action, exc):
+        """Stop conversion with one stable, object-addressed diagnostic."""
+        raise self.diagnostics.error(
+            code, source, "%s: %s" % (action, exc)
+        ) from exc
+
+    def _message_attr(self, msg, name, default=None):
+        return get_msg_attr_value(msg, name, default, self.diagnostics)
+
     def write(self, output_dir, output_name="TaktflowSystem.arxml"):
         """Write ARXML file to output directory."""
+        self.diagnostics.raise_if_errors()
         os.makedirs(output_dir, exist_ok=True)
         files = self.am.model.serialize_files()
         for _fn, content in files.items():
@@ -223,8 +327,8 @@ class Dbc2Arxml:
         self.cluster = self.system.create_can_cluster("CAN_500k", comm_pkg)
         try:
             self.cluster.baudrate = 500000
-        except (AttributeError, TypeError):
-            pass
+        except (AttributeError, TypeError) as exc:
+            self._fail("ARXML001", "CAN cluster 'CAN_500k'", "cannot set baudrate", exc)
         self.channel = self.cluster.create_physical_channel("CAN_Physical")
 
     def _create_ecus(self):
@@ -236,8 +340,11 @@ class Dbc2Arxml:
             ctrl = ecu.create_can_communication_controller("%s_CanCtrl" % name)
             try:
                 ctrl.connect_physical_channel("%s_Conn" % name, self.channel)
-            except Exception:
-                pass
+            except Exception as exc:
+                self._fail(
+                    "ARXML002", "ECU '%s' CAN controller" % name,
+                    "cannot connect physical channel", exc,
+                )
             self.controllers[name] = ctrl
 
     # -- Data types (CompuMethods) -----------------------------------------
@@ -270,8 +377,11 @@ class Dbc2Arxml:
                 cc = sc.get_or_create_sub_element("COMPU-CONST")
                 cc.get_or_create_sub_element("VT").character_data = str(label)
             self.compu_methods[name] = cm
-        except Exception as e:
-            print("  Warning: enum CM %s: %s" % (name, e))
+        except Exception as exc:
+            self._fail(
+                "ARXML003", "CompuMethod '%s'" % name,
+                "cannot create enumeration conversion", exc,
+            )
 
     def _create_linear_cm(self, pkg, name, sig):
         try:
@@ -289,12 +399,31 @@ class Dbc2Arxml:
                 sc.get_or_create_sub_element("UPPER-LIMIT").character_data = str(float(sig.maximum))
             if sig.unit:
                 try:
-                    elem.get_or_create_sub_element("DISPLAY-FORMAT").character_data = sig.unit
-                except Exception:
-                    pass
+                    unit_key = sig.unit.casefold()
+                    unit = self.units.get(unit_key)
+                    if unit is None:
+                        unit_token = sig.unit.replace("%", "pct").replace("/", "_per_")
+                        unit_token = re.sub(r"[^A-Za-z0-9_]", "_", unit_token).strip("_")
+                        unit_pkg = self.am.get_or_create_package("/Taktflow/Units")
+                        unit = unit_pkg.create_unit(
+                            "Unit_%s" % (unit_token or "unnamed"),
+                            display_name=sig.unit,
+                        )
+                        self.units[unit_key] = unit
+                    cm.unit = unit
+                except Exception as exc:
+                    self._fail(
+                        "ARXML004", "CompuMethod '%s' unit" % name,
+                        "cannot create or reference unit", exc,
+                    )
             self.compu_methods[name] = cm
-        except Exception as e:
-            print("  Warning: linear CM %s: %s" % (name, e))
+        except PipelineDiagnosticError:
+            raise
+        except Exception as exc:
+            self._fail(
+                "ARXML003", "CompuMethod '%s'" % name,
+                "cannot create linear conversion", exc,
+            )
 
     # -- Sender/Receiver Interfaces ----------------------------------------
 
@@ -312,13 +441,21 @@ class Dbc2Arxml:
                     sr = iface_pkg.create_sender_receiver_interface("SRI_%s" % sn)
                     idt = self.impl_data_types.get(signal_idt_name(sig))
                     if idt is None:
-                        continue
+                        raise self.diagnostics.error(
+                            "ARXML005", "signal '%s'" % sn,
+                            "has no implementation data type",
+                        )
                     de = sr.create_data_element(sn, idt)
                     self.sr_interfaces[sn] = sr
                     self.data_elements[sn] = de
                     self.interface_count += 1
-                except Exception as e:
-                    print("  Warning: S/R iface %s: %s" % (sn, e))
+                except PipelineDiagnosticError:
+                    raise
+                except Exception as exc:
+                    self._fail(
+                        "ARXML005", "signal '%s' sender-receiver interface" % sn,
+                        "cannot create interface", exc,
+                    )
 
     # -- Communication layer -----------------------------------------------
 
@@ -333,44 +470,98 @@ class Dbc2Arxml:
             ipdu = self.system.create_isignal_ipdu(mn, ipdu_pkg, msg.length)
             self.ipdus[mn] = ipdu
 
-            cycle_ms = get_msg_attr_value(msg, "GenMsgCycleTime", 0)
-            if cycle_ms and int(cycle_ms) > 0:
+            cycle_ms = self._message_attr(msg, "GenMsgCycleTime", 0)
+            try:
+                cycle_ms = int(cycle_ms or 0)
+            except (TypeError, ValueError) as exc:
+                self._fail(
+                    "DBC001", "DBC message '%s' attribute 'GenMsgCycleTime'" % msg.name,
+                    "value is not an integer", exc,
+                )
+            if cycle_ms > 0:
                 try:
-                    ipdu.set_timing(float(int(cycle_ms)) / 1000.0, CycleRepetition.CycleRepetitionOf1)
-                except Exception:
-                    pass
+                    ipdu.set_timing(
+                        IpduTiming(
+                            transmission_mode_true_timing=TransmissionModeTiming(
+                                cyclic_timing=CyclicTiming(float(cycle_ms) / 1000.0)
+                            )
+                        )
+                    )
+                except Exception as exc:
+                    self._fail(
+                        "ARXML006", "I-PDU '%s' timing" % mn,
+                        "cannot set cycle time", exc,
+                    )
 
             for sig in msg.signals:
                 sn = safe_name(sig.name)
+                communication_name = (
+                    "%s_%s" % (mn, sn)
+                    if self._signal_name_counts[sn] > 1
+                    else sn
+                )
                 try:
-                    ss = syssig_pkg.create_system_signal("SS_%s" % sn)
+                    ss = syssig_pkg.create_system_signal("SS_%s" % communication_name)
                     self.sys_signals[(mn, sig.name)] = ss
-                except Exception:
-                    continue
+                except Exception as exc:
+                    self._fail(
+                        "ARXML007", "system signal '%s/%s'" % (mn, sn),
+                        "cannot create system signal", exc,
+                    )
                 try:
-                    isig = self.system.create_isignal(sn, sig_pkg, sig.length, ss)
+                    isig = self.system.create_isignal(
+                        communication_name, sig_pkg, sig.length, ss
+                    )
                     self.isignals[(mn, sig.name)] = isig
-                except Exception as e:
-                    print("  Warning: ISignal %s: %s" % (sn, e))
-                    continue
+                except Exception as exc:
+                    self._fail(
+                        "ARXML008", "I-Signal '%s/%s'" % (mn, sn),
+                        "cannot create I-Signal", exc,
+                    )
                 try:
                     ipdu.map_signal(isig, sig.start, dbc_byte_order(sig))
-                except Exception as e:
-                    print("  Warning: map %s: %s" % (sn, e))
+                except Exception as exc:
+                    self._fail(
+                        "ARXML009", "I-Signal mapping '%s/%s'" % (mn, sn),
+                        "cannot map signal to I-PDU", exc,
+                    )
 
             try:
                 frame = self.system.create_can_frame("%s_Frame" % mn, frame_pkg, msg.length)
                 self.frames[mn] = frame
                 try:
                     frame.map_pdu(ipdu, 0, abst.ByteOrder.MostSignificantByteLast)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    self._fail(
+                        "ARXML010", "frame '%s_Frame'" % mn,
+                        "cannot map I-PDU", exc,
+                    )
                 try:
-                    self.channel.trigger_frame(frame, msg.frame_id, CanAddressingMode.Standard, CanFrameType.Can20)
-                except Exception as e:
-                    print("  Warning: trigger %s: %s" % (mn, e))
-            except Exception as e:
-                print("  Warning: frame %s: %s" % (mn, e))
+                    addressing_mode = (
+                        CanAddressingMode.Extended
+                        if getattr(msg, "is_extended_frame", False)
+                        else CanAddressingMode.Standard
+                    )
+                    frame_type = (
+                        CanFrameType.CanFd
+                        if getattr(msg, "is_fd", False)
+                        else CanFrameType.Can20
+                    )
+                    self.channel.trigger_frame(
+                        frame, msg.frame_id, addressing_mode, frame_type
+                    )
+                except Exception as exc:
+                    self._fail(
+                        "ARXML011", "frame triggering '%s'" % mn,
+                        "cannot create CAN triggering", exc,
+                    )
+            except PipelineDiagnosticError:
+                raise
+            except Exception as exc:
+                self._fail(
+                    "ARXML012", "CAN frame '%s'" % mn,
+                    "cannot create frame", exc,
+                )
 
     # -- E2E Protection Set (AUTOSAR Approach A) -----------------------------
 
@@ -429,11 +620,19 @@ class Dbc2Arxml:
             self.e2e_messages.append(mn)
 
             # Read DBC attributes
-            data_id = int(get_msg_attr_value(msg, "E2E_DataID", "0"))
-            max_delta = int(get_msg_attr_value(msg, "E2E_MaxDeltaCounter", "2"))
-            asil = get_msg_attr_value(msg, "ASIL", "QM")
-            satisfies = get_msg_attr_value(msg, "Satisfies", "")
-            cycle_ms = get_msg_attr_value(msg, "GenMsgCycleTime", "0")
+            try:
+                data_id = int(self._message_attr(msg, "E2E_DataID", "0"))
+                max_delta = int(self._message_attr(msg, "E2E_MaxDeltaCounter", "2"))
+                cycle_ms = int(self._message_attr(msg, "GenMsgCycleTime", "0"))
+            except PipelineDiagnosticError:
+                raise
+            except (TypeError, ValueError) as exc:
+                self._fail(
+                    "DBC001", "DBC message '%s' E2E/timing attributes" % msg.name,
+                    "numeric attribute is invalid", exc,
+                )
+            asil = self._message_attr(msg, "ASIL", "QM")
+            satisfies = self._message_attr(msg, "Satisfies", "")
 
             # Find E2E signal bit positions
             crc_offset = 8    # default
@@ -511,8 +710,11 @@ class Dbc2Arxml:
 
                 e2e_count += 1
 
-            except Exception as e:
-                print("  Warning: E2E %s: %s" % (mn, e))
+            except Exception as exc:
+                self._fail(
+                    "ARXML013", "E2E protection '%s'" % mn,
+                    "cannot create protection metadata", exc,
+                )
 
         print("    E2E protections: %d (Profile P01, END-TO-END-PROTECTION-SET)" % e2e_count)
 
@@ -547,8 +749,11 @@ class Dbc2Arxml:
                         run_map.get(swc_info["name"], []),
                         tx_sigs, rx_sigs,
                     )
-                except Exception as e:
-                    print("  Warning: SWC %s/%s: %s" % (eu, swc_info["name"], e))
+                except Exception as exc:
+                    self._fail(
+                        "ARXML014", "SWC '%s/%s'" % (eu, swc_info["name"]),
+                        "cannot create software component", exc,
+                    )
 
     def _create_one_swc(self, pkg, ecu, swc_name, functions, runnables, tx_sigs, rx_sigs):
         full = "%s_%s" % (ecu, swc_name)
@@ -568,8 +773,11 @@ class Dbc2Arxml:
                         swc.create_p_port("PP_%s" % sn, sr)
                         self.port_count += 1
                         added.add(sn)
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        self._fail(
+                            "ARXML015", "SWC '%s' P-port '%s'" % (full, sn),
+                            "cannot create port", exc,
+                        )
 
         # Require ports (RX)
         for sn in rx_sigs:
@@ -580,8 +788,11 @@ class Dbc2Arxml:
                         swc.create_r_port("RP_%s" % sn, sr)
                         self.port_count += 1
                         added.add(sn)
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        self._fail(
+                            "ARXML015", "SWC '%s' R-port '%s'" % (full, sn),
+                            "cannot create port", exc,
+                        )
 
         # Internal behavior
         beh = swc.create_swc_internal_behavior("%s_IB" % full)
@@ -598,8 +809,11 @@ class Dbc2Arxml:
                 if ms > 0:
                     beh.create_timing_event("TE_%s_%dms" % (func, ms), run, float(ms) / 1000.0)
                     self.timing_event_count += 1
-            except Exception as e:
-                print("  Warning: runnable %s: %s" % (func, e))
+            except Exception as exc:
+                self._fail(
+                    "ARXML016", "runnable '%s'" % func,
+                    "cannot create runnable or timing event", exc,
+                )
 
         # Init runnables
         for func in functions:
@@ -610,8 +824,11 @@ class Dbc2Arxml:
                     self.runnable_count += 1
                     beh.create_init_event("IE_%s" % func, run)
                     self.init_event_count += 1
-                except Exception:
-                    pass
+                except Exception as exc:
+                    self._fail(
+                        "ARXML017", "init runnable '%s'" % func,
+                        "cannot create runnable or init event", exc,
+                    )
 
     def _sig_matches(self, sig_name, swc_lower):
         """Heuristic: does this signal belong to this SWC domain?"""
@@ -653,7 +870,7 @@ class Dbc2Arxml:
 
         asil = {}
         for msg in self.db.messages:
-            a = get_msg_attr_value(msg, "ASIL", "QM")
+            a = self._message_attr(msg, "ASIL", "QM")
             asil[a] = asil.get(a, 0) + 1
         print("  [Safety]")
         print("    ASIL distribution: %s" % asil)
@@ -688,7 +905,7 @@ def main():
 
     if not os.path.isfile(args.dbc):
         print("Error: DBC file not found: %s" % args.dbc)
-        sys.exit(1)
+        return 1
 
     print("Converting %s -> ARXML (step=%s)..." % (args.dbc, args.step))
     if args.model:
@@ -701,19 +918,24 @@ def main():
               "  Full pipeline: pass arxml_v2/swc_model.json as the third "
               "argument (see .github/workflows/ci.yml).")
 
-    c = Dbc2Arxml(args.dbc, args.model)
+    try:
+        c = Dbc2Arxml(args.dbc, args.model)
 
-    if args.step == "base":
-        c.convert_base()
-    elif args.step == "enrich":
-        c.convert_enrich()
-    else:
-        c.convert()
+        if args.step == "base":
+            c.convert_base()
+        elif args.step == "enrich":
+            c.convert_enrich()
+        else:
+            c.convert()
 
-    c.report()
-    c.write(args.output)
-    print("\nDone.")
+        c.report()
+        c.write(args.output)
+        print("\nDone.")
+        return 0
+    except PipelineDiagnosticError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
