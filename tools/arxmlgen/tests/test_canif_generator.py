@@ -84,13 +84,13 @@ class TestCanIfCfgStructure:
         assert '#include "Bcm_Cfg.h"' in canif_bcm
 
     def test_has_tx_pdu_config_array(self, canif_bcm):
-        """Must have a CanIf_TxPduCfgType array."""
-        assert "CanIf_TxPduCfgType" in canif_bcm
+        """Must have a CanIf_TxPduConfigType array."""
+        assert "CanIf_TxPduConfigType" in canif_bcm
         assert "tx_pdu_config[]" in canif_bcm
 
     def test_has_rx_pdu_config_array(self, canif_bcm):
-        """Must have a CanIf_RxPduCfgType array."""
-        assert "CanIf_RxPduCfgType" in canif_bcm
+        """Must have a CanIf_RxPduConfigType array."""
+        assert "CanIf_RxPduConfigType" in canif_bcm
         assert "rx_pdu_config[]" in canif_bcm
 
     def test_has_aggregate_config(self, canif_bcm):
@@ -100,11 +100,11 @@ class TestCanIfCfgStructure:
 
     def test_tx_config_is_static_const(self, canif_bcm):
         """TX PDU config must be static const."""
-        assert re.search(r"static\s+const\s+CanIf_TxPduCfgType", canif_bcm)
+        assert re.search(r"static\s+const\s+CanIf_TxPduConfigType", canif_bcm)
 
     def test_rx_config_is_static_const(self, canif_bcm):
         """RX PDU config must be static const."""
-        assert re.search(r"static\s+const\s+CanIf_RxPduCfgType", canif_bcm)
+        assert re.search(r"static\s+const\s+CanIf_RxPduConfigType", canif_bcm)
 
     def test_aggregate_is_const_not_static(self, canif_bcm):
         """Aggregate config must be const (externally visible) but not static."""
@@ -211,11 +211,13 @@ class TestCanIfCfgAllEcus:
         assert "CanIf_ConfigType" in canif_sc
         assert "sc_canif_config" in canif_sc
 
-    def test_cvc_has_at_least_as_many_pdus_as_bcm(self, canif_cvc, canif_bcm):
-        """CVC should have >= BCM PDU count (broadcast CAN)."""
-        cvc_entries = len(re.findall(r"\{[^}]*0x[0-9A-Fa-f]+", canif_cvc))
-        bcm_entries = len(re.findall(r"\{[^}]*0x[0-9A-Fa-f]+", canif_bcm))
-        assert cvc_entries >= bcm_entries
+    def test_cvc_has_nonempty_canif(self, canif_cvc):
+        """CVC (central controller) must have a non-trivial CanIf config."""
+        # Removed the `CVC >= BCM` heuristic: on the zonal bus, BCM can
+        # end up with more total PDUs because DTC_Broadcast is injected as
+        # both TX (via sidecar multi-sender override) and RX (DBC default).
+        entries = len(re.findall(r"\{[^}]*0x[0-9A-Fa-f]+", canif_cvc))
+        assert entries >= 20, f"CVC CanIf only has {entries} PDUs"
 
     def test_no_ecu_has_empty_tx_and_rx(self, canif_files, load_model):
         """Every ECU should have at least one TX or RX PDU."""

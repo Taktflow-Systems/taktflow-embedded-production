@@ -1,6 +1,6 @@
 # Plan: DBC-to-ARXML Pipeline Hardening
 
-**Status:** STOPPED AFTER P1 (baseline gate failed)
+**Status:** IN PROGRESS - P2 NEXT
 **Created:** 2026-07-09
 **Branch:** `feat/pipeline-hardening`
 **Scope:** `gateway/taktflow_vehicle.dbc` -> `tools/arxml/dbc2arxml.py` ->
@@ -53,9 +53,9 @@ out in a memo, but are not removed until owner approval.
 | `python -m pytest tools/arxmlgen/tests -q` | **FAILED:** 35 failed, 295 passed |
 | Failure clusters | CanIf type expectations, Com table counts/IDs, E2E types/source, cross-ECU routing, OS goldens, PduR tables, BCM reference counts, RTE init-runnable expectations |
 
-The repository rule says to stop on a failing baseline. P2-P6 are therefore
-PENDING and must not start until the owner decides whether the 35 failures are
-expected drift to repair on this branch or supplies a green base.
+The repository rule required a stop on this failing baseline. On 2026-07-09,
+the owner approved repairing the baseline on this branch before P2. The B0
+prerequisite below must be green and committed separately before corpus work.
 
 ### Exception inventory: converter and extractor
 
@@ -174,6 +174,33 @@ and signal-to-SWC heuristic inventories.
 baseline converter and arxmlgen tests are recorded.
 **Gate:** commit P1 alone before implementation.
 **Result:** acceptance met; subsequent work stopped by the red baseline.
+
+### B0 - Restore a trustworthy generator baseline - DONE
+
+**Step ID:** PH-B0
+**Inputs:** the 35 failing arxmlgen tests, current BSW C type definitions,
+committed TX-mode/idempotency design and generated templates.
+**Steps:**
+
+1. PH-B0.1 classify every failure as a generator defect, stale assertion,
+   stale golden or intentionally changed project model.
+2. PH-B0.2 fix generator behavior where it violates the current C/ARXML
+   contract; update tests only when repository evidence proves the prior
+   assertion obsolete.
+3. PH-B0.3 regenerate only test goldens required by an intentional,
+   independently verified output change.
+4. PH-B0.4 run the complete arxmlgen suite and the in-house DBC conversion.
+
+**Deliverables:** green arxmlgen baseline, classification recorded in the
+commit diff, and updated plan status.
+**Acceptance criteria:** all arxmlgen tests pass; in-house DBC conversion still
+exits zero with no reference errors; no generated ECU configuration is
+hand-edited.
+**Gate:** commit B0 separately before changing P2 corpus or harness files.
+**Result:** 324 arxmlgen tests pass; the in-house conversion emits 45 PDUs,
+182 signals and zero reference errors. Drifted assertions were reconciled
+against current BSW headers and documented multi-sender/E2E source contracts;
+no generator or generated ECU configuration changed.
 
 ### P2 - Public DBC corpus and regression harness - PENDING
 

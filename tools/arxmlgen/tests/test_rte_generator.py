@@ -177,7 +177,11 @@ class TestRteCfgRunnables:
         """Number of runnable entries must match model."""
         model = load_model
         bcm = model.ecus["bcm"]
-        expected = sum(len(s.runnables) for s in bcm.swcs)
+        # runnable_config holds the periodic scheduler table only;
+        # Init runnables are called once at startup, not scheduled.
+        expected = sum(
+            1 for s in bcm.swcs for r in s.runnables if not r.is_init
+        )
 
         match = re.search(
             r"runnable_config\[\].*?=\s*\{(.*?)\};",
@@ -237,8 +241,10 @@ class TestRteCfgRunnables:
                 period = int(period_str)
                 assert period >= 0, f"Negative period in runnable: {entry.strip()}"
 
-    def test_each_extern_has_matching_runnable(self, rte_cfg_c_bcm):
-        """Every extern declaration must appear in the runnable config."""
+    def test_each_periodic_extern_has_matching_runnable(self, rte_cfg_c_bcm):
+        """Every periodic extern declaration must appear in the runnable config.
+        Init runnables (Swc_*_Init) are also externed but are called once
+        at startup, not from the scheduler table."""
         externs = re.findall(r"extern\s+void\s+(\w+)\(void\);", rte_cfg_c_bcm)
         match = re.search(
             r"runnable_config\[\].*?=\s*\{(.*?)\};",
@@ -247,8 +253,10 @@ class TestRteCfgRunnables:
         assert match
         config_body = match.group(1)
         for func in externs:
+            if func.endswith("_Init"):
+                continue  # Init runnables are called directly, not scheduled
             assert func in config_body, \
-                f"extern {func} declared but not in runnable_config"
+                f"periodic extern {func} declared but not in runnable_config"
 
 
 # ===================================================================

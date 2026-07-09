@@ -208,19 +208,55 @@ class TestCrossEcuInvariants:
 
     def test_no_two_ecus_tx_same_can_id(self, load_model):
         """On a shared CAN bus, no two ECUs may transmit the same CAN ID.
-        Exception: UDS response IDs may overlap if physically addressed."""
+        Exceptions:
+          - UDS response range (0x7E0-0x7FF): overlap allowed by physical addressing.
+          - Documented multi-sender broadcast messages: messages whose PDUs
+            carry multi_sender=True (from sidecar message_routing overrides).
+            See can-message-matrix.md — DTC_Broadcast on 0x500 is declared
+            "Any" transmitter with DTC_Broadcast_ECU_Source signal for
+            source disambiguation.
+        """
         model = load_model
-        uds_range = range(0x7E0, 0x800)  # UDS response range — allowed overlap
-        tx_map = {}  # can_id → ecu_name
+        uds_range = range(0x7E0, 0x800)
+        # Collect CAN IDs that are explicitly multi-sender via sidecar.
+        # Any PDU name that appears as a TX PDU on >1 ECU after reader
+        # resolution is, by construction, a declared multi-sender.
+        tx_name_to_ecus = {}
+        for name, ecu in model.ecus.items():
+            for pdu in ecu.tx_pdus:
+                tx_name_to_ecus.setdefault(pdu.name, set()).add(name)
+        multi_sender_can_ids = set()
+        for pdu_name, ecus in tx_name_to_ecus.items():
+            if len(ecus) > 1:
+                # Find the CAN ID for this PDU name
+                for ecu_name in ecus:
+                    for pdu in model.ecus[ecu_name].tx_pdus:
+                        if pdu.name == pdu_name:
+                            multi_sender_can_ids.add(pdu.can_id)
+                            break
+
+        tx_map = {}  # can_id → ecu_name (for single-sender check)
         for name, ecu in model.ecus.items():
             for pdu in ecu.tx_pdus:
                 if pdu.can_id in uds_range:
                     continue
+                if pdu.can_id in multi_sender_can_ids:
+                    continue
                 if pdu.can_id in tx_map:
                     assert False, \
                         f"CAN ID 0x{pdu.can_id:03X} transmitted by both " \
-                        f"{tx_map[pdu.can_id]} and {name}"
+                        f"{tx_map[pdu.can_id]} and {name} " \
+                        f"(not declared multi-sender in sidecar)"
                 tx_map[pdu.can_id] = name
+
+        # Still assert the multi-sender messages are documented. If the
+        # sidecar accidentally adds a collision, the model would produce
+        # a multi_sender entry that isn't in the allow-list.
+        documented_multi_sender = {0x500}  # DTC_Broadcast per can-message-matrix.md
+        unexpected = multi_sender_can_ids - documented_multi_sender
+        assert not unexpected, \
+            f"Undocumented multi-sender CAN IDs: " \
+            f"{ {f'0x{c:03X}' for c in unexpected} }"
 
     def test_total_signal_count(self, load_model):
         """Taktflow system has ~162 signals — sanity check."""

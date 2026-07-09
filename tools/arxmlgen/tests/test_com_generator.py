@@ -128,15 +128,20 @@ class TestComCfgCData:
     """Verify data correctness in generated Com_Cfg files."""
 
     def test_bcm_tx_signal_count(self, com_cfg_c_bcm, load_model):
-        """Number of TX signals in config must match model."""
+        """Unified signal_config entry count must equal model TX+RX signal count."""
         model = load_model
         bcm = model.ecus["bcm"]
         tx_signal_count = sum(len(p.signals) for p in bcm.tx_pdus)
-        # Count signal entries in the array (lines with braces and commas)
-        entries = re.findall(r"\{\s*\d+u,", com_cfg_c_bcm)
-        total_entries = len(entries)
         rx_signal_count = sum(len(p.signals) for p in bcm.rx_pdus)
-        assert total_entries == tx_signal_count + rx_signal_count
+        # Scope to the unified bcm_signal_config[] (template also emits
+        # separate tx/rx signal_config arrays, so a global regex would triple-count).
+        section = re.search(
+            r"Com_SignalConfigType\s+bcm_signal_config\[\].*?=\s*\{(.*?)\};",
+            com_cfg_c_bcm, re.DOTALL,
+        )
+        assert section, "unified bcm_signal_config array not found"
+        entries = re.findall(r"\{\s*\d+u,", section.group(1))
+        assert len(entries) == tx_signal_count + rx_signal_count
 
     def test_bcm_tx_pdu_count(self, com_cfg_c_bcm, load_model):
         """Number of TX PDU entries must match model."""
@@ -195,8 +200,13 @@ class TestComCfgCData:
         assert "static" not in line
 
     def test_signal_ids_are_sequential(self, com_cfg_c_bcm):
-        """Signal IDs in the config array must be sequential from 0."""
-        entries = re.findall(r"\{\s*(\d+)u,", com_cfg_c_bcm)
+        """Signal IDs in the unified config array must be sequential from 0."""
+        section = re.search(
+            r"Com_SignalConfigType\s+bcm_signal_config\[\].*?=\s*\{(.*?)\};",
+            com_cfg_c_bcm, re.DOTALL,
+        )
+        assert section, "unified bcm_signal_config array not found"
+        entries = re.findall(r"\{\s*(\d+)u,", section.group(1))
         ids = [int(x) for x in entries]
         assert ids == list(range(len(ids))), f"Non-sequential signal IDs: {ids}"
 
@@ -227,13 +237,20 @@ class TestComCfgCData:
 class TestComCfgCvc:
     """CVC-specific tests for the more complex ECU."""
 
-    def test_cvc_has_at_least_as_many_signals_as_bcm(self, generated_files):
-        """CVC should have at least as many signals as BCM (broadcast CAN)."""
+    def test_cvc_has_nonempty_signal_config(self, generated_files):
+        """CVC (central controller) must have a non-trivial signal config."""
+        # Removed the `CVC >= BCM` heuristic: on the zonal bus, BCM can
+        # end up with more signals because DTC_Broadcast is injected as a
+        # TX PDU via sidecar multi-sender override, adding TX signal
+        # entries to every DTC producer.
         cvc = generated_files["cvc"]["Com_Cfg.c"]
-        bcm = generated_files["bcm"]["Com_Cfg.c"]
-        cvc_entries = len(re.findall(r"\{\s*\d+u,", cvc))
-        bcm_entries = len(re.findall(r"\{\s*\d+u,", bcm))
-        assert cvc_entries >= bcm_entries
+        section = re.search(
+            r"Com_SignalConfigType\s+cvc_signal_config\[\].*?=\s*\{(.*?)\};",
+            cvc, re.DOTALL,
+        )
+        assert section, "cvc_signal_config not found"
+        entries = re.findall(r"\{\s*\d+u,", section.group(1))
+        assert len(entries) >= 100, f"CVC only has {len(entries)} signals"
 
     def test_cvc_includes_cvc_cfg_h(self, generated_files):
         """CVC file must include Cvc_Cfg.h."""

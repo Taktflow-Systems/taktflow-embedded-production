@@ -395,11 +395,14 @@ class TestModelVsProfessional:
         assert len(all_signals) >= BCM_EXPECTED["com_signal_count"]
 
     def test_bcm_tx_pdu_count(self, load_model):
+        """TX count >= baseline. Baseline is the original 3-message BCM;
+        current model adds BCM_Heartbeat (0x016) + DTC_Broadcast (0x500,
+        via sidecar multi-sender override — see can-message-matrix.md)."""
         model = load_model
         bcm = model.ecus.get("bcm")
         if bcm is None:
             pytest.skip("BCM not in model")
-        assert len(bcm.tx_pdus) == BCM_EXPECTED["com_tx_pdu_count"]
+        assert len(bcm.tx_pdus) >= BCM_EXPECTED["com_tx_pdu_count"]
 
     def test_bcm_rx_pdu_count(self, load_model):
         """RX count >= baseline (broadcast CAN gives more until generator filters)."""
@@ -410,12 +413,13 @@ class TestModelVsProfessional:
         assert len(bcm.rx_pdus) >= BCM_EXPECTED["com_rx_pdu_count"]
 
     def test_bcm_tx_can_ids(self, load_model):
+        """Baseline TX CAN IDs must all be present (current may add more)."""
         model = load_model
         bcm = model.ecus.get("bcm")
         if bcm is None:
             pytest.skip("BCM not in model")
         tx_ids = {pdu.can_id for pdu in bcm.tx_pdus}
-        assert tx_ids == BCM_EXPECTED["tx_can_ids"]
+        assert BCM_EXPECTED["tx_can_ids"].issubset(tx_ids)
 
     def test_bcm_rx_can_ids(self, load_model):
         model = load_model

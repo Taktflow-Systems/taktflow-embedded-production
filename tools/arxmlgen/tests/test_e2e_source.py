@@ -37,12 +37,14 @@ def _load_model_with_e2e_source(e2e_source: str):
     return reader.read()
 
 
-# CAN matrix authoritative data IDs (from docs/aspice/system/can-message-matrix.md)
-CAN_MATRIX_E2E_IDS = {
+# Explicit E2E_DataID assignments in the DBC. Messages that rely on another
+# source (ARXML or sidecar) are intentionally absent from DBC-source tests.
+EXPLICIT_DBC_E2E_IDS = {
     "EStop_Broadcast": 0x01,
     "CVC_Heartbeat": 0x02,
     "FZC_Heartbeat": 0x03,
     "RZC_Heartbeat": 0x04,
+    "SC_Status": 0x00,
     "Vehicle_State": 0x05,
     "Torque_Request": 0x06,
     "Steer_Command": 0x07,
@@ -54,7 +56,6 @@ CAN_MATRIX_E2E_IDS = {
     "Lidar_Distance": 0x0D,
     "Motor_Status": 0x0E,
     "Motor_Current": 0x0F,
-    "Motor_Temperature": 0x00,
 }
 
 
@@ -81,13 +82,13 @@ def model_sidecar():
 class TestE2ESourceConfig:
     """Verify e2e_source config and CLI parsing."""
 
-    def test_config_default_is_sidecar(self):
-        """Default e2e_source must be 'sidecar' for backward compatibility."""
+    def test_project_uses_arxml_source(self):
+        """Project config must use the structured ARXML protection set."""
         from tools.arxmlgen.config import load_config
 
         config_path = os.path.join(PROJECT_ROOT, "project.yaml")
         config = load_config(config_path)
-        assert config.e2e_source == "sidecar"
+        assert config.e2e_source == "arxml"
 
     def test_config_rejects_invalid_source(self, tmp_path):
         """Invalid e2e_source must raise ConfigError."""
@@ -134,7 +135,7 @@ class TestE2ESourceDbc:
         PDUs with E2E signals but no matrix entry (QM heartbeats) are excluded."""
         cvc = model_dbc.ecus["cvc"]
         for pdu in cvc.tx_pdus + cvc.rx_pdus:
-            if pdu.name in CAN_MATRIX_E2E_IDS:
+            if pdu.name in EXPLICIT_DBC_E2E_IDS:
                 assert pdu.e2e_data_id is not None, \
                     f"PDU {pdu.name} has no data ID in DBC mode"
 
@@ -142,8 +143,8 @@ class TestE2ESourceDbc:
         """DBC-sourced data IDs must match CAN message matrix exactly."""
         cvc = model_dbc.ecus["cvc"]
         for pdu in cvc.tx_pdus + cvc.rx_pdus:
-            if pdu.name in CAN_MATRIX_E2E_IDS:
-                expected = CAN_MATRIX_E2E_IDS[pdu.name]
+            if pdu.name in EXPLICIT_DBC_E2E_IDS:
+                expected = EXPLICIT_DBC_E2E_IDS[pdu.name]
                 assert pdu.e2e_data_id == expected, \
                     f"PDU {pdu.name}: expected data ID 0x{expected:02X}, " \
                     f"got 0x{pdu.e2e_data_id:02X}"
@@ -169,14 +170,14 @@ class TestE2ESourceDbc:
         assert hb.e2e_data_id == 0x04
 
     def test_all_16_e2e_messages_have_ids(self, model_dbc):
-        """All 16 E2E-protected messages from CAN matrix must have data IDs."""
+        """Every explicit DBC E2E assignment must reach a TX PDU."""
         all_pdus = {}
         for ecu in model_dbc.ecus.values():
             for pdu in ecu.tx_pdus:
-                if pdu.name in CAN_MATRIX_E2E_IDS:
+                if pdu.name in EXPLICIT_DBC_E2E_IDS:
                     all_pdus[pdu.name] = pdu.e2e_data_id
 
-        for msg_name, expected_id in CAN_MATRIX_E2E_IDS.items():
+        for msg_name, expected_id in EXPLICIT_DBC_E2E_IDS.items():
             assert msg_name in all_pdus, f"Message {msg_name} not found as TX PDU"
             assert all_pdus[msg_name] == expected_id, \
                 f"{msg_name}: expected 0x{expected_id:02X}, got 0x{all_pdus[msg_name]:02X}"
@@ -233,9 +234,8 @@ class TestE2ESourceComparison:
             assert dbc_e2e == sidecar_e2e, \
                 f"ECU {ecu_name}: E2E PDU mismatch between DBC and sidecar modes"
 
-    def test_dbc_ids_differ_from_sidecar_for_some_pdus(self, model_dbc, model_sidecar):
-        """DBC and sidecar must differ for at least some data IDs
-        (they use different numbering schemes)."""
+    def test_dbc_ids_match_sidecar_for_shared_pdus(self, model_dbc, model_sidecar):
+        """Duplicated DBC and sidecar assignments must remain consistent."""
         cvc_dbc = model_dbc.ecus["cvc"]
         cvc_sc = model_sidecar.ecus["cvc"]
 
@@ -244,8 +244,11 @@ class TestE2ESourceComparison:
         sc_ids = {p.name: p.e2e_data_id for p in cvc_sc.tx_pdus
                   if p.e2e_protected}
 
-        # At least one data ID should differ (CVC_Heartbeat: 0x02 vs 0x04)
-        differences = [name for name in dbc_ids
-                       if dbc_ids[name] != sc_ids.get(name)]
-        assert len(differences) > 0, \
-            "DBC and sidecar should produce different data IDs for some PDUs"
+        shared = sorted(set(dbc_ids) & set(sc_ids))
+        assert shared, "DBC and sidecar have no shared E2E PDUs"
+        differences = {
+            name: (dbc_ids[name], sc_ids[name])
+            for name in shared
+            if dbc_ids[name] != sc_ids[name]
+        }
+        assert not differences, f"DBC/sidecar E2E DataID drift: {differences}"

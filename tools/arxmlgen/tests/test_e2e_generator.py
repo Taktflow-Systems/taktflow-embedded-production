@@ -91,8 +91,8 @@ class TestE2ECfgStructure:
         assert "e2e_rx_config[]" in e2e_cvc
 
     def test_has_aggregate_config(self, e2e_cvc):
-        """Must have the E2E_ConfigType aggregate struct."""
-        assert "E2E_ConfigType" in e2e_cvc
+        """Must have the E2E_ProtectConfigType aggregate struct."""
+        assert "E2E_ProtectConfigType" in e2e_cvc
         assert "cvc_e2e_config" in e2e_cvc
 
     def test_tx_config_is_static_const(self, e2e_cvc):
@@ -106,10 +106,10 @@ class TestE2ECfgStructure:
     def test_aggregate_is_const_not_static(self, e2e_cvc):
         """Aggregate config must be const (externally visible) but not static."""
         match = re.search(
-            r"^(.*E2E_ConfigType\s+\w+_e2e_config)",
+            r"^(.*E2E_ProtectConfigType\s+\w+_e2e_config)",
             e2e_cvc, re.MULTILINE,
         )
-        assert match, "E2E_ConfigType aggregate not found"
+        assert match, "E2E_ProtectConfigType aggregate not found"
         line = match.group(1)
         assert "const" in line
         assert "static" not in line
@@ -210,7 +210,7 @@ class TestE2ECfgAllEcus:
         safety-critical signals and must verify CRC/alive counters."""
         assert "sc" in e2e_files, "SC must have E2E config (safety monitor)"
         content = e2e_files["sc"]["E2E_Cfg.c"]
-        assert "E2E_ConfigType" in content
+        assert "E2E_ProtectConfigType" in content
         assert "sc_e2e_config" in content
 
     def test_each_ecu_has_own_prefix(self, e2e_files):

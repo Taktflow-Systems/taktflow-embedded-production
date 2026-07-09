@@ -515,7 +515,10 @@ class TestGolden:
         assert os.path.exists(golden_path), (
             f"golden fixture missing: {golden_path}"
         )
-        with open(golden_path, "r", encoding="utf-8", newline="") as f:
+        # Golden files are checked out as CRLF on Windows while Jinja renders
+        # deterministic LF. Universal-newline input compares semantic content
+        # without making the test host-line-ending dependent.
+        with open(golden_path, "r", encoding="utf-8", newline=None) as f:
             golden = f.read()
         assert icu_files[filename] == golden, (
             f"{filename} diverged from golden fixture — if the change is "

@@ -2,11 +2,10 @@
 Tests for PduR_Cfg generator — validates generated PduR_Cfg.c
 against the AUTOSAR PDU Router configuration contract.
 
-TDD: these tests define the contract BEFORE the generator is implemented.
-
-PduR routes PDUs between CanIf and Com:
-  RX path: CanIf RX PDU → Com RX PDU  (PDUR_MOD_CANIF → PDUR_MOD_COM)
-  TX path: Com TX PDU → CanIf TX PDU  (PDUR_MOD_COM → PDUR_MOD_CANIF)
+PduR in this project uses a single-table RX routing model (aligned with
+the BSW PduR_ConfigType):
+  RX path: CanIf RX PDU → PDUR_DEST_COM|PDUR_DEST_XCP → upper-layer PDU
+  TX path: Com → CanIf directly (no PduR table entry needed)
 """
 
 import re
@@ -79,27 +78,19 @@ class TestPduRCfgStructure:
         """Must include the ECU-specific config header."""
         assert '#include "Bcm_Cfg.h"' in pdur_bcm
 
-    def test_has_rx_routing_table(self, pdur_bcm):
-        """Must have a PduR_RoutingPathType array for RX routes."""
-        assert "PduR_RoutingPathType" in pdur_bcm
-        assert "rx_routing[]" in pdur_bcm
-
-    def test_has_tx_routing_table(self, pdur_bcm):
-        """Must have a PduR_RoutingPathType array for TX routes."""
-        assert "tx_routing[]" in pdur_bcm
+    def test_has_routing_table(self, pdur_bcm):
+        """Must have a PduR_RoutingTableType array (single RX routing table)."""
+        assert "PduR_RoutingTableType" in pdur_bcm
+        assert "bcm_pdur_routing[]" in pdur_bcm
 
     def test_has_aggregate_config(self, pdur_bcm):
         """Must have the PduR_ConfigType aggregate struct."""
         assert "PduR_ConfigType" in pdur_bcm
         assert "bcm_pdur_config" in pdur_bcm
 
-    def test_rx_routing_is_static_const(self, pdur_bcm):
-        """RX routing table must be static const."""
-        assert re.search(r"static\s+const\s+PduR_RoutingPathType.*rx_routing", pdur_bcm)
-
-    def test_tx_routing_is_static_const(self, pdur_bcm):
-        """TX routing table must be static const."""
-        assert re.search(r"static\s+const\s+PduR_RoutingPathType.*tx_routing", pdur_bcm)
+    def test_routing_is_static_const(self, pdur_bcm):
+        """Routing table must be static const."""
+        assert re.search(r"static\s+const\s+PduR_RoutingTableType.*bcm_pdur_routing", pdur_bcm)
 
     def test_aggregate_is_const_not_static(self, pdur_bcm):
         """Aggregate config must be const (externally visible) but not static."""
@@ -120,67 +111,37 @@ class TestPduRCfgStructure:
 class TestPduRCfgData:
     """Verify data correctness in generated PduR_Cfg files."""
 
-    def test_rx_route_count_matches_rx_pdus(self, pdur_bcm, load_model):
-        """Number of RX routing entries must match model rx_pdus count."""
+    def test_route_count_matches_rx_pdus(self, pdur_bcm, load_model):
+        """Number of routing entries must match model rx_pdus count (single RX table)."""
         bcm = load_model.ecus["bcm"]
-        rx_section = re.search(
-            r"rx_routing\[\].*?=\s*\{(.*?)\};",
+        section = re.search(
+            r"bcm_pdur_routing\[\].*?=\s*\{(.*?)\};",
             pdur_bcm, re.DOTALL,
         )
-        assert rx_section, "rx_routing array not found"
-        entries = re.findall(r"\{[^}]+\}", rx_section.group(1))
+        assert section, "bcm_pdur_routing array not found"
+        entries = re.findall(r"\{[^}]+\}", section.group(1))
         assert len(entries) == len(bcm.rx_pdus)
 
-    def test_tx_route_count_matches_tx_pdus(self, pdur_bcm, load_model):
-        """Number of TX routing entries must match model tx_pdus count."""
-        bcm = load_model.ecus["bcm"]
-        tx_section = re.search(
-            r"tx_routing\[\].*?=\s*\{(.*?)\};",
+    def test_routes_have_pdur_destinations(self, pdur_bcm):
+        """Routing entries must specify a PDUR_DEST_* destination module."""
+        section = re.search(
+            r"bcm_pdur_routing\[\].*?=\s*\{(.*?)\};",
             pdur_bcm, re.DOTALL,
         )
-        assert tx_section, "tx_routing array not found"
-        entries = re.findall(r"\{[^}]+\}", tx_section.group(1))
-        assert len(entries) == len(bcm.tx_pdus)
+        assert section
+        body = section.group(1)
+        assert "PDUR_DEST_COM" in body, "routing must include PDUR_DEST_COM entries"
+        # PDUR_DEST_XCP is optional but valid; at minimum COM must be present.
 
-    def test_rx_routes_use_canif_to_com(self, pdur_bcm):
-        """RX routes must go from CANIF → COM."""
-        rx_section = re.search(
-            r"rx_routing\[\].*?=\s*\{(.*?)\};",
-            pdur_bcm, re.DOTALL,
-        )
-        assert rx_section
-        section = rx_section.group(1)
-        assert "PDUR_MOD_CANIF" in section, "RX source should be CANIF"
-        assert "PDUR_MOD_COM" in section, "RX destination should be COM"
-
-    def test_tx_routes_use_com_to_canif(self, pdur_bcm):
-        """TX routes must go from COM → CANIF."""
-        tx_section = re.search(
-            r"tx_routing\[\].*?=\s*\{(.*?)\};",
-            pdur_bcm, re.DOTALL,
-        )
-        assert tx_section
-        section = tx_section.group(1)
-        assert "PDUR_MOD_COM" in section, "TX source should be COM"
-        assert "PDUR_MOD_CANIF" in section, "TX destination should be CANIF"
-
-    def test_rx_routes_reference_com_rx_defines(self, pdur_bcm):
-        """RX routes should use COM RX PDU defines from Ecu_Cfg.h."""
+    def test_routes_reference_com_rx_defines(self, pdur_bcm):
+        """Routes must reference the ECU's Com RX PDU ID defines."""
         assert re.search(r"BCM_COM_RX_", pdur_bcm), \
-            "RX routes should reference BCM_COM_RX_* defines"
+            "routes should reference BCM_COM_RX_* defines"
 
-    def test_tx_routes_reference_com_tx_defines(self, pdur_bcm):
-        """TX routes should use COM TX PDU defines from Ecu_Cfg.h."""
-        assert re.search(r"BCM_COM_TX_", pdur_bcm), \
-            "TX routes should reference BCM_COM_TX_* defines"
-
-    def test_rx_route_count_define(self, pdur_bcm):
-        """Must define RX route count."""
-        assert "PDUR_RX_ROUTE_COUNT" in pdur_bcm
-
-    def test_tx_route_count_define(self, pdur_bcm):
-        """Must define TX route count."""
-        assert "PDUR_TX_ROUTE_COUNT" in pdur_bcm
+    def test_routing_count_field_populated(self, pdur_bcm):
+        """Aggregate config must set routingCount via sizeof pattern."""
+        assert ".routingCount" in pdur_bcm
+        assert "sizeof(bcm_pdur_routing)" in pdur_bcm
 
 
 # ===================================================================
@@ -205,8 +166,9 @@ class TestPduRCfgAllEcus:
             content = files["PduR_Cfg.c"]
             assert f"{ecu_name}_pdur_config" in content
 
-    def test_cvc_has_at_least_as_many_routes_as_bcm(self, pdur_cvc, pdur_bcm):
-        """CVC should have >= BCM routing entries (broadcast CAN)."""
-        cvc_entries = len(re.findall(r"\{[^}]+PDUR_MOD", pdur_cvc))
-        bcm_entries = len(re.findall(r"\{[^}]+PDUR_MOD", pdur_bcm))
-        assert cvc_entries >= bcm_entries
+    def test_every_ecu_has_nonempty_routing(self, pdur_files):
+        """Every ECU with pdur enabled must have at least one routing entry."""
+        for ecu_name, files in pdur_files.items():
+            content = files["PduR_Cfg.c"]
+            entries = re.findall(r"\{[^}]+PDUR_DEST_", content)
+            assert len(entries) > 0, f"{ecu_name} has no PduR routing entries"
