@@ -241,13 +241,52 @@ POSIX paths unchanged).
   failure safe (controlled reset instead of HardFault); CVC still will not
   run the 5 s task correctly until the root desync (F-B/F-C) is fixed. The
   5-min soak still requires FIX-03/04.
-- **S-OS-31-FIX-03/04 OPEN (F-B/F-C correctness root)** — needs the exact
-  nested-preemption kernel/port desync pinned. The host cooperative model
-  round-trips `SavedPsp` and does not naturally reproduce the hardware PSP
-  desync, so pinning the literal locus needs on-target instrumentation
-  (boards are up). Recommended next: instrument PendSV save vs
-  `os_preempted_task_stack` push/pop on target to catch the task whose
-  `SavedContextValid` should be false at resume.
+- **S-OS-31-FIX-03/04 DONE at build+host level (2026-07-09)** — desync
+  mechanism pinned by analysis (section 7); the literal locus is
+  `Os_Port_Stm32.c:451` request-drop + ungated `SelectedNextTask` overwrite +
+  PendSV-only `CurrentTask` advance. Implemented:
+  - FIX-03 (F-B): per-task `SavedContextValid` in
+    `Os_Port_Stm32_TaskContextType` (`firmware/platform/stm32/include/Os_Port_Stm32.h`)
+    — set TRUE on fresh-frame build and on PendSV save, FALSE on restore;
+    `Os_Port_Stm32_SelectNextTask` resume gate now requires it TRUE (the byte
+    `frame_is_resumable` check from FIX-02 kept as defense-in-depth).
+  - FIX-04 (F-C): one-shot `SaveSuppressed` + `Os_Port_Stm32_SuppressTaskSave`
+    (port) via the `Os_Port_SuppressTaskSave` kernel seam
+    (`Os_Port_TaskBinding.{h,c}`, STM32 impl / L5+TMS570 no-op), called by
+    `os_terminate_switchback` (`Os_Scheduler.c`) for the terminated task so the
+    next (possibly coalesced) PendSV cannot save the dead/parked frame over a
+    rebuilt one.
+  - Tests (TDD, fail-first at compile against the new field/API): 3 added to
+    `test_Os_Port_Stm32_bootstrap_switchback_resume_frame.c`
+    (SavedContextValid transitions; SuppressTaskSave one-shot skip; terminate
+    switchback suppresses without spurious fail-closed). Full OS runner GREEN:
+    36 suites / 522 tests / 0 failures / 3 pre-existing TMS570 ignores.
+  - Cross-build: cvc/fzc/rzc `OSEK=1` link clean, arm-none-eabi-gcc 13.3.0,
+    zero `-Werror` warnings; uniform +224 B text, data/bss unchanged
+    (cvc 50132/180/16336, fzc 48216/180/15328, rzc 47376/180/16224).
+  - **HOST-GREEN IS NOT ACCEPTANCE.** The mock moves pointers (no STMDB, one
+    fixed prepared_psp per task) so the clobbered/zeroed-frame HardFault is
+    NOT host-reproducible — the host tests are invariant/API guards only. The
+    on-target 3x G474RE soak (FIX-05) is the sole end-to-end proof.
+
+- **S-OS-31-FIX-05 DONE on target (2026-07-09) — HardFault/soak criterion MET.**
+  Bench mapping resolved by USB VCP<->SWD pairing (CVC=COM11, FZC=COM3,
+  RZC=COM10; the earlier "CVC=434B" hint was the F413 board, not a G474). The
+  5-probe count is the full bench (G4 trio + an F413 + an L552 for other
+  S-OS items), not a fault. All three G474RE boards flashed with the fixed
+  OSEK=1 image and RE-VERIFIED via st-util/gdb (full-speed run, break on
+  HardFault_Handler + Os_Task_<Ecu>_5000ms, read os_port_stm32_state +
+  CFSR/HFSR): 5-minute soak each — Tick 300000 (no WdgM reset), CFSR=0/HFSR=0
+  (no HardFault), PendSvReq==PendSvCplt (CVC 639060 / FZC 69059 / RZC 639059).
+  The CVC scenario that deterministically INVSTATE-HardFaulted at the first
+  5000ms activation before the fix now soaks 5 min clean. Report:
+  `test/hil/reports/os-migration-stm32.md`. PARTIAL: CAN-parity-vs-SIL
+  (candump can0 on the HIL Pi) + E2E-CRC checks at receiving ECUs remain OPEN
+  for a follow-up full-bench HIL run (boards verified standalone via SWD).
+  Note: the CVC ST-Link SWD session wedged once (LIBUSB_ERROR_TIMEOUT) under
+  aggressive repeated connect-under-reset + a hard-killed gdb; recovered after
+  clearing handles + ~15 s USB settle. Prefer one clean st-util session per
+  board.
 
 ## 6. Risks / open questions
 - Exact desync locus (F-C) not yet pinned to a single push/pop; catching the
@@ -257,3 +296,78 @@ POSIX paths unchanged).
   S-OS-31 scope; note for a separate ticket.
 - RZC/FZC must be re-verified after the fix (latent same defect), not assumed
   clean from this session.
+
+## 7. Root mechanism CONFIRMED — desync locus pinned (2026-07-09, host analysis)
+
+Step 1 of FIX-03/04 (pin the exact nested-preemption desync) is CLOSED via
+static analysis of the kernel+port model — the cheaper reproduction path this
+memo's section 6 already endorsed. The literal zeroed-byte HardFault is the
+hardware manifestation; the *mechanism* is fully determined from the sources
+and is host-reproducible (the existing suite misses it only because it asserts
+staging booleans, not restored-frame PC/xPSR — memo section 3).
+
+### 7.1 The invariant that breaks
+The STM32 port keeps its OWN current-task pointer `os_port_stm32_state.CurrentTask`
+that advances ONLY inside `Os_Port_Stm32_ResolvePendSvTarget`
+(`firmware/platform/stm32/src/Os_Port_Stm32.c:203`) — i.e. once per PendSV that
+actually executes. The kernel advances `os_current_task` and pushes onto
+`os_preempted_task_stack` speculatively (`Os_Scheduler.c:246` in
+`os_dispatch_task`; `Os_Scheduler.c:194` in the `os_terminate_switchback`
+fresh-dispatch branch), TRUSTING that a matching PendSV will save that task's
+live frame to `os_port_stm32_task_context[t].SavedPsp`. A single PendSV saves
+exactly ONE task (`CurrentTask`) and restores exactly one (`SelectedNextTask`,
+last-write-wins, ungated). The required invariant:
+
+  > at each context-switch request, port `CurrentTask == os_current_task`, and
+  > exactly one PendSV runs per push.
+
+### 7.2 The coalescing race (structural enabler)
+`Os_PortRequestContextSwitch` DROPS a second request when `PendSvPending==TRUE`
+(`Os_Port_Stm32.c:451`) and does NOT set `DeferredPendSv` on that path — but
+`Os_Port_Stm32_SelectNextTask` overwrites `SelectedNextTask` UNGATED
+(`Os_Port_Stm32.c:403`). PendSV is lowest priority (0xFF); SysTick is 0x40
+(`Os_Port_Stm32.c:33-34,286-287`). `os_terminate_switchback` stages a
+Select+Request (sets `PendSvPending=TRUE`) then PARKS in `for(;;)`
+(`Os_Scheduler.c:230-236`). A SysTick landing in the gap between `PENDSVSET`
+and PendSV entry preempts the pending PendSV, runs a full tick +
+`os_maybe_dispatch_preemption` (`Os_Core.c:573`) -> a SECOND `os_dispatch_task`
+whose `Os_Port_RequestConfiguredDispatch` REBUILDS the incoming frame and
+overwrites `SelectedNextTask`, but its request hits the `:451` early-return.
+Net: TWO kernel pushes/advances, ONE PendSV save. The single PendSV then saves
+the OUTGOING (often already-terminated/parked) task's live frame into its
+`SavedPsp` slot — CLOBBERING the just-rebuilt initial frame and/or leaving an
+intermediate pushed task with a `SavedPsp` that was never written to a live
+frame (stale/zeroed). A later resume-WITHOUT-rebuild
+(`Os_Scheduler.c:219` -> `Os_Port_TaskBinding.c:150` -> `Os_Port_Stm32.c:393`)
+selects that stale/zeroed PSP -> PendSV exception-returns to PC=0, T-bit=0 ->
+INVSTATE UsageFault -> FORCED HardFault (CFSR=0x00020000, HFSR=0x40000000).
+
+Onset at the FIRST `Cvc_5000ms` activation matches: 5000ms is the first task
+that both drives the preempted stack to depth 2 AND runs long enough (a body
+spanning thousands of ticks) that a SysTick reliably lands in the
+terminate->PendSV park gap.
+
+### 7.3 Two independent per-tick staging routes (contributing factor)
+On hardware, `Os_BootstrapProcessCounterTick` ALSO stages a port Select
+directly when a dispatch is needed (`Os_Alarm.c:340-345`), separate from the
+ISR2-exit `os_maybe_dispatch_preemption` route (`Os_Core.c:571-577`). Both
+converge on `SelectedNextTask`; the tick route runs no rebuild and no
+`os_push_preempted_task`. This widens the set of interleavings in which
+`SelectedNextTask` is overwritten between a stage and its PendSV.
+
+### 7.4 Fix targets (unchanged design, now with pinned lines)
+- F-B (FIX-03): per-task `SavedContextValid` in
+  `os_port_stm32_task_context[]` — set TRUE when `PrepareTaskContext` builds a
+  fresh initial frame and when `ResolvePendSvTarget` saves a live outgoing
+  frame; cleared for the restored task (now running, no live saved frame).
+  `Os_Port_Stm32_SelectNextTask` resume gate requires it TRUE (else fail
+  closed). Makes the fail-closed guard authoritative rather than byte-heuristic.
+- F-C (FIX-04): reconcile the speculative kernel push/advance with the single
+  PendSV so the coalesced save cannot clobber a rebuilt frame nor strand a
+  pushed task — the correctness root that lets the 5-min soak run without
+  fail-closing.
+
+CAVEAT (carried to FIX-05): host-green is necessary but NOT sufficient. The
+on-target 3x G474RE soak remains the acceptance gate — the host model does not
+stack real registers (`ResolvePendSvTarget` moves pointers, it does not run
+STMDB), so the literal zeroed-byte outcome is only reproducible on silicon.

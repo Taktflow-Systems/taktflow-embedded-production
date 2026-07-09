@@ -381,6 +381,20 @@ merge is not viable; the port work must be harvested file-wise.
   - Gate: HIL soak report (Layer 4 hardware analogue).
   - Definition of done: mixed bench (physical STM32 + POSIX vECUs) runs
     the standard HIL scenario set green.
+  - Status (2026-07-09): on-target bringup found a CONFIRMED switchback
+    HardFault (INVSTATE at first Cvc_5000ms activation) — a PendSV coalescing
+    race resuming a task from a stale/zeroed SavedPsp (memo
+    `memo-s-os-31-switchback-resume-defect.md` §7). ROOT FIX landed:
+    FIX-03 (per-task `SavedContextValid` resume gate) + FIX-04 (one-shot
+    `SaveSuppressed` on the terminated task), host suite green (36/522),
+    cvc/fzc/rzc OSEK=1 cross-build clean. ON-TARGET RE-VERIFIED
+    (`test/hil/reports/os-migration-stm32.md`): all three G474RE boards pass a
+    5-minute soak — Tick 300000 (no WdgM reset), CFSR/HFSR=0 (no HardFault),
+    PendSvReq==PendSvCplt (CVC 639060 / FZC 69059 / RZC 639059), including the
+    CVC scenario that deterministically faulted before the fix. PARTIAL — the
+    HardFault/soak criterion is MET; the CAN-parity-vs-SIL + E2E-CRC checks
+    (candump can0 on the HIL Pi + peer ECUs) remain OPEN for a follow-up full-
+    bench HIL run. UNCOMMITTED.
 
 - **S-OS-32 STM32F4 OSEK port bringup (F413ZH) — spare-board track**
   - Goal: extend the OSEK kernel + STM32 Cortex-M4 port to build, link,
