@@ -377,9 +377,14 @@ make -f firmware/platform/tms570/Makefile.tms570 build
 # Run MISRA analysis
 cppcheck --project=compile_commands.json --addon=tools/misra/misra.json
 
-# Regenerate configs from DBC (full pipeline)
-python tools/arxml/dbc2arxml.py gateway/taktflow_vehicle.dbc arxml/
-python -m tools.arxmlgen
+# Regenerate configs from DBC (full pipeline — the SWC model JSON is
+# required; without it the ARXML loses all SWCs, ports and runnables)
+python tools/arxml/dbc2arxml.py gateway/taktflow_vehicle.dbc arxml_v2/ arxml_v2/swc_model.json
+cp arxml_v2/TaktflowSystem.arxml arxml/TaktflowSystem.arxml
+python -m tools.arxmlgen --config project.yaml
+
+# Verify the pipeline is idempotent (run twice, expect zero diff)
+bash tools/ci/check_codegen_idempotency.sh
 ```
 
 ---

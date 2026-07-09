@@ -18,7 +18,11 @@ Python 3.10 or later required.
 **Step 1: Have ARXML files.** Either generate from DBC or export from a professional tool.
 
 ```bash
-# Example: generate from DBC (project-specific, not part of arxmlgen)
+# Example: generate from DBC (project-specific, not part of arxmlgen).
+# Taktflow note: always pass the SWC model JSON — omitting it silently
+# drops every SWC (ports, runnables) from the ARXML:
+#   python tools/arxml/dbc2arxml.py gateway/taktflow_vehicle.dbc arxml_v2/ arxml_v2/swc_model.json
+#   cp arxml_v2/TaktflowSystem.arxml arxml/TaktflowSystem.arxml
 python tools/arxml/dbc2arxml.py gateway/my_project.dbc arxml/
 ```
 
