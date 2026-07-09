@@ -211,9 +211,17 @@ void os_terminate_switchback(void)
             os_pre_task_hook();
         }
     } else if (resume != INVALID_TASK) {
-        /* BRINGUP-6 switchback: resume the preempted task as-is. */
-        (void)Os_Port_StageConfiguredResume(resume);
-        Os_Port_ObserveConfiguredDispatch(resume);
+        /* BRINGUP-6 switchback: resume the preempted task as-is. The port
+         * rejects a stale/invalid saved frame (S-OS-31 fail-closed guard,
+         * docs/plans/memo-s-os-31-switchback-resume-defect.md); if the resume
+         * cannot be staged validly, fail closed rather than let PendSV return
+         * into a corrupt frame (INVSTATE HardFault on target). */
+        if (Os_Port_StageConfiguredResume(resume) == E_OK) {
+            Os_Port_ObserveConfiguredDispatch(resume);
+        } else {
+            os_report_service_error(OS_DET_API_TERMINATE_TASK, DET_E_PARAM_VALUE,
+                                    E_OS_STATE);
+        }
     } else {
         os_report_service_error(OS_DET_API_TERMINATE_TASK, DET_E_PARAM_VALUE,
                                 E_OS_STATE);

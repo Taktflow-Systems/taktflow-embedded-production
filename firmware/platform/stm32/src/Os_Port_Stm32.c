@@ -25,6 +25,11 @@
 #define OS_PORT_STM32_INITIAL_TASK_LR            0xFFFFFFFFu
 #define OS_PORT_STM32_SOFTWARE_RESTORE_WORDS     9u
 #define OS_PORT_STM32_SOFTWARE_RESTORE_BYTES     (OS_PORT_STM32_SOFTWARE_RESTORE_WORDS * sizeof(uint32))
+/* Stacked hardware-frame word indices from the frame base (SavedPsp):
+ * software regs R4-R11 + EXC_RETURN occupy [0..8], then the exception frame
+ * R0,R1,R2,R3,R12,LR,PC,xPSR at [9..16]. */
+#define OS_PORT_STM32_FRAME_PC_INDEX             15u
+#define OS_PORT_STM32_FRAME_XPSR_INDEX           16u
 #define OS_PORT_STM32_PENDSV_LOWEST_PRIORITY     0xFFu
 #define OS_PORT_STM32_SYSTICK_BOOTSTRAP_PRIORITY 0x40u
 
@@ -341,8 +346,41 @@ StatusType Os_Port_Stm32_PrepareFirstTask(TaskType TaskID, Os_TaskEntryType Entr
     return E_OK;
 }
 
+/**
+ * @brief Reject a saved frame that cannot be safely resumed by PendSV.
+ *
+ * A live resume context has a non-null stacked PC and the Thumb bit set in
+ * the stacked xPSR. A stale/zeroed frame (PC=0 or xPSR Thumb bit clear) would
+ * make the PendSV exception return load an invalid PC/EPSR -> INVSTATE
+ * UsageFault -> HardFault. This guard is the S-OS-31 on-target fix (fail
+ * closed): the bench found the termination switchback resuming a task from
+ * such a frame under nested preemption
+ * (docs/plans/memo-s-os-31-switchback-resume-defect.md).
+ *
+ * @note ISR/critical context safe: pure read of the target frame, no writes.
+ */
+static boolean os_port_stm32_frame_is_resumable(uintptr_t SavedPsp)
+{
+    const uint32* frame;
+
+    if (SavedPsp == (uintptr_t)0u) {
+        return FALSE;
+    }
+
+    frame = (const uint32*)SavedPsp;
+    if (frame[OS_PORT_STM32_FRAME_PC_INDEX] == 0u) {
+        return FALSE;
+    }
+    if ((frame[OS_PORT_STM32_FRAME_XPSR_INDEX] & OS_PORT_STM32_XPSR_THUMB) == 0u) {
+        return FALSE;
+    }
+    return TRUE;
+}
+
 StatusType Os_Port_Stm32_SelectNextTask(TaskType TaskID)
 {
+    uintptr_t saved_psp;
+
     if (os_port_stm32_state.TargetInitialized == FALSE) {
         return E_OS_STATE;
     }
@@ -352,8 +390,18 @@ StatusType Os_Port_Stm32_SelectNextTask(TaskType TaskID)
         return E_OS_VALUE;
     }
 
+    saved_psp = os_port_stm32_task_context[TaskID].SavedPsp;
+
+    /* Fail closed: never stage a context switch into a frame that is not a
+     * live resume context (S-OS-31 switchback resume-frame guard). Fresh
+     * dispatch rebuilds the frame before selecting, so only a stale resume
+     * can fail here. */
+    if (os_port_stm32_frame_is_resumable(saved_psp) == FALSE) {
+        return E_OS_STATE;
+    }
+
     os_port_stm32_state.SelectedNextTask = TaskID;
-    os_port_stm32_state.SelectedNextTaskPsp = os_port_stm32_task_context[TaskID].SavedPsp;
+    os_port_stm32_state.SelectedNextTaskPsp = saved_psp;
     return E_OK;
 }
 
