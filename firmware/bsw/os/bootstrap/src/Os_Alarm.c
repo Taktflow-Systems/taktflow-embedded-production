@@ -336,8 +336,18 @@ boolean Os_BootstrapProcessCounterTick(void)
 
 #if defined(PLATFORM_STM32) || defined(PLATFORM_TMS570)
     /* On hardware, stage the port dispatch target before returning.
-     * The caller will fire PENDSVSET; PendSV needs SelectedNextTask set. */
-    if (dispatch_needed == TRUE) {
+     * The caller will fire the dispatch; it needs SelectedNextTask set.
+     * DISABLED under the STM32 commit dispatch (S-OS-31 FIX-10 / memo 8.8
+     * option C): the tick route staged selections without
+     * os_maybe_dispatch_preemption's preemptability checks and decoupled
+     * staging from requesting (GAP-C, memo 7.3 double-staging); the
+     * ISR2-exit dispatch route is the single stager on the production
+     * images.  Legacy/bringup configurations keep the route. */
+    if ((dispatch_needed == TRUE)
+#if defined(PLATFORM_STM32)
+        && (os_commit_dispatch_live == FALSE)
+#endif
+    ) {
         TaskType next = os_select_next_ready_task();
         if (next != INVALID_TASK) {
             (void)Os_Port_SelectConfiguredTask(next);

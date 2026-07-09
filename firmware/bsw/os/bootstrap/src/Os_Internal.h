@@ -135,6 +135,7 @@ extern Os_ShutdownHookType os_shutdown_hook;
 extern uint8 os_isr_cat2_nesting;
 extern TaskType os_preempted_task_stack[OS_MAX_TASKS];
 extern uint8 os_preempted_task_depth;
+extern boolean os_commit_dispatch_live;
 extern Os_ProtectionHookType os_protection_hook;
 extern uint8 os_call_level;
 extern boolean os_all_interrupts_disabled;

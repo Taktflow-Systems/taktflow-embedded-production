@@ -38,6 +38,12 @@ uint8 os_trusted_function_count = 0u;
 AlarmBaseType os_counter_base = { 0xFFFFFFFFu, 1u, 1u };
 TickType os_counter_value = 0u;
 TaskType os_current_task = INVALID_TASK;
+/* S-OS-31 FIX-10 (memo 8.8): TRUE only when StartOS's launch seam engaged
+ * the production PendSV dispatch (all tasks port-prepared from the
+ * configured stack table).  Gates the commit-dispatch kernel/port contract;
+ * bringup images and Os_TestConfigure-driven suites (no stack table) keep
+ * the legacy speculative-advance semantics. */
+boolean os_commit_dispatch_live = FALSE;
 AppModeType os_active_app_mode = OSDEFAULTAPPMODE;
 StatusType os_shutdown_error = E_OK;
 boolean os_initialized = FALSE;
@@ -222,6 +228,7 @@ void os_reset_runtime_state(void)
     os_shutdown_error = E_OK;
     os_initialized = TRUE;
     os_started = FALSE;
+    os_commit_dispatch_live = FALSE;
     os_shutdown_requested = FALSE;
     os_ready_bitmap = 0u;
     os_ready_stamp_counter = 1u;
@@ -464,6 +471,12 @@ static StatusType os_startos_launch_first_configured_task(void)
         os_pre_task_hook();
     }
 
+#if defined(PLATFORM_STM32)
+    /* S-OS-31 FIX-10: every task is port-prepared above, so the
+     * commit-dispatch contract (stage-only + PendSV commit) is engageable. */
+    os_commit_dispatch_live = TRUE;
+#endif
+
     Os_PortStartFirstTask();
     return E_OK;
 }
@@ -552,6 +565,11 @@ void ShutdownOS(StatusType Error)
 AppModeType GetActiveApplicationMode(void)
 {
     return os_active_app_mode;
+}
+
+boolean Os_BootstrapCommitDispatchLive(void)
+{
+    return os_commit_dispatch_live;
 }
 
 void Os_BootstrapEnterIsr2(void)

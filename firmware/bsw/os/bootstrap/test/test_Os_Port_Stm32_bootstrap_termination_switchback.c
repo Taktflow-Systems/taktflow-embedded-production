@@ -255,16 +255,21 @@ void test_TerminateTask_switchback_resumes_preempted_without_rebuild(void)
     TEST_ASSERT_EQUAL_PTR((void*)idle_saved_psp, (void*)state->SelectedNextTaskPsp);
     TEST_ASSERT_EQUAL_HEX32(FRAME_SENTINEL, task_frame(TASK_IDLE)[FRAME_PC_INDEX]);
 
-    /* Kernel state: terminated task SUSPENDED, idle restored as current. */
+    /* Kernel state: terminated task SUSPENDED.  S-OS-31 FIX-10 (memo 8.8):
+     * os_current_task does NOT advance at stage time any more — it stays on
+     * the retired task through the park gap (so a tick landing there cannot
+     * double-dispatch) and commits to idle inside the switchback PendSV. */
     TEST_ASSERT_EQUAL(E_OK, GetTaskState(TASK_1MS, &task_state));
     TEST_ASSERT_EQUAL(SUSPENDED, task_state);
-    TEST_ASSERT_EQUAL(TASK_IDLE, Os_TestGetCurrentTask());
+    TEST_ASSERT_EQUAL(TASK_1MS, Os_TestGetCurrentTask());
 
-    /* Complete the switchback PendSV: port lands in idle, no entry re-run. */
+    /* Complete the switchback PendSV: port lands in idle, no entry re-run,
+     * and the kernel advance commits with the physical switch. */
     TEST_ASSERT_EQUAL(E_OK, Os_Port_CompleteConfiguredDispatch());
     state = Os_Port_Stm32_GetBootstrapState();
     TEST_ASSERT_FALSE(state->PendSvPending);
     TEST_ASSERT_EQUAL(TASK_IDLE, state->CurrentTask);
+    TEST_ASSERT_EQUAL(TASK_IDLE, Os_TestGetCurrentTask());
     TEST_ASSERT_EQUAL_UINT8(0u, runs_idle);   /* resume, not a fresh entry */
     TEST_ASSERT_EQUAL_UINT32(2u, state->TaskSwitchCount);
 }
@@ -326,7 +331,9 @@ void test_TerminateTask_switchback_dispatches_next_ready_with_fresh_frame(void)
     state = Os_Port_Stm32_GetBootstrapState();
     TEST_ASSERT_TRUE(state->PendSvPending);
     TEST_ASSERT_EQUAL(TASK_10MS, state->SelectedNextTask);
-    TEST_ASSERT_EQUAL(TASK_10MS, Os_TestGetCurrentTask());
+    /* S-OS-31 FIX-10: the kernel advance to 10ms commits inside the PendSV,
+     * not at stage time — current stays on the retired 1ms task here. */
+    TEST_ASSERT_EQUAL(TASK_1MS, Os_TestGetCurrentTask());
     TEST_ASSERT_EQUAL_HEX32(
         (uint32)((uintptr_t)Task_10ms_Entry & 0xFFFFFFFFu),
         task_frame(TASK_10MS)[FRAME_PC_INDEX]);          /* rebuilt */
@@ -342,8 +349,11 @@ void test_TerminateTask_switchback_dispatches_next_ready_with_fresh_frame(void)
     TEST_ASSERT_FALSE(state->PendSvPending);
     /* launch + 1ms + 10ms dispatches (resume is not a fresh dispatch) */
     TEST_ASSERT_EQUAL_UINT32(dispatches_before + 2u, Os_TestGetDispatchCount());
-    /* PreTaskHook per fresh dispatch: 1ms + 10ms */
-    TEST_ASSERT_EQUAL_UINT8(2u, pre_hook_count);
+    /* PreTaskHook per transition to RUNNING: launch + 1ms + 10ms.  Pre-
+     * FIX-10 the ISR-staged 1ms dispatch skipped the hook (the ISR-context
+     * early return preceded it); the PendSV commit now runs it for every
+     * fresh adoption (OSEK: hook on entering RUNNING). */
+    TEST_ASSERT_EQUAL_UINT8(3u, pre_hook_count);
 }
 
 /**
@@ -368,7 +378,11 @@ void test_TerminateTask_switchback_fails_closed_when_nothing_to_run(void)
     TEST_ASSERT_EQUAL(E_OS_STATE, error_hook_status);
     TEST_ASSERT_FALSE(state->PendSvPending);
     TEST_ASSERT_EQUAL_UINT32(0u, state->PendSvRequestCount);
-    TEST_ASSERT_EQUAL(INVALID_TASK, Os_TestGetCurrentTask());
+    /* S-OS-31 FIX-10: with no successor staged there is no commit, so
+     * os_current_task stays on the retired task (SUSPENDED) — never
+     * INVALID.  This retires the ISR2-exit os_run_ready_tasks Synchronize
+     * leg (memo 8.8.1 mis-keyed-save hazard) on a live system. */
+    TEST_ASSERT_EQUAL(TASK_IDLE, Os_TestGetCurrentTask());
 }
 
 /**
@@ -458,8 +472,11 @@ void test_pending_activation_requeues_ready_then_redispatches_fresh(void)
     TEST_ASSERT_EQUAL_UINT8(1u, Os_TestGetPendingActivations(TASK_1MS));
     state = Os_Port_Stm32_GetBootstrapState();
     TEST_ASSERT_EQUAL(TASK_IDLE, state->SelectedNextTask);
-    TEST_ASSERT_EQUAL(TASK_IDLE, Os_TestGetCurrentTask());
+    /* S-OS-31 FIX-10: current stays on the re-queued (READY) 1ms task until
+     * the switchback PendSV commits the idle resume. */
+    TEST_ASSERT_EQUAL(TASK_1MS, Os_TestGetCurrentTask());
     TEST_ASSERT_EQUAL(E_OK, Os_Port_CompleteConfiguredDispatch());
+    TEST_ASSERT_EQUAL(TASK_IDLE, Os_TestGetCurrentTask());
 
     /* Next tick: exit-ISR preemption dispatches the pending activation
      * with a fresh frame; it runs once more and completes to SUSPENDED. */

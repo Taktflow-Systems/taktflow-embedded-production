@@ -99,6 +99,34 @@ TaskType os_select_next_ready_task(void)
     return INVALID_TASK;
 }
 
+/**
+ * @brief Retire a finished task's TCB state (no current-task advance).
+ *
+ * Split out of os_complete_running_task for S-OS-31 FIX-10 (memo 8.8): the
+ * STM32 termination switchback must retire the terminated task immediately
+ * but defer the current-task advance / preempted-stack pop to the PendSV
+ * commit (Os_BootstrapCommitDispatch).
+ */
+static void os_retire_running_task(TaskType CompletedTask)
+{
+    if (os_tcb[CompletedTask].PendingActivations > 0u) {
+        os_tcb[CompletedTask].PendingActivations--;
+    }
+
+    if (os_tcb[CompletedTask].PendingActivations > 0u) {
+        os_tcb[CompletedTask].State = READY;
+        os_tcb[CompletedTask].ReadyStamp = os_ready_stamp_counter++;
+    } else {
+        os_tcb[CompletedTask].State = SUSPENDED;
+        os_tcb[CompletedTask].ReadyStamp = 0u;
+    }
+
+    os_tcb[CompletedTask].CurrentPriority = os_task_cfg[CompletedTask].Priority;
+    os_tcb[CompletedTask].ResourceCount = 0u;
+    os_tcb[CompletedTask].SetEvents = 0u;
+    os_tcb[CompletedTask].WaitEvents = 0u;
+}
+
 void os_complete_running_task(void)
 {
     TaskType completed_task = os_current_task;
@@ -107,23 +135,7 @@ void os_complete_running_task(void)
         return;
     }
 
-    if (os_tcb[completed_task].PendingActivations > 0u) {
-        os_tcb[completed_task].PendingActivations--;
-    }
-
-    if (os_tcb[completed_task].PendingActivations > 0u) {
-        os_tcb[completed_task].State = READY;
-        os_tcb[completed_task].ReadyStamp = os_ready_stamp_counter++;
-    } else {
-        os_tcb[completed_task].State = SUSPENDED;
-        os_tcb[completed_task].ReadyStamp = 0u;
-    }
-
-    os_tcb[completed_task].CurrentPriority = os_task_cfg[completed_task].Priority;
-    os_tcb[completed_task].ResourceCount = 0u;
-    os_tcb[completed_task].SetEvents = 0u;
-    os_tcb[completed_task].WaitEvents = 0u;
-
+    os_retire_running_task(completed_task);
     os_restore_preempted_task();
     os_rebuild_ready_bitmap();
 }
@@ -180,7 +192,26 @@ void os_terminate_switchback(void)
     }
 
     os_stack_monitor_leave_task(terminated);
+
+#if defined(PLATFORM_STM32)
+    if (os_commit_dispatch_live == TRUE) {
+        /* S-OS-31 FIX-10 (memo 8.8, option A): retire the terminated task's
+         * TCB NOW, but do NOT advance os_current_task / pop the preempted
+         * stack — that commits inside the PendSV
+         * (Os_BootstrapCommitDispatch), paired one-to-one with the physical
+         * switch.  os_current_task stays on the terminated (now
+         * non-RUNNING) task through the park gap, so a SysTick landing
+         * there cannot dispatch a second time (os_maybe_dispatch_preemption
+         * declines on State != RUNNING): the 7.2 double-advance race is
+         * structurally closed. */
+        os_retire_running_task(terminated);
+        os_rebuild_ready_bitmap();
+    } else {
+        os_complete_running_task();
+    }
+#else
     os_complete_running_task();
+#endif
 
     /* S-OS-31 FIX-04 (F-C): the terminating task's frame is now dead. Suppress
      * its next PendSV save so a re-dispatch that rebuilds a fresh frame in its
@@ -188,13 +219,33 @@ void os_terminate_switchback(void)
      * parked/dead context. */
     Os_Port_SuppressTaskSave(terminated);
 
+#if defined(PLATFORM_STM32)
+    if (os_commit_dispatch_live == TRUE) {
+        resume = (os_preempted_task_depth > 0u)
+                     ? os_preempted_task_stack[os_preempted_task_depth - 1u]
+                     : INVALID_TASK;
+    } else {
+        resume = os_current_task;
+    }
+#else
     resume = os_current_task;
+#endif
     ready = os_select_next_ready_task();
 
     if ((ready != INVALID_TASK) &&
         (ready != terminated) &&
         ((resume == INVALID_TASK) ||
          (os_has_higher_priority(ready, resume) == TRUE))) {
+#if defined(PLATFORM_STM32)
+        if (os_commit_dispatch_live == TRUE) {
+            /* Fresh dispatch of a higher-priority ready task: stage only —
+             * the resume-target-in-waiting stays where it already is (on
+             * the stack), and the adoption commits in PendSV. */
+            (void)Os_Port_RequestConfiguredDispatch(ready);
+            Os_Port_ObserveConfiguredDispatch(ready);
+        } else
+#endif
+        {
         /* Fresh dispatch of a higher-priority ready task. */
         if (resume != INVALID_TASK) {
             os_push_preempted_task(resume);
@@ -215,6 +266,7 @@ void os_terminate_switchback(void)
 
         if (os_pre_task_hook != (Os_HookType)0) {
             os_pre_task_hook();
+        }
         }
     } else if (resume != INVALID_TASK) {
         /* BRINGUP-6 switchback: resume the preempted task as-is. The port
@@ -241,12 +293,91 @@ void os_terminate_switchback(void)
     }
 #endif
 }
+
+#if defined(PLATFORM_STM32)
+/**
+ * @brief   Commit the kernel dispatch bookkeeping inside PendSV (FIX-10)
+ *
+ * @details Called by Os_Port_Stm32_ResolvePendSvTarget AFTER the outgoing
+ *          context is physically saved (SavedContextValid TRUE) and the
+ *          staged target passed the consume-time gate, with interrupts
+ *          disabled.  Performs the push/pop/current-task advance that
+ *          os_dispatch_task and os_terminate_switchback used to do
+ *          speculatively (memo 8.8, option A):
+ *          - the saved (outgoing) task is pushed onto the preempted stack
+ *            iff it is still logically RUNNING — a terminated outgoing task
+ *            was already retired (SUSPENDED/READY) and must not be pushed;
+ *          - an adopted task that is the preempted-stack top is a resume
+ *            (pop); anything else is a fresh dispatch (READY -> RUNNING,
+ *            stack-monitor enter + PreTaskHook, matching the placements of
+ *            the pre-FIX-10 dispatch path).
+ *
+ *          Push-at-save makes the FIX-10 invariant ("every task on
+ *          os_preempted_task_stack has SavedContextValid TRUE") hold by
+ *          construction.  On a consume-time gate rejection the port does
+ *          NOT call this function: the kernel never advanced, so the
+ *          rejected target is simply re-dispatched by a later tick instead
+ *          of stranding.
+ *
+ * @note    PendSV context, interrupts disabled: plain data updates only.
+ */
+void Os_BootstrapCommitDispatch(TaskType SavedTask, TaskType AdoptedTask)
+{
+    if ((os_is_valid_task(AdoptedTask) == FALSE) || (AdoptedTask == SavedTask)) {
+        return;
+    }
+
+    if ((SavedTask != INVALID_TASK) &&
+        (os_is_valid_task(SavedTask) == TRUE) &&
+        (os_tcb[SavedTask].State == RUNNING)) {
+        os_push_preempted_task(SavedTask);
+    }
+
+    if ((os_preempted_task_depth > 0u) &&
+        (os_preempted_task_stack[os_preempted_task_depth - 1u] == AdoptedTask)) {
+        /* Resume of the most recently preempted task (not a fresh dispatch:
+         * no rebuild happened, no PreTaskHook, not counted). */
+        os_restore_preempted_task();
+    } else {
+        /* Fresh adoption of a rebuilt initial frame. */
+        os_current_task = AdoptedTask;
+        os_tcb[AdoptedTask].State = RUNNING;
+        os_tcb[AdoptedTask].ReadyStamp = 0u;
+        os_dispatch_count++;
+
+        if (os_task_stack_top_cfg[AdoptedTask] != (uintptr_t)0u) {
+            os_stack_monitor_enter_task(AdoptedTask, os_task_stack_top_cfg[AdoptedTask]);
+        }
+
+        if (os_pre_task_hook != (Os_HookType)0) {
+            os_pre_task_hook();
+        }
+    }
+
+    os_rebuild_ready_bitmap();
+}
+#endif /* PLATFORM_STM32 */
 #endif /* PLATFORM_STM32 || PLATFORM_STM32L5 || PLATFORM_TMS570 */
 
 static void os_dispatch_task(TaskType NextTask)
 {
     TaskType previous_task = os_current_task;
     uint8 stack_base_marker = 0u;
+
+#if defined(PLATFORM_STM32)
+    /* S-OS-31 FIX-10 (memo 8.8, option A): with the production commit
+     * dispatch live, stage only — rebuild+select+request — and let the
+     * PendSV commit the kernel push/advance via Os_BootstrapCommitDispatch,
+     * paired with the physical save.  This also retires the
+     * previous==INVALID Synchronize branch on a live system (the 8.8.1
+     * mis-keyed-save leg): every live dispatch now switches contexts
+     * through PendSV. */
+    if (os_commit_dispatch_live == TRUE) {
+        (void)Os_Port_RequestConfiguredDispatch(NextTask);
+        os_publish_port_dispatch(NextTask);
+        return;
+    }
+#endif
 
     if (previous_task != INVALID_TASK) {
         os_push_preempted_task(previous_task);
@@ -312,6 +443,15 @@ StatusType os_dispatch_one(void)
 StatusType os_run_ready_tasks(void)
 {
     StatusType status = E_OS_NOFUNC;
+
+#if defined(PLATFORM_STM32)
+    /* S-OS-31 FIX-10: with the commit dispatch live os_dispatch_task stages
+     * only (os_current_task advances at commit), so the loop condition
+     * below would re-stage forever.  Stage at most one dispatch. */
+    if (os_commit_dispatch_live == TRUE) {
+        return os_dispatch_one();
+    }
+#endif
 
     while ((os_shutdown_requested == FALSE) &&
            (os_current_task == INVALID_TASK) &&

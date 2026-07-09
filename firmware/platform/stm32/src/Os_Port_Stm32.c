@@ -249,6 +249,16 @@ uintptr_t Os_Port_Stm32_ResolvePendSvTarget(uintptr_t CurrentSavedPsp)
     os_port_stm32_state.ActivePsp =
         target_saved_psp + (uintptr_t)OS_PORT_STM32_SOFTWARE_RESTORE_BYTES;
 
+    /* S-OS-31 FIX-10 (memo 8.8, option A): commit the kernel push/pop/
+     * current-task advance atomically with the physical switch.  Not called
+     * on fail-closed (kernel never advanced — recoverable), on a
+     * selection-less self-restore, or under legacy/bringup dispatch (the
+     * kernel advanced speculatively there — the pre-FIX-10 contract). */
+    if ((target_task != current_task) &&
+        (Os_BootstrapCommitDispatchLive() == TRUE)) {
+        Os_BootstrapCommitDispatch(current_task, target_task);
+    }
+
     return target_saved_psp;
 }
 
@@ -654,7 +664,17 @@ void Os_Port_Stm32_TickIsr(void)
 
     os_port_stm32_state.TickInterruptCount++;
 
-    if (Os_BootstrapProcessCounterTick() == TRUE) {
+    /* S-OS-31 FIX-10 (memo 8.8, option C): under the production commit
+     * dispatch the tick no longer requests PendSV itself.  A selection-less
+     * PendSV self-restores but consumes SaveSuppressed one-shots early
+     * (GAP-C) and burns latency on every rejected staging.  The single
+     * dispatch route is the ISR2-exit os_maybe_dispatch_preemption
+     * (Os_BootstrapExitIsr2), whose Os_Port_RequestConfiguredDispatch
+     * stages the selection AND requests the switch (deferred to
+     * Os_PortExitIsr2 while nested).  Bringup/legacy configurations keep
+     * the tick-driven request. */
+    if ((Os_BootstrapProcessCounterTick() == TRUE) &&
+        (Os_BootstrapCommitDispatchLive() == FALSE)) {
         Os_PortRequestContextSwitch();
     }
 }

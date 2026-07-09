@@ -291,6 +291,15 @@ StatusType CallTrustedFunction(TrustedFunctionIndexType FunctionIndex, TrustedFu
 boolean Os_BootstrapProcessCounterTick(void);
 void Os_BootstrapEnterIsr2(void);
 void Os_BootstrapExitIsr2(void);
+/* S-OS-31 FIX-10 (memo 8.8): called by the port INSIDE the context-switch
+ * exception (PendSV), after the outgoing context is physically saved and the
+ * target adopted, to commit the kernel's push/pop/current-task advance
+ * atomically with the switch. STM32 dispatch-live path only. */
+void Os_BootstrapCommitDispatch(TaskType SavedTask, TaskType AdoptedTask);
+/* TRUE only when StartOS's launch seam engaged the production PendSV
+ * dispatch (all tasks port-prepared).  Bringup images and test harnesses
+ * that start the port manually keep the legacy dispatch semantics. */
+boolean Os_BootstrapCommitDispatchLive(void);
 
 void DisableAllInterrupts(void);
 void EnableAllInterrupts(void);
