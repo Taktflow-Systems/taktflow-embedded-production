@@ -59,6 +59,12 @@ typedef struct {
     uint32 PendSvCompleteCount;
     uint32 TaskSwitchCount;
     uint32 KernelDispatchObserveCount;
+    /* S-OS-31-FIX-06 (GAP-A): count of PendSV resolutions that rejected the
+     * staged target at CONSUME time (stage-time validity revoked or frame
+     * bytes no longer resumable) and stayed on the interrupted context
+     * instead of exception-returning into an invalid frame. Nonzero means a
+     * kernel/port desync occurred and was contained fail-closed. */
+    uint32 DesyncFailClosedCount;
     TaskType FirstTaskTaskID;
     TaskType CurrentTask;
     TaskType LastSavedTask;

@@ -48,6 +48,8 @@
 static Os_Port_Stm32_StateType os_port_stm32_state;
 static Os_Port_Stm32_TaskContextType os_port_stm32_task_context[OS_MAX_TASKS];
 
+static boolean os_port_stm32_frame_is_resumable(uintptr_t SavedPsp);
+
 static uintptr_t os_port_stm32_align_down(uintptr_t Value, uintptr_t Alignment)
 {
     return (Value & ~(Alignment - 1u));
@@ -200,8 +202,22 @@ uintptr_t Os_Port_Stm32_ResolvePendSvTarget(uintptr_t CurrentSavedPsp)
     target_task = current_task;
 
     if (os_port_stm32_state.SelectedNextTask != INVALID_TASK) {
-        target_task = os_port_stm32_state.SelectedNextTask;
-        target_saved_psp = os_port_stm32_task_context[target_task].SavedPsp;
+        TaskType candidate = os_port_stm32_state.SelectedNextTask;
+        uintptr_t candidate_psp = os_port_stm32_task_context[candidate].SavedPsp;
+
+        /* S-OS-31-FIX-06 (GAP-A): re-validate the staged target at CONSUME
+         * time. Every SelectNextTask gate runs at STAGE time; anything that
+         * invalidates the frame between staging and this PendSV (suppression,
+         * clobber, kernel/port desync) would otherwise be exception-returned
+         * into -> INVSTATE HardFault. Fail closed: stay on the interrupted
+         * context (always restorable — it was just saved above) and count. */
+        if ((os_port_stm32_task_context[candidate].SavedContextValid == TRUE) &&
+            (os_port_stm32_frame_is_resumable(candidate_psp) == TRUE)) {
+            target_task = candidate;
+            target_saved_psp = candidate_psp;
+        } else {
+            os_port_stm32_state.DesyncFailClosedCount++;
+        }
     }
 
     /* State bookkeeping */
@@ -237,6 +253,16 @@ void Os_Port_Stm32_MarkFirstTaskStarted(uintptr_t ActivePsp)
     os_port_stm32_state.ActivePsp = ActivePsp;
     os_port_stm32_state.CurrentTask = os_port_stm32_state.FirstTaskTaskID;
     os_port_stm32_state.FirstTaskLaunchCount++;
+    /* S-OS-31-FIX-06 (GAP-B): the launch consumed the first task's initial
+     * frame (it is now the live running context; SavedPsp points into the
+     * executing stack), and any selection staged before launch is stale
+     * (SelectNextTask has no launch gate) — a later PendSV must not consume
+     * either. */
+    if (os_port_stm32_is_valid_task(os_port_stm32_state.FirstTaskTaskID)) {
+        os_port_stm32_task_context[os_port_stm32_state.FirstTaskTaskID].SavedContextValid = FALSE;
+    }
+    os_port_stm32_state.SelectedNextTask = INVALID_TASK;
+    os_port_stm32_state.SelectedNextTaskPsp = (uintptr_t)0u;
 }
 
 void Os_Port_Stm32_MarkPendSvComplete(uintptr_t ActivePsp)
@@ -269,6 +295,7 @@ static void os_port_stm32_reset_state(void)
     os_port_stm32_state.PendSvCompleteCount = 0u;
     os_port_stm32_state.TaskSwitchCount = 0u;
     os_port_stm32_state.KernelDispatchObserveCount = 0u;
+    os_port_stm32_state.DesyncFailClosedCount = 0u;
     os_port_stm32_state.FirstTaskTaskID = INVALID_TASK;
     os_port_stm32_state.CurrentTask = INVALID_TASK;
     os_port_stm32_state.LastSavedTask = INVALID_TASK;

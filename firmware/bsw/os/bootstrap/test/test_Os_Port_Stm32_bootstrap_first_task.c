@@ -170,6 +170,45 @@ void test_Os_Port_Stm32_start_first_task_is_not_relaunched_after_first_start(voi
     TEST_ASSERT_EQUAL_UINT32(1u, state->FirstTaskLaunchCount);
 }
 
+/**
+ * @requirement S-OS-31-FIX-06 (GAP-B, memo section 8.3): the first-task launch
+ *              shall CONSUME the launched task's saved context (it is now the
+ *              live running context; its SavedPsp points into the executing
+ *              stack) and shall clear any selection staged before launch
+ *              (Os_Port_Stm32_SelectNextTask has no FirstTaskStarted gate, so
+ *              pre-launch kernel activity can leave a stale armed selection
+ *              that the first post-launch PendSV would consume).
+ * @verify After a pre-launch selection of the second task, starting the first
+ *         task clears the selection and marks the first task's saved context
+ *         invalid.
+ */
+void test_Os_Port_Stm32_start_first_task_consumes_context_and_clears_selection(void)
+{
+    static uint8 stack_a[128] __attribute__((aligned(8)));
+    static uint8 stack_b[128] __attribute__((aligned(8)));
+    const Os_Port_Stm32_StateType* state;
+
+    Os_PortTargetInit();
+    TEST_ASSERT_EQUAL(E_OK, Os_Port_Stm32_PrepareTaskContext(
+        OS_PORT_STM32_SECOND_TASK_ID, dummy_task_entry_alt, (uintptr_t)&stack_b[128]));
+    TEST_ASSERT_EQUAL(E_OK, Os_Port_Stm32_PrepareFirstTask(
+        OS_PORT_STM32_FIRST_TASK_ID, dummy_task_entry, (uintptr_t)&stack_a[128]));
+
+    /* Stale pre-launch staging: accepted (valid initial frame, no launch gate). */
+    TEST_ASSERT_EQUAL(E_OK, Os_Port_Stm32_SelectNextTask(OS_PORT_STM32_SECOND_TASK_ID));
+    TEST_ASSERT_TRUE(
+        Os_Port_Stm32_GetTaskContext(OS_PORT_STM32_FIRST_TASK_ID)->SavedContextValid);
+
+    Os_PortStartFirstTask();
+
+    state = Os_Port_Stm32_GetBootstrapState();
+    TEST_ASSERT_TRUE(state->FirstTaskStarted);
+    TEST_ASSERT_EQUAL(INVALID_TASK, state->SelectedNextTask);
+    TEST_ASSERT_EQUAL_PTR((void*)0, (void*)state->SelectedNextTaskPsp);
+    TEST_ASSERT_FALSE(
+        Os_Port_Stm32_GetTaskContext(OS_PORT_STM32_FIRST_TASK_ID)->SavedContextValid);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -177,5 +216,6 @@ int main(void)
     RUN_TEST(test_Os_Port_Stm32_prepare_first_task_builds_threadx_compatible_frame_words);
     RUN_TEST(test_Os_Port_Stm32_start_first_task_requires_prepared_launch_frame);
     RUN_TEST(test_Os_Port_Stm32_start_first_task_is_not_relaunched_after_first_start);
+    RUN_TEST(test_Os_Port_Stm32_start_first_task_consumes_context_and_clears_selection);
     return UNITY_END();
 }

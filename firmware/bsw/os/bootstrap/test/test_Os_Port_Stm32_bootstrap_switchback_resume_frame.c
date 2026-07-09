@@ -357,6 +357,107 @@ void test_terminate_switchback_suppresses_terminated_save(void)
     TEST_ASSERT_FALSE(ctx_of(TASK_1MS)->SaveSuppressed);
 }
 
+/* ==================================================================
+ * S-OS-31-FIX-06 (GAP-A, memo section 8.3/8.5): consume-time resume gate.
+ *
+ * Every FIX-02/03 resume gate runs at STAGE time (Os_Port_Stm32_SelectNextTask).
+ * ResolvePendSvTarget re-reads the target's SavedPsp at CONSUME time and,
+ * before FIX-06, exception-returned into it with no re-validation — anything
+ * that invalidates the staged frame between staging and PendSV entry defeated
+ * every guard (the free-running INVSTATE class).  FIX-06 re-validates the
+ * staged target inside ResolvePendSvTarget; on failure the port stays on the
+ * interrupted context (fail closed, no invalid exception return possible) and
+ * counts the event in DesyncFailClosedCount.
+ * ================================================================== */
+
+/**
+ * @requirement ResolvePendSvTarget shall re-validate the staged target at
+ *              consume time: a target whose SavedContextValid was revoked
+ *              AFTER a (then-valid) staging shall NOT be adopted; the port
+ *              stays on the interrupted context and increments
+ *              DesyncFailClosedCount.
+ * @verify Stage a valid select of the 10ms task, revoke its context validity
+ *         (SuppressTaskSave), run PendSV: the port stays on idle, counts one
+ *         fail-closed event, and consumes the selection.
+ */
+void test_pendsv_rejects_target_invalidated_after_staging(void)
+{
+    const Os_Port_Stm32_StateType* state;
+
+    start_production_os();
+
+    /* Valid staging (initial frame, SavedContextValid TRUE from prepare). */
+    TEST_ASSERT_EQUAL(E_OK, Os_Port_Stm32_SelectNextTask(TASK_10MS));
+    Os_PortRequestContextSwitch();
+    TEST_ASSERT_TRUE(Os_Port_Stm32_GetBootstrapState()->PendSvPending);
+
+    /* TOCTOU: validity revoked AFTER staging, BEFORE the PendSV consumes it. */
+    Os_Port_Stm32_SuppressTaskSave(TASK_10MS);
+    TEST_ASSERT_FALSE(ctx_of(TASK_10MS)->SavedContextValid);
+
+    Os_Port_Stm32_PendSvHandler();
+
+    state = Os_Port_Stm32_GetBootstrapState();
+    TEST_ASSERT_EQUAL(TASK_IDLE, state->CurrentTask);          /* no adoption */
+    TEST_ASSERT_EQUAL_UINT32(1u, state->DesyncFailClosedCount);
+    TEST_ASSERT_EQUAL(INVALID_TASK, state->SelectedNextTask);  /* consumed    */
+    TEST_ASSERT_FALSE(state->PendSvPending);
+}
+
+/**
+ * @requirement ResolvePendSvTarget shall re-validate the staged target's frame
+ *              BYTES at consume time: a frame corrupted (stacked PC=0 / xPSR
+ *              T-bit clear) after a valid staging shall NOT be exception-
+ *              returned into (on-target: INVSTATE HardFault); the port stays
+ *              on the interrupted context and increments DesyncFailClosedCount.
+ * @verify Stage a valid select of the 10ms task, then zero its frame's PC and
+ *         xPSR, run PendSV: the port stays on idle and counts one fail-closed
+ *         event.
+ */
+void test_pendsv_rejects_target_frame_corrupted_after_staging(void)
+{
+    const Os_Port_Stm32_StateType* state;
+
+    start_production_os();
+
+    TEST_ASSERT_EQUAL(E_OK, Os_Port_Stm32_SelectNextTask(TASK_10MS));
+    Os_PortRequestContextSwitch();
+
+    /* TOCTOU: frame bytes die AFTER staging (SavedContextValid still TRUE). */
+    corrupt_resume_frame(TASK_10MS);
+    TEST_ASSERT_TRUE(ctx_of(TASK_10MS)->SavedContextValid);
+
+    Os_Port_Stm32_PendSvHandler();
+
+    state = Os_Port_Stm32_GetBootstrapState();
+    TEST_ASSERT_EQUAL(TASK_IDLE, state->CurrentTask);
+    TEST_ASSERT_EQUAL_UINT32(1u, state->DesyncFailClosedCount);
+    TEST_ASSERT_EQUAL(INVALID_TASK, state->SelectedNextTask);
+    TEST_ASSERT_FALSE(state->PendSvPending);
+}
+
+/**
+ * @requirement The consume-time gate shall NOT interfere with a valid staged
+ *              target: a select whose frame stays live is adopted normally and
+ *              no fail-closed event is counted.
+ * @verify Stage a valid select of the 10ms task and run PendSV untouched: the
+ *         port adopts the 10ms task and DesyncFailClosedCount stays zero.
+ */
+void test_pendsv_adopts_valid_target_without_fail_closed(void)
+{
+    const Os_Port_Stm32_StateType* state;
+
+    start_production_os();
+
+    TEST_ASSERT_EQUAL(E_OK, Os_Port_Stm32_SelectNextTask(TASK_10MS));
+    Os_PortRequestContextSwitch();
+    Os_Port_Stm32_PendSvHandler();
+
+    state = Os_Port_Stm32_GetBootstrapState();
+    TEST_ASSERT_EQUAL(TASK_10MS, state->CurrentTask);
+    TEST_ASSERT_EQUAL_UINT32(0u, state->DesyncFailClosedCount);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -366,5 +467,8 @@ int main(void)
     RUN_TEST(test_saved_context_valid_tracks_save_and_restore);
     RUN_TEST(test_suppress_task_save_skips_next_save_one_shot);
     RUN_TEST(test_terminate_switchback_suppresses_terminated_save);
+    RUN_TEST(test_pendsv_rejects_target_invalidated_after_staging);
+    RUN_TEST(test_pendsv_rejects_target_frame_corrupted_after_staging);
+    RUN_TEST(test_pendsv_adopts_valid_target_without_fail_closed);
     return UNITY_END();
 }
