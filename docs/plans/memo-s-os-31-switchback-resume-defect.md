@@ -579,3 +579,77 @@ fault records. Further armchair derivation is not the cost-effective path.
   FIX-05 gdb-breakpoint methodology, which is retired (section 5a false-PASS).
 - Definition of done: S-OS-31 closed on free-running bus-observed evidence
   only, or a root-cause record exists for the surviving fault.
+
+## 8.6 FIX-06/07/08 execution results (2026-07-09, on-target)
+
+FIX-06 and FIX-07 are implemented and committed (2e54071, bbfbf36; host
+runner 36 suites / 0 failures; cvc/fzc/rzc OSEK=1 cross-build clean). FIX-08
+executed per protocol — full data in
+`test/hil/reports/os-migration-stm32.md` (FIX-08 section). Summary of what
+the evidence establishes:
+
+- **Containment works**: 14/15 board-runs with zero HardFaults (pre-fix RZC
+  HardFaulted within seconds every run). The desync now lands in the
+  fail-closed park (CVC 3/5, RZC 1/5 — correct ASIL-D reaction, watchdog
+  would force safe state in production) or the RZC CAN-TX wedge (OS alive).
+- **FIX-07 proven end-to-end**: RZC run-4 INVSTATE HardFault captured,
+  survived the next flash+reset, printed and cleared by the boot report.
+  RCC_CSR per-run hygiene confirmed (only SFTRSTF+BORRSTF from st-flash).
+- **The gate fired (failClosed=1) AND was bypassed once**: RZC run-4 record
+  shows one consume-time rejection before a PendSV still popped a zeroed
+  frame with basic-layout EXC_RETURN (0xFFFFFFFD). Bypass mechanism not yet
+  pinned — candidates: GAP-D layout mismatch in an earlier save (FPU
+  confirmed enabled: CPACR=0x00F00000, FPCCR ASPEN+LSPEN), an async writer
+  (DMA) zeroing the frame between gate and pop, or a restore path outside
+  ResolvePendSvTarget.
+- **The stranded-task leg of section 7.2 is PROVEN on silicon**: post-soak
+  gdb on CVC caught, on a healthy running system, preempted stack =
+  [idle, Cvc_50ms] with SavedContextValid[Cvc_50ms]=FALSE — a task pushed by
+  the kernel without a matching port save. Resuming it later fail-closes
+  (the CVC silent park); the kernel double-advance is the source.
+
+## 8.7 Next iteration (plan; NOT yet implemented)
+
+### S-OS-31-FIX-09 — EXC_RETURN-aware frame validation (GAP-D closure)
+- Goal: the resume gates read PC/xPSR at the offsets the hardware will
+  actually pop, for both basic and extended (FPU) frame layouts.
+- Inputs: `os_port_stm32_frame_is_resumable` (`Os_Port_Stm32.c`); frame
+  layout doc in `Os_Port_Stm32_Asm.S` header; FIX-08 record.
+- Deliverables: layout decode from frame word[8] (EXC_RETURN bit 4): basic ->
+  PC/xPSR at words 15/16, extended -> words 31/32; reject frames whose
+  word[8] is not a plausible EXC_RETURN (0xFFFFFFE1/E9/ED/F1/F9/FD family);
+  unit tests for both layouts + junk-EXC_RETURN rejection in
+  `test_Os_Port_Stm32_bootstrap_switchback_resume_frame.c`.
+- Acceptance: suite red-then-green; full OS runner green; cross-build clean.
+- Gate: Layer 1-3; asil-d fail-closed.
+- Definition of done: no frame layout can make the gate validate different
+  words than the exception return consumes.
+
+### S-OS-31-FIX-10 — Kernel/port single-advance reconciliation (root fix)
+- Goal: eliminate the double-advance at source: a kernel push to
+  `os_preempted_task_stack` must be paired one-to-one with a port save of
+  that task's live context; a coalesced/overwritten selection must not
+  strand a pushed task without a saved frame.
+- Inputs: section 7.2/7.3 mechanism; FIX-08 CVC forensics (stranded
+  Cvc_50ms); `Os_Scheduler.c` (`os_dispatch_task`, `os_terminate_switchback`),
+  `Os_Alarm.c:337-346` tick staging, `Os_Port_Stm32.c` request-drop path.
+- Deliverables: design note (option A: kernel defers its push/advance until
+  the port confirms the save — port callback on ResolvePendSvTarget; option
+  B: port queues pending selections instead of last-write-wins overwrite;
+  option C: tick-route staging removed, single dispatch route) appended to
+  this memo as section 8.8 BEFORE implementation; then implementation +
+  invariant test "every task on the preempted stack has SavedContextValid
+  TRUE" running in the host model under randomized tick/terminate
+  interleavings.
+- Acceptance: invariant test green under the interleaving fuzz; FIX-08
+  protocol re-run: 5x5-min free-running, all three boards, zero fault
+  records, zero silent parks, RZC CAN TX alive for the full window (0x012 at
+  20 Hz throughout), CAN parity held.
+- Gate: S-OS-31 acceptance (plan-osek-os-migration.md Phase 3).
+- Definition of done: S-OS-31 closed on free-running bus-observed evidence.
+
+Open question carried into FIX-10 analysis: the RZC CAN-TX wedge (TX FIFO
+full, TEC=0, OS alive) — determine whether it is a desync side effect (a
+stranded/parked task owning the TX pump) or an independent FDCAN handling
+defect; the post-fix FIX-08 re-run distinguishes them (it disappears with
+FIX-10 if desync-caused).

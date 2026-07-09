@@ -235,3 +235,108 @@ by a self-test / sensor gate.
   board's SWD (chip-ID 0 on the next `--no-reset` attach);
   `st-flash --connect-under-reset` recovers it. The OSEK idle task's WFI also
   blocks a `--no-reset` attach — use connect-under-reset for a running board.
+
+## FIX-08 clean-bench free-run soak (2026-07-09, evening — FIX-06/07 images)
+
+### Method (memo section 8.5, S-OS-31-FIX-08)
+
+- Images: cvc/fzc/rzc `OSEK=1` with FIX-06 (consume-time resume gate +
+  launch-seam consumption, commit 2e54071) and FIX-07 (.noinit fault record +
+  HardFault capture + boot RCC_CSR/record dump, commit bbfbf36). Boot banner
+  shows build-time HEAD `12e9f562`; content equals the two commits above
+  (built from that working tree, committed unchanged).
+- Protocol: 5 runs x 300 s FREE-RUNNING soak, all three G474RE boards
+  (CVC=COM11, FZC=COM3, RZC=COM10). Each run: one
+  `st-flash --connect-under-reset write` per board, then hands-off — NO
+  debugger attached during any soak window. USART2 captured per board;
+  `candump can0` captured on the HIL Pi per run. After run 5: one flashless
+  reset per board to harvest run-5 fault records via the FIX-07 boot report.
+  Post-soak: one clean `st-util --no-reset` + batch-gdb attach per board
+  (parked cores only; running boards refuse `--no-reset` as documented).
+- The gdb-breakpoint soak methodology of the original FIX-05 run is retired
+  (false-PASS mechanism, see CRITICAL FINDING above).
+
+### Results — 15 board-runs (5 runs x 3 boards)
+
+| Run | CVC | FZC | RZC |
+|---|---|---|---|
+| 1 | SILENT at ~85 s (no fault record) | CLEAN 300 s | UART clean 300 s; CAN TX frozen at ~1.4 s |
+| 2 | SILENT at ~45 s (no fault record) | CLEAN 300 s | UART clean 300 s; CAN TX frozen at ~2.5 s |
+| 3 | CLEAN 300 s (full CAN parity) | CLEAN 300 s | UART clean 300 s; CAN TX frozen at ~2.5 s |
+| 4 | CLEAN 300 s | CLEAN 300 s | FULL SILENT from boot — INVSTATE HardFault park (record below) |
+| 5 | SILENT at ~18 s (no fault record) | CLEAN 300 s | SILENT at ~5 s (no fault record) |
+
+- **No WdgM-style resets, no boot-banner repeats in any window** (RCC_CSR
+  each boot = 0x14000000 = SFTRSTF+BORRSTF from the st-flash write only,
+  cleared by the FIX-07 boot report; each run's flags are its own — the
+  reset-flag contamination of the previous session is eliminated).
+- **CAN parity (run 3, 305 s, 229 741 frames on can0)**: CVC + FZC IDs at
+  exact DBC rates the full window (10 ms IDs at ~30 559 frames = 100 Hz,
+  50 ms IDs at ~6 111 = 20 Hz, 100 ms at ~3 056 = 10 Hz). RZC heartbeat 0x012
+  stopped at 50 frames (~2.5 s) — RZC TX dies early in EVERY run.
+
+### Fault record — first uncontaminated free-run INVSTATE forensics (RZC run 4)
+
+Harvested automatically by the FIX-07 boot report at the run-5 flash+boot:
+
+```
+[FLT] FAULT RECORD seq=0x00000001
+[FLT] CFSR=0x00020000 HFSR=0x40000000 EXC_RET=0xFFFFFFFD
+[FLT] PC=0x00000000 LR=0x00000000 xPSR=0x00000000 SP=0x200039C0
+[FLT] cur=0x00000000 sel=0x000000FF tick=0x000006A6
+[FLT] psvReq=0x00000E22 psvCplt=0x00000E22 sw=0x00000E21 failClosed=0x00000001
+```
+
+Same INVSTATE signature as the original defect, onset at tick 1702 (~1.7 s),
+faulting context = task 0 (Rzc_1ms), stacked frame zeroed. **The FIX-06
+consume-time gate FIRED ONCE before the fault (failClosed=1)** — the gate
+works, caught one bad restore, and a second bad restore still passed it:
+the popped EXC_RETURN 0xFFFFFFFD says the fatal frame used the basic (no-FPU)
+layout, i.e. the gate validated the same words the hardware later popped as
+zero. Bypass mechanism NOT yet pinned; candidates: FPU frame-layout mismatch
+in an earlier save (GAP-D — FPU IS enabled with lazy stacking, see below),
+an asynchronous writer (DMA) zeroing the frame between gate and pop, or a
+restore path outside ResolvePendSvTarget.
+
+### Post-soak gdb forensics (post-harvest run, one clean session per board)
+
+- CVC (attached — core NOT faulted): CPU healthy mid-`Com_MainFunction_Tx`
+  in the 10 ms task, CFSR/HFSR=0, ~240 k clean PendSVs,
+  DesyncFailClosedCount=0 in this window. **Kernel/port invariant violation
+  caught LIVE: preempted stack = [idle, Cvc_50ms] with
+  `SavedContextValid[Cvc_50ms]=FALSE`** — a stranded task pushed without a
+  live saved frame (the memo section 7.2 double-advance leg, now proven on
+  silicon). The first termination that tries to RESUME it fail-closes
+  (E_OS_STATE -> park): this is CVC's intermittent silent-park mechanism —
+  the park time varies with when the ready-set is momentarily empty.
+- FPU: CPACR=0x00F00000 (CP10/11 full access), FPCCR=0xC0000000 (ASPEN+LSPEN)
+  — extended exception frames are armed on this build (hard-float ABI), so
+  the FPU-blind byte guard (GAP-D) is a live hazard even with no explicit
+  float usage in the source.
+- FZC / RZC: `st-util --no-reset` attach refused (boards running, WFI idle) —
+  expected per bench lessons; no state disturbed.
+
+### Verdict
+
+- **The INVSTATE HardFault class is 14/15 contained**: zero HardFaults on
+  CVC/FZC across all runs; RZC HardFaulted once (run 4) THROUGH the gates
+  and left a complete forensic record — the exact instrument S-OS-31 lacked.
+- **The underlying kernel/port desync is NOT eliminated** (it was never
+  claimed to be — FIX-06/07 are containment + forensics). Its two contained
+  manifestations: intermittent fail-closed silent park (CVC 3/5, RZC 1/5;
+  correct ASIL-D reaction — on production hardware the external watchdog
+  forces the safe state; the Nucleo bench has no watchdog so the board just
+  parks), and the RZC CAN-TX wedge (OS alive, TX FIFO never drains, TEC=0).
+- FZC: 5/5 clean, full parity — unchanged from previous sessions.
+- **S-OS-31 acceptance (5-min soak, no HardFault, CAN parity, all three
+  boards) remains NOT MET.** FIX-08's alternative acceptance IS met: the
+  surviving defect is reproduced free-running with a complete root-cause
+  record. Next iteration: FIX-09 (EXC_RETURN-aware frame validation, GAP-D)
+  and FIX-10 (kernel/port single-advance reconciliation — eliminate the
+  stranded-task/double-advance at source), defined in the memo.
+
+### Bench state at end of session
+
+All three boards free-running the FIX-06/07 image (CVC reset after the gdb
+attach; FZC/RZC untouched since harvest). can0 UP on the Pi. No debugger
+handles left attached. Raw logs archived in the session scratchpad (os31/).

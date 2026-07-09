@@ -413,6 +413,22 @@ merge is not viable; the port work must be harvested file-wise.
     `test/hil/reports/os-migration-stm32.md` (CRITICAL FINDING section).
     Bench was heavily perturbed this session — confirm failure rate on a clean
     single-flash free-run before final triage. UNCOMMITTED. STATUS: OPEN.
+  - 2026-07-09 (evening) UPDATE — FIX-06/07/08 executed (memo sections
+    8.5-8.7; commits 2e54071, bbfbf36): the "launch path" localization was a
+    gdb MSP-unwind artifact (memo 8.1); consume-time resume gate (FIX-06) +
+    .noinit fault record/boot forensics (FIX-07) implemented, host suite
+    green, on-target verified. FIX-08 clean-bench 5x5-min free-run soak:
+    HardFault class 14/15 contained (one RZC INVSTATE THROUGH the gates,
+    full forensic record captured by FIX-07 — first uncontaminated
+    localization); underlying kernel/port desync NOT eliminated — contained
+    as fail-closed silent park (CVC 3/5, RZC 1/5) + RZC CAN-TX wedge (every
+    run). Stranded-task invariant violation proven live by post-soak gdb
+    (preempted stack holds Cvc_50ms with SavedContextValid=FALSE). NEXT:
+    FIX-09 (EXC_RETURN-aware frame validation) + FIX-10 (kernel/port
+    single-advance reconciliation — the true root fix), defined in memo 8.7.
+    Report: `test/hil/reports/os-migration-stm32.md` (FIX-08 section).
+    STATUS: OPEN (containment + forensics done; root desync elimination
+    pending FIX-10).
 
 - **S-OS-32 STM32F4 OSEK port bringup (F413ZH) — spare-board track**
   - Goal: extend the OSEK kernel + STM32 Cortex-M4 port to build, link,
