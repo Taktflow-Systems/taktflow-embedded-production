@@ -527,8 +527,10 @@ class Dbc2Arxml:
             eu = ecu_name.upper()
             swc_pkg = self.am.get_or_create_package("/Taktflow/SWCs/%s" % eu)
 
-            tx_sigs = set(sn for _, sn, _ in self.ecu_tx_signals.get(eu, []))
-            rx_sigs = set(sn for _, sn, _ in self.ecu_rx_signals.get(eu, []))
+            # Sorted for deterministic port order — bare set iteration follows
+            # randomized str hashing and reshuffles the ARXML on every run.
+            tx_sigs = sorted(set(sn for _, sn, _ in self.ecu_tx_signals.get(eu, [])))
+            rx_sigs = sorted(set(sn for _, sn, _ in self.ecu_rx_signals.get(eu, [])))
 
             # Map runnables to SWC by function name prefix
             run_map = {}
@@ -691,6 +693,13 @@ def main():
     print("Converting %s -> ARXML (step=%s)..." % (args.dbc, args.step))
     if args.model:
         print("  ECU model: %s" % args.model)
+    else:
+        print("  WARNING: no ECU model JSON given — SWC model will NOT be "
+              "merged.\n"
+              "  The output ARXML will lack all APPLICATION-SW-COMPONENT-TYPEs "
+              "(ports, runnables).\n"
+              "  Full pipeline: pass arxml_v2/swc_model.json as the third "
+              "argument (see .github/workflows/ci.yml).")
 
     c = Dbc2Arxml(args.dbc, args.model)
 

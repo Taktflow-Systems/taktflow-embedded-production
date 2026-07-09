@@ -7,6 +7,18 @@ message_routing:
   DTC_Broadcast:
     additional_tx_ecus: [fzc, rzc, sc, bcm, icu, tcu]
 
+# TX-mode overrides: force the Com TX mode for the DBC sender ECU.
+# Values: none | direct | periodic. 'none' keeps the PDU slot in the TX
+# tables (PDU index consistency with *_Cfg.h defines) but never transmits.
+# Precedence: this section > DBC GenMsgSendType=event > cycle-time heuristic.
+message_tx_mode:
+  FZC_Virtual_Sensors: none   # plant-sim is sole sender on SIL (commit 4ef2bde)
+  RZC_Virtual_Sensors: none   # plant-sim is sole sender on SIL (commit 4ef2bde)
+  # DBC marks EStop_Broadcast GenMsgSendType=event, but its repetition
+  # strategy ("event + 10ms repeat x4", CM_ BO_ 1) is modelled in Com as
+  # continuous periodic TX — pin it so event->DIRECT does not apply.
+  EStop_Broadcast: periodic
+
 # UDS diagnostic addressing per ECU
 # uds_rx_pdu_name: DBC message name for physical UDS request TO this ECU
 # uds_tx_pdu_name: DBC message name for UDS response FROM this ECU

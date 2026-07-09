@@ -87,7 +87,9 @@ static const Com_SignalConfigType {{ ecu.name }}_signal_config[] = {
 static const Com_TxPduConfigType {{ ecu.name }}_tx_pdu_config[] = {
     /* pduId,                      dlc, cycleMs, txMode,              e2eProt, dataId, cntBit, crcBit */
 {% for pdu in ecu.tx_pdus %}
-    { {{ ecu.prefix }}_COM_TX_{{ pdu.name | upper_snake }}, {{ "%5d"|format(pdu.dlc) }}u, {{ "%5d"|format(pdu.cycle_ms) }}u, {{ "COM_TX_MODE_DIRECT  " if pdu.cycle_ms == 0 else "COM_TX_MODE_PERIODIC" }}, {{ "TRUE " if pdu.e2e_protected else "FALSE" }}, {{ "%2d"|format(pdu.e2e_data_id if pdu.e2e_data_id is not none else 0) }}u, {{ "%2d"|format(pdu.e2e_counter_bit if pdu.e2e_counter_bit is not none else 0) }}u, {{ "%2d"|format(pdu.e2e_crc_bit if pdu.e2e_crc_bit is not none else 8) }}u },   /* CAN {{ pdu.can_id | hex3 }}{{ " @satisfies " + pdu.satisfies if pdu.satisfies else "" }} */
+{% set tx_mode = pdu.tx_mode if pdu.tx_mode else ("DIRECT" if pdu.cycle_ms == 0 else "PERIODIC") %}
+{% set tx_cycle = pdu.cycle_ms if tx_mode == "PERIODIC" else 0 %}
+    { {{ ecu.prefix }}_COM_TX_{{ pdu.name | upper_snake }}, {{ "%5d"|format(pdu.dlc) }}u, {{ "%5d"|format(tx_cycle) }}u, {{ "%-20s"|format("COM_TX_MODE_" ~ tx_mode) }}, {{ "TRUE " if pdu.e2e_protected else "FALSE" }}, {{ "%2d"|format(pdu.e2e_data_id if pdu.e2e_data_id is not none else 0) }}u, {{ "%2d"|format(pdu.e2e_counter_bit if pdu.e2e_counter_bit is not none else 0) }}u, {{ "%2d"|format(pdu.e2e_crc_bit if pdu.e2e_crc_bit is not none else 8) }}u },   /* CAN {{ pdu.can_id | hex3 }}{{ " @satisfies " + pdu.satisfies if pdu.satisfies else "" }}{{ " — TX disabled via sidecar message_tx_mode" if tx_mode == "NONE" else "" }} */
 {% endfor %}
 };
 

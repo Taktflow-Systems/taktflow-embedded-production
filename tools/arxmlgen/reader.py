@@ -46,6 +46,8 @@ class ArxmlReader:
         self._dbc_satisfies_map: dict[str, str] = {}   # message_name → Satisfies string
         self._dbc_asil_map: dict[str, str] = {}        # message_name → ASIL level
         self._additional_tx_ecus: dict[str, list[str]] = {}  # message_name → extra TX ECUs
+        self._dbc_send_type_map: dict[str, str] = {}   # message_name → GenMsgSendType (lowercase)
+        self._tx_mode_overrides: dict[str, str] = {}   # message_name → forced Com TX mode (sidecar)
 
     def read(self) -> ProjectModel:
         """Read all ARXML files and build the project model."""
@@ -203,6 +205,15 @@ class ArxmlReader:
             except (AttributeError, TypeError, ValueError):
                 pass
 
+            # Extract GenMsgSendType attribute ("event" → COM_TX_MODE_DIRECT)
+            try:
+                st_attr = msg.dbc.attributes.get("GenMsgSendType")
+                if st_attr is not None:
+                    st_val = st_attr.value if hasattr(st_attr, 'value') else st_attr
+                    self._dbc_send_type_map[msg.name] = str(st_val).strip().lower()
+            except (AttributeError, TypeError, ValueError):
+                pass
+
             # Extract Satisfies attribute (requirement traceability)
             try:
                 sat_attr = msg.dbc.attributes.get("Satisfies")
@@ -241,12 +252,37 @@ class ArxmlReader:
                         ]
                 if routing:
                     _info(f"  Routing overrides: {len(routing)} messages")
+
+                # TX-mode overrides: force the Com TX mode for the sender ECU
+                # (e.g. 'none' = keep PDU slot but never transmit)
+                tx_modes = sidecar.get("message_tx_mode", {}) or {}
+                for msg_name, mode in tx_modes.items():
+                    mode_up = str(mode).strip().upper()
+                    if mode_up not in ("NONE", "DIRECT", "PERIODIC"):
+                        self._warn(
+                            f"Sidecar message_tx_mode[{msg_name}] = '{mode}' "
+                            f"invalid — expected none|direct|periodic; ignored"
+                        )
+                        continue
+                    self._tx_mode_overrides[msg_name] = mode_up
+                if self._tx_mode_overrides:
+                    _info(f"  TX-mode overrides: {len(self._tx_mode_overrides)} messages")
             except Exception as exc:
                 self._warn(f"Failed to read sidecar routing: {exc}")
 
     # ------------------------------------------------------------------
     # Platform types
     # ------------------------------------------------------------------
+
+    def _msg_attr_lookup(self, pdu_name: str, mapping: dict[str, str]) -> str | None:
+        """Look up a per-message attribute, tolerating _Ipdu/_Frame/_Pdu suffixes."""
+        if pdu_name in mapping:
+            return mapping[pdu_name]
+        for suffix in ("_Ipdu", "_Frame", "_Pdu"):
+            stripped = pdu_name.replace(suffix, "")
+            if stripped in mapping:
+                return mapping[stripped]
+        return None
 
     def _extract_platform_types(self) -> list[str]:
         """Extract platform implementation data type names."""
@@ -405,11 +441,20 @@ class ArxmlReader:
                         break
                 # pdu_cycle == 0 means event-triggered (DTC, UDS, etc.) — no throttle
 
+            # TX mode: sidecar override wins over DBC GenMsgSendType=event;
+            # empty string keeps the legacy cycle_ms heuristic in the template
+            pdu_tx_mode = self._msg_attr_lookup(pdu_name, self._tx_mode_overrides) or ""
+            if not pdu_tx_mode:
+                send_type = self._msg_attr_lookup(pdu_name, self._dbc_send_type_map) or ""
+                if send_type.startswith("event"):
+                    pdu_tx_mode = "DIRECT"
+
             pdu = Pdu(
                 name=pdu_name,
                 can_id=can_id,
                 dlc=dlc,
                 cycle_ms=pdu_cycle,
+                tx_mode=pdu_tx_mode,
                 signals=sorted(signals, key=lambda s: s.bit_position),
                 e2e_protected=e2e,
                 e2e_data_id=e2e_data_id,
@@ -444,6 +489,7 @@ class ArxmlReader:
                     can_id=pdu.can_id,
                     dlc=pdu.dlc,
                     cycle_ms=pdu.cycle_ms,
+                    tx_mode=pdu.tx_mode,
                     direction="TX",
                     signals=pdu.signals,
                     e2e_protected=pdu.e2e_protected,
@@ -487,6 +533,7 @@ class ArxmlReader:
                     can_id=pdu.can_id,
                     dlc=pdu.dlc,
                     cycle_ms=pdu.cycle_ms,
+                    tx_mode=pdu.tx_mode,
                     direction="TX",
                     signals=pdu.signals,
                     e2e_protected=pdu.e2e_protected,
