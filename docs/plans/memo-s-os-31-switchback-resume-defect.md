@@ -653,3 +653,189 @@ full, TEC=0, OS alive) — determine whether it is a desync side effect (a
 stranded/parked task owning the TX pump) or an independent FDCAN handling
 defect; the post-fix FIX-08 re-run distinguishes them (it disappears with
 FIX-10 if desync-caused).
+
+## 8.8 FIX-10 design decision (2026-07-09, session 3 — BEFORE implementation)
+
+Decision: **Option A (kernel defers push/advance until the port commits the
+switch) with Option C (single dispatch route) folded in. Option B rejected.**
+Scope-gated to PLATFORM_STM32 (the S-OS-31 bench trio); STM32L5/TMS570 keep
+current semantics unchanged (SC migration is deferred per plan).
+
+### 8.8.1 New finding from this analysis — a fourth, hand-traceable desync leg
+
+Auditing the option space surfaced a leg that section 8.4's interleaving
+sweep missed because it is not an interleaving — it is a plain call path:
+
+- `Os_BootstrapExitIsr2` (`Os_Core.c:571-577`) calls `os_run_ready_tasks()`
+  whenever `os_current_task == INVALID_TASK` at ISR2 exit. Post-terminate
+  legs CAN leave `os_current_task == INVALID` (e.g. terminate whose
+  switchback fail-closed, or whose only ready successor was the terminated
+  task itself via PendingActivations while the preempted stack was empty).
+- `os_run_ready_tasks -> os_dispatch_one -> os_dispatch_task` with
+  `previous_task == INVALID` takes `os_stage_port_dispatch`'s SYNCHRONIZE
+  branch (`Os_Scheduler.c:29-31`): `Os_Port_Stm32_SynchronizeCurrentTask`
+  retargets the port's `CurrentTask` — with NO frame rebuild, NO selection,
+  NO PendSV — while the PHYSICAL thread context is still the terminated
+  task's park loop.
+- Every subsequent PendSV then saves the park-loop context INTO the
+  retargeted task's slot (`os_port_stm32_task_context[CurrentTask]`,
+  `Os_Port_Stm32.c` save path keys the save to port `CurrentTask`) and
+  marks it `SavedContextValid=TRUE`. The mis-keyed slot now holds a live
+  pointer into the DEAD task's stack.
+- Consequences match the two unexplained FIX-08 observations: (1) a later
+  resume of the mis-keyed task restores a frame inside the dead task's
+  reused/rebuilt stack — bytes may legitimately read ZERO (the initial-frame
+  builder zeroes words 0..13) => the RZC run-4 "zeroed frame that passed the
+  gates" no longer needs DMA or FPU-layout stories; (2) the mis-keyed task
+  never runs again while the OS stays alive => exactly the RZC CAN-TX wedge
+  shape (0x012 pump task dead, OS/idle alive, TEC=0). This leg is a
+  CANDIDATE explanation, not proven — the FIX-08 re-run after FIX-10
+  decides (wedge disappears => it was this; survives => independent FDCAN
+  defect, new plan item).
+
+### 8.8.2 Option analysis against the proven traces (7.2/7.3, 8.6 forensics)
+
+- **Option B (port queues selections instead of last-write-wins)** —
+  REJECTED. The queue attacks selection OVERWRITE, but overwrite is not the
+  stranding mechanism: a discarded intermediate target was never adopted,
+  so its `SavedContextValid` stays TRUE and a later resume of it restores a
+  correct (initial or live) frame. The stranding legs are (i) kernel
+  push/advance N times per ONE physical save (7.2) and (ii) the mis-keyed
+  save (8.8.1) — a queue fixes neither: the port cannot replay saves that
+  never physically happened, and replaying intermediate selections would
+  transiently RUN tasks the kernel has already accounted as preempted
+  (kernel State=READY while physically executing — a new desync class),
+  while adding an ISR-shared FIFO to the hottest path.
+- **Option C (remove tick-route staging, single dispatch route)** —
+  NECESSARY BUT NOT SUFFICIENT, folded into A. Removing the
+  `Os_BootstrapProcessCounterTick` direct staging (`Os_Alarm.c:337-346`,
+  STM32 arm) and the unconditional `Os_PortRequestContextSwitch` in
+  `Os_Port_Stm32_TickIsr` closes GAP-C (spurious selection-less PendSV that
+  consumes `SaveSuppressed` one-shots early and burns latency every
+  rejected tick) and 7.3's double-staging route, and stops the tick route
+  from violating non-preemptive task semantics (it staged dispatches
+  without `os_maybe_dispatch_preemption`'s preemptability checks). It does
+  NOT pair kernel pushes with port saves, so alone it leaves 7.2 open.
+- **Option A (port-confirmed commit)** — CHOSEN. The kernel's push/advance
+  moves INTO the PendSV: `Os_Port_Stm32_ResolvePendSvTarget`, after it has
+  physically saved the outgoing context and decided adoption, calls a new
+  kernel seam `Os_BootstrapCommitDispatch(SavedTask, AdoptedTask)` which
+  performs push/pop/advance atomically with the physical switch. The
+  invariant "every task on `os_preempted_task_stack` has
+  `SavedContextValid=TRUE`" holds BY CONSTRUCTION: the push happens in the
+  same critical section as the save that makes the flag TRUE. Checks
+  against the proven traces:
+  - 7.2 terminate park-gap race: terminate retires the task's TCB state
+    (SUSPENDED/READY) but no longer advances `os_current_task`; a SysTick
+    in the stage->PendSV gap sees `State(current) != RUNNING` and
+    `os_maybe_dispatch_preemption` declines — the second kernel
+    dispatch/push cannot happen. One PendSV, one commit. Race dead.
+  - 8.6 stranded CVC task ([idle, Cvc_50ms], flag FALSE): pushes no longer
+    precede their save; a pushed task's flag is TRUE at push time.
+  - 8.8.1 mis-keyed save: on the live STM32 path `os_dispatch_task` never
+    takes the Synchronize branch again (every dispatch stages
+    rebuild+select+request and commits via PendSV); Synchronize remains
+    launch-only. The port `CurrentTask` is written only by
+    launch/ResolvePendSvTarget — it can no longer drift from the physical
+    thread context.
+  - FIX-06 consume-time rejection: no commit on rejection — the kernel
+    never advanced, so a rejected target is simply re-dispatched by a later
+    tick instead of stranding + parking. The fail-closed park (watchdog
+    starve) remains ONLY for stage-time resume-gate failure in the
+    switchback, i.e. genuine memory corruption.
+
+### 8.8.3 Kernel/port contract after FIX-10 (PLATFORM_STM32, dispatch live)
+
+- Stage (ISR2 exit or thread service): pick target, rebuild-if-fresh,
+  `SelectNextTask`, request PendSV. NO kernel current/stack/State-RUNNING
+  mutation. Last-write-wins selection overwrite is now safe: losers were
+  never accounted.
+- Commit (inside PendSV, interrupts disabled):
+  `Os_BootstrapCommitDispatch(saved, adopted)`: push `saved` iff its State
+  is RUNNING (a terminated outgoing is SUSPENDED/READY — not pushed); pop
+  iff `adopted` is the preempted-stack top (resume), else fresh-adopt
+  (READY->RUNNING + stack-monitor enter + PreTaskHook, matching the old
+  dispatch path's hook placement); rebuild ready bitmap; count dispatch.
+- Terminate: retire TCB (activations/State/priority/events — split out of
+  `os_complete_running_task`, which keeps its host semantics), suppress the
+  dead save (FIX-04 unchanged), stage successor (stack top resume or
+  outranking ready fresh dispatch — decision logic unchanged), park.
+  `os_current_task` stays on the terminated task until commit: OSEK
+  services already reject non-RUNNING callers, and no thread code runs in
+  the park gap.
+- Pre-launch (StartOS, dispatch not live): unchanged synchronous path.
+- ChainTask on live dispatch: already fail-closed rejected (unchanged);
+  WaitEvent/extended tasks: unused by all three ECU images (audited) —
+  the INVALID-current leg at ISR2 exit is closed by construction for the
+  production configs; extended-task support on live dispatch stays a
+  documented non-goal of S-OS-31.
+
+### 8.8.4 Implementation steps
+
+#### S-OS-31-FIX-10a — Interleaving-fuzz invariant test (red first)
+- Goal: host reproduction of the double-advance stranding + a randomized
+  interleaving fuzz that machine-checks the FIX-10 invariant.
+- Inputs: sections 7.2/8.6; the UNIT_TEST port mock seams
+  (`Os_Port_Stm32_SysTickHandler`, `Os_Port_CompleteConfiguredDispatch`
+  — completion is host-controlled, so SysTick-in-the-park-gap is
+  expressible by ticking between stage and completion).
+- Deliverables:
+  - `firmware/bsw/os/bootstrap/test/test_Os_Port_Stm32_bootstrap_dispatch_commit_fuzz.c`:
+    (1) a deterministic reproduction: terminate-stages-resume, tick
+    interposes a higher dispatch before PendSV completion, assert the
+    invariant "every task on `os_preempted_task_stack` has
+    `SavedContextValid=TRUE`" and kernel/port CurrentTask agreement after
+    every completion — RED on pre-FIX-10 HEAD; (2) a fuzz loop: fixed
+    seeds (documented in-file), randomized action sequence {tick,
+    complete-one-PendSV, burst-ticks-before-complete} over a 4-task config
+    (1ms/10ms/50ms periods + idle), >= 10k steps per seed, invariant +
+    ErrorHook-silence + DesyncFailClosedCount==0 asserted at every step.
+- Acceptance: reproduction test FAILS on unfixed HEAD; fuzz loop present
+  with fixed seeds; suite auto-discovered by the test Makefile wildcard.
+- Gate: Layer 1; development-discipline rule 2 (test-first).
+- Definition of done: suite red for the invariant assertion on unfixed HEAD.
+
+#### S-OS-31-FIX-10b — Commit-seam implementation
+- Goal: 8.8.3 contract implemented, STM32-gated.
+- Inputs: FIX-10a red suite; `Os_Scheduler.c`, `Os_Core.c`, `Os_Alarm.c`,
+  `Os_Task.c` (no change expected), `Os.h`, `Os_Port_Stm32.c`.
+- Deliverables:
+  - `Os_BootstrapCommitDispatch(TaskType, TaskType)` in `Os_Scheduler.c`
+    (+ decl in `Os.h` next to the other Os_Bootstrap* port seams).
+  - `os_dispatch_task`: STM32 dispatch-live branch stages only (including
+    the previously-Synchronize `previous==INVALID` case) and returns.
+  - `os_run_ready_tasks`: STM32 dispatch-live branch stages at most one
+    dispatch (no loop-until-current-set — current no longer set at stage).
+  - `os_terminate_switchback`: retire-without-advance (new
+    `os_retire_running_task` split from `os_complete_running_task`),
+    successor staging unchanged, no push/pop/advance.
+  - `Os_Alarm.c:337-346` tick staging: STM32 arm removed (TMS570 arm kept).
+  - `Os_Port_Stm32_TickIsr`: drop the unconditional
+    `Os_PortRequestContextSwitch` (the ISR2-exit stage requests with a
+    selection).
+  - `Os_Port_Stm32_ResolvePendSvTarget`: call the commit seam on adoption
+    (not on fail-closed, not on self-restore).
+- Acceptance: FIX-10a suite GREEN (reproduction + all fuzz seeds); full OS
+  host runner green (>= 36 suites, 0 new failures — expectation updates in
+  existing suites are legitimate ONLY where they asserted the old
+  speculative-advance semantics, each documented in the commit message);
+  cvc/fzc/rzc `OSEK=1` cross-build clean; no generated files touched;
+  L5/TMS570 suite results byte-identical.
+- Gate: Layer 1-3; asil-d fail-closed rule; HOST GREEN IS NOT ACCEPTANCE
+  (section 7.4 caveat carries).
+- Definition of done: invariant fuzz green; the S-OS-31 acceptance remains
+  gated on FIX-10c.
+
+#### S-OS-31-FIX-10c — On-target re-verification (FIX-08 protocol, unchanged)
+- Goal: S-OS-31 closed on free-running bus-observed evidence only.
+- Inputs: FIX-10b images; FIX-08 protocol + tooling (soak.py/forensics.py).
+- Deliverables: new run section in `test/hil/reports/os-migration-stm32.md`
+  (5 runs x 300 s free-run x 3 boards, per-run st-flash, USART2 + candump
+  captures, flashless harvest, one clean st-util session per board after).
+- Acceptance (ALL, all three boards): zero fault records, zero silent
+  parks, zero unexplained resets (RCC_CSR clean per FIX-07 boot report),
+  RZC 0x012 at 20 Hz for the FULL window, CVC/FZC/RZC frame-set + period
+  parity vs DBC. A clean-UART board whose bus IDs die is a FAIL.
+- Gate: S-OS-31 acceptance (plan-osek-os-migration.md Phase 3).
+- Definition of done: S-OS-31 closed, or the surviving defect has a full
+  forensic record and a named next step.
