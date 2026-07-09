@@ -85,6 +85,7 @@ extern const Dcm_ConfigType  cvc_dcm_config;
 #include "Os_Cfg_Cvc.h"   /* generated kernel config (S-OS-11) */
 #include "Os_TaskMap.h"
 #include "Os_Port.h"
+#include "Os_FaultRecord.h"   /* S-OS-31-FIX-07 boot forensics */
 #endif
 
 /* ==================================================================
@@ -556,6 +557,10 @@ int main(void)
      * external watchdog starves and forces the safe state. */
     {
         StatusType os_status;
+
+        /* S-OS-31-FIX-07: dump + clear any prior fault record and the
+         * RCC_CSR reset flags before the kernel starts (memo section 8.5). */
+        Os_FaultRecord_BootReport();
 
         Os_PortTargetInit();
         Os_TaskMap_SetTable(cvc_os_task_map, CVC_OS_TASK_MAP_COUNT);

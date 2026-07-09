@@ -182,6 +182,17 @@ SECTIONS
     __bss_end__ = _ebss;
   } >RAM
 
+  /* Uninitialized-and-unzeroed data: survives reset while powered.
+     Placed after .bss so the startup zero loop (_sbss.._ebss) never touches
+     it. Used by the OSEK fault record (Os_FaultRecord.c, S-OS-31-FIX-07). */
+  .noinit (NOLOAD) :
+  {
+    . = ALIGN(4);
+    *(.noinit)
+    *(.noinit*)
+    . = ALIGN(4);
+  } >RAM
+
   /* User_heap_stack section, used to check that there is enough RAM left */
   ._user_heap_stack :
   {
