@@ -35,15 +35,14 @@ EXPECTED_UNMAPPED = {
     "SC": {"provided": 8, "required": 67},
     "TCU": {"provided": 5, "required": 3},
 }
-DEFAULT_GOLDEN = (
+DEFAULT_STRICT_GOLDEN = (
     Path(__file__).resolve().parents[1]
     / "arxml"
     / "test"
     / "golden"
     / "swc_mapping"
-    / "legacy_inventory.json"
+    / "strict_parity.json"
 )
-DEFAULT_STRICT_GOLDEN = DEFAULT_GOLDEN.with_name("strict_parity.json")
 
 
 class InventoryError(Exception):
@@ -556,7 +555,7 @@ def main() -> int:
     parser.add_argument("swc_model", type=Path)
     parser.add_argument("mapping_or_arxml", type=Path)
     parser.add_argument("arxml", nargs="?", type=Path)
-    parser.add_argument("--mode", choices=["strict"])
+    parser.add_argument("--mode", choices=["strict"], required=True)
     parser.add_argument("--output", type=Path)
     parser.add_argument(
         "--check",
@@ -569,22 +568,16 @@ def main() -> int:
         parser.error("one of --output or --check is required")
 
     try:
-        if args.mode == "strict":
-            if args.arxml is None:
-                parser.error("strict mode requires SWC mapping and ARXML positional inputs")
-            report = build_mapping_report(
-                args.dbc,
-                args.swc_model,
-                args.mapping_or_arxml,
-                args.arxml,
-                mode=args.mode,
-            )
-            default_golden = DEFAULT_STRICT_GOLDEN
-        else:
-            if args.arxml is not None:
-                parser.error("the fourth positional input requires a mapping mode")
-            report = build_inventory(args.dbc, args.swc_model, args.mapping_or_arxml)
-            default_golden = DEFAULT_GOLDEN
+        if args.arxml is None:
+            parser.error("strict mode requires SWC mapping and ARXML positional inputs")
+        report = build_mapping_report(
+            args.dbc,
+            args.swc_model,
+            args.mapping_or_arxml,
+            args.arxml,
+            mode=args.mode,
+        )
+        default_golden = DEFAULT_STRICT_GOLDEN
         rendered = render_inventory(report)
         if args.check is not None:
             check_path = (
@@ -609,19 +602,12 @@ def main() -> int:
         return 1
 
     summary = json.loads(rendered)["summary"]
-    if args.mode == "strict":
-        print(
-            "SWC mapping %s parity passed: " % args.mode +
-            f"{summary['swcs']} SWCs, {summary['ports']} ports, "
-            f"{summary['runnables']} runnables, {summary['events']} events, "
-            f"{summary['differences']} differences."
-        )
-    else:
-        print(
-            "Legacy SWC mapping inventory passed: "
-            f"{summary['arxml_swcs']} SWCs, {summary['arxml_ports']} ports, "
-            f"{summary['arxml_runnables']} runnables, {summary['arxml_events']} events."
-        )
+    print(
+        "SWC mapping %s parity passed: " % args.mode +
+        f"{summary['swcs']} SWCs, {summary['ports']} ports, "
+        f"{summary['runnables']} runnables, {summary['events']} events, "
+        f"{summary['differences']} differences."
+    )
     return 0
 
 

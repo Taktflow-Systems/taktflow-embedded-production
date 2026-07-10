@@ -8,9 +8,15 @@ from collections import defaultdict
 from pathlib import Path
 
 import cantools
+import pytest
 
 from tools.arxml.swc_mapping import load_swc_mapping
-from tools.ci.check_swc_mapping import compare_parity_snapshots
+from tools.ci.check_swc_mapping import (
+    InventoryError,
+    build_inventory,
+    compare_parity_snapshots,
+    render_inventory,
+)
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -19,48 +25,23 @@ DBC = ROOT / "gateway" / "taktflow_vehicle.dbc"
 SWC_MODEL = ROOT / "arxml_v2" / "swc_model.json"
 ARXML = ROOT / "arxml" / "TaktflowSystem.arxml"
 MAPPING = ROOT / "model" / "ecu_sidecar.yaml"
-GOLDEN = (
+STRICT_GOLDEN = (
     ROOT
     / "tools"
     / "arxml"
     / "test"
     / "golden"
     / "swc_mapping"
-    / "legacy_inventory.json"
+    / "strict_parity.json"
 )
-STRICT_GOLDEN = GOLDEN.with_name("strict_parity.json")
 
 
-def run_checker(arxml: Path, output: Path) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [
-            sys.executable,
-            str(CHECKER),
-            str(DBC),
-            str(SWC_MODEL),
-            str(arxml),
-            "--output",
-            str(output),
-        ],
-        cwd=ROOT,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
+def test_inventory_is_repeatable_and_path_scrubbed():
+    first = render_inventory(build_inventory(DBC, SWC_MODEL, ARXML))
+    second = render_inventory(build_inventory(DBC, SWC_MODEL, ARXML))
 
-
-def test_legacy_inventory_matches_golden_and_is_path_scrubbed(tmp_path):
-    first = tmp_path / "first" / "inventory.json"
-    second = tmp_path / "second" / "inventory.json"
-
-    first_result = run_checker(ARXML, first)
-    second_result = run_checker(ARXML, second)
-
-    assert first_result.returncode == 0, first_result.stderr
-    assert second_result.returncode == 0, second_result.stderr
-    assert first.read_bytes() == second.read_bytes() == GOLDEN.read_bytes()
-
-    raw = first.read_text(encoding="utf-8")
+    assert first == second
+    raw = first.decode("utf-8")
     inventory = json.loads(raw)
     assert list(inventory["ecus"]) == ["BCM", "CVC", "FZC", "ICU", "RZC", "SC", "TCU"]
     assert inventory["summary"] == {
@@ -90,7 +71,7 @@ def test_legacy_inventory_matches_golden_and_is_path_scrubbed(tmp_path):
     assert "\\\\" not in raw
 
 
-def test_legacy_inventory_fails_on_unmapped_baseline_drift(tmp_path):
+def test_inventory_fails_on_unmapped_baseline_drift(tmp_path):
     tree = ET.parse(ARXML)
     root = tree.getroot()
     namespace = root.tag.split("}", 1)[0].removeprefix("{")
@@ -109,15 +90,12 @@ def test_legacy_inventory_fails_on_unmapped_baseline_drift(tmp_path):
     mutated = tmp_path / "mutated.arxml"
     tree.write(mutated, encoding="utf-8", xml_declaration=True)
 
-    result = run_checker(mutated, tmp_path / "inventory.json")
+    with pytest.raises(InventoryError) as failure:
+        build_inventory(DBC, SWC_MODEL, mutated)
 
-    assert result.returncode == 1
-    assert result.stdout == ""
-    assert (
+    assert str(failure.value) == (
         "legacy inventory drift: ICU unmapped required routes: expected 97, actual 98"
-        in result.stderr
     )
-    assert not (tmp_path / "inventory.json").exists()
 
 
 def test_mapping_parity_reports_four_exact_differences_deterministically():

@@ -25,7 +25,8 @@ GEN_PATHS=(
 )
 
 run_pipeline() {
-    python tools/arxml/dbc2arxml.py gateway/taktflow_vehicle.dbc arxml_v2/ arxml_v2/swc_model.json > /dev/null
+    python tools/arxml/dbc2arxml.py gateway/taktflow_vehicle.dbc arxml_v2/ arxml_v2/swc_model.json \
+        --swc-mapping model/ecu_sidecar.yaml --swc-mapping-mode strict > /dev/null
     cp arxml_v2/TaktflowSystem.arxml arxml/TaktflowSystem.arxml
     python -m tools.arxmlgen --config project.yaml --quiet > /dev/null
 }
