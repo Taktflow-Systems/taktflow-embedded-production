@@ -319,6 +319,9 @@ def test_atomic_write_failure_preserves_existing_output(tmp_path, monkeypatch):
     def fail_replace(_source, _target):
         raise OSError("simulated replace failure")
 
+    monkeypatch.setattr(
+        "arxml.dbc2arxml.validate_arxml_strict", lambda _path: None
+    )
     monkeypatch.setattr("arxml.dbc2arxml.os.replace", fail_replace)
 
     with pytest.raises(PipelineDiagnosticError) as exc_info:

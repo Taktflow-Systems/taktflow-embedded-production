@@ -18,9 +18,16 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-import autosar_data as ad
 import cantools
 
+TOOLS_DIR = Path(__file__).resolve().parents[1]
+if str(TOOLS_DIR) not in sys.path:
+    sys.path.insert(0, str(TOOLS_DIR))
+
+from arxml_validation import (  # noqa: E402
+    StrictArxmlValidationError,
+    validate_arxml_strict,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CORPUS = REPO_ROOT / "test" / "framework" / "corpus" / "dbc"
@@ -122,15 +129,9 @@ def expected_rejection_reason(output: str) -> str | None:
 def strict_validation_reason(path: Path) -> str | None:
     """Return a portable failure reason, or None for strict-valid ARXML."""
     try:
-        model = ad.AutosarModel()
-        _, warnings = model.load_file(str(path), strict=True)
-        if warnings:
-            return f"strict load warnings: {len(warnings)}"
-        reference_errors = model.check_references()
-        if reference_errors:
-            return f"reference validation failed: {len(reference_errors)}"
-    except Exception as exc:
-        return f"strict load failed: {type(exc).__name__}"
+        validate_arxml_strict(path)
+    except StrictArxmlValidationError as exc:
+        return f"{exc.code}: {exc.message}"
     return None
 
 

@@ -45,7 +45,7 @@ jobs:
       - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version: '3.12'
-      - run: pip install cantools pyyaml autosar-data jinja2
+      - run: pip install cantools pyyaml autosar-data==0.16.0 jinja2
       - name: Generate ARXML from DBC
         run: |
           python tools/arxml/dbc2arxml.py $DBC arxml_v2/ arxml_v2/swc_model.json
@@ -67,11 +67,12 @@ jobs:
       - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version: '3.12'
-      - run: pip install cantools pyyaml autosar-data
+      - run: pip install cantools pyyaml autosar-data==0.16.0
       - uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
         with:
           name: arxml
           path: arxml/
+      - run: python tools/ci/validate_arxml_strict.py arxml/TaktflowSystem.arxml
       - run: python tools/pipeline/step4_validate_arxml.py arxml/TaktflowSystem.arxml $DBC
 
   # -------------------------------------------------------------------
@@ -86,7 +87,7 @@ jobs:
       - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version: '3.12'
-      - run: pip install cantools pyyaml autosar-data jinja2
+      - run: pip install cantools pyyaml autosar-data==0.16.0 jinja2
       - uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
         with:
           name: arxml
@@ -110,7 +111,7 @@ jobs:
       - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version: '3.12'
-      - run: pip install cantools pyyaml autosar-data jinja2
+      - run: pip install cantools pyyaml autosar-data==0.16.0 jinja2
       - uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
         with:
           name: arxml
@@ -147,7 +148,7 @@ jobs:
       - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version: '3.12'
-      - run: pip install cantools pyyaml autosar-data jinja2
+      - run: pip install cantools pyyaml autosar-data==0.16.0 jinja2
       - uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
         with:
           name: arxml

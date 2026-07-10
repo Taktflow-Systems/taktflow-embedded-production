@@ -37,6 +37,10 @@ from pipeline_diagnostics import (
     locate_text,
     portable_path,
 )
+from arxml_validation import (
+    StrictArxmlValidationError,
+    validate_arxml_strict,
+)
 from autosar_data.abstraction.communication import (
     CanAddressingMode, CanFrameType, CyclicTiming, IpduTiming,
     TransmissionModeTiming,
@@ -361,8 +365,25 @@ class Dbc2Arxml:
                 stream.write(content)
                 stream.flush()
                 os.fsync(stream.fileno())
+            validate_arxml_strict(temp_path)
             os.replace(temp_path, filepath)
             temp_path = None
+        except StrictArxmlValidationError as exc:
+            if temp_path and os.path.exists(temp_path):
+                try:
+                    os.unlink(temp_path)
+                except OSError as cleanup_exc:
+                    exc.message += "; temporary-file cleanup failed: %s" % (
+                        _portable_error(cleanup_exc, temp_path)
+                    )
+            raise self.diagnostics.error(
+                exc.code,
+                "ARXML output '%s'" % output_name,
+                exc.message,
+                path=output_name,
+                line=exc.line,
+                column=exc.column,
+            ) from exc
         except (OSError, UnicodeError) as exc:
             cleanup_error = None
             if temp_path and os.path.exists(temp_path):

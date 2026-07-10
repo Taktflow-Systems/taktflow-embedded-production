@@ -4,9 +4,18 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
-import autosar_data as ad
+TOOLS_DIR = Path(__file__).resolve().parents[1]
+if str(TOOLS_DIR) not in sys.path:
+    sys.path.insert(0, str(TOOLS_DIR))
+
+from arxml_validation import (  # noqa: E402
+    StrictArxmlValidationError,
+    validate_arxml_strict,
+)
+from pipeline_diagnostics import portable_path  # noqa: E402
 
 
 def resolve_arxml_files(patterns: list[str]) -> list[Path]:
@@ -20,17 +29,11 @@ def resolve_arxml_files(patterns: list[str]) -> list[Path]:
 
 
 def validate_strict(path: Path) -> tuple[int, int]:
-    model = ad.AutosarModel()
-    _, warnings = model.load_file(str(path), strict=True)
-    ref_errors = model.check_references()
-    if ref_errors:
-        raise ValueError(
-            f"Reference validation failed for {path}: {len(ref_errors)} invalid references."
-        )
-    return len(warnings), len(list(model.identifiable_elements))
+    result = validate_arxml_strict(path)
+    return result.warning_count, result.identifiable_count
 
 
-def main() -> None:
+def main() -> int:
     parser = argparse.ArgumentParser(
         description="Strictly validate ARXML files using autosar-data."
     )
@@ -45,12 +48,20 @@ def main() -> None:
     if not arxml_files:
         raise FileNotFoundError("No ARXML files matched input arguments.")
 
-    for path in arxml_files:
-        warnings, identifiable = validate_strict(path)
-        print(f"[OK] {path} (warnings={warnings}, identifiable={identifiable})")
+    try:
+        for path in arxml_files:
+            warnings, identifiable = validate_strict(path)
+            print(
+                f"[OK] {portable_path(path)} "
+                f"(warnings={warnings}, identifiable={identifiable})"
+            )
+    except StrictArxmlValidationError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
 
     print(f"Strict validation passed for {len(arxml_files)} ARXML file(s).")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

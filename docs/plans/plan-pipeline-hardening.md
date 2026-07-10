@@ -1,6 +1,6 @@
 # Plan: DBC-to-ARXML Pipeline Hardening
 
-**Status:** P3 DONE - P4 PENDING
+**Status:** P4 DONE - P5 PENDING
 **Created:** 2026-07-09
 **Branch:** `feat/pipeline-hardening`
 **Scope:** `gateway/taktflow_vehicle.dbc` -> `tools/arxml/dbc2arxml.py` ->
@@ -282,7 +282,7 @@ explicit DBC IDs, all heartbeat IDs, RX/TX inheritance, ECU/PDU parity and
 DBC-versus-sidecar equality using a completed-DBC test fixture. All 345
 combined tests pass after the corrective review.
 
-### P4 - Strict schema validation gate - PENDING
+### P4 - Strict schema validation gate - DONE
 
 **Step ID:** PH-P4
 **Inputs:** autosar-data Python API version verified by import probe, P3
@@ -305,6 +305,19 @@ negative test, regenerated validated ARXML.
 load and reference validation; validation cannot be bypassed on normal emit.
 **Gate:** handwritten P4 commit first, then a separate generated-output commit
 when needed; both before P5.
+**Result:** `autosar-data==0.16.0` is pinned after a CPython 3.14 import probe
+confirmed the strict-load signature and zero-warning/zero-reference result for
+the in-house model. `tools/arxml_validation.py` now supplies one fail-closed
+validator to the converter, corpus strict mode and the CI ARXML gate. The
+converter validates its complete same-directory temporary file before atomic
+replacement, so normal emission cannot bypass strict validation or overwrite a
+known-good file with invalid output. Stable failures distinguish strict parse
+or schema errors (`ARXML200`), strict warnings (`ARXML201`) and unresolved
+references (`ARXML202`). A corrupted CAN addressing enum fails at its source
+line, while the in-house conversion and both corpus modes remain green. The
+canonical ARXML and resulting ECU configuration were regenerated only through
+their generators and are committed separately from the handwritten P4 change.
+All 350 combined Python tests pass on the pinned dependency.
 
 ### P5 - Deterministic conversion assumptions report - PENDING
 
