@@ -29,6 +29,12 @@
 extern void sc_sci_puts(const char* str);
 extern void sc_sci_put_uint(uint32 val);
 
+/* Target-state dump (Os_Port_Tms570_Target.c) — VIM/RTI/CPSR snapshot.
+ * Used before test 6 unmasks FIQ: a pending VIM ch0/ch1 request there
+ * (INTREQ0 bits 0/1, phantom-mapped FIQ) would livelock on CPSIE if. */
+extern void Os_Port_Tms570_BringupDumpTargetState(void);
+extern void Os_Port_Tms570_BringupClearRetainedEsmGroup2(void);
+
 /* ==================================================================
  * Shared helpers
  * ================================================================== */
@@ -522,8 +528,10 @@ static void bringup_preempt_task_b_entry(void)
  *
  * @note   Uses MSR CPSR_c for mode switches (following ThreadX pattern)
  *         rather than CPS, for explicit control over I/F bits.
- *         0x9F = System mode + I=1 (IRQ disabled)
- *         0x92 = IRQ mode + I=1 (IRQ disabled)
+ *         0xDF = System mode + I=1 + F=1 (never unmask FIQ by accident;
+ *         NMFI ignores the F-set when FIQ was deliberately enabled, as
+ *         in test 6, so behavior there is unchanged)
+ *         0xD2 = IRQ mode + I=1 + F=1
  *
  * @note   SPSR_irq is preserved throughout — no code writes to it.
  *         The final LDMIA ^{pc} restores CPSR from SPSR_irq, returning
@@ -559,8 +567,8 @@ void bringup_preempt_isr(void)
         "MOV    r1, #0                  \n\t"
         "STR    r1, [r0]                \n\t"
 
-        /* Switch to System mode (I=1: IRQs remain disabled) */
-        "MOV    r2, #0x9F              \n\t"
+        /* Switch to System mode (I=1, F preserved-or-set: 0xDF) */
+        "MOV    r2, #0xDF              \n\t"
         "MSR    CPSR_c, r2             \n\t"
 
         /* Now SP = SP_sys (Task A's stack), LR = LR_sys */
@@ -576,8 +584,8 @@ void bringup_preempt_isr(void)
         /* Resumed — Task B switched back */
         "POP    {lr}                    \n\t"
 
-        /* Switch back to IRQ mode (I=1: IRQs disabled) */
-        "MOV    r2, #0x92              \n\t"
+        /* Switch back to IRQ mode (I=1, F preserved-or-set: 0xD2) */
+        "MOV    r2, #0xD2              \n\t"
         "MSR    CPSR_c, r2             \n\t"
 
         /* ---- Normal exception return ---- */
@@ -816,9 +824,21 @@ static boolean bringup_test_fiq_ownership(void)
     boolean pass;
     uint32 i;
     uintptr_t stackTop;
+    uint32 counterNow;
+    uint32 irqPeriod;
     uint32 fiqPeriod;
 
     sc_sci_puts("[BRINGUP-6] FIQ does not break IRQ-return ownership...\r\n");
+
+    /* Pre-unmask snapshot: INTREQ0 bits 0/1 asserted here would mean the
+     * CPSIE below hands the CPU to the phantom-mapped ch0/ch1 FIQ pair. */
+    Os_Port_Tms570_BringupDumpTargetState();
+
+    /* Bench substitute for the documented power-cycle: clear a RETAINED
+     * group-2 latch (pre-existing CCM diagnostic residue) so the FIQ
+     * unmask below exercises the compare0/compare1 pair, not the phantom
+     * ESM-high channel. Prints the value it clears. */
+    Os_Port_Tms570_BringupClearRetainedEsmGroup2();
 
     /* Prepare Task B's initial context (fresh for test 6) */
     bringup_preempt_ctx_b.r4  = 0u;
@@ -843,12 +863,19 @@ static boolean bringup_test_fiq_ownership(void)
     vimChannelMap(2u, 2u, (t_isrFuncPTR)&bringup_preempt_isr);
     vimEnableInterrupt(2u, SYS_IRQ);
 
-    /* Configure RTI compare1 for FIQ at ~70% of compare0's period.
-     * Different rate avoids phase-lock with compare0. */
+    /* Test 5 disables compare0 while UART reporting continues. On this RTI,
+     * a disabled compare does not advance COMPx, so its match can be stale
+     * (behind FRCx) by the time test 6 starts. Rearm BOTH compares from one
+     * current counter snapshot; otherwise neither IRQ preemption nor the
+     * paired FIQ ownership observation has a valid start boundary. */
     rtiREG1->COMPCTRL &= ~(uint32)(1u << 4u);  /* compare1 uses counter block 0 */
-    fiqPeriod = (rtiREG1->CMP[0u].UDCPx * 7u) / 10u;
+    irqPeriod = rtiREG1->CMP[0u].UDCPx;
+    if (irqPeriod == 0u) { irqPeriod = 1u; }
+    fiqPeriod = (irqPeriod * 7u) / 10u;
     if (fiqPeriod == 0u) { fiqPeriod = 1u; }
-    rtiREG1->CMP[1u].COMPx = rtiREG1->CNT[0u].FRCx + fiqPeriod;
+    counterNow = rtiREG1->CNT[0u].FRCx;
+    rtiREG1->CMP[0u].COMPx = counterNow + irqPeriod;
+    rtiREG1->CMP[1u].COMPx = counterNow + fiqPeriod;
     rtiREG1->CMP[1u].UDCPx = fiqPeriod;
     rtiREG1->INTFLAG = 2u;  /* Clear any pending compare1 flag */
 
@@ -863,6 +890,11 @@ static boolean bringup_test_fiq_ownership(void)
     bringup_preempt_flag = 1u;
 
     irqsBefore = bringup_rti_irq_count;
+
+    /* Second snapshot: everything armed, one instruction group away from
+     * the CPSIE. Distinguishes "wedged at unmask" from "wedged later". */
+    Os_Port_Tms570_BringupDumpTargetState();
+    sc_sci_puts("[BRINGUP-6] unmasking FIQ+IRQ...\r\n");
 
     /* Same busy-wait as test 5, but enable BOTH IRQ and FIQ.
      * FIQ can fire at any point including during the IRQ
@@ -900,6 +932,7 @@ static boolean bringup_test_fiq_ownership(void)
     );
 
     irqsAfter = bringup_rti_irq_count;
+    sc_sci_puts("[BRINGUP-6] busy-wait survived\r\n");
 
     /* Restore polled mode — disable both compare0 and compare1 */
     rtiREG1->CLEARINTENA = 3u;  /* bits 0+1 */
@@ -1052,6 +1085,8 @@ static void bringup_first_task_entry(void)
     sc_sci_puts("=== Bring-up ");
     sc_sci_puts(allPass ? "ALL PASS" : "SOME FAILED");
     sc_sci_puts(" ===\r\n\r\n");
+    sc_sci_puts(allPass ? "[BRINGUP-SUMMARY] ALL PASS\r\n"
+                        : "[BRINGUP-SUMMARY] SOME FAILED\r\n");
 
     /* Stay alive: polled RTI LED blink (500ms on / 500ms off) */
     for (;;) {

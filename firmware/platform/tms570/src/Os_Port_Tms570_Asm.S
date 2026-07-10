@@ -22,7 +22,12 @@
  *   - R4-R11 are NOT banked between System and IRQ modes
  *   - SPSR_irq is preserved across MSR CPSR_c mode switches
  *   - CPSR mask: only replace mode bits [4:0], never full low byte
- *   - 0x9F = System mode + I=1, 0x92 = IRQ mode + I=1
+ *   - 0xDF = System mode + I=1 + F=1, 0xD2 = IRQ mode + I=1 + F=1
+ *   - NMFI core: MSR can clear F but never set it. A mode-switch
+ *     immediate with F=0 (0x9F/0x92) permanently unmasks FIQ; the only
+ *     enabled FIQ channels (VIM ch0/ch1, ESM high) are phantom-mapped,
+ *     so a latched source becomes an unrecoverable FIQ livelock.
+ *     All dispatch-path mode switches MUST keep bit 6 set.
  */
 
     .arm
@@ -167,11 +172,11 @@ __os_port_tms570_start_done:
  *
  * Preemption path (ThreadX pattern from tx_thread_context_restore.S):
  *   5. Get save/restore cooperative context pointers
- *   6. Switch to System mode (0x9F: I=1, IRQ disabled)
+ *   6. Switch to System mode (0xDF: I=1, F=1 — never unmask FIQ)
  *   7. PUSH {lr} — save LR_sys (BLX will clobber it)
  *   8. Cooperative switch: save current R4-R11,LR,SP; load next
  *   9. POP {lr} — restore LR_sys
- *  10. Switch back to IRQ mode (0x92: I=1, IRQ disabled)
+ *  10. Switch back to IRQ mode (0xD2: I=1, F=1)
  *  11. Exception return: LDMIA {r0-r3, r12, pc}^
  *      → atomically restores CPSR from SPSR_irq
  *
@@ -216,8 +221,9 @@ Os_Port_Tms570_RtiTickHandler:
     MOV     r1, r0                          /* r1 = restore ctx */
     POP     {r0}                            /* r0 = save ctx */
 
-    /* Switch to System mode (I=1: IRQs remain disabled) */
-    MOV     r2, #0x9F
+    /* Switch to System mode (I=1, F=1 — NMFI: clearing F here would
+     * permanently unmask FIQ into phantom-mapped VIM ch0/ch1) */
+    MOV     r2, #0xDF
     MSR     CPSR_c, r2
 
     /* Now SP = SP_sys (current task's stack), LR = LR_sys */
@@ -230,8 +236,8 @@ Os_Port_Tms570_RtiTickHandler:
     /* Resumed — a different task switched back to us */
     POP     {lr}
 
-    /* Switch back to IRQ mode (I=1: IRQs disabled) */
-    MOV     r2, #0x92
+    /* Switch back to IRQ mode (I=1, F=1) */
+    MOV     r2, #0xD2
     MSR     CPSR_c, r2
 
 __rti_no_preempt:

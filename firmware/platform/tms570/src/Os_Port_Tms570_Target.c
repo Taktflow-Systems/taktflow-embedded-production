@@ -25,9 +25,16 @@
 /* HALCoGen headers first — they define uint32, boolean, etc. */
 #include "HL_sys_vim.h"
 #include "HL_reg_rti.h"
+#include "HL_reg_esm.h"     /* bringup dump: group-2/high-level latch visibility */
 #include "HL_sys_core.h"    /* _enable_IRQ_interrupt_ */
 
 #include <stdint.h>
+
+#ifdef OS_BOOTSTRAP_BRINGUP
+extern void sc_sci_puts(const char* str);
+extern void sc_sci_put_hex32(uint32 value);
+static volatile uint32 os_tgt_tick_entry_count;
+#endif
 
 /* ====================================================================
  * Local type definitions — mirror Os_Port_Tms570.h layout without
@@ -82,39 +89,29 @@ static TargetTaskCtxType* os_tgt_first_task_ctx = (TargetTaskCtxType*)0;
  * in Os.h (boolean typedef conflict with HALCoGen).
  * ==================================================================== */
 extern boolean Os_BootstrapProcessCounterTick(void);
-extern uint8 Os_Port_Tms570_HwSelectNextTask(void);
+extern void Os_PortEnterIsr2(void);
+extern void Os_PortExitIsr2(void);
 
 /* ====================================================================
  * RtiTickServiceCore — called from RtiTickHandler assembly
  *
  * RTI compare0 has already been acknowledged in assembly (direct write
  * to INTFLAG). This function does the OSEK tick processing:
- * 1. Advance the OSEK counter and process alarm expiries.
- * 2. If a task became ready, select it for dispatch.
- *
- * In the synchronous run-to-completion model with NON scheduling,
- * the kernel's idle loop in StartOS calls os_dispatch_one() which
- * picks up the newly READY task and calls its Entry() directly.
- * The os_tgt_switch_pending flag is set here but consumed by the
- * assembly preemption check path (future multi-task use).
+ * 1. Enter the kernel ISR2 service-protection context.
+ * 2. Advance the OSEK counter and process alarm expiries.
+ * 3. Exit ISR2; the kernel stages any required preemption exactly once.
+ * The assembly handler commits that staged switch after this function.
  * ==================================================================== */
 
 void Os_Port_Tms570_RtiTickServiceCore(void)
 {
-    boolean dispatchNeeded;
+#ifdef OS_BOOTSTRAP_BRINGUP
+    os_tgt_tick_entry_count++;
+#endif
 
-    dispatchNeeded = Os_BootstrapProcessCounterTick();
-
-    /* Only signal preemption if there's an active task to save/switch.
-     * When idle (no current task), the StartOS idle loop will pick up
-     * the newly READY task via os_dispatch_one() after ISR returns. */
-    if ((dispatchNeeded != FALSE) && (os_tgt_current_task < TARGET_MAX_TASKS)) {
-        uint8 nextTask = Os_Port_Tms570_HwSelectNextTask();
-        if (nextTask != TARGET_INVALID_TASK) {
-            os_tgt_next_task = nextTask;
-            os_tgt_switch_pending = TRUE;
-        }
-    }
+    Os_PortEnterIsr2();
+    (void)Os_BootstrapProcessCounterTick();
+    Os_PortExitIsr2();
 }
 
 /* ====================================================================
@@ -136,7 +133,15 @@ uint32 Os_Port_Tms570_CheckPreemption(void)
 {
     if (os_tgt_switch_pending != FALSE) {
         os_tgt_switch_pending = FALSE;
-        return 1u;
+        /* Commit only with a valid save AND restore context. A pending
+         * flag without a selected next task would make SwitchContextAsm
+         * load SP/LR from flash bytes at 0x20/0x24 and BX into garbage.
+         * Fail safe: skip the commit; the activated task stays READY and
+         * the next tick re-stages the dispatch. */
+        if ((os_tgt_next_task < TARGET_MAX_TASKS) &&
+            (os_tgt_current_task < TARGET_MAX_TASKS)) {
+            return 1u;
+        }
     }
     return 0u;
 }
@@ -282,18 +287,106 @@ extern void Os_Port_Tms570_RtiTickHandler(void);
 
 void Os_Port_Tms570_TargetEnableRtiIrq(void)
 {
+#ifdef OS_BOOTSTRAP_BRINGUP
+    sc_sci_puts("[OSEK-TICK] target enter\r\n");
+    sc_sci_puts("[OSEK-TICK] before vim map\r\n");
+#endif
     /* 1. Map RTI compare0 (request 2) → VIM channel 2 with OS ISR */
     vimChannelMap(2u, 2u, (t_isrFuncPTR)&Os_Port_Tms570_RtiTickHandler);
+#ifdef OS_BOOTSTRAP_BRINGUP
+    sc_sci_puts("[OSEK-TICK] after vim map\r\n");
+    sc_sci_puts("[OSEK-TICK] before vim enable\r\n");
+#endif
 
     /* 2. Enable VIM channel 2 as IRQ */
     vimEnableInterrupt(2u, SYS_IRQ);
+#ifdef OS_BOOTSTRAP_BRINGUP
+    sc_sci_puts("[OSEK-TICK] after vim enable\r\n");
+    sc_sci_puts("[OSEK-TICK] before rti enable\r\n");
+#endif
 
     /* 3. Enable RTI compare0 interrupt generation */
     rtiREG1->SETINTENA = (uint32)1u;
+#ifdef OS_BOOTSTRAP_BRINGUP
+    sc_sci_puts("[OSEK-TICK] after rti enable\r\n");
+    sc_sci_puts("[OSEK-TICK] before cpu irq enable\r\n");
+#endif
 
     /* 4. Enable CPU IRQs (clear CPSR I-bit) */
     _enable_IRQ_interrupt_();
+#ifdef OS_BOOTSTRAP_BRINGUP
+    sc_sci_puts("[OSEK-TICK] after cpu irq enable\r\n");
+#endif
 }
+
+void Os_Port_Tms570_TargetMarkSwitchPending(void)
+{
+    os_tgt_switch_pending = TRUE;
+}
+
+#ifdef OS_BOOTSTRAP_BRINGUP
+uint32 Os_Port_Tms570_BringupGetTickEntryCount(void)
+{
+    return os_tgt_tick_entry_count;
+}
+
+void Os_Port_Tms570_BringupDumpTargetState(void)
+{
+    uint32 cpsr;
+    __asm__ volatile("MRS %0, CPSR" : "=r"(cpsr));
+    sc_sci_puts("[OSEK-HW] GCTRL="); sc_sci_put_hex32(rtiREG1->GCTRL);
+    sc_sci_puts(" FRC0="); sc_sci_put_hex32(rtiREG1->CNT[0u].FRCx);
+    sc_sci_puts(" CMP0="); sc_sci_put_hex32(rtiREG1->CMP[0u].COMPx);
+    sc_sci_puts(" SETINTENA="); sc_sci_put_hex32(rtiREG1->SETINTENA);
+    sc_sci_puts(" INTFLAG="); sc_sci_put_hex32(rtiREG1->INTFLAG);
+    sc_sci_puts(" REQMASK0="); sc_sci_put_hex32(vimREG->REQMASKSET0);
+    sc_sci_puts(" INTREQ0="); sc_sci_put_hex32(vimREG->INTREQ0);
+    sc_sci_puts(" FIRQPR0="); sc_sci_put_hex32(vimREG->FIRQPR0);
+    sc_sci_puts(" IRQINDEX="); sc_sci_put_hex32(vimREG->IRQINDEX);
+    sc_sci_puts(" CPSR="); sc_sci_put_hex32(cpsr);
+    sc_sci_puts(" VEC2=");
+    sc_sci_put_hex32(*((volatile uint32*)0xFFF82000u + 3u));
+    /* ESM latch visibility: SR1[0]=group1, SR1[1]=group2, SR1[2]=group3,
+     * SSR2=group2 shadow, IOFFHR=highest pending high-level channel+1.
+     * The boot dump prints only SR1/SR3 — a group-2 latch (VIM ch0 FIQ
+     * request) is invisible there. */
+    sc_sci_puts(" ESMSR1="); sc_sci_put_hex32(esmREG->SR1[0u]);
+    sc_sci_puts(" ESMSR2="); sc_sci_put_hex32(esmREG->SR1[1u]);
+    sc_sci_puts(" ESMSR3="); sc_sci_put_hex32(esmREG->SR1[2u]);
+    sc_sci_puts(" ESMSSR2="); sc_sci_put_hex32(esmREG->SSR2);
+    sc_sci_puts(" ESMSR4="); sc_sci_put_hex32(esmREG->SR4[0u]);
+    sc_sci_puts(" IOFFHR="); sc_sci_put_hex32(esmREG->IOFFHR);
+    sc_sci_puts("\r\n");
+}
+
+/* Bring-up bench only: report and clear a RETAINED ESM group-2 latch.
+ *
+ * Group-2 status (SR2/SSR2) survives every reset short of power-on; DSLite
+ * reflash cycles never power-cycle the LaunchPad, so a latch left by earlier
+ * destructive CCM diagnostics keeps the VIM ch0 high-level request asserted
+ * forever. VIM ch0/ch1 are phantom-mapped, so the first FIQ unmask (bring-up
+ * test 6 CPSIE) livelocks. The documented recovery is a power cycle; on the
+ * remote bench this W1C clear substitutes for it, with UART evidence of the
+ * value cleared. Production images never call this — a production group-2
+ * reaction must be fail-closed, not a clear. */
+void Os_Port_Tms570_BringupClearRetainedEsmGroup2(void)
+{
+    uint32 sr2 = esmREG->SR1[1u];
+    uint32 ssr2 = esmREG->SSR2;
+
+    sc_sci_puts("[BRINGUP-ESM] retained SR2="); sc_sci_put_hex32(sr2);
+    sc_sci_puts(" SSR2="); sc_sci_put_hex32(ssr2);
+    if ((sr2 | ssr2) != 0u) {
+        esmREG->SR1[1u] = sr2;   /* W1C */
+        esmREG->SSR2 = ssr2;     /* W1C */
+        esmREG->EKR = 0x5u;      /* error-key: release nERROR */
+        esmREG->EKR = 0x0u;
+        sc_sci_puts(" -> cleared, SSR2 now ");
+        sc_sci_put_hex32(esmREG->SSR2);
+    }
+    sc_sci_puts("\r\n");
+}
+#endif
 
 #endif /* !UNIT_TEST */
 #endif /* PLATFORM_TMS570 */

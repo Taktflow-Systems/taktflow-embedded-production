@@ -445,6 +445,14 @@ StatusType Os_Port_Tms570_VimIrqEntryCore(void);
 StatusType Os_Port_Tms570_VimIrqEntry(void);
 void Os_Port_Tms570_RtiTickServiceCore(void);
 void Os_Port_Tms570_RtiTickHandler(void);
+/** Enable the configured RTI compare0/VIM tick after the first task arms alarms. */
+void Os_Port_Tms570_EnableRtiTick(void);
+#ifdef OS_BOOTSTRAP_BRINGUP
+void Os_Port_Tms570_BringupDumpTargetState(void);
+void Os_Port_Tms570_BringupObserveKernelState(void);
+/** Bench-only: report + W1C a retained ESM group-2 latch (power-cycle substitute). */
+void Os_Port_Tms570_BringupClearRetainedEsmGroup2(void);
+#endif
 
 /**
  * @brief  Naked cooperative context switch — saves R4-R11, LR, SP to Save,

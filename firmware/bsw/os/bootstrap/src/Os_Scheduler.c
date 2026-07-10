@@ -388,7 +388,21 @@ static void os_dispatch_task(TaskType NextTask)
     os_tcb[NextTask].ReadyStamp = 0u;
     os_stage_port_dispatch(previous_task, NextTask);
     os_publish_port_dispatch(NextTask);
+    /* On ported hardware an ISR-context dispatch is deferred: the task will
+     * run on its own configured stack, so &stack_base_marker (an IRQ-stack
+     * address) as stack base would make the budget check measure garbage.
+     * The synchronous path (host model, direct Entry() call) keeps the
+     * marker — there the task really runs on this C stack. */
+#if defined(PLATFORM_STM32) || defined(PLATFORM_TMS570)
+    if ((Os_PortIsInIsrContext() == TRUE) &&
+        (os_task_stack_top_cfg[NextTask] != (uintptr_t)0u)) {
+        os_stack_monitor_enter_task(NextTask, os_task_stack_top_cfg[NextTask]);
+    } else {
+        os_stack_monitor_enter_task(NextTask, (uintptr_t)&stack_base_marker);
+    }
+#else
     os_stack_monitor_enter_task(NextTask, (uintptr_t)&stack_base_marker);
+#endif
     os_rebuild_ready_bitmap();
     os_dispatch_count++;
 
