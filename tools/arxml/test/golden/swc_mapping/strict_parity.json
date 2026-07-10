@@ -209,7 +209,7 @@
       "message": "Brake_Status",
       "signal": "Brake_Status_BrakeCommandEcho",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -217,7 +217,7 @@
       "message": "Brake_Status",
       "signal": "Brake_Status_BrakeMode",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -225,7 +225,7 @@
       "message": "Brake_Status",
       "signal": "Brake_Status_BrakePosition",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -233,7 +233,7 @@
       "message": "Brake_Status",
       "signal": "Brake_Status_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -241,7 +241,7 @@
       "message": "Brake_Status",
       "signal": "Brake_Status_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -249,7 +249,7 @@
       "message": "Brake_Status",
       "signal": "Brake_Status_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -257,7 +257,7 @@
       "message": "Brake_Status",
       "signal": "Brake_Status_ServoCurrent_mA",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -265,7 +265,7 @@
       "message": "CVC_Heartbeat",
       "signal": "CVC_Heartbeat_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -273,7 +273,7 @@
       "message": "CVC_Heartbeat",
       "signal": "CVC_Heartbeat_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -281,7 +281,7 @@
       "message": "CVC_Heartbeat",
       "signal": "CVC_Heartbeat_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -289,7 +289,7 @@
       "message": "CVC_Heartbeat",
       "signal": "CVC_Heartbeat_ECU_ID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -297,7 +297,7 @@
       "message": "CVC_Heartbeat",
       "signal": "CVC_Heartbeat_OperatingMode",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -340,7 +340,7 @@
       "message": "EStop_Broadcast",
       "signal": "EStop_Broadcast_Active",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -348,7 +348,7 @@
       "message": "EStop_Broadcast",
       "signal": "EStop_Broadcast_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -356,7 +356,7 @@
       "message": "EStop_Broadcast",
       "signal": "EStop_Broadcast_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -364,7 +364,7 @@
       "message": "EStop_Broadcast",
       "signal": "EStop_Broadcast_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -372,7 +372,7 @@
       "message": "EStop_Broadcast",
       "signal": "EStop_Broadcast_Source",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -380,7 +380,7 @@
       "message": "FZC_Heartbeat",
       "signal": "FZC_Heartbeat_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -388,7 +388,7 @@
       "message": "FZC_Heartbeat",
       "signal": "FZC_Heartbeat_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -396,7 +396,7 @@
       "message": "FZC_Heartbeat",
       "signal": "FZC_Heartbeat_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -404,7 +404,7 @@
       "message": "FZC_Heartbeat",
       "signal": "FZC_Heartbeat_ECU_ID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -412,7 +412,7 @@
       "message": "FZC_Heartbeat",
       "signal": "FZC_Heartbeat_OperatingMode",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -448,7 +448,7 @@
       "message": "Lidar_Distance",
       "signal": "Lidar_Distance_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -456,7 +456,7 @@
       "message": "Lidar_Distance",
       "signal": "Lidar_Distance_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -464,7 +464,7 @@
       "message": "Lidar_Distance",
       "signal": "Lidar_Distance_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -472,7 +472,7 @@
       "message": "Lidar_Distance",
       "signal": "Lidar_Distance_ObstacleZone",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -480,7 +480,7 @@
       "message": "Lidar_Distance",
       "signal": "Lidar_Distance_Range_cm",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -488,7 +488,7 @@
       "message": "Lidar_Distance",
       "signal": "Lidar_Distance_SensorStatus",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -496,7 +496,7 @@
       "message": "Lidar_Distance",
       "signal": "Lidar_Distance_SignalStrength",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -539,7 +539,7 @@
       "message": "Motor_Current",
       "signal": "Motor_Current_DirIsReverse",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -547,7 +547,7 @@
       "message": "Motor_Current",
       "signal": "Motor_Current_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -555,7 +555,7 @@
       "message": "Motor_Current",
       "signal": "Motor_Current_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -563,7 +563,7 @@
       "message": "Motor_Current",
       "signal": "Motor_Current_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -571,7 +571,7 @@
       "message": "Motor_Current",
       "signal": "Motor_Current_MotorEnable",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -579,7 +579,7 @@
       "message": "Motor_Current",
       "signal": "Motor_Current_OvercurrentFlag",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -587,7 +587,7 @@
       "message": "Motor_Current",
       "signal": "Motor_Current_Phase_mA",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -595,7 +595,7 @@
       "message": "Motor_Current",
       "signal": "Motor_Current_TorqueEcho",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -603,7 +603,7 @@
       "message": "Motor_Status",
       "signal": "Motor_Status_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -611,7 +611,7 @@
       "message": "Motor_Status",
       "signal": "Motor_Status_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -619,7 +619,7 @@
       "message": "Motor_Status",
       "signal": "Motor_Status_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -627,7 +627,7 @@
       "message": "Motor_Status",
       "signal": "Motor_Status_MotorDirection",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -635,7 +635,7 @@
       "message": "Motor_Status",
       "signal": "Motor_Status_MotorEnable",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -643,7 +643,7 @@
       "message": "Motor_Status",
       "signal": "Motor_Status_TorqueEcho",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -651,7 +651,7 @@
       "message": "Motor_Temperature",
       "signal": "Motor_Temperature_DeratingPercent",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -659,7 +659,7 @@
       "message": "Motor_Temperature",
       "signal": "Motor_Temperature_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -667,7 +667,7 @@
       "message": "Motor_Temperature",
       "signal": "Motor_Temperature_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -675,7 +675,7 @@
       "message": "Motor_Temperature",
       "signal": "Motor_Temperature_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -683,7 +683,7 @@
       "message": "Motor_Temperature",
       "signal": "Motor_Temperature_WindingTemp1_C",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -691,7 +691,7 @@
       "message": "Motor_Temperature",
       "signal": "Motor_Temperature_WindingTemp2_C",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -699,7 +699,7 @@
       "message": "RZC_Heartbeat",
       "signal": "RZC_Heartbeat_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -707,7 +707,7 @@
       "message": "RZC_Heartbeat",
       "signal": "RZC_Heartbeat_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -715,7 +715,7 @@
       "message": "RZC_Heartbeat",
       "signal": "RZC_Heartbeat_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -723,7 +723,7 @@
       "message": "RZC_Heartbeat",
       "signal": "RZC_Heartbeat_ECU_ID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -731,7 +731,7 @@
       "message": "RZC_Heartbeat",
       "signal": "RZC_Heartbeat_OperatingMode",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -739,7 +739,7 @@
       "message": "SC_Status",
       "signal": "SC_Status_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -747,7 +747,7 @@
       "message": "SC_Status",
       "signal": "SC_Status_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -755,7 +755,7 @@
       "message": "SC_Status",
       "signal": "SC_Status_ECU_Health",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -763,7 +763,7 @@
       "message": "SC_Status",
       "signal": "SC_Status_Mode",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -771,7 +771,7 @@
       "message": "SC_Status",
       "signal": "SC_Status_RelayEnergized",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -779,7 +779,7 @@
       "message": "Steering_Status",
       "signal": "Steering_Status_ActualAngle",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -787,7 +787,7 @@
       "message": "Steering_Status",
       "signal": "Steering_Status_CommandedAngle",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -795,7 +795,7 @@
       "message": "Steering_Status",
       "signal": "Steering_Status_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -803,7 +803,7 @@
       "message": "Steering_Status",
       "signal": "Steering_Status_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -811,7 +811,7 @@
       "message": "Steering_Status",
       "signal": "Steering_Status_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -819,7 +819,7 @@
       "message": "Steering_Status",
       "signal": "Steering_Status_ServoCurrent_mA",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -827,7 +827,7 @@
       "message": "Steering_Status",
       "signal": "Steering_Status_SteerMode",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -842,7 +842,7 @@
       "message": "Vehicle_State",
       "signal": "Vehicle_State_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -850,7 +850,7 @@
       "message": "Vehicle_State",
       "signal": "Vehicle_State_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -858,7 +858,7 @@
       "message": "Vehicle_State",
       "signal": "Vehicle_State_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -866,7 +866,7 @@
       "message": "Vehicle_State",
       "signal": "Vehicle_State_Mode",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -874,7 +874,7 @@
       "message": "Vehicle_State",
       "signal": "Vehicle_State_SpeedLimit",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "ICU",
@@ -882,7 +882,7 @@
       "message": "Vehicle_State",
       "signal": "Vehicle_State_TorqueLimit",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -890,7 +890,7 @@
       "message": "SC_Status",
       "signal": "SC_Status_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -898,7 +898,7 @@
       "message": "SC_Status",
       "signal": "SC_Status_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -906,7 +906,7 @@
       "message": "SC_Status",
       "signal": "SC_Status_ECU_Health",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -914,7 +914,7 @@
       "message": "SC_Status",
       "signal": "SC_Status_FaultFlags",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -922,7 +922,7 @@
       "message": "SC_Status",
       "signal": "SC_Status_FaultReason",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -930,7 +930,7 @@
       "message": "SC_Status",
       "signal": "SC_Status_Mode",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -938,7 +938,7 @@
       "message": "SC_Status",
       "signal": "SC_Status_RelayEnergized",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -953,7 +953,7 @@
       "message": "Brake_Fault",
       "signal": "Brake_Fault_CommandedBrake",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -961,7 +961,7 @@
       "message": "Brake_Fault",
       "signal": "Brake_Fault_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -969,7 +969,7 @@
       "message": "Brake_Fault",
       "signal": "Brake_Fault_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -977,7 +977,7 @@
       "message": "Brake_Fault",
       "signal": "Brake_Fault_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -985,7 +985,7 @@
       "message": "Brake_Fault",
       "signal": "Brake_Fault_FaultType",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -993,7 +993,7 @@
       "message": "Brake_Fault",
       "signal": "Brake_Fault_MeasuredBrake",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1001,7 +1001,7 @@
       "message": "Brake_Status",
       "signal": "Brake_Status_BrakeCommandEcho",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1009,7 +1009,7 @@
       "message": "Brake_Status",
       "signal": "Brake_Status_BrakeFaultStatus",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1017,7 +1017,7 @@
       "message": "Brake_Status",
       "signal": "Brake_Status_BrakeMode",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1025,7 +1025,7 @@
       "message": "Brake_Status",
       "signal": "Brake_Status_BrakePosition",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1033,7 +1033,7 @@
       "message": "Brake_Status",
       "signal": "Brake_Status_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1041,7 +1041,7 @@
       "message": "Brake_Status",
       "signal": "Brake_Status_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1049,7 +1049,7 @@
       "message": "Brake_Status",
       "signal": "Brake_Status_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1057,7 +1057,7 @@
       "message": "Brake_Status",
       "signal": "Brake_Status_ServoCurrent_mA",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1065,7 +1065,7 @@
       "message": "CVC_Heartbeat",
       "signal": "CVC_Heartbeat_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1073,7 +1073,7 @@
       "message": "CVC_Heartbeat",
       "signal": "CVC_Heartbeat_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1081,7 +1081,7 @@
       "message": "CVC_Heartbeat",
       "signal": "CVC_Heartbeat_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1089,7 +1089,7 @@
       "message": "CVC_Heartbeat",
       "signal": "CVC_Heartbeat_ECU_ID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1097,7 +1097,7 @@
       "message": "CVC_Heartbeat",
       "signal": "CVC_Heartbeat_FaultStatus",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1105,7 +1105,7 @@
       "message": "CVC_Heartbeat",
       "signal": "CVC_Heartbeat_OperatingMode",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1113,7 +1113,7 @@
       "message": "EStop_Broadcast",
       "signal": "EStop_Broadcast_Active",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1121,7 +1121,7 @@
       "message": "EStop_Broadcast",
       "signal": "EStop_Broadcast_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1129,7 +1129,7 @@
       "message": "EStop_Broadcast",
       "signal": "EStop_Broadcast_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1137,7 +1137,7 @@
       "message": "EStop_Broadcast",
       "signal": "EStop_Broadcast_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1145,7 +1145,7 @@
       "message": "EStop_Broadcast",
       "signal": "EStop_Broadcast_Source",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1153,7 +1153,7 @@
       "message": "FZC_Heartbeat",
       "signal": "FZC_Heartbeat_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1161,7 +1161,7 @@
       "message": "FZC_Heartbeat",
       "signal": "FZC_Heartbeat_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1169,7 +1169,7 @@
       "message": "FZC_Heartbeat",
       "signal": "FZC_Heartbeat_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1177,7 +1177,7 @@
       "message": "FZC_Heartbeat",
       "signal": "FZC_Heartbeat_ECU_ID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1185,7 +1185,7 @@
       "message": "FZC_Heartbeat",
       "signal": "FZC_Heartbeat_FaultStatus",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1193,7 +1193,7 @@
       "message": "FZC_Heartbeat",
       "signal": "FZC_Heartbeat_OperatingMode",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1201,7 +1201,7 @@
       "message": "Motor_Current",
       "signal": "Motor_Current_DirIsReverse",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1209,7 +1209,7 @@
       "message": "Motor_Current",
       "signal": "Motor_Current_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1217,7 +1217,7 @@
       "message": "Motor_Current",
       "signal": "Motor_Current_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1225,7 +1225,7 @@
       "message": "Motor_Current",
       "signal": "Motor_Current_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1233,7 +1233,7 @@
       "message": "Motor_Current",
       "signal": "Motor_Current_MotorEnable",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1241,7 +1241,7 @@
       "message": "Motor_Current",
       "signal": "Motor_Current_OvercurrentFlag",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1249,7 +1249,7 @@
       "message": "Motor_Current",
       "signal": "Motor_Current_Phase_mA",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1257,7 +1257,7 @@
       "message": "Motor_Current",
       "signal": "Motor_Current_TorqueEcho",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1265,7 +1265,7 @@
       "message": "Motor_Status",
       "signal": "Motor_Status_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1273,7 +1273,7 @@
       "message": "Motor_Status",
       "signal": "Motor_Status_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1281,7 +1281,7 @@
       "message": "Motor_Status",
       "signal": "Motor_Status_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1289,7 +1289,7 @@
       "message": "Motor_Status",
       "signal": "Motor_Status_MotorDirection",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1297,7 +1297,7 @@
       "message": "Motor_Status",
       "signal": "Motor_Status_MotorEnable",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1305,7 +1305,7 @@
       "message": "Motor_Status",
       "signal": "Motor_Status_MotorFaultStatus",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1313,7 +1313,7 @@
       "message": "Motor_Status",
       "signal": "Motor_Status_MotorSpeed_RPM",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1321,7 +1321,7 @@
       "message": "Motor_Status",
       "signal": "Motor_Status_TorqueEcho",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1329,7 +1329,7 @@
       "message": "RZC_Heartbeat",
       "signal": "RZC_Heartbeat_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1337,7 +1337,7 @@
       "message": "RZC_Heartbeat",
       "signal": "RZC_Heartbeat_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1345,7 +1345,7 @@
       "message": "RZC_Heartbeat",
       "signal": "RZC_Heartbeat_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1353,7 +1353,7 @@
       "message": "RZC_Heartbeat",
       "signal": "RZC_Heartbeat_ECU_ID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1361,7 +1361,7 @@
       "message": "RZC_Heartbeat",
       "signal": "RZC_Heartbeat_FaultStatus",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1369,7 +1369,7 @@
       "message": "RZC_Heartbeat",
       "signal": "RZC_Heartbeat_OperatingMode",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1377,7 +1377,7 @@
       "message": "Steering_Status",
       "signal": "Steering_Status_ActualAngle",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1385,7 +1385,7 @@
       "message": "Steering_Status",
       "signal": "Steering_Status_CommandedAngle",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1393,7 +1393,7 @@
       "message": "Steering_Status",
       "signal": "Steering_Status_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1401,7 +1401,7 @@
       "message": "Steering_Status",
       "signal": "Steering_Status_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1409,7 +1409,7 @@
       "message": "Steering_Status",
       "signal": "Steering_Status_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1417,7 +1417,7 @@
       "message": "Steering_Status",
       "signal": "Steering_Status_ServoCurrent_mA",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1425,7 +1425,7 @@
       "message": "Steering_Status",
       "signal": "Steering_Status_SteerFaultStatus",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1433,7 +1433,7 @@
       "message": "Steering_Status",
       "signal": "Steering_Status_SteerMode",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1441,7 +1441,7 @@
       "message": "Vehicle_State",
       "signal": "Vehicle_State_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1449,7 +1449,7 @@
       "message": "Vehicle_State",
       "signal": "Vehicle_State_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1457,7 +1457,7 @@
       "message": "Vehicle_State",
       "signal": "Vehicle_State_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1465,7 +1465,7 @@
       "message": "Vehicle_State",
       "signal": "Vehicle_State_FaultMask",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1473,7 +1473,7 @@
       "message": "Vehicle_State",
       "signal": "Vehicle_State_Mode",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "SC",
@@ -1523,7 +1523,7 @@
       "message": "EStop_Broadcast",
       "signal": "EStop_Broadcast_E2E_AliveCounter",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "TCU",
@@ -1531,7 +1531,7 @@
       "message": "EStop_Broadcast",
       "signal": "EStop_Broadcast_E2E_CRC8",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     },
     {
       "ecu": "TCU",
@@ -1539,7 +1539,7 @@
       "message": "EStop_Broadcast",
       "signal": "EStop_Broadcast_E2E_DataID",
       "disposition": "legacy-no-swc-port",
-      "safety_approval_ref": "SM3-COMPAT-001"
+      "safety_approval_ref": "SM6-STRICT-001"
     }
   ],
   "differences": []
