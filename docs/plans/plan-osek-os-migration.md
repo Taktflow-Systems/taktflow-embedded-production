@@ -642,6 +642,20 @@ merge is not viable; the port work must be harvested file-wise.
     start DCAN1 ECC recovery or IRQ-stack work until that ordered boot and
     non-diagnostic verification step is complete. CCM/ESM self-test remains
     NOT RUN and physical-CAN gates remain DEFERRED.
+  - Status (2026-07-10, full-power-cycle follow-up): **NORMAL PRODUCTION BOOT
+    STILL BLOCKED.** Full target supply removal was performed with all target
+    LEDs off before restoration. The direct Ethernet link returned at
+    100 Mbps, but SCET produced 0 frames over 15 seconds and XCP CONNECT timed
+    out. Diagnostic replay proved a second condition in addition to retained
+    group-2 state: after SR2/SSR2 and IOFFHR reached zero, VIM ch0 could remain
+    pending. The isolated bring-up recovery now drains that stale VIM request
+    only after source registers verify zero; its retained-state replay passed
+    module init, BIST, and all six port checks. Production still never writes
+    SR2/SSR2. A proposed production VIM drain was withdrawn uncommitted because
+    production liveness was not proven. The committed `7be31ce`
+    non-diagnostic image is restored fail-closed. Do not start the ordered
+    DCAN1 ECC, IRQ-stack, or CCM/ESM self-test tasks until the normal-production
+    handoff is resolved. Physical-CAN gates remain DEFERRED.
 
 ### Phase 5 — Legacy retirement + safety documentation (closes G3)
 

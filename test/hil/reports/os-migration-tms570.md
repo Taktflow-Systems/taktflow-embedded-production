@@ -60,6 +60,21 @@ module init, so production correctly parked without acknowledging it. A
 physical power cycle with UART capture is now required for the controlled
 normal boot; steps 2-5 remain unexecuted in this continuation.
 
+**Update (2026-07-10, full-power-cycle follow-up):** a complete target supply
+removal with all target LEDs off was performed after installing a fresh
+non-diagnostic production image. The direct Ethernet link returned at
+100 Mbps, but a 15-second SCET capture received 0 valid frames and XCP
+CONNECT timed out. Production therefore did not reach verified scheduler
+liveness. Diagnostic replay separated two reset states: some DSLite resets
+recreated a real group-2 channel-3 source (`SR2=SSR2=0x00000008`), while a
+stale replay left `SR2=SSR2=IOFFHR=0, INTREQ0=1`. The bring-up-only recovery
+now drains VIM ch0 only after SR2/SSR2 verify zero; a retained-state replay
+printed `VIM0 drained`, completed module init and BIST, and passed all six
+port checks. No production SR2/SSR2 clear was added. An experimental
+production VIM drain was investigated and withdrawn uncommitted because the
+normal-production boot was not proven. The committed `7be31ce`
+non-diagnostic image is restored and remains fail-closed.
+
 ## Scope and unchanged limits
 
 The fixed 10 ms SC sequence runs as one highest-priority, run-to-completion
@@ -224,3 +239,16 @@ open non-CAN item.
 - No debugger, serial monitor, or flash process remains attached. The next
   target action is a physical power cycle followed by XDS110 Application/User
   UART capture; do not reflash before that observation.
+
+### Full-power-cycle follow-up end state
+
+- Full target power removal did not produce scheduler or XCP evidence: SCET
+  was 0 frames in 15 seconds and XCP CONNECT timed out, despite a 100 Mbps
+  physical link.
+- The isolated recovery's guarded VIM0 drain is target-proven with a nonzero
+  retained-state replay and all six bring-up checks passing.
+- The current installed image is the non-diagnostic production build from
+  `7be31ce`, flashed with DSLite `flash --run`; it remains fail-closed.
+- Task 2 production liveness is not passed. DCAN1 recovery, IRQ-stack work,
+  and the CCM/ESM self-test were not started because the ordered normal-boot
+  gate remains blocked.
