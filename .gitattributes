@@ -1,1 +1,2 @@
 tools/arxml/test/golden/assumptions/minimal_defaults.assumptions.md text eol=lf
+tools/arxml/test/golden/swc_mapping/legacy_inventory.json text eol=lf

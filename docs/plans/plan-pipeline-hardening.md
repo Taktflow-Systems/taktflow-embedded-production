@@ -1,6 +1,6 @@
 # Plan: DBC-to-ARXML Pipeline Hardening
 
-**Status:** STOP-GATE MEMO APPROVED - IMPLEMENTATION PLAN AWAITS APPROVAL
+**Status:** EXPLICIT MAPPING PLAN APPROVED - SM0 DONE; SM1 PENDING
 **Created:** 2026-07-09
 **Branch:** `feat/pipeline-hardening`
 **Scope:** `gateway/taktflow_vehicle.dbc` -> `tools/arxml/dbc2arxml.py` ->
@@ -14,8 +14,8 @@ partial result after an unreported conversion failure, validate emitted ARXML,
 record every conversion assumption, and independently compare the DBC and
 ARXML communication models. The C BSW and the overall DBC-first architecture
 remain unchanged. Signal-to-SWC name heuristics are documented and designed
-out in an owner-approved memo. Implementation remains forbidden until the
-separate implementation plan is approved.
+out in an owner-approved memo. The separate implementation plan is approved;
+its SM0 legacy inventory gate is complete and SM1 remains pending.
 
 ## Governing inputs
 
@@ -386,10 +386,10 @@ migration for seven ECUs, compatibility window and rollback.
 **Acceptance criteria:** every current heuristic has an explicit replacement;
 examples cover TX, RX, shared signals and unmapped signals; no production code
 or sidecar schema is changed.
-**Gate:** commit memo and stop for owner review. Implementation remains
+**Gate:** commit memo and stop for owner review. Implementation remained
 forbidden until the
 [explicit mapping implementation plan](plan-signal-swc-mapping-implementation.md)
-is separately approved.
+was separately approved.
 
 **Result:** The memo is complete and proposes an explicit fail-closed sidecar
 schema, validation and conflict rules, ownership, a seven-ECU migration,
@@ -398,7 +398,9 @@ explicit replacement, with TX, RX, shared and unmapped examples. No production
 code, generated output or sidecar schema changed. The owner approved the memo;
 the concrete phased implementation is proposed in the
 [explicit mapping implementation plan](plan-signal-swc-mapping-implementation.md)
-and awaits approval.
+and is owner-approved. SM0 now freezes a deterministic seven-ECU legacy
+inventory with the 48-SWC baseline and the recomputed SC, ICU and TCU unmapped
+counts; SM1 remains pending.
 
 ## Cross-phase gates
 
@@ -425,8 +427,8 @@ and awaits approval.
 - In-house DBC passes conversion, strict load-back, arxmlgen and semantic
   round-trip verification.
 - Assumptions report is complete, deterministic and golden-tested.
-- Signal-to-SWC removal memo is committed and owner-approved; the linked
-  implementation plan awaits separate approval and no heuristic-removal
+- Signal-to-SWC removal memo and linked implementation plan are committed and
+  owner-approved; SM0 freezes the legacy inventory and no heuristic-removal
   implementation is included.
 - End-of-job handoff describes the actual commits, test results, blockers and
   next action.
