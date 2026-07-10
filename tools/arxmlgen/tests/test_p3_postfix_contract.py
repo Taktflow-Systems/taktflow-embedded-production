@@ -34,6 +34,9 @@ def test_atomic_replace_failure_preserves_bytes_and_removes_temporary_file(
     def fail_replace(_source, _target):
         raise OSError("simulated atomic replacement failure")
 
+    monkeypatch.setattr(
+        "tools.arxml.dbc2arxml.validate_arxml_strict", lambda _path: None
+    )
     monkeypatch.setattr("tools.arxml.dbc2arxml.os.replace", fail_replace)
 
     with pytest.raises(PipelineDiagnosticError) as exc_info:
