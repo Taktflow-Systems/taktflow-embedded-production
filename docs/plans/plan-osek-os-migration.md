@@ -184,6 +184,10 @@ merge is not viable; the port work must be harvested file-wise.
   - Status (2026-07-07): user decision DEFERRED — revisit after the STM32
     cutover (S-OS-31) is complete and proven; Phase 4 remains blocked
     until then (recorded in decision-sc-osek-adoption.md sign-off).
+  - Status (2026-07-10): user selected and signed **Option B** for the
+    experimental platform. S-OS-40 is authorized. The approval retains the
+    existing watchdog, 10 ms period, 2 ms WCET target, 5 ms overrun threshold,
+    ESM, CAN, telemetry, startup-BIST, relay, and safe-state limits.
 
 ### Phase 1 — Production OS configuration codegen (closes G1)
 
@@ -443,6 +447,19 @@ merge is not viable; the port work must be harvested file-wise.
     FDCAN transmit-path defect (`plan-rzc-fdcan-tx-wedge.md`). **STATUS:
     OPEN** - FIX-10 scheduler acceptance is clean, but S-OS-31 cannot close
     because its unchanged full-window RZC CAN-parity gate is not met.
+  - 2026-07-10 DISPOSITION - CONTINUE WITH KNOWN PHYSICAL LIMITATION:
+    the post-wiring 300 s replay failed when RZC accumulated transmit errors
+    and all required RZC cyclic IDs later paused together for approximately
+    one second. Five follow-up 150 s diagnostic runs placed the earliest
+    sampled RZC error at 30 s (TEC 130), with a clean preceding 25 s sample;
+    required cyclic traffic nevertheless remained uninterrupted for all five
+    150 s windows. The kernel/scheduler evidence remains clean: no fault
+    record, silent park, unexplained reset, or OS/UART loss occurred. By user
+    direction, the RZC physical/controller behavior is accepted as a known
+    limitation for continued OS-adoption work. **STATUS: COMPLETE FOR OS
+    ADOPTION BY ACCEPTED DEVIATION; SYSTEM-LEVEL CAN ACCEPTANCE NOT MET.**
+    RZC-FDCAN-03 remains deferred and must not be represented as passed or as
+    production CAN qualification.
 
 - **S-OS-32 STM32F4 OSEK port bringup (F413ZH) — spare-board track**
   - Goal: extend the OSEK kernel + STM32 Cortex-M4 port to build, link,
@@ -477,6 +494,25 @@ merge is not viable; the port work must be harvested file-wise.
   - Status (2026-07-08): OPEN, off the critical path. The 3x G474RE bench
     (S-OS-31) is the primary target; F4 is a spare board and this step is
     net-new port-adaptation work, not a flag flip.
+  - Status (2026-07-10): BLOCKED at the mixed-bench CAN gate. The narrow F413
+    OSEK target, 96 MHz SC3 override, F4 exception ownership, isolated output,
+    build ID, clean `-Werror` build, size budget, and 37-suite host regression
+    are complete. The uniquely mapped F413 passes all six on-target bringup
+    checks. A fresh-flash 300-second production run had continuous UART/OS,
+    no reset or retained fault, but zero captured CAN frames: boot diagnostics
+    showed bxCAN `MSR=0x09` (INAK set and RX sampled dominant/low), so the
+    controller could not observe the 11 recessive bits required to leave
+    initialization. Adapter RX packets and all error counters were unchanged.
+    The ignored map proves probe/VCP identity but not a valid active shared
+    transceiver segment. S-OS-32 remains OPEN until that physical segment is
+    corrected and the unchanged 300-second CAN/E2E soak is replayed. Report:
+    `test/hil/reports/os-migration-stm32f4.md`.
+  - 2026-07-10 DISPOSITION - DEFER PHYSICAL WIRING AND CONTINUE: by user
+    direction, the dominant F4 CAN RX segment is carried as a known physical
+    limitation and no longer blocks subsequent OS-adoption work. The F413
+    OSEK implementation, build, budget, regression, and 6/6 port-bringup
+    evidence remain valid. The production CAN/E2E soak remains explicitly
+    unmet and must be replayed before F413 production CAN qualification.
 
 ### Phase 4 — SC (TMS570) per S-OS-02 decision
 
@@ -499,6 +535,84 @@ merge is not viable; the port work must be harvested file-wise.
   - Status (2026-07-07): blocked — S-OS-02 decision DEFERRED until after
     S-OS-31 is complete and proven; do not start this step before a
     signed A/B decision exists in decision-sc-osek-adoption.md.
+  - Status (2026-07-10): ready for the S-OS-02 user decision. STM32 OS
+    adoption may continue with the G4 and F4 physical CAN limitations carried
+    explicitly, but S-OS-40 still must not start until Option A or Option B is
+    signed in `decision-sc-osek-adoption.md`.
+  - Status (2026-07-10): **IN PROGRESS — OPTION B SIGNED.** Implementation
+    and verification must preserve the fixed sequence as one highest-priority
+    run-to-completion task and may close only after the complete host, clean
+    cross-build, and on-target gate above is recorded in the TMS570 report.
+  - Status (2026-07-10, target attempt): **BLOCKED AT CAN-DEPENDENT HIL
+    CLOSURE.** A container-level correction proved that the apparent two
+    XDS110 devices were two serial interfaces of one physical probe; the
+    logical SC was then reverified before every flash. Production boot,
+    nine-module initialization, BIST 7/7, relay MONITORING, alarm-driven
+    safety-task activation, and all six isolated TMS570 port checks pass.
+    Red/target iteration fixed the idle autostart bitmask, enabled the
+    RTI/VIM/CPU-IRQ tick path after alarm arming, and corrected stale compare
+    rearming in check 6 without changing any acceptance limit. The final
+    production image was restored and ran beyond the external-watchdog timeout
+    margin with one boot and no fault/reset marker. The mapped bench CAN
+    interface is BUS-OFF with zero traffic from all ECUs; CAN continuity,
+    S-UDP-03, XCP, watchdog fault injection, and retained-fault closure were
+    stopped and remain pending. A documented manual interface recovery later
+    cleared BUS-OFF at the unchanged 500 kbit/s settings, but the error-active
+    adapter still had flat RX/TX/error counters and zero traffic. SC is running,
+    and CVC/FZC/RZC each produced live periodic UART output during a 12-second
+    read-only observation. With all four production nodes demonstrably live,
+    operator inspection of physical wiring, transceiver power/enable,
+    termination, and adapter routing/connection is required. See
+    `test/hil/reports/os-migration-tms570.md`.
+  - Status (2026-07-10, deviation disposition): **ACCEPTED FOR CONTINUED
+    OSEK ADOPTION BY EXPLICIT DEVIATION; NOT FULL S-OS-40 CLOSURE.** All
+    defensible non-physical-CAN host, build, executable fault-injection,
+    production boot, alarm/task activation, and six-check port evidence is
+    recorded in the TMS570 report. Physical CAN continuity, on-bus SC_Status,
+    CAN-driven S-UDP-03 phases, CAN-dependent XCP continuity, physical DCAN
+    bus-off injection, and system retained-fault/reset behavior after CAN
+    faults are DEFERRED. The lockstep CCM/ESM target self-test is NOT RUN
+    because the available debugger-detach/reset handoff does not repeatably
+    execute the documented method. Direct Ethernet is addressed by the
+    correction below. This deviation permits continued adoption only; it is
+    not production CAN, telemetry, or system qualification, and all stated
+    limits remain unchanged.
+  - Correction (2026-07-10, final-source rerun): the prior Ethernet
+    disconnected-path inference was wrong. An `ETH=1` image wakes the SC PHY
+    and the directly cabled PC link reports 100 Mbps. Direct UDP/XCP was run:
+    SC initialization reported Ethernet ready, but the PC received zero SCET
+    frames and XCP timed out. Investigation also found that the original
+    TMS570 production port completed only one safety-task activation because
+    termination switchback was never committed. The task-context cooperative
+    switch, fresh-frame rebuild, and ISR2 single-staging path now pass 100+
+    periodic activations in a diagnostic production build. However, the final
+    isolated port rerun passes check 1 and then stops in check 2, and the
+    Ethernet-enabled image stops at first task dispatch after RTI service.
+    Both are non-CAN software blockers; the earlier final-source 6/6 and
+    Ethernet NOT RUN claims are withdrawn. Option B remains accepted for
+    continued experimentation by deviation, not closed or qualified.
+  - Status (2026-07-10, non-CAN blocker closure): **BOTH NON-CAN SOFTWARE
+    BLOCKERS CLOSED ON TARGET.** Shared root cause: the dispatch-commit mode
+    switches (`MSR CPSR_c, #0x9F/#0x92`) cleared the F bit on the NMFI core,
+    permanently unmasking FIQ into the phantom-mapped VIM ch0/ch1 (ESM
+    high-level) pair; a retained ESM group-2 ch3 latch (CCM diagnostic
+    residue, survives all non-power-on resets) was asserting VIM ch0 and
+    livelocked the CPU at the first F-unmask. Fixes: F-preserving immediates
+    `0xDF/0xD2` in `Os_Port_Tms570_Asm.S` and the bring-up preemption ISR; a
+    save+restore validity guard in `Os_Port_Tms570_CheckPreemption`; and
+    `os_dispatch_task` records the configured stack top (not an IRQ-stack
+    local) as the stack-monitor base for ISR-context deferred dispatches.
+    Evidence: host runner 37 executables / 533 tests / 0 failures / 3
+    expected ignores; 13 SC scheduling/watchdog contract tests; on-target
+    final-source isolated suite 6/6 `[BRINGUP-SUMMARY] ALL PASS` (task CPSR
+    `0x600003DF` proves F=1); live SCET at 100.000 Hz, 3001 frames / 30 s,
+    zero gaps; XCP CONNECT/UNLOCK/SHORT_UPLOAD with `os_counter_value`
+    advancing 101 ticks per second. Remaining non-CAN item: repeatable
+    CCM/ESM self-test handoff (NOT RUN, unchanged). New open findings
+    (production ESM group-2 visibility gap, group-1 ch21 latch, 256-byte IRQ
+    stack margin, STM32-only FIX-10 gate) are recorded in
+    `test/hil/reports/os-migration-tms570.md`. Physical CAN gates remain
+    DEFERRED; the deviation disposition itself is unchanged.
 
 ### Phase 5 — Legacy retirement + safety documentation (closes G3)
 
