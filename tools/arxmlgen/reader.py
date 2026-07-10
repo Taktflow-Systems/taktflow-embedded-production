@@ -11,6 +11,9 @@ import os
 import re
 import sys
 from collections import defaultdict
+from collections.abc import Mapping
+from types import MappingProxyType
+from typing import Any
 
 import autosar_data as ad
 import yaml
@@ -36,6 +39,36 @@ except ModuleNotFoundError:
 from .config import ProjectConfig
 from .model import Ecu, Pdu, Port, ProjectModel, Runnable, Signal, Swc
 from .policy import apply_rate_monotonic_banding
+
+
+_SIDECAR_YAML_CACHE: dict[str, tuple[int, int, Any]] = {}
+
+
+def _freeze_sidecar(value: Any) -> Any:
+    """Make cached YAML read-only so readers cannot contaminate later loads."""
+
+    if isinstance(value, dict):
+        return MappingProxyType(
+            {key: _freeze_sidecar(item) for key, item in value.items()}
+        )
+    if isinstance(value, list):
+        return tuple(_freeze_sidecar(item) for item in value)
+    return value
+
+
+def _load_sidecar_yaml(path: str) -> Any:
+    """Load one immutable sidecar snapshot, invalidated by file metadata."""
+
+    resolved = os.path.realpath(path)
+    stat = os.stat(resolved)
+    cached = _SIDECAR_YAML_CACHE.get(resolved)
+    if cached is not None and cached[:2] == (stat.st_mtime_ns, stat.st_size):
+        return cached[2]
+    with open(resolved, "r", encoding="utf-8") as stream:
+        loaded = yaml.safe_load(stream)
+    frozen = _freeze_sidecar(loaded)
+    _SIDECAR_YAML_CACHE[resolved] = (stat.st_mtime_ns, stat.st_size, frozen)
+    return frozen
 
 
 class ArxmlReadError(PipelineDiagnosticError):
@@ -367,8 +400,7 @@ class ArxmlReader:
         # Load message_routing overrides from sidecar (multi-sender messages)
         if self.config.sidecar_path and os.path.exists(self.config.sidecar_path):
             try:
-                with open(self.config.sidecar_path, "r", encoding="utf-8") as f:
-                    sidecar = yaml.safe_load(f) or {}
+                sidecar = _load_sidecar_yaml(self.config.sidecar_path) or {}
                 routing = sidecar.get("message_routing", {})
                 for msg_name, cfg in routing.items():
                     extra_tx = cfg.get("additional_tx_ecus", [])
@@ -1015,10 +1047,9 @@ class ArxmlReader:
 
     def _read_sidecar(self, ecus: dict[str, Ecu]):
         """Merge sidecar YAML into existing ECU models."""
-        with open(self.config.sidecar_path, "r", encoding="utf-8") as f:
-            sidecar = yaml.safe_load(f)
+        sidecar = _load_sidecar_yaml(self.config.sidecar_path)
 
-        if not isinstance(sidecar, dict):
+        if not isinstance(sidecar, Mapping):
             self._fail(
                 "SIDECAR003", "sidecar root", "expected a YAML mapping"
             )
@@ -1154,7 +1185,7 @@ class ArxmlReader:
                 # load-bearing bridge runnables (Swc_FzcCom_Receive resets
                 # the CanMon silence counter; commit f22eb15).
                 _skip_com_bridge = lambda n: n.endswith("Com_Receive") or n.endswith("Com_TransmitSchedule")
-                _kept = lambda d: isinstance(d, dict) and bool(d.get("keep", False))
+                _kept = lambda d: isinstance(d, Mapping) and bool(d.get("keep", False))
                 missing = set(runnable_overrides.keys()) - found_names
                 if missing:
                     sidecar_runnables = []

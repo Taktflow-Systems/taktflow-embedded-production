@@ -410,8 +410,13 @@ outputs. Governed-ECU completeness uses the exact SWC-model inventory plus an
 explicit model-external production scope, while safety approval is driven only
 by structured DBC `ASIL` and `E2E_*` attributes. Migration signal sets expand
 for review but never grant coverage, so new signals cannot inherit exceptions
-silently. Converter, reader, actual sidecar, generated output and mapping
-behavior remain unchanged; SM3 shadow-mode wiring is pending.
+silently. SM3 adds the CI-blocking shadow CLI and deterministic parity gate,
+migrates all seven ECUs to exact mapped-or-unmapped coverage, and records the
+time-bounded project decision `SM3-COMPAT-001` for reviewed shared writers and
+safety exceptions. Legacy remains the sole emitter and normalized parity is
+exact at 48 SWCs, 848 ports, 182 interfaces, 71 runnables and 71 events. The
+combined ARXML, arxmlgen and CI suite passes with 447 tests; generated ARXML
+and ECU configuration remain unchanged. SM4 preferred emission is pending.
 
 ## Cross-phase gates
 

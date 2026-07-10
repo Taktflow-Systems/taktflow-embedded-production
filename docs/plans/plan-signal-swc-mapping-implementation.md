@@ -1,12 +1,13 @@
 # Plan: Explicit Signal-to-SWC Mapping Implementation
 
-**Status:** OWNER APPROVED - SM0-SM2 DONE; SM3 PENDING
+**Status:** OWNER APPROVED - SM0-SM3 DONE; SM4 PENDING
 **Source decision:** [approved removal memo](memo-signal-swc-mapping-removal.md)
 **Scope:** Replace name-derived Signal-to-SWC and related identity decisions
 with an explicit, fail-closed mapping in `model/ecu_sidecar.yaml`.
-**Current boundary:** SM2 provides disconnected, fail-closed cross-input
-validation and a validate-before-publish boundary only; it does not implement
-mapping behavior, migration, generated output, or heuristic removal.
+**Current boundary:** SM3 validates the exact seven-ECU map and blocks on
+deterministic shadow parity while the legacy heuristic model remains the sole
+emitter. Preferred emission, generated-output migration and heuristic removal
+have not started.
 
 ## Objective and authority boundary
 
@@ -208,7 +209,24 @@ ARXML, arxmlgen and CI regression suite passes with 438 tests, and the SM0
 inventory remains at 48 SWCs, 848 ports, 71 runnables and 71 events. Converter,
 reader, actual sidecar, generated output and mapping behavior remain unchanged.
 
-### SM3 - Milestone 1: inventory/report shadow mode - PENDING
+### SM3 - Milestone 1: inventory/report shadow mode - DONE
+
+**Compatibility decision `SM3-COMPAT-001`:** The project is the sole
+accountable identity. Shared provided signals select exactly one temporary
+writer by this reviewed order: the sole non-generic domain SWC; otherwise an
+exact structured DBC signal `Owner` candidate; otherwise an exact structured
+DBC signal `ProducedBy` candidate; otherwise, only for a candidate set with
+one `Com` transport SWC and `CanMonitor` observers, the `Com` SWC. Generic
+catch-all SWCs remain compatibility shadows except for those evidenced
+transport-only cases. The proof resolves all 147 shared provided identities
+exactly once: 90 by sole domain, 37 by `Owner`, eight by `ProducedBy`, and 12
+by the transport-only rule, with no unresolved case.
+
+The same project-owned decision identifier is the temporary reviewable safety
+reference for shared and unmapped safety-sensitive signals. The entire
+decision is limited to shadow and preferred migration, expires before strict
+mode, and must be reviewed or removed at the SM5 entry gate. No personal or
+external organizational identity is recorded.
 
 **Tests first:** Require legacy emission plus independent explicit-map
 validation and a stable parity report. Seed port, interface, runnable and event
@@ -235,6 +253,26 @@ interface, runnable and event parity is exact unless each difference has an
 architecture-owner decision; all seven ECUs have 100% mapped-or-unmapped
 signal coverage and all extracted runnables are assigned-or-unmapped; reports
 are byte-identical, privacy-clean and CI-blocking.
+
+**Result:** The required red tests first failed on the absent shadow CLI and
+parity comparator. Shadow mode now validates the explicitly supplied sidecar
+before converter construction and retains legacy-only emission. The exact map
+covers seven ECUs, 48 SWCs, 848 port bindings, 71 mapped and 69 intentionally
+unmapped runnables, and 185 exact unmapped signals with no migration signal
+sets. It records 313 shared identities; all 147 shared provided identities
+have one writer under `SM3-COMPAT-001`, and safety-sensitive shared/unmapped
+entries carry that time-bounded project decision reference.
+
+The normalized report records 48 SWCs, 848 ports, 182 interfaces, 71
+runnables, 71 events and zero differences. Two conversion runs produced
+byte-identical ARXML, assumptions and parity reports; the parity report matches
+the committed golden and contains no host or private identity data. Focused
+mapping tests pass with 73 tests and the combined ARXML, arxmlgen and CI suite
+passes with 447 tests. Strict ARXML, 45-frame/182-signal round trip and the
+strict corpus gate pass. A read-only sidecar cache, invalidated by resolved
+path metadata and protected by immutable snapshots, restored the arxmlgen
+suite from 258.97 seconds to 23.14 seconds without activating mapping
+semantics. Generated ARXML and ECU configuration remain unchanged.
 
 **Commits**
 

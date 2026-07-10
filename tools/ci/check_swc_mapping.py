@@ -1,17 +1,31 @@
 #!/usr/bin/env python3
-"""Freeze the normalized legacy Signal-to-SWC inventory."""
+"""Check normalized legacy inventory and explicit SWC mapping shadow parity."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
+import tempfile
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
 import cantools
+
+TOOLS_DIR = Path(__file__).resolve().parents[1]
+if str(TOOLS_DIR) not in sys.path:
+    sys.path.insert(0, str(TOOLS_DIR))
+
+from arxml.swc_mapping import (
+    ExplicitSwcMapping,
+    SwcMappingError,
+    SwcMappingValidationError,
+    load_swc_mapping,
+    validate_swc_mapping,
+)
 
 
 ECUS = ("BCM", "CVC", "FZC", "ICU", "RZC", "SC", "TCU")
@@ -29,6 +43,7 @@ DEFAULT_GOLDEN = (
     / "swc_mapping"
     / "legacy_inventory.json"
 )
+DEFAULT_SHADOW_GOLDEN = DEFAULT_GOLDEN.with_name("shadow_parity.json")
 
 
 class InventoryError(Exception):
@@ -328,44 +343,283 @@ def render_inventory(inventory: dict[str, Any]) -> bytes:
     return (json.dumps(inventory, indent=2, ensure_ascii=True) + "\n").encode("utf-8")
 
 
+def _legacy_parity_snapshot(inventory: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    snapshot: dict[str, dict[str, Any]] = {
+        name: {} for name in ("swcs", "ports", "interfaces", "runnables", "events")
+    }
+    for ecu, entry in inventory["ecus"].items():
+        for swc in entry["generated_swcs"]:
+            source_name = swc["name"].removeprefix(f"{ecu}_")
+            swc_key = f"{ecu.lower()}/{source_name}"
+            snapshot["swcs"][swc_key] = swc["name"]
+            for port in swc["ports"]:
+                key = "/".join(
+                    (swc_key, port["direction"], port["message"], port["signal"])
+                )
+                snapshot["ports"][key] = port["name"]
+                snapshot["interfaces"][key] = port["interface"]
+            for runnable in swc["runnables"]:
+                key = f"{swc_key}/{runnable}"
+                snapshot["runnables"][key] = runnable
+            for event in swc["events"]:
+                key = f"{swc_key}/{event['runnable']}"
+                snapshot["events"][key] = {
+                    field: event[field]
+                    for field in ("name", "period_seconds", "type")
+                    if field in event
+                }
+    return snapshot
+
+
+def _explicit_parity_snapshot(mapping: ExplicitSwcMapping) -> dict[str, dict[str, Any]]:
+    snapshot: dict[str, dict[str, Any]] = {
+        name: {} for name in ("swcs", "ports", "interfaces", "runnables", "events")
+    }
+    for ecu in mapping.ecus:
+        for swc in ecu.swcs:
+            swc_key = f"{ecu.name.lower()}/{swc.name}"
+            snapshot["swcs"][swc_key] = swc.arxml_short_name
+            for port in swc.ports:
+                key = "/".join(
+                    (
+                        swc_key,
+                        port.direction,
+                        port.identity.message,
+                        port.identity.signal,
+                    )
+                )
+                snapshot["ports"][key] = port.name
+                snapshot["interfaces"][key] = port.interface
+            for runnable in swc.runnables:
+                key = f"{swc_key}/{runnable.function}"
+                snapshot["runnables"][key] = runnable.function
+                if runnable.trigger == "init":
+                    event = {"name": f"IE_{runnable.function}", "type": "init"}
+                elif runnable.trigger == "periodic":
+                    event = {
+                        "name": f"TE_{runnable.function}_{runnable.period_ms}ms",
+                        "period_seconds": str(runnable.period_ms / 1000.0),
+                        "type": "timing",
+                    }
+                else:
+                    event = {
+                        "name": f"DE_{runnable.function}",
+                        "type": "data-received",
+                    }
+                snapshot["events"][key] = event
+    return snapshot
+
+
+def compare_parity_snapshots(
+    legacy: dict[str, dict[str, Any]],
+    explicit: dict[str, dict[str, Any]],
+) -> tuple[dict[str, Any], ...]:
+    """Return one stable difference per normalized semantic object."""
+
+    singular = {
+        "events": "event",
+        "interfaces": "interface",
+        "ports": "port",
+        "runnables": "runnable",
+        "swcs": "swc",
+    }
+    differences: list[dict[str, Any]] = []
+    for category in sorted(singular):
+        legacy_rows = legacy.get(category, {})
+        explicit_rows = explicit.get(category, {})
+        for key in sorted(set(legacy_rows) | set(explicit_rows)):
+            legacy_value = legacy_rows.get(key)
+            explicit_value = explicit_rows.get(key)
+            if legacy_value != explicit_value:
+                differences.append(
+                    {
+                        "category": singular[category],
+                        "object": key,
+                        "legacy": legacy_value,
+                        "explicit": explicit_value,
+                    }
+                )
+    return tuple(differences)
+
+
+def build_shadow_report(
+    dbc_path: Path,
+    model_path: Path,
+    mapping_path: Path,
+    arxml_path: Path,
+) -> dict[str, Any]:
+    mapping = load_swc_mapping(mapping_path)
+    result = validate_swc_mapping(mapping, dbc_path, model_path, governed_ecus=ECUS)
+    if result.expanded_unmapped_signals:
+        raise InventoryError(
+            "SWCMAP016 shadow parity: migration-only unmapped signal sets are forbidden"
+        )
+    inventory = build_inventory(dbc_path, model_path, arxml_path)
+    legacy = _legacy_parity_snapshot(inventory)
+    explicit = _explicit_parity_snapshot(mapping)
+    differences = compare_parity_snapshots(legacy, explicit)
+    coverage: list[dict[str, Any]] = []
+    unmapped_signals: list[dict[str, Any]] = []
+    for ecu in mapping.ecus:
+        mapped = {
+            (port.direction, port.identity)
+            for swc in ecu.swcs
+            for port in swc.ports
+        }
+        coverage.append(
+            {
+                "ecu": ecu.name.upper(),
+                "swcs": len(ecu.swcs),
+                "port_bindings": sum(len(swc.ports) for swc in ecu.swcs),
+                "mapped_provided_signals": sum(
+                    direction == "provided" for direction, _ in mapped
+                ),
+                "mapped_required_signals": sum(
+                    direction == "required" for direction, _ in mapped
+                ),
+                "unmapped_provided_signals": sum(
+                    item.direction == "provided" for item in ecu.unmapped_signals
+                ),
+                "unmapped_required_signals": sum(
+                    item.direction == "required" for item in ecu.unmapped_signals
+                ),
+                "mapped_runnables": sum(len(swc.runnables) for swc in ecu.swcs),
+                "unmapped_runnables": len(ecu.unmapped_runnables),
+            }
+        )
+        for item in ecu.unmapped_signals:
+            row = {
+                "ecu": ecu.name.upper(),
+                "direction": item.direction,
+                "message": item.identity.message,
+                "signal": item.identity.signal,
+                "disposition": item.disposition,
+            }
+            if item.safety_approval_ref is not None:
+                row["safety_approval_ref"] = item.safety_approval_ref
+            unmapped_signals.append(row)
+    return {
+        "schema": "swc-mapping-shadow-parity-v1",
+        "mode": "shadow",
+        "inputs": {
+            "dbc": dbc_path.name,
+            "swc_model": model_path.name,
+            "swc_mapping": mapping_path.name,
+            "arxml": arxml_path.name,
+        },
+        "summary": {
+            "swcs": len(legacy["swcs"]),
+            "ports": len(legacy["ports"]),
+            "interfaces": inventory["summary"]["arxml_interfaces"],
+            "runnables": len(legacy["runnables"]),
+            "events": len(legacy["events"]),
+            "mapped_signal_identities": sum(
+                row["mapped_provided_signals"] + row["mapped_required_signals"]
+                for row in coverage
+            ),
+            "unmapped_signals": len(unmapped_signals),
+            "unmapped_runnables": sum(row["unmapped_runnables"] for row in coverage),
+            "differences": len(differences),
+        },
+        "coverage": coverage,
+        "unmapped_signals": unmapped_signals,
+        "differences": list(differences),
+    }
+
+
+def _write_atomic(path: Path, content: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="wb",
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            dir=path.parent,
+            delete=False,
+        ) as stream:
+            temporary = Path(stream.name)
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+        temporary = None
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("dbc", type=Path)
     parser.add_argument("swc_model", type=Path)
-    parser.add_argument("arxml", type=Path)
+    parser.add_argument("mapping_or_arxml", type=Path)
+    parser.add_argument("arxml", nargs="?", type=Path)
+    parser.add_argument("--mode", choices=["shadow"])
     parser.add_argument("--output", type=Path)
     parser.add_argument(
         "--check",
         nargs="?",
-        type=Path,
-        const=DEFAULT_GOLDEN,
-        help="compare with a golden (default: committed legacy inventory)",
+        const="__default__",
+        help="compare with a golden (default depends on selected mode)",
     )
     args = parser.parse_args()
     if args.output is None and args.check is None:
         parser.error("one of --output or --check is required")
 
     try:
-        rendered = render_inventory(build_inventory(args.dbc, args.swc_model, args.arxml))
+        if args.mode == "shadow":
+            if args.arxml is None:
+                parser.error("shadow mode requires SWC mapping and ARXML positional inputs")
+            report = build_shadow_report(
+                args.dbc,
+                args.swc_model,
+                args.mapping_or_arxml,
+                args.arxml,
+            )
+            default_golden = DEFAULT_SHADOW_GOLDEN
+        else:
+            if args.arxml is not None:
+                parser.error("the fourth positional input requires --mode shadow")
+            report = build_inventory(args.dbc, args.swc_model, args.mapping_or_arxml)
+            default_golden = DEFAULT_GOLDEN
+        rendered = render_inventory(report)
         if args.check is not None:
-            expected = args.check.read_bytes()
+            check_path = (
+                default_golden if args.check == "__default__" else Path(args.check)
+            )
+            expected = check_path.read_bytes()
             if rendered != expected:
                 raise InventoryError(
-                    f"legacy inventory drift: generated report differs from '{args.check.name}'"
+                    f"SWC mapping report drift: generated report differs from '{check_path.name}'"
                 )
         if args.output is not None:
-            args.output.parent.mkdir(parents=True, exist_ok=True)
-            args.output.write_bytes(rendered)
-    except (InventoryError, OSError, ET.ParseError, json.JSONDecodeError) as exc:
+            _write_atomic(args.output, rendered)
+    except (
+        InventoryError,
+        OSError,
+        ET.ParseError,
+        json.JSONDecodeError,
+        SwcMappingError,
+        SwcMappingValidationError,
+    ) as exc:
         print(str(exc), file=sys.stderr)
         return 1
 
     summary = json.loads(rendered)["summary"]
-    print(
-        "Legacy SWC mapping inventory passed: "
-        f"{summary['arxml_swcs']} SWCs, {summary['arxml_ports']} ports, "
-        f"{summary['arxml_runnables']} runnables, {summary['arxml_events']} events."
-    )
+    if args.mode == "shadow":
+        print(
+            "SWC mapping shadow parity passed: "
+            f"{summary['swcs']} SWCs, {summary['ports']} ports, "
+            f"{summary['runnables']} runnables, {summary['events']} events, "
+            f"{summary['differences']} differences."
+        )
+    else:
+        print(
+            "Legacy SWC mapping inventory passed: "
+            f"{summary['arxml_swcs']} SWCs, {summary['arxml_ports']} ports, "
+            f"{summary['arxml_runnables']} runnables, {summary['arxml_events']} events."
+        )
     return 0
 
 

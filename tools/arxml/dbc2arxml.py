@@ -42,6 +42,12 @@ from arxml_validation import (
     validate_arxml_strict,
 )
 from conversion_assumptions import AssumptionsCollector
+from arxml.swc_mapping import (
+    SwcMappingError,
+    SwcMappingValidationError,
+    load_swc_mapping,
+    validate_swc_mapping,
+)
 from autosar_data.abstraction.communication import (
     CanAddressingMode, CanFrameType, CyclicTiming, IpduTiming,
     TransmissionModeTiming,
@@ -1182,7 +1188,21 @@ def main():
     parser.add_argument("model", nargs="?", help="ECU model JSON (optional)")
     parser.add_argument("--step", choices=["base", "enrich", "all"], default="all",
                         help="Pipeline step: base (step 2), enrich (step 3), all (both)")
+    parser.add_argument(
+        "--swc-mapping",
+        help="explicit signal-to-SWC sidecar path (required with mapping mode)",
+    )
+    parser.add_argument(
+        "--swc-mapping-mode",
+        choices=["shadow"],
+        help="validate explicit mapping while retaining legacy emission",
+    )
     args = parser.parse_args()
+
+    if bool(args.swc_mapping) != bool(args.swc_mapping_mode):
+        parser.error("--swc-mapping and --swc-mapping-mode must be supplied together")
+    if args.swc_mapping and not args.model:
+        parser.error("--swc-mapping requires an ECU model JSON input")
 
     if not os.path.isfile(args.dbc):
         print("Error: DBC file not found: %s" % args.dbc)
@@ -1200,6 +1220,28 @@ def main():
               "argument (see .github/workflows/ci.yml).")
 
     try:
+        if args.swc_mapping_mode == "shadow":
+            mapping = load_swc_mapping(args.swc_mapping)
+            database = cantools.database.load_file(args.dbc)
+            production_ecus = {"cvc", "fzc", "rzc", "sc", "bcm", "icu", "tcu"}
+            governed_ecus = sorted(
+                production_ecus
+                & {
+                    (node.name if hasattr(node, "name") else str(node)).lower()
+                    for node in database.nodes
+                }
+            )
+            validate_swc_mapping(
+                mapping,
+                args.dbc,
+                args.model,
+                governed_ecus=governed_ecus,
+            )
+            print(
+                "  SWC mapping: shadow validation passed; "
+                "legacy emission remains active"
+            )
+
         c = Dbc2Arxml(args.dbc, args.model)
 
         if args.step == "base":
@@ -1215,6 +1257,9 @@ def main():
         return 0
     except PipelineDiagnosticError as exc:
         print(str(exc), file=sys.stderr)
+        return 2
+    except (SwcMappingError, SwcMappingValidationError, OSError) as exc:
+        print(_portable_error(exc, args.swc_mapping, args.model, args.dbc), file=sys.stderr)
         return 2
 
 

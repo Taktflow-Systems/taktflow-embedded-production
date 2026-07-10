@@ -48,8 +48,12 @@ jobs:
       - run: pip install cantools pyyaml autosar-data==0.16.0 jinja2
       - name: Generate ARXML from DBC
         run: |
-          python tools/arxml/dbc2arxml.py $DBC arxml_v2/ arxml_v2/swc_model.json
+          python tools/arxml/dbc2arxml.py $DBC arxml_v2/ arxml_v2/swc_model.json \
+            --swc-mapping model/ecu_sidecar.yaml --swc-mapping-mode shadow
           cp arxml_v2/TaktflowSystem.arxml arxml/TaktflowSystem.arxml
+          python tools/ci/check_swc_mapping.py $DBC arxml_v2/swc_model.json \
+            model/ecu_sidecar.yaml arxml/TaktflowSystem.arxml \
+            --mode shadow --check
       - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: arxml
