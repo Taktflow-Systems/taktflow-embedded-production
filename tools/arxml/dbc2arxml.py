@@ -243,7 +243,7 @@ DOMAIN_MAP = {
 class Dbc2Arxml:
     """Convert a DBC file to ARXML using autosar-data abstraction layer."""
 
-    def __init__(self, dbc_path, ecu_model_path=None):
+    def __init__(self, dbc_path, ecu_model_path=None, swc_mapping=None):
         self.diagnostics = DiagnosticBag()
         self.source_path = dbc_path
         try:
@@ -284,6 +284,7 @@ class Dbc2Arxml:
 
         # SWC architecture
         self.sr_interfaces = {}
+        self.sr_interfaces_by_name = {}
         self.data_elements = {}
         self.swc_types = {}
         self.swc_behaviors = {}
@@ -294,6 +295,7 @@ class Dbc2Arxml:
         self.interface_count = 0
         self.timing_event_count = 0
         self.init_event_count = 0
+        self.explicit_swc_mapping = swc_mapping
 
         # ECU model (optional)
         self.ecu_model = None
@@ -703,6 +705,7 @@ class Dbc2Arxml:
                         )
                     de = sr.create_data_element(sn, idt)
                     self.sr_interfaces[sn] = sr
+                    self.sr_interfaces_by_name["SRI_%s" % sn] = sr
                     self.data_elements[sn] = de
                     self.interface_count += 1
                 except PipelineDiagnosticError:
@@ -1007,6 +1010,9 @@ class Dbc2Arxml:
 
     def _create_swc_types(self):
         """Create ApplicationSwComponentType per SWC with ports, runnables, events."""
+        if getattr(self, "explicit_swc_mapping", None) is not None:
+            self._create_explicit_swc_types()
+            return
         if self.ecu_model is None:
             return
 
@@ -1042,6 +1048,58 @@ class Dbc2Arxml:
                         "cannot create software component", exc,
                     )
 
+    def _create_explicit_swc_types(self):
+        """Emit only the already validated exact mapping model."""
+        for ecu in self.explicit_swc_mapping.ecus:
+            swc_pkg = self.am.get_or_create_package(
+                "/Taktflow/SWCs/%s" % ecu.name.upper()
+            )
+            for mapped_swc in ecu.swcs:
+                try:
+                    swc = swc_pkg.create_application_sw_component_type(
+                        mapped_swc.arxml_short_name
+                    )
+                    self.swc_types[mapped_swc.arxml_short_name] = swc
+                    self.swc_count += 1
+                    for port in mapped_swc.ports:
+                        interface = self.sr_interfaces_by_name[port.interface]
+                        if port.direction == "provided":
+                            swc.create_p_port(port.name, interface)
+                        else:
+                            swc.create_r_port(port.name, interface)
+                        self.port_count += 1
+
+                    behavior = swc.create_swc_internal_behavior(
+                        "%s_IB" % mapped_swc.arxml_short_name
+                    )
+                    self.swc_behaviors[mapped_swc.arxml_short_name] = behavior
+                    for runnable in mapped_swc.runnables:
+                        entity = behavior.create_runnable_entity(runnable.function)
+                        self.swc_runnables[runnable.function] = entity
+                        self.runnable_count += 1
+                        if runnable.trigger == "init":
+                            behavior.create_init_event(
+                                "IE_%s" % runnable.function, entity
+                            )
+                            self.init_event_count += 1
+                        elif runnable.trigger == "periodic":
+                            behavior.create_timing_event(
+                                "TE_%s_%dms" % (
+                                    runnable.function, runnable.period_ms
+                                ),
+                                entity,
+                                float(runnable.period_ms) / 1000.0,
+                            )
+                            self.timing_event_count += 1
+                except PipelineDiagnosticError:
+                    raise
+                except Exception as exc:
+                    self._fail(
+                        "ARXML014",
+                        "SWC '%s/%s'" % (ecu.name, mapped_swc.name),
+                        "cannot create explicit software component",
+                        exc,
+                    )
     def _create_one_swc(self, pkg, ecu, swc_name, functions, runnables, tx_sigs, rx_sigs):
         full = "%s_%s" % (ecu, swc_name)
         swc = pkg.create_application_sw_component_type(full)
@@ -1194,8 +1252,8 @@ def main():
     )
     parser.add_argument(
         "--swc-mapping-mode",
-        choices=["shadow"],
-        help="validate explicit mapping while retaining legacy emission",
+        choices=["shadow", "preferred"],
+        help="validate explicit mapping for shadow or preferred emission",
     )
     args = parser.parse_args()
 
@@ -1220,7 +1278,8 @@ def main():
               "argument (see .github/workflows/ci.yml).")
 
     try:
-        if args.swc_mapping_mode == "shadow":
+        mapping = None
+        if args.swc_mapping_mode in ("shadow", "preferred"):
             mapping = load_swc_mapping(args.swc_mapping)
             database = cantools.database.load_file(args.dbc)
             production_ecus = {"cvc", "fzc", "rzc", "sc", "bcm", "icu", "tcu"}
@@ -1237,12 +1296,19 @@ def main():
                 args.model,
                 governed_ecus=governed_ecus,
             )
-            print(
-                "  SWC mapping: shadow validation passed; "
-                "legacy emission remains active"
-            )
+            if args.swc_mapping_mode == "shadow":
+                print(
+                    "  SWC mapping: shadow validation passed; "
+                    "legacy emission remains active"
+                )
+            else:
+                print("  SWC mapping: preferred explicit emission active")
 
-        c = Dbc2Arxml(args.dbc, args.model)
+        c = Dbc2Arxml(
+            args.dbc,
+            args.model,
+            swc_mapping=mapping if args.swc_mapping_mode == "preferred" else None,
+        )
 
         if args.step == "base":
             c.convert_base()

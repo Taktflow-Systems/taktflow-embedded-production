@@ -101,6 +101,9 @@ class ArxmlReader:
         self._additional_tx_ecus: dict[str, list[str]] = {}  # message_name → extra TX ECUs
         self._dbc_send_type_map: dict[str, str] = {}   # message_name → GenMsgSendType (lowercase)
         self._tx_mode_overrides: dict[str, str] = {}   # message_name → forced Com TX mode (sidecar)
+        self._dbc_signal_types: dict[tuple[str, str], str] = {}
+        self._mapped_swcs: dict[str, tuple[str, str]] = {}
+        self._mapped_ports: dict[tuple[str, str], tuple[str, str]] = {}
 
     def read(self) -> ProjectModel:
         """Read all ARXML files and build the project model."""
@@ -122,6 +125,8 @@ class ArxmlReader:
         # Load DBC for TX/RX routing (optional but recommended)
         if self.config.dbc_path:
             self._load_dbc_routing()
+        if self.config.sidecar_path:
+            self._load_explicit_mapping_index()
 
         # Extract data in dependency order
         platform_types = self._extract_platform_types()
@@ -278,6 +283,10 @@ class ArxmlReader:
                     source="DBC attribute definition '%s'" % name,
                 )
         for msg in db.messages:
+            for signal in msg.signals:
+                self._dbc_signal_types[(msg.name, signal.name)] = _bits_to_c_type(
+                    signal.length
+                )
             senders = msg.senders or []
             if senders:
                 self._dbc_tx_map[msg.name] = senders[0].upper()
@@ -870,6 +879,22 @@ class ArxmlReader:
     # SWCs
     # ------------------------------------------------------------------
 
+    def _load_explicit_mapping_index(self):
+        """Index exact mapped ownership and signal identity from the sidecar."""
+        sidecar = _load_sidecar_yaml(self.config.sidecar_path)
+        section = sidecar.get("swc_signal_mapping") if isinstance(sidecar, Mapping) else None
+        if not isinstance(section, Mapping):
+            return
+        for ecu_name, ecu_data in section.get("ecus", {}).items():
+            for swc_name, swc_data in ecu_data.get("swcs", {}).items():
+                short_name = swc_data.get("arxml_short_name")
+                if isinstance(short_name, str):
+                    self._mapped_swcs[short_name] = (str(ecu_name).lower(), str(swc_name))
+                for port in swc_data.get("ports", ()):
+                    values = (short_name, port.get("name"), port.get("message"), port.get("signal"))
+                    if all(isinstance(value, str) for value in values):
+                        self._mapped_ports[(values[0], values[1])] = (values[2], values[3])
+
     def _extract_swcs(self, ecus: dict[str, Ecu]):
         """Extract SWC types from ARXML and assign to ECUs by naming convention."""
         for path, elem in self.model.identifiable_elements:
@@ -879,8 +904,11 @@ class ArxmlReader:
             short_name = elem.item_name  # e.g., "CVC_Swc_Pedal"
 
             # Determine owning ECU from prefix: "CVC_Swc_Pedal" → "cvc"
-            ecu_name = None
+            mapped_owner = self._mapped_swcs.get(short_name)
+            ecu_name = mapped_owner[0] if mapped_owner is not None else None
             for name, ecu in ecus.items():
+                if ecu_name is not None:
+                    break
                 if short_name.upper().startswith(ecu.prefix + "_"):
                     ecu_name = name
                     break
@@ -892,9 +920,9 @@ class ArxmlReader:
                 )
 
             # Strip ECU prefix to get clean SWC name
-            swc_name = short_name
+            swc_name = mapped_owner[1] if mapped_owner is not None else short_name
             prefix_len = len(ecus[ecu_name].prefix) + 1  # "CVC_"
-            if len(short_name) > prefix_len:
+            if mapped_owner is None and len(short_name) > prefix_len:
                 swc_name = short_name[prefix_len:]  # "Swc_Pedal"
 
             # Extract ports
@@ -902,7 +930,7 @@ class ArxmlReader:
             for sub in elem.sub_elements:
                 if sub.element_name == "PORTS":
                     for port_elem in sub.sub_elements:
-                        port = self._parse_port(port_elem)
+                        port = self._parse_port(port_elem, short_name)
                         if port:
                             ports.append(port)
 
@@ -926,7 +954,7 @@ class ArxmlReader:
             )
             ecus[ecu_name].swcs.append(swc)
 
-    def _parse_port(self, port_elem) -> Port | None:
+    def _parse_port(self, port_elem, swc_short_name="") -> Port | None:
         """Parse a P-PORT-PROTOTYPE or R-PORT-PROTOTYPE."""
         elem_name = port_elem.element_name
         if elem_name not in ("P-PORT-PROTOTYPE", "R-PORT-PROTOTYPE"):
@@ -948,13 +976,21 @@ class ArxmlReader:
                     )
 
         # Derive signal name from interface: "SRI_PedalRaw1" → "PedalRaw1"
-        signal_name = interface_name.replace("SRI_", "") if interface_name.startswith("SRI_") else interface_name
+        mapped_identity = self._mapped_ports.get((swc_short_name, name))
+        signal_name = (
+            mapped_identity[1]
+            if mapped_identity is not None
+            else interface_name.replace("SRI_", "")
+            if interface_name.startswith("SRI_")
+            else interface_name
+        )
 
         return Port(
             name=name,
             direction=direction,
             interface_name=interface_name,
             signal_name=signal_name,
+            message_name=mapped_identity[0] if mapped_identity is not None else "",
         )
 
     def _parse_behavior(self, beh_elem) -> list[Runnable]:
@@ -1451,7 +1487,12 @@ class ArxmlReader:
 
             for swc in ecu.swcs:
                 for port in swc.ports:
-                    if port.signal_name in exact_types:
+                    mapped_type = self._dbc_signal_types.get(
+                        (port.message_name, port.signal_name)
+                    )
+                    if mapped_type is not None:
+                        port.data_type = mapped_type
+                    elif port.signal_name in exact_types:
                         port.data_type = exact_types[port.signal_name]
                     elif port.signal_name in suffix_types:
                         port.data_type = suffix_types[port.signal_name]

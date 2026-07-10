@@ -29,6 +29,7 @@ GOLDEN = (
     / "legacy_inventory.json"
 )
 SHADOW_GOLDEN = GOLDEN.with_name("shadow_parity.json")
+PREFERRED_GOLDEN = GOLDEN.with_name("preferred_parity.json")
 
 
 def run_checker(arxml: Path, output: Path) -> subprocess.CompletedProcess[str]:
@@ -213,6 +214,39 @@ def run_shadow_checker(
         capture_output=True,
         check=False,
     )
+
+
+def run_preferred_checker(output: Path, check: bool = False):
+    command = [
+        sys.executable,
+        str(CHECKER),
+        str(DBC),
+        str(SWC_MODEL),
+        str(MAPPING),
+        str(ARXML),
+        "--mode",
+        "preferred",
+    ]
+    command.extend(["--check"] if check else ["--output", str(output)])
+    return subprocess.run(
+        command, cwd=ROOT, text=True, capture_output=True, check=False
+    )
+
+
+def test_project_preferred_report_has_distinct_repeatable_golden(tmp_path: Path):
+    first = tmp_path / "first.json"
+    second = tmp_path / "second.json"
+
+    first_result = run_preferred_checker(first)
+    second_result = run_preferred_checker(second)
+    check_result = run_preferred_checker(tmp_path / "unused.json", check=True)
+
+    assert first_result.returncode == second_result.returncode == 0
+    assert check_result.returncode == 0, check_result.stderr
+    assert first.read_bytes() == second.read_bytes() == PREFERRED_GOLDEN.read_bytes()
+    report = json.loads(first.read_text(encoding="utf-8"))
+    assert report["mode"] == "preferred"
+    assert report["summary"]["differences"] == 0
 
 
 def test_project_shadow_report_is_exact_repeatable_and_path_scrubbed(tmp_path: Path):

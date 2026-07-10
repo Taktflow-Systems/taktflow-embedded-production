@@ -65,6 +65,7 @@ class Port:
     direction: str = "REQUIRED"
     interface_name: str = ""
     signal_name: str = ""
+    message_name: str = ""
     data_type: str = "uint32_t"
 
 

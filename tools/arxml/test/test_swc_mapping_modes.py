@@ -1,4 +1,4 @@
-"""SM3 shadow-mode integration keeps legacy emission authoritative."""
+"""SM3 shadow and SM4 preferred-mode integration contracts."""
 
 from __future__ import annotations
 
@@ -96,3 +96,55 @@ def test_mapping_path_and_shadow_mode_must_be_supplied_together(tmp_path: Path):
     assert missing_mapping.returncode == 2
     assert "must be supplied together" in missing_mode.stderr
     assert "must be supplied together" in missing_mapping.stderr
+
+
+def test_preferred_emits_only_the_validated_explicit_model(tmp_path: Path):
+    output = tmp_path / "preferred"
+
+    result = _run(
+        output,
+        "--swc-mapping",
+        str(MAPPING),
+        "--swc-mapping-mode",
+        "preferred",
+    )
+
+    assert result.returncode == 0, result.stderr
+    arxml = (output / "TaktflowSystem.arxml").read_text(encoding="utf-8")
+    assert "<SHORT-NAME>CVC_Swc_Pedal</SHORT-NAME>" in arxml
+    assert "<SHORT-NAME>PP_PedalPosition</SHORT-NAME>" in arxml
+    assert "<SHORT-NAME>RP_BrakeForceCmd</SHORT-NAME>" in arxml
+    assert "<SHORT-NAME>Swc_Pedal_Init</SHORT-NAME>" in arxml
+    assert "<SHORT-NAME>Swc_Pedal_MainFunction</SHORT-NAME>" in arxml
+    assert "<SHORT-NAME>Swc_Pedal_Background</SHORT-NAME>" not in arxml
+    assert "SWC mapping: preferred explicit emission active" in result.stdout
+
+
+def test_preferred_invalid_mapping_replaces_no_output_and_never_falls_back(tmp_path: Path):
+    mapping = tmp_path / "invalid.yaml"
+    mapping.write_text(
+        MAPPING.read_text(encoding="utf-8").replace(
+            "signal: PedalPosition", "signal: UnknownSignal", 1
+        ),
+        encoding="utf-8",
+    )
+    output = tmp_path / "output"
+    output.mkdir()
+    arxml = output / "TaktflowSystem.arxml"
+    assumptions = output / "TaktflowSystem.arxml.assumptions.md"
+    arxml.write_bytes(b"existing-arxml\n")
+    assumptions.write_bytes(b"existing-assumptions\n")
+
+    result = _run(
+        output,
+        "--swc-mapping",
+        str(mapping),
+        "--swc-mapping-mode",
+        "preferred",
+    )
+
+    assert result.returncode == 2
+    assert "SWCMAP008" in result.stderr
+    assert "legacy" not in result.stdout.lower()
+    assert arxml.read_bytes() == b"existing-arxml\n"
+    assert assumptions.read_bytes() == b"existing-assumptions\n"

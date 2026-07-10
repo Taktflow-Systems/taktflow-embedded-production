@@ -44,6 +44,7 @@ DEFAULT_GOLDEN = (
     / "legacy_inventory.json"
 )
 DEFAULT_SHADOW_GOLDEN = DEFAULT_GOLDEN.with_name("shadow_parity.json")
+DEFAULT_PREFERRED_GOLDEN = DEFAULT_GOLDEN.with_name("preferred_parity.json")
 
 
 class InventoryError(Exception):
@@ -447,6 +448,7 @@ def build_shadow_report(
     model_path: Path,
     mapping_path: Path,
     arxml_path: Path,
+    mode: str = "shadow",
 ) -> dict[str, Any]:
     mapping = load_swc_mapping(mapping_path)
     result = validate_swc_mapping(mapping, dbc_path, model_path, governed_ecus=ECUS)
@@ -499,8 +501,8 @@ def build_shadow_report(
                 row["safety_approval_ref"] = item.safety_approval_ref
             unmapped_signals.append(row)
     return {
-        "schema": "swc-mapping-shadow-parity-v1",
-        "mode": "shadow",
+        "schema": "swc-mapping-%s-parity-v1" % mode,
+        "mode": mode,
         "inputs": {
             "dbc": dbc_path.name,
             "swc_model": model_path.name,
@@ -555,7 +557,7 @@ def main() -> int:
     parser.add_argument("swc_model", type=Path)
     parser.add_argument("mapping_or_arxml", type=Path)
     parser.add_argument("arxml", nargs="?", type=Path)
-    parser.add_argument("--mode", choices=["shadow"])
+    parser.add_argument("--mode", choices=["shadow", "preferred"])
     parser.add_argument("--output", type=Path)
     parser.add_argument(
         "--check",
@@ -568,7 +570,7 @@ def main() -> int:
         parser.error("one of --output or --check is required")
 
     try:
-        if args.mode == "shadow":
+        if args.mode in ("shadow", "preferred"):
             if args.arxml is None:
                 parser.error("shadow mode requires SWC mapping and ARXML positional inputs")
             report = build_shadow_report(
@@ -576,11 +578,16 @@ def main() -> int:
                 args.swc_model,
                 args.mapping_or_arxml,
                 args.arxml,
+                mode=args.mode,
             )
-            default_golden = DEFAULT_SHADOW_GOLDEN
+            default_golden = (
+                DEFAULT_PREFERRED_GOLDEN
+                if args.mode == "preferred"
+                else DEFAULT_SHADOW_GOLDEN
+            )
         else:
             if args.arxml is not None:
-                parser.error("the fourth positional input requires --mode shadow")
+                parser.error("the fourth positional input requires a mapping mode")
             report = build_inventory(args.dbc, args.swc_model, args.mapping_or_arxml)
             default_golden = DEFAULT_GOLDEN
         rendered = render_inventory(report)
@@ -607,9 +614,9 @@ def main() -> int:
         return 1
 
     summary = json.loads(rendered)["summary"]
-    if args.mode == "shadow":
+    if args.mode in ("shadow", "preferred"):
         print(
-            "SWC mapping shadow parity passed: "
+            "SWC mapping %s parity passed: " % args.mode +
             f"{summary['swcs']} SWCs, {summary['ports']} ports, "
             f"{summary['runnables']} runnables, {summary['events']} events, "
             f"{summary['differences']} differences."
