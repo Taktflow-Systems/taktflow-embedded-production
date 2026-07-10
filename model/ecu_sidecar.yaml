@@ -405,6 +405,12 @@ ecus:
         period_ms: 1
         priority: 9
         wdgm_se_id: 0xFF
+      # Drain software TX queue after transient FDCAN mailbox pressure and
+      # bus-off recovery. Keep in the 1 ms band immediately after RX.
+      Can_MainFunction_Write:
+        period_ms: 1
+        priority: 8
+        wdgm_se_id: 0xFF
       Com_MainFunction_Rx:
         period_ms: 10
         priority: 8

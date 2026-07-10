@@ -61,9 +61,11 @@ Std_ReturnType CanSM_RequestComMode(void)
     }
 
     if (cansm_state == CANSM_STOPPED) {
-        (void)Can_SetControllerMode(0u, CAN_CS_STARTED);
-        cansm_state = CANSM_STARTED;
-        return E_OK;
+        if (Can_SetControllerMode(0u, CAN_CS_STARTED) == E_OK) {
+            cansm_state = CANSM_STARTED;
+            return E_OK;
+        }
+        return E_NOT_OK;
     }
 
     return (cansm_state == CANSM_STARTED) ? E_OK : E_NOT_OK;
@@ -114,10 +116,11 @@ void CanSM_MainFunction(void)
 
             if (cansm_recovery_attempt <= cansm_config->L1_MaxAttempts) {
                 /* Attempt recovery: restart controller */
-                (void)Can_SetControllerMode(0u, CAN_CS_STARTED);
-                cansm_state = CANSM_STARTED;
-                g_dbg_cansm_recovery_count++;
-                /* If bus-off recurs, CanSM_ControllerBusOff will be called again */
+                if (Can_SetControllerMode(0u, CAN_CS_STARTED) == E_OK) {
+                    cansm_state = CANSM_STARTED;
+                    g_dbg_cansm_recovery_count++;
+                    /* If bus-off recurs, CanSM_ControllerBusOff is called again. */
+                }
             } else {
                 /* L1 exhausted → escalate to L2 (slow) */
                 cansm_recovery_level = 2u;
@@ -132,9 +135,10 @@ void CanSM_MainFunction(void)
             cansm_recovery_attempt++;
 
             if (cansm_recovery_attempt <= cansm_config->L2_MaxAttempts) {
-                (void)Can_SetControllerMode(0u, CAN_CS_STARTED);
-                cansm_state = CANSM_STARTED;
-                g_dbg_cansm_recovery_count++;
+                if (Can_SetControllerMode(0u, CAN_CS_STARTED) == E_OK) {
+                    cansm_state = CANSM_STARTED;
+                    g_dbg_cansm_recovery_count++;
+                }
             } else {
                 /* L2 exhausted → permanent bus-off, needs power cycle */
                 cansm_state = CANSM_BUS_OFF;

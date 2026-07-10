@@ -37,7 +37,7 @@ repair is selected.
 
 ## 3. Work items
 
-### RZC-FDCAN-01 - Capture the first wedge without a debugger - HIL PENDING
+### RZC-FDCAN-01 - Capture the first wedge without a debugger - COMPLETE
 
 - Goal: leave a bounded, machine-readable record at the first persistent TX
   failure without changing real-time behavior through breakpoints.
@@ -60,13 +60,16 @@ Implementation result (2026-07-10):
 - Capture performs no UART output; the next RZC boot prints and clears the
   complete record before the OS starts.
 - Direct-enqueue, queue-overflow and queue-drain paths are distinguished.
-- Four retained-record host tests and 33 CAN driver tests pass; tests cover
+- Four retained-record host tests and 34 CAN driver tests pass; tests cover
   one-shot behavior, clear/re-arm, sequence wrap and queue-state forwarding.
 - A clean RZC OSEK `-Werror` cross-build passes, the strong RZC capture hook
   is linked, and the 64-byte record is present in `.noinit`.
-- Remaining gate: flash this committed build, reproduce the short free-running
-  wedge, reset once, and harvest the `[CAN-TX]` boot record before selecting
-  RZC-FDCAN-02.
+- The short free-running reproduction captured failed ID 0x500 on the direct
+  enqueue path with CCCR=0x00001001, ECR TEC=251, PSR.BO=1,
+  TXFQS.TFQF=1, HAL state BUSY, and HAL FIFO_FULL. The later UART state of
+  TEC=0 was post-recovery state, not the state that caused the wedge.
+- Direct SRAM harvest under reset confirmed the retained magic and complete
+  64-byte snapshot before boot reporting.
 
 ### RZC-FDCAN-02 - Repair the classified transmit contract
 
@@ -82,6 +85,31 @@ Implementation result (2026-07-10):
   persistent failure by resetting the controller without a safety rationale.
 - Definition of done: every accepted or queued frame has one deterministic
   completion/drop outcome and the wedge reproducer cannot strand TX progress.
+
+Implementation result (2026-07-10) - SOFTWARE COMPLETE, HIL BLOCKED:
+
+- Bus-off detection is now side-effect free. CanSM owns STOPPED and the L1/L2
+  recovery delay; the successful STOPPED-to-STARTED transition owns hardware
+  recovery, so logical and physical controller states cannot diverge.
+- STM32G4 recovery performs HAL deinit, RCC FDCAN peripheral reset, normal-mode
+  reinit/filter restore, and start. Failed recovery keeps the logical driver
+  STOPPED and is retried by CanSM instead of being reported as STARTED.
+- The generated RZC 1 ms task now calls `Can_MainFunction_Write` after RX. The
+  source-of-truth sidecar and generator policy test prevent regeneration from
+  dropping the software TX queue pump again.
+- UART diagnostics now expose hardware TX calls, queue high-water, TXFQS,
+  pending buffers, COM calls, and per-PDU send counts.
+- Targeted verification passes: 34 CAN tests, 4 retained-record tests,
+  67 policy/OS generator tests, ARXML dry-run, and clean RZC OSEK `-Werror`
+  cross-build.
+- The current bench still drives RZC repeatedly to TEC 250-253 and PSR.BO.
+  A 30 s run carried 0x012 for only 15.48 s and 0x300/0x301 for 14.87 s;
+  CanSM then exhausted recovery against the persistent error. This is not a
+  zero-error software FIFO wedge and does not satisfy RZC-FDCAN-03.
+- Next gate: isolate the physical/protocol error on the RZC branch (transceiver,
+  termination, wiring, clock/bit timing, and analyzer error frames) before a
+  five-run software acceptance. Do not weaken CanSM exhaustion limits to hide
+  a continuously faulting bus.
 
 ### RZC-FDCAN-03 - Free-running HIL closure
 

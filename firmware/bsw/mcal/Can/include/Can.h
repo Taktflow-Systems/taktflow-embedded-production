@@ -68,6 +68,7 @@ extern void           Can_Hw_Stop(void);
 extern Std_ReturnType Can_Hw_Transmit(Can_IdType id, const uint8* data, uint8 dlc);
 extern boolean        Can_Hw_Receive(Can_IdType* id, uint8* data, uint8* dlc);
 extern boolean        Can_Hw_IsBusOff(void);
+extern Std_ReturnType Can_Hw_RecoverBusOff(void);
 extern void           Can_Hw_GetErrorCounters(uint8* tec, uint8* rec);
 extern Std_ReturnType Can_Hw_LoopbackTest(void);
 extern uint8          Can_Hw_GetHalState(void);

@@ -20,6 +20,7 @@
 #include "stm32g4xx_hal.h"
 #include "Rzc_Cfg.h"
 #include "Can.h"
+#include "Com.h"
 #include "Rte.h"
 
 /* ==================================================================
@@ -438,6 +439,26 @@ void Main_Hw_DebugPrintStatus(uint32 tick_us)
     Dbg_PrintU32((uint32)Main_Hw_GetCanHalState());
     Dbg_Uart_Print(" TXbusy=");
     Dbg_PrintU32(g_can_tx_busy_count);
+    Dbg_Uart_Print(" HWTX=");
+    Dbg_PrintU32(g_dbg_hw_tx_total);
+    Dbg_Uart_Print(" QHWM=");
+    Dbg_PrintU32(g_can_tx_queue_hwm);
+    Dbg_Uart_Print(" TXFQS=");
+    Dbg_PrintU32(FDCAN1->TXFQS);
+    Dbg_Uart_Print(" TXBRP=");
+    Dbg_PrintU32(FDCAN1->TXBRP);
+    Dbg_Uart_Print(" COMCALL=");
+    Dbg_PrintU32(g_dbg_com_tx_calls);
+    Dbg_Uart_Print(" TX0-4=");
+    Dbg_PrintU32(com_tx_send_count[0]);
+    Dbg_Uart_Print(",");
+    Dbg_PrintU32(com_tx_send_count[1]);
+    Dbg_Uart_Print(",");
+    Dbg_PrintU32(com_tx_send_count[2]);
+    Dbg_Uart_Print(",");
+    Dbg_PrintU32(com_tx_send_count[3]);
+    Dbg_Uart_Print(",");
+    Dbg_PrintU32(com_tx_send_count[4]);
     Dbg_Uart_Print("\r\n");
 }
 

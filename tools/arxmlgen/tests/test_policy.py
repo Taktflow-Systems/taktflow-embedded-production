@@ -175,3 +175,17 @@ class TestReaderIntegration:
         by = {r.name: r.priority for s in rzc.swcs for r in s.runnables}
         assert by["Can_MainFunction_Read"] > by["Swc_Encoder_MainFunction"]
         assert by["Swc_CurrentMonitor_MainFunction"] > by["Can_MainFunction_Read"]
+
+    def test_rzc_can_write_in_one_ms_band(self, load_model):
+        """RZC must schedule the TX software-queue pump after CAN RX.
+
+        Without this runnable, a transient full STM32G4 TX FIFO leaves queued
+        frames permanently stranded even after hardware bus-off recovery.
+        """
+        rzc = load_model.ecus["rzc"]
+        table = _table(rzc)
+        names = [r.name for r in table]
+        read_idx = names.index("Can_MainFunction_Read")
+        write_idx = names.index("Can_MainFunction_Write")
+        assert write_idx == read_idx + 1
+        assert table[write_idx].period_ms == 1

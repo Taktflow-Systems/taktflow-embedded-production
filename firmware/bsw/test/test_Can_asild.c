@@ -23,6 +23,8 @@ static boolean      mock_hw_init_fail;
 static uint32       mock_hw_baudrate;
 static boolean      mock_hw_started;
 static boolean      mock_hw_bus_off;
+static Std_ReturnType mock_hw_recovery_result;
+static uint8        mock_hw_recovery_calls;
 static uint8        mock_hw_tec;
 static uint8        mock_hw_rec;
 
@@ -125,6 +127,12 @@ boolean Can_Hw_IsBusOff(void)
     return mock_hw_bus_off;
 }
 
+Std_ReturnType Can_Hw_RecoverBusOff(void)
+{
+    mock_hw_recovery_calls++;
+    return mock_hw_recovery_result;
+}
+
 void Can_Hw_GetErrorCounters(uint8* tec, uint8* rec)
 {
     *tec = mock_hw_tec;
@@ -179,6 +187,8 @@ void setUp(void)
     mock_hw_baudrate = 0u;
     mock_hw_started = FALSE;
     mock_hw_bus_off = FALSE;
+    mock_hw_recovery_result = E_OK;
+    mock_hw_recovery_calls = 0u;
     mock_hw_tec = 0u;
     mock_hw_rec = 0u;
     mock_tx_count = 0u;
@@ -464,6 +474,7 @@ void test_Can_MainFunction_BusOff_detects_busoff(void)
     Can_MainFunction_BusOff();
 
     TEST_ASSERT_TRUE(canif_busoff_called);
+    TEST_ASSERT_EQUAL_UINT8(0u, mock_hw_recovery_calls);
 }
 
 /** @verifies SWR-BSW-004 */
@@ -476,6 +487,40 @@ void test_Can_MainFunction_BusOff_no_busoff(void)
     Can_MainFunction_BusOff();
 
     TEST_ASSERT_FALSE(canif_busoff_called);
+    TEST_ASSERT_EQUAL_UINT8(0u, mock_hw_recovery_calls);
+}
+
+/** @verifies SWR-BSW-004 */
+void test_Can_BusOff_recovery_runs_on_stopped_to_started(void)
+{
+    Can_PduType pdu;
+    uint8 data[] = {0x5Au};
+
+    Can_Init(&test_config);
+    Can_SetControllerMode(0u, CAN_CS_STARTED);
+
+    mock_hw_bus_off = TRUE;
+    Can_MainFunction_BusOff();
+    TEST_ASSERT_TRUE(canif_busoff_called);
+    TEST_ASSERT_EQUAL_UINT8(0u, mock_hw_recovery_calls);
+
+    TEST_ASSERT_EQUAL(E_OK, Can_SetControllerMode(0u, CAN_CS_STOPPED));
+    mock_hw_recovery_result = E_NOT_OK;
+    TEST_ASSERT_EQUAL(E_NOT_OK, Can_SetControllerMode(0u, CAN_CS_STARTED));
+    TEST_ASSERT_EQUAL_UINT8(1u, mock_hw_recovery_calls);
+
+    mock_hw_recovery_result = E_OK;
+    TEST_ASSERT_EQUAL(E_OK, Can_SetControllerMode(0u, CAN_CS_STARTED));
+    TEST_ASSERT_EQUAL_UINT8(2u, mock_hw_recovery_calls);
+
+    pdu.id = 0x321u;
+    pdu.length = 1u;
+    pdu.sdu = data;
+    TEST_ASSERT_EQUAL(CAN_OK, Can_Write(0u, &pdu));
+
+    canif_busoff_called = FALSE;
+    Can_MainFunction_BusOff();
+    TEST_ASSERT_TRUE(canif_busoff_called);
 }
 
 /* ==================================================================
@@ -726,11 +771,13 @@ void test_Can_BusOff_hysteresis_full_cycle(void)
     mock_hw_bus_off = TRUE;
     Can_MainFunction_BusOff();
     TEST_ASSERT_TRUE(canif_busoff_called);
+    TEST_ASSERT_EQUAL_UINT8(0u, mock_hw_recovery_calls);
 
     /* Step 3: Still bus-off — no SECOND callback (hysteresis) */
     canif_busoff_called = FALSE;
     Can_MainFunction_BusOff();
     TEST_ASSERT_FALSE(canif_busoff_called);
+    TEST_ASSERT_EQUAL_UINT8(0u, mock_hw_recovery_calls);
 
     /* Step 4: Recovery (bus-off clears) — no callback on recovery */
     mock_hw_bus_off = FALSE;
@@ -741,6 +788,7 @@ void test_Can_BusOff_hysteresis_full_cycle(void)
     mock_hw_bus_off = TRUE;
     Can_MainFunction_BusOff();
     TEST_ASSERT_TRUE(canif_busoff_called);
+    TEST_ASSERT_EQUAL_UINT8(0u, mock_hw_recovery_calls);
 }
 
 /* ==================================================================
@@ -776,6 +824,7 @@ int main(void)
     /* Bus-off tests (SWR-BSW-004) */
     RUN_TEST(test_Can_MainFunction_BusOff_detects_busoff);
     RUN_TEST(test_Can_MainFunction_BusOff_no_busoff);
+    RUN_TEST(test_Can_BusOff_recovery_runs_on_stopped_to_started);
 
     /* Error counter tests (SWR-BSW-005) */
     RUN_TEST(test_Can_GetErrorCounters);

@@ -37,6 +37,7 @@
 /* Forward declarations for SWC/BSW runnables */
 extern void Swc_CurrentMonitor_MainFunction(void);
 extern void Can_MainFunction_Read(void);
+extern void Can_MainFunction_Write(void);
 extern void Swc_Encoder_MainFunction(void);
 extern void Swc_Motor_MainFunction(void);
 extern void Com_MainFunction_Rx(void);
@@ -49,7 +50,7 @@ extern void Swc_TempMonitor_MainFunction(void);
 extern void Swc_RzcSafety_MainFunction(void);
 
 /**
- * @brief   1 ms period-group task (2 runnables)
+ * @brief   1 ms period-group task (3 runnables)
  * @note    Activated by schedule table OS_TABLE_RZC_1MS at every
  *          counter tick with tick % 1 == 0.
  */
@@ -60,6 +61,7 @@ void Os_Task_Rzc_1ms(void)
     Swc_CurrentMonitor_MainFunction();
     (void)WdgM_CheckpointReached(0x00u);
     Can_MainFunction_Read();
+    Can_MainFunction_Write();
     (void)TerminateTask();
 }
 

@@ -65,6 +65,17 @@ __attribute__((weak)) void Can_Hw_CaptureTxFailure(
     (void)QueueHighWater;
 }
 
+/**
+ * Default recovery for platforms without a controller-specific sequence.
+ * STM32G4 overrides this with a full HAL deinit/reinit to clear Message RAM.
+ */
+__attribute__((weak)) Std_ReturnType Can_Hw_RecoverBusOff(void)
+{
+    Can_Hw_Stop();
+    Can_Hw_Start();
+    return E_OK;
+}
+
 /* ---- API Implementation ---- */
 
 void Can_Init(const Can_ConfigType* ConfigPtr)
@@ -113,7 +124,20 @@ Std_ReturnType Can_SetControllerMode(uint8 Controller, Can_StateType Mode)
     switch (Mode) {
     case CAN_CS_STARTED:
         if (can_state == CAN_CS_STOPPED) {
-            Can_Hw_Start();
+            if (can_bus_off_active == TRUE) {
+                /* CanSM owns the recovery delay. When it requests STARTED,
+                 * perform the platform-specific reset that also clears stale
+                 * hardware TX Message RAM. */
+                if (Can_Hw_RecoverBusOff() != E_OK) {
+                    SchM_Exit_Can_CAN_EXCLUSIVE_AREA_0();
+                    return E_NOT_OK;
+                }
+                /* Recovery completed. Re-arm episode detection so an
+                 * immediate physical relapse is reported to CanSM. */
+                can_bus_off_active = FALSE;
+            } else {
+                Can_Hw_Start();
+            }
             can_state = CAN_CS_STARTED;
             SchM_Exit_Can_CAN_EXCLUSIVE_AREA_0();
             return E_OK;
@@ -280,6 +304,8 @@ void Can_MainFunction_Read(void)
 
 void Can_MainFunction_BusOff(void)
 {
+    boolean notify_bus_off = FALSE;
+
     if (can_state != CAN_CS_STARTED) {
         return;
     }
@@ -288,16 +314,21 @@ void Can_MainFunction_BusOff(void)
         SchM_Enter_Can_CAN_EXCLUSIVE_AREA_0();
         if (can_bus_off_active == FALSE) {
             can_bus_off_active = TRUE;
-            SchM_Exit_Can_CAN_EXCLUSIVE_AREA_0();
-            CanIf_ControllerBusOff(can_controller_id);
-        } else {
-            SchM_Exit_Can_CAN_EXCLUSIVE_AREA_0();
+            notify_bus_off = TRUE;
         }
+        SchM_Exit_Can_CAN_EXCLUSIVE_AREA_0();
+
+        if (notify_bus_off == TRUE) {
+            CanIf_ControllerBusOff(can_controller_id);
+        }
+
+        /* CanIf forwards the event to CanSM. CanSM stops the logical
+         * controller immediately and requests STARTED after its configured
+         * L1/L2 delay; that transition owns hardware recovery. */
     } else {
         SchM_Enter_Can_CAN_EXCLUSIVE_AREA_0();
         if (can_bus_off_active == TRUE) {
             can_bus_off_active = FALSE;
-            /* Recovery complete — controller remains in STARTED */
         }
         SchM_Exit_Can_CAN_EXCLUSIVE_AREA_0();
     }

@@ -18,6 +18,7 @@
 extern void Swc_Battery_MainFunction(void);
 extern void Swc_Battery_Init(void);
 extern void Can_MainFunction_Read(void);
+extern void Can_MainFunction_Write(void);
 extern void Com_MainFunction_Rx(void);
 extern void Com_MainFunction_Tx(void);
 extern void Can_MainFunction_BusOff(void);
@@ -255,8 +256,9 @@ static const Rte_SignalConfigType rzc_signal_config[RZC_SIG_COUNT] = {
 
 static const Rte_RunnableConfigType rzc_runnable_config[] = {
     /* func,                        periodMs, priority, seId */
-    { Swc_CurrentMonitor_MainFunction,             1u,    11u, 0x00u },
-    { Can_MainFunction_Read,                       1u,    10u, 0xFFu },
+    { Swc_CurrentMonitor_MainFunction,             1u,    12u, 0x00u },
+    { Can_MainFunction_Read,                       1u,    11u, 0xFFu },
+    { Can_MainFunction_Write,                      1u,    10u, 0xFFu },
     { Swc_Encoder_MainFunction,                   10u,     9u, 0x02u },
     { Swc_Motor_MainFunction,                     10u,     8u, 0x01u },
     { Com_MainFunction_Rx,                        10u,     7u, 0xFFu },

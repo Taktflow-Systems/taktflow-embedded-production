@@ -304,17 +304,50 @@ boolean Can_Hw_IsBusOff(void)
         return TRUE;  /* fail-closed: assume bus-off if unreadable */
     }
 
-    /* Auto bus-off recovery: FDCAN stays in bus-off until software
-     * intervention. If bus-off detected, stop and restart the FDCAN
-     * to trigger the 128-occurrence recovery sequence per ISO 11898. */
-    if (psr.BusOff != 0u)
+    return (boolean)(psr.BusOff != 0u);
+}
+
+/**
+ * @brief  Recover from bus-off and clear pending Message RAM TX state
+ * @return E_OK when the controller is listening again, otherwise E_NOT_OK
+ *
+ * A stop/start-only sequence leaves the three pending STM32G4 TX FIFO
+ * elements resident after bus-off. The error counters then return to zero,
+ * but every later enqueue sees a permanently full FIFO. A full HAL reset
+ * reinitializes Message RAM and reapplies the acceptance filters before the
+ * controller is started again.
+ */
+Std_ReturnType Can_Hw_RecoverBusOff(void)
+{
+    /* HAL_FDCAN_DeInit() already performs a best-effort stop and then
+     * normalizes the handle to RESET. Calling Stop explicitly makes recovery
+     * non-idempotent: after a partial attempt leaves the handle READY, the
+     * next Stop returns NOT_STARTED and strands the controller there. */
+    if (HAL_FDCAN_DeInit(&hfdcan1) != HAL_OK)
     {
-        (void)HAL_FDCAN_Stop(&hfdcan1);
-        (void)HAL_FDCAN_Start(&hfdcan1);
-        return TRUE;
+        return E_NOT_OK;
     }
 
-    return FALSE;
+    /* HAL deinit disables the clock but does not reset the M_CAN protocol
+     * core. Without an RCC reset, ECR.TEC and PSR.BO survive and the next
+     * 10 ms bus-off poll can stop the controller before its 128 x 11-bit
+     * recovery sequence completes. Reset the shared FDCAN kernel while all
+     * local controllers are deinitialized; RZC uses FDCAN1 only. */
+    __HAL_RCC_FDCAN_FORCE_RESET();
+    __DSB();
+    __HAL_RCC_FDCAN_RELEASE_RESET();
+
+    if (Can_Hw_InitMode(FDCAN_MODE_NORMAL) != E_OK)
+    {
+        return E_NOT_OK;
+    }
+
+    if (HAL_FDCAN_Start(&hfdcan1) != HAL_OK)
+    {
+        return E_NOT_OK;
+    }
+
+    return E_OK;
 }
 
 /**
