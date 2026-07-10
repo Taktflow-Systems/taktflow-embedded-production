@@ -273,37 +273,6 @@ def test_reader_rejects_unsupported_pdu_construct():
     assert exc_info.value.diagnostics[0].code == "ARXML111"
 
 
-def test_swc_nested_diagnostic_code_is_preserved():
-    converter = Dbc2Arxml.__new__(Dbc2Arxml)
-    converter.ecu_model = {
-        "ecus": {
-            "brake": {
-                "runnables": [],
-                "swcs": [{"name": "Swc_Brake", "functions": []}],
-            }
-        }
-    }
-    converter.am = SimpleNamespace(get_or_create_package=lambda _path: object())
-    converter.ecu_tx_signals = {}
-    converter.ecu_rx_signals = {}
-    nested = PipelineDiagnostic(
-        "ARXML015",
-        DiagnosticSeverity.ERROR,
-        "SWC 'BRK_Swc_Brake' P-port 'BrakeRequest'",
-        "cannot create port",
-    )
-
-    def fail_with_nested_code(*_args):
-        raise PipelineDiagnosticError([nested])
-
-    converter._create_one_swc = fail_with_nested_code
-
-    with pytest.raises(PipelineDiagnosticError) as exc_info:
-        converter._create_swc_types()
-
-    assert exc_info.value.diagnostics[0].code == "ARXML015"
-
-
 def test_atomic_write_failure_preserves_existing_output(tmp_path, monkeypatch):
     output = tmp_path / "TaktflowSystem.arxml"
     output.write_text("known-good", encoding="utf-8")

@@ -28,8 +28,7 @@ GOLDEN = (
     / "swc_mapping"
     / "legacy_inventory.json"
 )
-SHADOW_GOLDEN = GOLDEN.with_name("shadow_parity.json")
-PREFERRED_GOLDEN = GOLDEN.with_name("preferred_parity.json")
+STRICT_GOLDEN = GOLDEN.with_name("strict_parity.json")
 
 
 def run_checker(arxml: Path, output: Path) -> subprocess.CompletedProcess[str]:
@@ -121,7 +120,7 @@ def test_legacy_inventory_fails_on_unmapped_baseline_drift(tmp_path):
     assert not (tmp_path / "inventory.json").exists()
 
 
-def test_shadow_parity_reports_four_exact_differences_deterministically():
+def test_mapping_parity_reports_four_exact_differences_deterministically():
     legacy = {
         "swcs": {"cvc/Swc_Pedal": "CVC_Swc_Pedal"},
         "ports": {
@@ -193,30 +192,7 @@ def test_shadow_parity_reports_four_exact_differences_deterministically():
     )
 
 
-def run_shadow_checker(
-    mapping: Path, output: Path
-) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [
-            sys.executable,
-            str(CHECKER),
-            str(DBC),
-            str(SWC_MODEL),
-            str(mapping),
-            str(ARXML),
-            "--mode",
-            "shadow",
-            "--output",
-            str(output),
-        ],
-        cwd=ROOT,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-
-
-def run_preferred_checker(output: Path, check: bool = False):
+def run_strict_checker(output: Path, check: bool = False):
     command = [
         sys.executable,
         str(CHECKER),
@@ -225,7 +201,7 @@ def run_preferred_checker(output: Path, check: bool = False):
         str(MAPPING),
         str(ARXML),
         "--mode",
-        "preferred",
+        "strict",
     ]
     command.extend(["--check"] if check else ["--output", str(output)])
     return subprocess.run(
@@ -233,32 +209,29 @@ def run_preferred_checker(output: Path, check: bool = False):
     )
 
 
-def test_project_preferred_report_has_distinct_repeatable_golden(tmp_path: Path):
+def test_project_strict_report_is_repeatable(tmp_path: Path):
     first = tmp_path / "first.json"
     second = tmp_path / "second.json"
 
-    first_result = run_preferred_checker(first)
-    second_result = run_preferred_checker(second)
-    check_result = run_preferred_checker(tmp_path / "unused.json", check=True)
-
+    first_result = run_strict_checker(first)
+    second_result = run_strict_checker(second)
     assert first_result.returncode == second_result.returncode == 0
-    assert check_result.returncode == 0, check_result.stderr
-    assert first.read_bytes() == second.read_bytes() == PREFERRED_GOLDEN.read_bytes()
+    assert first.read_bytes() == second.read_bytes() == STRICT_GOLDEN.read_bytes()
     report = json.loads(first.read_text(encoding="utf-8"))
-    assert report["mode"] == "preferred"
+    assert report["mode"] == "strict"
     assert report["summary"]["differences"] == 0
 
 
-def test_project_shadow_report_is_exact_repeatable_and_path_scrubbed(tmp_path: Path):
-    first = tmp_path / "first" / "shadow.json"
-    second = tmp_path / "second" / "shadow.json"
+def test_project_strict_report_is_exact_repeatable_and_path_scrubbed(tmp_path: Path):
+    first = tmp_path / "first" / "strict.json"
+    second = tmp_path / "second" / "strict.json"
 
-    first_result = run_shadow_checker(MAPPING, first)
-    second_result = run_shadow_checker(MAPPING, second)
+    first_result = run_strict_checker(first)
+    second_result = run_strict_checker(second)
 
     assert first_result.returncode == 0, first_result.stderr
     assert second_result.returncode == 0, second_result.stderr
-    assert first.read_bytes() == second.read_bytes() == SHADOW_GOLDEN.read_bytes()
+    assert first.read_bytes() == second.read_bytes()
     report = json.loads(first.read_text(encoding="utf-8"))
     assert report["summary"] == {
         "differences": 0,
@@ -344,7 +317,7 @@ def test_project_mapping_has_exact_coverage_and_reviewed_shared_writers():
     assert shared_provided == 147
 
 
-def test_shadow_validation_failure_does_not_replace_parity_report(tmp_path: Path):
+def test_strict_validation_failure_does_not_replace_parity_report(tmp_path: Path):
     invalid = tmp_path / "invalid.yaml"
     text = MAPPING.read_text(encoding="utf-8")
     invalid.write_text(
@@ -353,10 +326,12 @@ def test_shadow_validation_failure_does_not_replace_parity_report(tmp_path: Path
         ),
         encoding="utf-8",
     )
-    report = tmp_path / "shadow.json"
+    report = tmp_path / "strict.json"
     report.write_bytes(b"existing-parity\n")
 
-    result = run_shadow_checker(invalid, report)
+    command = [sys.executable, str(CHECKER), str(DBC), str(SWC_MODEL),
+               str(invalid), str(ARXML), "--mode", "strict", "--output", str(report)]
+    result = subprocess.run(command, cwd=ROOT, text=True, capture_output=True, check=False)
 
     assert result.returncode == 1
     assert "SWCMAP008" in result.stderr

@@ -49,11 +49,11 @@ jobs:
       - name: Generate ARXML from DBC
         run: |
           python tools/arxml/dbc2arxml.py $DBC arxml_v2/ arxml_v2/swc_model.json \
-            --swc-mapping model/ecu_sidecar.yaml --swc-mapping-mode preferred
+            --swc-mapping model/ecu_sidecar.yaml --swc-mapping-mode strict
           cp arxml_v2/TaktflowSystem.arxml arxml/TaktflowSystem.arxml
           python tools/ci/check_swc_mapping.py $DBC arxml_v2/swc_model.json \
             model/ecu_sidecar.yaml arxml/TaktflowSystem.arxml \
-            --mode preferred --check
+            --mode strict --check
       - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: arxml

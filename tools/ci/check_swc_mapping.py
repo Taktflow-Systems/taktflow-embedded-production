@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check normalized legacy inventory and explicit SWC mapping shadow parity."""
+"""Check normalized inventory and strict explicit SWC mapping parity."""
 
 from __future__ import annotations
 
@@ -43,8 +43,7 @@ DEFAULT_GOLDEN = (
     / "swc_mapping"
     / "legacy_inventory.json"
 )
-DEFAULT_SHADOW_GOLDEN = DEFAULT_GOLDEN.with_name("shadow_parity.json")
-DEFAULT_PREFERRED_GOLDEN = DEFAULT_GOLDEN.with_name("preferred_parity.json")
+DEFAULT_STRICT_GOLDEN = DEFAULT_GOLDEN.with_name("strict_parity.json")
 
 
 class InventoryError(Exception):
@@ -443,18 +442,18 @@ def compare_parity_snapshots(
     return tuple(differences)
 
 
-def build_shadow_report(
+def build_mapping_report(
     dbc_path: Path,
     model_path: Path,
     mapping_path: Path,
     arxml_path: Path,
-    mode: str = "shadow",
+    mode: str = "strict",
 ) -> dict[str, Any]:
     mapping = load_swc_mapping(mapping_path)
     result = validate_swc_mapping(mapping, dbc_path, model_path, governed_ecus=ECUS)
     if result.expanded_unmapped_signals:
         raise InventoryError(
-            "SWCMAP016 shadow parity: migration-only unmapped signal sets are forbidden"
+            "SWCMAP016 strict parity: migration-only unmapped signal sets are forbidden"
         )
     inventory = build_inventory(dbc_path, model_path, arxml_path)
     legacy = _legacy_parity_snapshot(inventory)
@@ -557,7 +556,7 @@ def main() -> int:
     parser.add_argument("swc_model", type=Path)
     parser.add_argument("mapping_or_arxml", type=Path)
     parser.add_argument("arxml", nargs="?", type=Path)
-    parser.add_argument("--mode", choices=["shadow", "preferred"])
+    parser.add_argument("--mode", choices=["strict"])
     parser.add_argument("--output", type=Path)
     parser.add_argument(
         "--check",
@@ -570,21 +569,17 @@ def main() -> int:
         parser.error("one of --output or --check is required")
 
     try:
-        if args.mode in ("shadow", "preferred"):
+        if args.mode == "strict":
             if args.arxml is None:
-                parser.error("shadow mode requires SWC mapping and ARXML positional inputs")
-            report = build_shadow_report(
+                parser.error("strict mode requires SWC mapping and ARXML positional inputs")
+            report = build_mapping_report(
                 args.dbc,
                 args.swc_model,
                 args.mapping_or_arxml,
                 args.arxml,
                 mode=args.mode,
             )
-            default_golden = (
-                DEFAULT_PREFERRED_GOLDEN
-                if args.mode == "preferred"
-                else DEFAULT_SHADOW_GOLDEN
-            )
+            default_golden = DEFAULT_STRICT_GOLDEN
         else:
             if args.arxml is not None:
                 parser.error("the fourth positional input requires a mapping mode")
@@ -614,7 +609,7 @@ def main() -> int:
         return 1
 
     summary = json.loads(rendered)["summary"]
-    if args.mode in ("shadow", "preferred"):
+    if args.mode == "strict":
         print(
             "SWC mapping %s parity passed: " % args.mode +
             f"{summary['swcs']} SWCs, {summary['ports']} ports, "

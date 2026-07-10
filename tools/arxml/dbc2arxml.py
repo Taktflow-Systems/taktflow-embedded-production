@@ -214,32 +214,6 @@ def signal_idt_name(sig):
 
 
 # Signal-to-SWC domain mapping for port assignment heuristic
-DOMAIN_MAP = {
-    "steer": ["steer", "steering"],
-    "brake": ["brake"],
-    "lidar": ["lidar"],
-    "pedal": ["pedal"],
-    "motor": ["motor", "torque"],
-    "heartbeat": ["heartbeat", "hb", "alive"],
-    "estop": ["estop", "e_stop"],
-    "vehicle": ["vehiclestate", "vehicle_state"],
-    "battery": ["battery", "batt"],
-    "temp": ["temp", "temperature"],
-    "encoder": ["encoder", "speed"],
-    "current": ["current"],
-    "buzzer": ["buzzer"],
-    "light": ["light", "headlamp", "tail"],
-    "indicator": ["indicator", "turn"],
-    "door": ["door", "lock"],
-    "dashboard": ["dashboard", "display", "rpm", "torque_pct"],
-    "dtc": ["dtc", "fault"],
-    "uds": ["uds"],
-    "com": ["com", "can"],
-    "safety": ["safety", "fault_mask", "cutoff"],
-    "nvm": ["nvm", "cal"],
-}
-
-
 class Dbc2Arxml:
     """Convert a DBC file to ARXML using autosar-data abstraction layer."""
 
@@ -1010,43 +984,9 @@ class Dbc2Arxml:
 
     def _create_swc_types(self):
         """Create ApplicationSwComponentType per SWC with ports, runnables, events."""
-        if getattr(self, "explicit_swc_mapping", None) is not None:
-            self._create_explicit_swc_types()
+        if getattr(self, "explicit_swc_mapping", None) is None:
             return
-        if self.ecu_model is None:
-            return
-
-        for ecu_name, ecu_data in self.ecu_model.get("ecus", {}).items():
-            eu = ecu_name.upper()
-            swc_pkg = self.am.get_or_create_package("/Taktflow/SWCs/%s" % eu)
-
-            # Sorted for deterministic port order — bare set iteration follows
-            # randomized str hashing and reshuffles the ARXML on every run.
-            tx_sigs = sorted(set(sn for _, sn, _ in self.ecu_tx_signals.get(eu, [])))
-            rx_sigs = sorted(set(sn for _, sn, _ in self.ecu_rx_signals.get(eu, [])))
-
-            # Map runnables to SWC by function name prefix
-            run_map = {}
-            for r in ecu_data.get("runnables", []):
-                parts = r["function"].split("_")
-                key = "%s_%s" % (parts[0], parts[1]) if len(parts) >= 3 else r["function"]
-                run_map.setdefault(key, []).append(r)
-
-            for swc_info in ecu_data.get("swcs", []):
-                try:
-                    self._create_one_swc(
-                        swc_pkg, eu, swc_info["name"],
-                        swc_info.get("functions", []),
-                        run_map.get(swc_info["name"], []),
-                        tx_sigs, rx_sigs,
-                    )
-                except PipelineDiagnosticError:
-                    raise
-                except Exception as exc:
-                    self._fail(
-                        "ARXML014", "SWC '%s/%s'" % (eu, swc_info["name"]),
-                        "cannot create software component", exc,
-                    )
+        self._create_explicit_swc_types()
 
     def _create_explicit_swc_types(self):
         """Emit only the already validated exact mapping model."""
@@ -1100,93 +1040,6 @@ class Dbc2Arxml:
                         "cannot create explicit software component",
                         exc,
                     )
-    def _create_one_swc(self, pkg, ecu, swc_name, functions, runnables, tx_sigs, rx_sigs):
-        full = "%s_%s" % (ecu, swc_name)
-        swc = pkg.create_application_sw_component_type(full)
-        self.swc_types[full] = swc
-        self.swc_count += 1
-
-        swc_low = swc_name.lower()
-        added = set()
-
-        # Provide ports (TX)
-        for sn in tx_sigs:
-            if self._sig_matches(sn, swc_low) and sn not in added:
-                sr = self.sr_interfaces.get(sn)
-                if sr:
-                    try:
-                        swc.create_p_port("PP_%s" % sn, sr)
-                        self.port_count += 1
-                        added.add(sn)
-                    except Exception as exc:
-                        self._fail(
-                            "ARXML015", "SWC '%s' P-port '%s'" % (full, sn),
-                            "cannot create port", exc,
-                        )
-
-        # Require ports (RX)
-        for sn in rx_sigs:
-            if self._sig_matches(sn, swc_low) and sn not in added:
-                sr = self.sr_interfaces.get(sn)
-                if sr:
-                    try:
-                        swc.create_r_port("RP_%s" % sn, sr)
-                        self.port_count += 1
-                        added.add(sn)
-                    except Exception as exc:
-                        self._fail(
-                            "ARXML015", "SWC '%s' R-port '%s'" % (full, sn),
-                            "cannot create port", exc,
-                        )
-
-        # Internal behavior
-        beh = swc.create_swc_internal_behavior("%s_IB" % full)
-        self.swc_behaviors[full] = beh
-
-        # Periodic runnables
-        for r in runnables:
-            func = r["function"]
-            try:
-                run = beh.create_runnable_entity(func)
-                self.swc_runnables[func] = run
-                self.runnable_count += 1
-                ms = r.get("period_ms", 0)
-                if ms > 0:
-                    beh.create_timing_event("TE_%s_%dms" % (func, ms), run, float(ms) / 1000.0)
-                    self.timing_event_count += 1
-            except Exception as exc:
-                self._fail(
-                    "ARXML016", "runnable '%s'" % func,
-                    "cannot create runnable or timing event", exc,
-                )
-
-        # Init runnables
-        for func in functions:
-            if func.endswith("_Init") and func not in self.swc_runnables:
-                try:
-                    run = beh.create_runnable_entity(func)
-                    self.swc_runnables[func] = run
-                    self.runnable_count += 1
-                    beh.create_init_event("IE_%s" % func, run)
-                    self.init_event_count += 1
-                except Exception as exc:
-                    self._fail(
-                        "ARXML017", "init runnable '%s'" % func,
-                        "cannot create runnable or init event", exc,
-                    )
-
-    def _sig_matches(self, sig_name, swc_lower):
-        """Heuristic: does this signal belong to this SWC domain?"""
-        sl = sig_name.lower()
-        for domain, kws in DOMAIN_MAP.items():
-            if domain in swc_lower:
-                for kw in kws:
-                    if kw in sl:
-                        return True
-        if any(k in swc_lower for k in ["com", "canmonitor", "main"]):
-            return True
-        return False
-
     # -- Reporting ---------------------------------------------------------
 
     def report(self):
@@ -1252,8 +1105,8 @@ def main():
     )
     parser.add_argument(
         "--swc-mapping-mode",
-        choices=["shadow", "preferred"],
-        help="validate explicit mapping for shadow or preferred emission",
+        choices=["strict"],
+        help="require validated explicit mapping for strict emission",
     )
     args = parser.parse_args()
 
@@ -1279,7 +1132,7 @@ def main():
 
     try:
         mapping = None
-        if args.swc_mapping_mode in ("shadow", "preferred"):
+        if args.swc_mapping_mode == "strict":
             mapping = load_swc_mapping(args.swc_mapping)
             database = cantools.database.load_file(args.dbc)
             production_ecus = {"cvc", "fzc", "rzc", "sc", "bcm", "icu", "tcu"}
@@ -1296,18 +1149,12 @@ def main():
                 args.model,
                 governed_ecus=governed_ecus,
             )
-            if args.swc_mapping_mode == "shadow":
-                print(
-                    "  SWC mapping: shadow validation passed; "
-                    "legacy emission remains active"
-                )
-            else:
-                print("  SWC mapping: preferred explicit emission active")
+            print("  SWC mapping: strict explicit emission active")
 
         c = Dbc2Arxml(
             args.dbc,
             args.model,
-            swc_mapping=mapping if args.swc_mapping_mode == "preferred" else None,
+            swc_mapping=mapping,
         )
 
         if args.step == "base":

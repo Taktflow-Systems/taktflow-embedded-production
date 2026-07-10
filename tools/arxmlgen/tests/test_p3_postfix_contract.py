@@ -50,17 +50,7 @@ def test_atomic_replace_failure_preserves_bytes_and_removes_temporary_file(
 @pytest.mark.parametrize("nested_code", ["ARXML015", "ARXML016", "ARXML017"])
 def test_nested_swc_diagnostic_code_survives_outer_handler(nested_code):
     converter = Dbc2Arxml.__new__(Dbc2Arxml)
-    converter.ecu_model = {
-        "ecus": {
-            "brake": {
-                "runnables": [],
-                "swcs": [{"name": "Swc_Brake", "functions": []}],
-            }
-        }
-    }
-    converter.am = SimpleNamespace(get_or_create_package=lambda _path: object())
-    converter.ecu_tx_signals = {}
-    converter.ecu_rx_signals = {}
+    converter.explicit_swc_mapping = object()
     nested = PipelineDiagnostic(
         code=nested_code,
         severity=DiagnosticSeverity.ERROR,
@@ -71,7 +61,7 @@ def test_nested_swc_diagnostic_code_survives_outer_handler(nested_code):
     def fail_with_nested_diagnostic(*_args):
         raise PipelineDiagnosticError([nested])
 
-    converter._create_one_swc = fail_with_nested_diagnostic
+    converter._create_explicit_swc_types = fail_with_nested_diagnostic
 
     with pytest.raises(PipelineDiagnosticError) as exc_info:
         converter._create_swc_types()

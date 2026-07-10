@@ -905,25 +905,14 @@ class ArxmlReader:
 
             # Determine owning ECU from prefix: "CVC_Swc_Pedal" → "cvc"
             mapped_owner = self._mapped_swcs.get(short_name)
-            ecu_name = mapped_owner[0] if mapped_owner is not None else None
-            for name, ecu in ecus.items():
-                if ecu_name is not None:
-                    break
-                if short_name.upper().startswith(ecu.prefix + "_"):
-                    ecu_name = name
-                    break
-
-            if not ecu_name:
+            if mapped_owner is None:
                 self._fail(
                     "ARXML106", "SWC '%s'" % short_name,
-                    "does not match a configured ECU prefix",
+                    "has no exact explicit mapping owner",
                 )
 
             # Strip ECU prefix to get clean SWC name
-            swc_name = mapped_owner[1] if mapped_owner is not None else short_name
-            prefix_len = len(ecus[ecu_name].prefix) + 1  # "CVC_"
-            if mapped_owner is None and len(short_name) > prefix_len:
-                swc_name = short_name[prefix_len:]  # "Swc_Pedal"
+            ecu_name, swc_name = mapped_owner
 
             # Extract ports
             ports = []
@@ -977,20 +966,18 @@ class ArxmlReader:
 
         # Derive signal name from interface: "SRI_PedalRaw1" → "PedalRaw1"
         mapped_identity = self._mapped_ports.get((swc_short_name, name))
-        signal_name = (
-            mapped_identity[1]
-            if mapped_identity is not None
-            else interface_name.replace("SRI_", "")
-            if interface_name.startswith("SRI_")
-            else interface_name
-        )
+        if mapped_identity is None:
+            self._fail(
+                "ARXML108", "port '%s/%s'" % (swc_short_name, name),
+                "has no exact explicit mapping identity",
+            )
 
         return Port(
             name=name,
             direction=direction,
             interface_name=interface_name,
-            signal_name=signal_name,
-            message_name=mapped_identity[0] if mapped_identity is not None else "",
+            signal_name=mapped_identity[1],
+            message_name=mapped_identity[0],
         )
 
     def _parse_behavior(self, beh_elem) -> list[Runnable]:
@@ -1476,15 +1463,6 @@ class ArxmlReader:
         """
         for ecu in ecus.values():
             # Two lookups: exact match and suffix match (strip PDU prefix)
-            exact_types: dict[str, str] = {}
-            suffix_types: dict[str, str] = {}
-            for pdu in ecu.tx_pdus + ecu.rx_pdus:
-                for sig in pdu.signals:
-                    exact_types[sig.name] = sig.data_type
-                    if sig.name.startswith(pdu.name + "_"):
-                        suffix = sig.name[len(pdu.name) + 1:]
-                        suffix_types[suffix] = sig.data_type
-
             for swc in ecu.swcs:
                 for port in swc.ports:
                     mapped_type = self._dbc_signal_types.get(
@@ -1492,10 +1470,6 @@ class ArxmlReader:
                     )
                     if mapped_type is not None:
                         port.data_type = mapped_type
-                    elif port.signal_name in exact_types:
-                        port.data_type = exact_types[port.signal_name]
-                    elif port.signal_name in suffix_types:
-                        port.data_type = suffix_types[port.signal_name]
 
     # ------------------------------------------------------------------
     # Helpers

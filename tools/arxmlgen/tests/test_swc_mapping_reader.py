@@ -63,3 +63,28 @@ def test_mapped_message_signal_type_precedes_suffix_recovery():
     reader._resolve_port_types({"cvc": ecu})
 
     assert port.data_type == "uint16_t"
+
+
+def test_pdu_suffix_confers_no_type_identity():
+    reader = ArxmlReader.__new__(ArxmlReader)
+    reader._dbc_signal_types = {}
+    port = Port(name="ExactPort", signal_name="ExactSignal")
+    ecu = Ecu(name="cvc", prefix="CVC", swcs=[Swc(name="Swc_Logical", ports=[port])],
+              tx_pdus=[Pdu(name="Misleading", signals=[Signal(
+                  "Misleading_ExactSignal", 0, 8, data_type="uint8_t")])])
+    reader._resolve_port_types({"cvc": ecu})
+    assert port.data_type == "uint32_t"
+
+
+def test_sri_prefix_confers_no_signal_identity():
+    reader = ArxmlReader.__new__(ArxmlReader)
+    reader._mapped_ports = {("UnprefixedComponent", "ExactPort"): (
+        "ExactMessage", "ExactSignal")}
+    reference = SimpleNamespace(
+        element_name="PROVIDED-INTERFACE-TREF", is_reference=True,
+        reference_target=SimpleNamespace(item_name="SRI_DecoySignal"))
+    element = SimpleNamespace(
+        element_name="P-PORT-PROTOTYPE", item_name="ExactPort",
+        sub_elements=[reference])
+    port = reader._parse_port(element, "UnprefixedComponent")
+    assert (port.message_name, port.signal_name) == ("ExactMessage", "ExactSignal")
