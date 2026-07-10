@@ -379,7 +379,7 @@ cppcheck --project=compile_commands.json --addon=tools/misra/misra.json
 
 # Regenerate configs from DBC (full pipeline — the SWC model JSON is
 # required; without it the ARXML loses all SWCs, ports and runnables)
-python tools/arxml/dbc2arxml.py gateway/taktflow_vehicle.dbc arxml_v2/ arxml_v2/swc_model.json --swc-mapping model/ecu_sidecar.yaml --swc-mapping-mode shadow
+python tools/arxml/dbc2arxml.py gateway/taktflow_vehicle.dbc arxml_v2/ arxml_v2/swc_model.json --swc-mapping model/ecu_sidecar.yaml --swc-mapping-mode preferred
 cp arxml_v2/TaktflowSystem.arxml arxml/TaktflowSystem.arxml
 python -m tools.arxmlgen --config project.yaml
 
@@ -388,15 +388,17 @@ bash tools/ci/check_codegen_idempotency.sh
 
 # Independently compare DBC and ARXML frame/signal communication semantics
 python tools/ci/roundtrip_check.py gateway/taktflow_vehicle.dbc arxml/TaktflowSystem.arxml
-python tools/ci/check_swc_mapping.py gateway/taktflow_vehicle.dbc arxml_v2/swc_model.json model/ecu_sidecar.yaml arxml/TaktflowSystem.arxml --mode shadow --check
+python tools/ci/check_swc_mapping.py gateway/taktflow_vehicle.dbc arxml_v2/swc_model.json model/ecu_sidecar.yaml arxml/TaktflowSystem.arxml --mode preferred --check
 ```
 
-`shadow` validates the explicit Signal-to-SWC mapping before conversion, then
-keeps the legacy heuristic model as the sole ARXML emitter. The parity checker
-is a blocking gate over normalized SWCs, ports, interfaces, runnables, and
-events. A missing or invalid map fails before ARXML or assumptions-report
-replacement; the legacy command without mapping flags remains the pre-strict
-rollback path.
+`preferred` validates the explicit Signal-to-SWC mapping before conversion and
+uses that mapping as the sole ARXML emitter. It never falls back to legacy
+heuristics. The parity checker is a blocking gate over normalized SWCs, ports,
+interfaces, runnables, and events. A missing, invalid, or incomplete map fails
+before ARXML, assumptions-report, or parity-report replacement. `shadow`
+retains legacy-only emission for comparison, and the command without mapping
+flags remains the pre-strict rollback path until the strict migration removes
+compatibility behavior.
 
 The round-trip gate compares frame ID, extended-ID flag, DLC, signal start,
 length, byte order, factor, and offset. ARXML is imported with canmatrix only.

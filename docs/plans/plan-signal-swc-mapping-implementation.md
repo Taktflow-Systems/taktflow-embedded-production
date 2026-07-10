@@ -1,13 +1,13 @@
 # Plan: Explicit Signal-to-SWC Mapping Implementation
 
-**Status:** OWNER APPROVED - SM0-SM3 DONE; SM4 PENDING
+**Status:** OWNER APPROVED - SM0-SM4 DONE; SM5 PENDING
 **Source decision:** [approved removal memo](memo-signal-swc-mapping-removal.md)
 **Scope:** Replace name-derived Signal-to-SWC and related identity decisions
 with an explicit, fail-closed mapping in `model/ecu_sidecar.yaml`.
-**Current boundary:** SM3 validates the exact seven-ECU map and blocks on
-deterministic shadow parity while the legacy heuristic model remains the sole
-emitter. Preferred emission, generated-output migration and heuristic removal
-have not started.
+**Current boundary:** SM4 validates the exact seven-ECU map and uses it as the
+sole emitter in preferred mode. Generated ARXML and affected RTE declarations
+are migrated; legacy heuristics remain only for shadow comparison and
+pre-SM5 rollback. Strict activation and heuristic removal have not started.
 
 ## Objective and authority boundary
 
@@ -283,7 +283,7 @@ semantics. Generated ARXML and ECU configuration remain unchanged.
 The first compatibility milestone completes only after all three commits are
 integrated and its CI gate is green.
 
-### SM4 - Milestone 2: explicit/preferred emission - PENDING
+### SM4 - Milestone 2: explicit/preferred emission - DONE
 
 **Entry gate:** Owner approves all SM3 differences and long-term or
 time-bounded dispositions for catch-all/shared providers.
@@ -309,6 +309,26 @@ is approved and reported; one full preferred milestone is green before SM5.
 **Commits:** `feat(pipeline): prefer explicit SWC mapping`, then separate
 `chore(codegen): regenerate explicit SWC mapping outputs` if needed, then a
 separate documentation/status commit records milestone approval.
+
+**Result:** Preferred mode validates the complete explicit map before converter
+construction and uses it as the sole SWC emitter without legacy fallback.
+Exact mapped SWC, message, signal and type identities flow into arxmlgen before
+the retained compatibility recovery paths. The normalized preferred report
+records 48 SWCs, 848 ports, 182 interfaces, 71 runnables and 71 events with
+zero differences from the approved SM3 model. Two preferred runs produced
+byte-identical ARXML, assumptions and parity reports.
+
+The owner approved the raw ARXML ordering/representation migration after its
+normalized model was proven unchanged. Generator-produced RTE changes only
+reorder 18 forward declarations into explicit-map runnable order; executable
+bodies and tables are unchanged. Strict ARXML validation reports zero warnings,
+the semantic round trip covers 45 frames and 182 signals, and the strict corpus
+gate converts three corpora with two documented skips and no crashes. The
+standalone ARXML, arxmlgen and CI suites pass 100, 331 and 21 tests respectively.
+The arxmlgen suite completes in 23.68 seconds, with no material regression from
+the 23.14-second SM3 baseline. `DOMAIN_MAP`, `_sig_matches`, type-recovery
+compatibility paths and the separately governed Com bridge filter remain for
+SM5 review.
 
 ### SM5 - Milestone 3: explicit/strict and removal - PENDING
 
