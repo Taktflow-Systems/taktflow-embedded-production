@@ -268,5 +268,9 @@ def test_tms570_bringup_recovery_precedes_one_way_fiq_unmask():
     assert "[BRINGUP-ESM] retained SR2=" in recovery
     assert "esmREG->SR1[1u] = sr2;" in recovery
     assert "esmREG->SSR2 = ssr2;" in recovery
+    assert "(esmREG->SR1[1u] | esmREG->SSR2) == 0u" in recovery
+    assert recovery.index("esmREG->SSR2 = ssr2;") < recovery.index(
+        "vimREG->INTREQ0 = 1u;"
+    )
     for marker in ("post SR2=", "SSR2=", "IOFFHR=", "INTREQ0="):
         assert marker in recovery

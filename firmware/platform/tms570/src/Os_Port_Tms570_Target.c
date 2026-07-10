@@ -383,6 +383,12 @@ void Os_Port_Tms570_BringupClearRetainedEsmGroup2(void)
         esmREG->EKR = 0x0u;
         sc_sci_puts(" -> cleared, SSR2 now ");
         sc_sci_put_hex32(esmREG->SSR2);
+        if ((esmREG->SR1[1u] | esmREG->SSR2) == 0u) {
+            /* The source is gone; drain only the stale VIM ch0 request left
+             * by the asserted high-level input. Bring-up recovery only. */
+            vimREG->INTREQ0 = 1u;
+            sc_sci_puts(" VIM0 drained");
+        }
     }
     sc_sci_puts(" post SR2="); sc_sci_put_hex32(esmREG->SR1[1u]);
     sc_sci_puts(" SSR2="); sc_sci_put_hex32(esmREG->SSR2);
