@@ -23,18 +23,18 @@ extern void Com_MainFunction_Tx(void);
 extern void Can_MainFunction_BusOff(void);
 extern void Swc_CvcCom_Init(void);
 extern void Swc_CvcDcm_Init(void);
-extern void Swc_Dashboard_MainFunction(void);
 extern void Swc_Dashboard_Init(void);
-extern void Swc_EStop_MainFunction(void);
+extern void Swc_Dashboard_MainFunction(void);
 extern void Swc_EStop_Init(void);
-extern void Swc_Heartbeat_MainFunction(void);
+extern void Swc_EStop_MainFunction(void);
 extern void Swc_Heartbeat_Init(void);
+extern void Swc_Heartbeat_MainFunction(void);
 extern void Swc_Nvm_Init(void);
-extern void Swc_Pedal_MainFunction(void);
 extern void Swc_Pedal_Init(void);
+extern void Swc_Pedal_MainFunction(void);
 extern void Swc_Scheduler_Init(void);
-extern void Swc_VehicleState_MainFunction(void);
 extern void Swc_VehicleState_Init(void);
+extern void Swc_VehicleState_MainFunction(void);
 extern void Swc_Watchdog_Init(void);
 
 /* ==================================================================

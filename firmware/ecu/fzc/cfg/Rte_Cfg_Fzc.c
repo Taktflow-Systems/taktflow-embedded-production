@@ -15,30 +15,30 @@
  * Forward declarations for SWC runnables
  * ================================================================== */
 
-extern void Swc_Brake_MainFunction(void);
 extern void Swc_Brake_Init(void);
+extern void Swc_Brake_MainFunction(void);
 extern void Can_MainFunction_Read(void);
 extern void Com_MainFunction_Rx(void);
 extern void Swc_FzcCom_Receive(void);
 extern void Com_MainFunction_Tx(void);
 extern void Can_MainFunction_BusOff(void);
-extern void Swc_Buzzer_MainFunction(void);
 extern void Swc_Buzzer_Init(void);
+extern void Swc_Buzzer_MainFunction(void);
 extern void Swc_FzcCanMonitor_Check(void);
 extern void Swc_FzcCanMonitor_Init(void);
 extern void Swc_FzcCom_Init(void);
 extern void Swc_FzcDcm_Init(void);
 extern void Swc_FzcNvm_Init(void);
-extern void Swc_FzcSafety_MainFunction(void);
 extern void Swc_FzcSafety_Init(void);
+extern void Swc_FzcSafety_MainFunction(void);
 extern void Swc_FzcScheduler_Init(void);
-extern void Swc_FzcSensorFeeder_MainFunction(void);
 extern void Swc_FzcSensorFeeder_Init(void);
+extern void Swc_FzcSensorFeeder_MainFunction(void);
 extern void Swc_Heartbeat_MainFunction(void);
-extern void Swc_Lidar_MainFunction(void);
 extern void Swc_Lidar_Init(void);
-extern void Swc_Steering_MainFunction(void);
+extern void Swc_Lidar_MainFunction(void);
 extern void Swc_Steering_Init(void);
+extern void Swc_Steering_MainFunction(void);
 
 /* ==================================================================
  * Signal Configuration Table

@@ -10603,6 +10603,328 @@
           <SHORT-NAME>SWCs</SHORT-NAME>
           <AR-PACKAGES>
             <AR-PACKAGE>
+              <SHORT-NAME>BCM</SHORT-NAME>
+              <ELEMENTS>
+                <APPLICATION-SW-COMPONENT-TYPE>
+                  <SHORT-NAME>BCM_Swc_BcmCan</SHORT-NAME>
+                  <INTERNAL-BEHAVIORS>
+                    <SWC-INTERNAL-BEHAVIOR>
+                      <SHORT-NAME>BCM_Swc_BcmCan_IB</SHORT-NAME>
+                    </SWC-INTERNAL-BEHAVIOR>
+                  </INTERNAL-BEHAVIORS>
+                </APPLICATION-SW-COMPONENT-TYPE>
+                <APPLICATION-SW-COMPONENT-TYPE>
+                  <SHORT-NAME>BCM_Swc_BcmMain</SHORT-NAME>
+                  <PORTS>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_BCM_Heartbeat_AliveCounter</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_BCM_Heartbeat_AliveCounter</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_BCM_Heartbeat_E2E_AliveCounter</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_BCM_Heartbeat_E2E_AliveCounter</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_BCM_Heartbeat_E2E_CRC8</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_BCM_Heartbeat_E2E_CRC8</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_BCM_Heartbeat_E2E_DataID</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_BCM_Heartbeat_E2E_DataID</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_BCM_Heartbeat_ECU_ID</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_BCM_Heartbeat_ECU_ID</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Door_Lock_Status_CentralLock</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_CentralLock</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Door_Lock_Status_FrontLeftLock</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_FrontLeftLock</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Door_Lock_Status_FrontRightLock</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_FrontRightLock</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Door_Lock_Status_RearLeftLock</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_RearLeftLock</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Door_Lock_Status_RearRightLock</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_RearRightLock</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Indicator_State_BlinkPhaseHigh</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Indicator_State_BlinkPhaseHigh</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Indicator_State_HazardActive</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Indicator_State_HazardActive</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Indicator_State_LeftOn</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Indicator_State_LeftOn</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Indicator_State_RightOn</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Indicator_State_RightOn</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Light_Status_BrakeLightOn</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_BrakeLightOn</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Light_Status_FogLightOn</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_FogLightOn</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Light_Status_HeadlightLevel</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_HeadlightLevel</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Light_Status_HeadlightOn</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_HeadlightOn</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Light_Status_TailLightOn</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_TailLightOn</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_Body_Control_Cmd_DoorLockCmd</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Body_Control_Cmd_DoorLockCmd</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_Body_Control_Cmd_HazardActive</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Body_Control_Cmd_HazardActive</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_Body_Control_Cmd_HeadlightCmd</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Body_Control_Cmd_HeadlightCmd</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_Body_Control_Cmd_TailLightOn</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Body_Control_Cmd_TailLightOn</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_Body_Control_Cmd_TurnSignalCmd</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Body_Control_Cmd_TurnSignalCmd</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_EStop_Broadcast_Active</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_EStop_Broadcast_Active</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_EStop_Broadcast_E2E_AliveCounter</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_EStop_Broadcast_E2E_AliveCounter</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_EStop_Broadcast_E2E_CRC8</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_EStop_Broadcast_E2E_CRC8</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_EStop_Broadcast_E2E_DataID</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_EStop_Broadcast_E2E_DataID</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_EStop_Broadcast_Source</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_EStop_Broadcast_Source</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_UDS_Func_Request_UDS_Data</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_UDS_Func_Request_UDS_Data</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_Vehicle_State_E2E_AliveCounter</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Vehicle_State_E2E_AliveCounter</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_Vehicle_State_E2E_CRC8</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Vehicle_State_E2E_CRC8</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_Vehicle_State_E2E_DataID</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Vehicle_State_E2E_DataID</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_Vehicle_State_FaultMask</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Vehicle_State_FaultMask</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_Vehicle_State_Mode</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Vehicle_State_Mode</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                  </PORTS>
+                  <INTERNAL-BEHAVIORS>
+                    <SWC-INTERNAL-BEHAVIOR>
+                      <SHORT-NAME>BCM_Swc_BcmMain_IB</SHORT-NAME>
+                    </SWC-INTERNAL-BEHAVIOR>
+                  </INTERNAL-BEHAVIORS>
+                </APPLICATION-SW-COMPONENT-TYPE>
+                <APPLICATION-SW-COMPONENT-TYPE>
+                  <SHORT-NAME>BCM_Swc_DoorLock</SHORT-NAME>
+                  <PORTS>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Door_Lock_Status_CentralLock</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_CentralLock</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Door_Lock_Status_FrontLeftLock</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_FrontLeftLock</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Door_Lock_Status_FrontRightLock</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_FrontRightLock</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Door_Lock_Status_RearLeftLock</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_RearLeftLock</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Door_Lock_Status_RearRightLock</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_RearRightLock</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_Body_Control_Cmd_DoorLockCmd</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Body_Control_Cmd_DoorLockCmd</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                  </PORTS>
+                  <INTERNAL-BEHAVIORS>
+                    <SWC-INTERNAL-BEHAVIOR>
+                      <SHORT-NAME>BCM_Swc_DoorLock_IB</SHORT-NAME>
+                      <EVENTS>
+                        <TIMING-EVENT>
+                          <SHORT-NAME>TE_Swc_DoorLock_100ms_100ms</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/BCM/BCM_Swc_DoorLock/BCM_Swc_DoorLock_IB/Swc_DoorLock_100ms</START-ON-EVENT-REF>
+                          <PERIOD>0.1</PERIOD>
+                        </TIMING-EVENT>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_DoorLock_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/BCM/BCM_Swc_DoorLock/BCM_Swc_DoorLock_IB/Swc_DoorLock_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
+                      </EVENTS>
+                      <RUNNABLES>
+                        <RUNNABLE-ENTITY>
+                          <SHORT-NAME>Swc_DoorLock_100ms</SHORT-NAME>
+                        </RUNNABLE-ENTITY>
+                        <RUNNABLE-ENTITY>
+                          <SHORT-NAME>Swc_DoorLock_Init</SHORT-NAME>
+                        </RUNNABLE-ENTITY>
+                      </RUNNABLES>
+                    </SWC-INTERNAL-BEHAVIOR>
+                  </INTERNAL-BEHAVIORS>
+                </APPLICATION-SW-COMPONENT-TYPE>
+                <APPLICATION-SW-COMPONENT-TYPE>
+                  <SHORT-NAME>BCM_Swc_Indicators</SHORT-NAME>
+                  <PORTS>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Indicator_State_BlinkPhaseHigh</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Indicator_State_BlinkPhaseHigh</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Indicator_State_HazardActive</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Indicator_State_HazardActive</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Indicator_State_LeftOn</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Indicator_State_LeftOn</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Indicator_State_RightOn</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Indicator_State_RightOn</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_Body_Control_Cmd_TurnSignalCmd</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Body_Control_Cmd_TurnSignalCmd</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                  </PORTS>
+                  <INTERNAL-BEHAVIORS>
+                    <SWC-INTERNAL-BEHAVIOR>
+                      <SHORT-NAME>BCM_Swc_Indicators_IB</SHORT-NAME>
+                      <EVENTS>
+                        <TIMING-EVENT>
+                          <SHORT-NAME>TE_Swc_Indicators_10ms_10ms</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/BCM/BCM_Swc_Indicators/BCM_Swc_Indicators_IB/Swc_Indicators_10ms</START-ON-EVENT-REF>
+                          <PERIOD>0.01</PERIOD>
+                        </TIMING-EVENT>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_Indicators_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/BCM/BCM_Swc_Indicators/BCM_Swc_Indicators_IB/Swc_Indicators_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
+                      </EVENTS>
+                      <RUNNABLES>
+                        <RUNNABLE-ENTITY>
+                          <SHORT-NAME>Swc_Indicators_10ms</SHORT-NAME>
+                        </RUNNABLE-ENTITY>
+                        <RUNNABLE-ENTITY>
+                          <SHORT-NAME>Swc_Indicators_Init</SHORT-NAME>
+                        </RUNNABLE-ENTITY>
+                      </RUNNABLES>
+                    </SWC-INTERNAL-BEHAVIOR>
+                  </INTERNAL-BEHAVIORS>
+                </APPLICATION-SW-COMPONENT-TYPE>
+                <APPLICATION-SW-COMPONENT-TYPE>
+                  <SHORT-NAME>BCM_Swc_Lights</SHORT-NAME>
+                  <PORTS>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Light_Status_BrakeLightOn</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_BrakeLightOn</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Light_Status_FogLightOn</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_FogLightOn</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Light_Status_HeadlightLevel</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_HeadlightLevel</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Light_Status_HeadlightOn</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_HeadlightOn</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <P-PORT-PROTOTYPE>
+                      <SHORT-NAME>PP_Light_Status_TailLightOn</SHORT-NAME>
+                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_TailLightOn</PROVIDED-INTERFACE-TREF>
+                    </P-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_Body_Control_Cmd_HeadlightCmd</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Body_Control_Cmd_HeadlightCmd</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_Body_Control_Cmd_TailLightOn</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Body_Control_Cmd_TailLightOn</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                  </PORTS>
+                  <INTERNAL-BEHAVIORS>
+                    <SWC-INTERNAL-BEHAVIOR>
+                      <SHORT-NAME>BCM_Swc_Lights_IB</SHORT-NAME>
+                      <EVENTS>
+                        <TIMING-EVENT>
+                          <SHORT-NAME>TE_Swc_Lights_10ms_10ms</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/BCM/BCM_Swc_Lights/BCM_Swc_Lights_IB/Swc_Lights_10ms</START-ON-EVENT-REF>
+                          <PERIOD>0.01</PERIOD>
+                        </TIMING-EVENT>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_Lights_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/BCM/BCM_Swc_Lights/BCM_Swc_Lights_IB/Swc_Lights_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
+                      </EVENTS>
+                      <RUNNABLES>
+                        <RUNNABLE-ENTITY>
+                          <SHORT-NAME>Swc_Lights_10ms</SHORT-NAME>
+                        </RUNNABLE-ENTITY>
+                        <RUNNABLE-ENTITY>
+                          <SHORT-NAME>Swc_Lights_Init</SHORT-NAME>
+                        </RUNNABLE-ENTITY>
+                      </RUNNABLES>
+                    </SWC-INTERNAL-BEHAVIOR>
+                  </INTERNAL-BEHAVIORS>
+                </APPLICATION-SW-COMPONENT-TYPE>
+              </ELEMENTS>
+            </AR-PACKAGE>
+            <AR-PACKAGE>
               <SHORT-NAME>CVC</SHORT-NAME>
               <ELEMENTS>
                 <APPLICATION-SW-COMPONENT-TYPE>
@@ -11930,22 +12252,22 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>CVC_Swc_Dashboard_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_Dashboard_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/CVC/CVC_Swc_Dashboard/CVC_Swc_Dashboard_IB/Swc_Dashboard_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_Dashboard_MainFunction_10ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/CVC/CVC_Swc_Dashboard/CVC_Swc_Dashboard_IB/Swc_Dashboard_MainFunction</START-ON-EVENT-REF>
                           <PERIOD>0.01</PERIOD>
                         </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_Dashboard_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/CVC/CVC_Swc_Dashboard/CVC_Swc_Dashboard_IB/Swc_Dashboard_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Dashboard_MainFunction</SHORT-NAME>
+                          <SHORT-NAME>Swc_Dashboard_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Dashboard_Init</SHORT-NAME>
+                          <SHORT-NAME>Swc_Dashboard_MainFunction</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -11979,22 +12301,22 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>CVC_Swc_EStop_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_EStop_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/CVC/CVC_Swc_EStop/CVC_Swc_EStop_IB/Swc_EStop_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_EStop_MainFunction_10ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/CVC/CVC_Swc_EStop/CVC_Swc_EStop_IB/Swc_EStop_MainFunction</START-ON-EVENT-REF>
                           <PERIOD>0.01</PERIOD>
                         </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_EStop_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/CVC/CVC_Swc_EStop/CVC_Swc_EStop_IB/Swc_EStop_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_EStop_MainFunction</SHORT-NAME>
+                          <SHORT-NAME>Swc_EStop_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_EStop_Init</SHORT-NAME>
+                          <SHORT-NAME>Swc_EStop_MainFunction</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -12200,22 +12522,22 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>CVC_Swc_Heartbeat_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_Heartbeat_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/CVC/CVC_Swc_Heartbeat/CVC_Swc_Heartbeat_IB/Swc_Heartbeat_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_Heartbeat_MainFunction_10ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/CVC/CVC_Swc_Heartbeat/CVC_Swc_Heartbeat_IB/Swc_Heartbeat_MainFunction</START-ON-EVENT-REF>
                           <PERIOD>0.01</PERIOD>
                         </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_Heartbeat_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/CVC/CVC_Swc_Heartbeat/CVC_Swc_Heartbeat_IB/Swc_Heartbeat_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Heartbeat_MainFunction</SHORT-NAME>
+                          <SHORT-NAME>Swc_Heartbeat_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Heartbeat_Init</SHORT-NAME>
+                          <SHORT-NAME>Swc_Heartbeat_MainFunction</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -12260,22 +12582,22 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>CVC_Swc_Pedal_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_Pedal_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/CVC/CVC_Swc_Pedal/CVC_Swc_Pedal_IB/Swc_Pedal_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_Pedal_MainFunction_10ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/CVC/CVC_Swc_Pedal/CVC_Swc_Pedal_IB/Swc_Pedal_MainFunction</START-ON-EVENT-REF>
                           <PERIOD>0.01</PERIOD>
                         </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_Pedal_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/CVC/CVC_Swc_Pedal/CVC_Swc_Pedal_IB/Swc_Pedal_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Pedal_MainFunction</SHORT-NAME>
+                          <SHORT-NAME>Swc_Pedal_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Pedal_Init</SHORT-NAME>
+                          <SHORT-NAME>Swc_Pedal_MainFunction</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -12352,22 +12674,22 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>CVC_Swc_VehicleState_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_VehicleState_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState/CVC_Swc_VehicleState_IB/Swc_VehicleState_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_VehicleState_MainFunction_10ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState/CVC_Swc_VehicleState_IB/Swc_VehicleState_MainFunction</START-ON-EVENT-REF>
                           <PERIOD>0.01</PERIOD>
                         </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_VehicleState_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/CVC/CVC_Swc_VehicleState/CVC_Swc_VehicleState_IB/Swc_VehicleState_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_VehicleState_MainFunction</SHORT-NAME>
+                          <SHORT-NAME>Swc_VehicleState_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_VehicleState_Init</SHORT-NAME>
+                          <SHORT-NAME>Swc_VehicleState_MainFunction</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -12493,22 +12815,22 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>FZC_Swc_Brake_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_Brake_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_Brake/FZC_Swc_Brake_IB/Swc_Brake_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_Brake_MainFunction_10ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_Brake/FZC_Swc_Brake_IB/Swc_Brake_MainFunction</START-ON-EVENT-REF>
                           <PERIOD>0.01</PERIOD>
                         </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_Brake_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_Brake/FZC_Swc_Brake_IB/Swc_Brake_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Brake_MainFunction</SHORT-NAME>
+                          <SHORT-NAME>Swc_Brake_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Brake_Init</SHORT-NAME>
+                          <SHORT-NAME>Swc_Brake_MainFunction</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -12520,22 +12842,22 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>FZC_Swc_Buzzer_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_Buzzer_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_Buzzer/FZC_Swc_Buzzer_IB/Swc_Buzzer_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_Buzzer_MainFunction_10ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_Buzzer/FZC_Swc_Buzzer_IB/Swc_Buzzer_MainFunction</START-ON-EVENT-REF>
                           <PERIOD>0.01</PERIOD>
                         </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_Buzzer_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_Buzzer/FZC_Swc_Buzzer_IB/Swc_Buzzer_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Buzzer_MainFunction</SHORT-NAME>
+                          <SHORT-NAME>Swc_Buzzer_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Buzzer_Init</SHORT-NAME>
+                          <SHORT-NAME>Swc_Buzzer_MainFunction</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -13242,6 +13564,10 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>FZC_Swc_FzcCom_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_FzcCom_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_FzcCom/FZC_Swc_FzcCom_IB/Swc_FzcCom_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_FzcCom_Receive_10ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_FzcCom/FZC_Swc_FzcCom_IB/Swc_FzcCom_Receive</START-ON-EVENT-REF>
@@ -13252,20 +13578,16 @@
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_FzcCom/FZC_Swc_FzcCom_IB/Swc_FzcCom_TransmitSchedule</START-ON-EVENT-REF>
                           <PERIOD>0.01</PERIOD>
                         </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_FzcCom_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_FzcCom/FZC_Swc_FzcCom_IB/Swc_FzcCom_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
+                        <RUNNABLE-ENTITY>
+                          <SHORT-NAME>Swc_FzcCom_Init</SHORT-NAME>
+                        </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
                           <SHORT-NAME>Swc_FzcCom_Receive</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
                           <SHORT-NAME>Swc_FzcCom_TransmitSchedule</SHORT-NAME>
-                        </RUNNABLE-ENTITY>
-                        <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_FzcCom_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -13337,22 +13659,22 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>FZC_Swc_FzcSafety_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_FzcSafety_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_FzcSafety/FZC_Swc_FzcSafety_IB/Swc_FzcSafety_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_FzcSafety_MainFunction_10ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_FzcSafety/FZC_Swc_FzcSafety_IB/Swc_FzcSafety_MainFunction</START-ON-EVENT-REF>
                           <PERIOD>0.01</PERIOD>
                         </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_FzcSafety_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_FzcSafety/FZC_Swc_FzcSafety_IB/Swc_FzcSafety_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_FzcSafety_MainFunction</SHORT-NAME>
+                          <SHORT-NAME>Swc_FzcSafety_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_FzcSafety_Init</SHORT-NAME>
+                          <SHORT-NAME>Swc_FzcSafety_MainFunction</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -13383,22 +13705,22 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>FZC_Swc_FzcSensorFeeder_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_FzcSensorFeeder_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_FzcSensorFeeder/FZC_Swc_FzcSensorFeeder_IB/Swc_FzcSensorFeeder_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_FzcSensorFeeder_MainFunction_10ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_FzcSensorFeeder/FZC_Swc_FzcSensorFeeder_IB/Swc_FzcSensorFeeder_MainFunction</START-ON-EVENT-REF>
                           <PERIOD>0.01</PERIOD>
                         </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_FzcSensorFeeder_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_FzcSensorFeeder/FZC_Swc_FzcSensorFeeder_IB/Swc_FzcSensorFeeder_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_FzcSensorFeeder_MainFunction</SHORT-NAME>
+                          <SHORT-NAME>Swc_FzcSensorFeeder_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_FzcSensorFeeder_Init</SHORT-NAME>
+                          <SHORT-NAME>Swc_FzcSensorFeeder_MainFunction</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -13550,22 +13872,22 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>FZC_Swc_Lidar_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_Lidar_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_Lidar/FZC_Swc_Lidar_IB/Swc_Lidar_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_Lidar_MainFunction_10ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_Lidar/FZC_Swc_Lidar_IB/Swc_Lidar_MainFunction</START-ON-EVENT-REF>
                           <PERIOD>0.01</PERIOD>
                         </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_Lidar_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_Lidar/FZC_Swc_Lidar_IB/Swc_Lidar_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Lidar_MainFunction</SHORT-NAME>
+                          <SHORT-NAME>Swc_Lidar_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Lidar_Init</SHORT-NAME>
+                          <SHORT-NAME>Swc_Lidar_MainFunction</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -13639,22 +13961,142 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>FZC_Swc_Steering_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_Steering_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_Steering/FZC_Swc_Steering_IB/Swc_Steering_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_Steering_MainFunction_10ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_Steering/FZC_Swc_Steering_IB/Swc_Steering_MainFunction</START-ON-EVENT-REF>
                           <PERIOD>0.01</PERIOD>
                         </TIMING-EVENT>
+                      </EVENTS>
+                      <RUNNABLES>
+                        <RUNNABLE-ENTITY>
+                          <SHORT-NAME>Swc_Steering_Init</SHORT-NAME>
+                        </RUNNABLE-ENTITY>
+                        <RUNNABLE-ENTITY>
+                          <SHORT-NAME>Swc_Steering_MainFunction</SHORT-NAME>
+                        </RUNNABLE-ENTITY>
+                      </RUNNABLES>
+                    </SWC-INTERNAL-BEHAVIOR>
+                  </INTERNAL-BEHAVIORS>
+                </APPLICATION-SW-COMPONENT-TYPE>
+              </ELEMENTS>
+            </AR-PACKAGE>
+            <AR-PACKAGE>
+              <SHORT-NAME>ICU</SHORT-NAME>
+              <ELEMENTS>
+                <APPLICATION-SW-COMPONENT-TYPE>
+                  <SHORT-NAME>ICU_Swc_Dashboard</SHORT-NAME>
+                  <PORTS>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_Motor_Status_MotorSpeed_RPM</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Motor_Status_MotorSpeed_RPM</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                  </PORTS>
+                  <INTERNAL-BEHAVIORS>
+                    <SWC-INTERNAL-BEHAVIOR>
+                      <SHORT-NAME>ICU_Swc_Dashboard_IB</SHORT-NAME>
+                      <EVENTS>
+                        <TIMING-EVENT>
+                          <SHORT-NAME>TE_Swc_Dashboard_50ms_50ms</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/ICU/ICU_Swc_Dashboard/ICU_Swc_Dashboard_IB/Swc_Dashboard_50ms</START-ON-EVENT-REF>
+                          <PERIOD>0.05</PERIOD>
+                        </TIMING-EVENT>
+                      </EVENTS>
+                      <RUNNABLES>
+                        <RUNNABLE-ENTITY>
+                          <SHORT-NAME>Swc_Dashboard_50ms</SHORT-NAME>
+                        </RUNNABLE-ENTITY>
+                      </RUNNABLES>
+                    </SWC-INTERNAL-BEHAVIOR>
+                  </INTERNAL-BEHAVIORS>
+                </APPLICATION-SW-COMPONENT-TYPE>
+                <APPLICATION-SW-COMPONENT-TYPE>
+                  <SHORT-NAME>ICU_Swc_DtcDisplay</SHORT-NAME>
+                  <PORTS>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_Brake_Status_BrakeFaultStatus</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Brake_Status_BrakeFaultStatus</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_CVC_Heartbeat_FaultStatus</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_CVC_Heartbeat_FaultStatus</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_DTC_Broadcast_ECU_Source</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_DTC_Broadcast_ECU_Source</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_DTC_Broadcast_FreezeFrame0</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_DTC_Broadcast_FreezeFrame0</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_DTC_Broadcast_FreezeFrame1</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_DTC_Broadcast_FreezeFrame1</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_DTC_Broadcast_Number</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_DTC_Broadcast_Number</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_DTC_Broadcast_OccurrenceCount</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_DTC_Broadcast_OccurrenceCount</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_DTC_Broadcast_Status</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_DTC_Broadcast_Status</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_FZC_Heartbeat_FaultStatus</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_FZC_Heartbeat_FaultStatus</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_Motor_Status_MotorFaultStatus</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Motor_Status_MotorFaultStatus</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_RZC_Heartbeat_FaultStatus</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_RZC_Heartbeat_FaultStatus</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_SC_Status_FaultFlags</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_SC_Status_FaultFlags</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_SC_Status_FaultReason</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_SC_Status_FaultReason</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_Steering_Status_SteerFaultStatus</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Steering_Status_SteerFaultStatus</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                    <R-PORT-PROTOTYPE>
+                      <SHORT-NAME>RP_Vehicle_State_FaultMask</SHORT-NAME>
+                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Vehicle_State_FaultMask</REQUIRED-INTERFACE-TREF>
+                    </R-PORT-PROTOTYPE>
+                  </PORTS>
+                  <INTERNAL-BEHAVIORS>
+                    <SWC-INTERNAL-BEHAVIOR>
+                      <SHORT-NAME>ICU_Swc_DtcDisplay_IB</SHORT-NAME>
+                      <EVENTS>
+                        <TIMING-EVENT>
+                          <SHORT-NAME>TE_Swc_DtcDisplay_50ms_50ms</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/ICU/ICU_Swc_DtcDisplay/ICU_Swc_DtcDisplay_IB/Swc_DtcDisplay_50ms</START-ON-EVENT-REF>
+                          <PERIOD>0.05</PERIOD>
+                        </TIMING-EVENT>
                         <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_Steering_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/FZC/FZC_Swc_Steering/FZC_Swc_Steering_IB/Swc_Steering_Init</START-ON-EVENT-REF>
+                          <SHORT-NAME>IE_Swc_DtcDisplay_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/ICU/ICU_Swc_DtcDisplay/ICU_Swc_DtcDisplay_IB/Swc_DtcDisplay_Init</START-ON-EVENT-REF>
                         </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Steering_MainFunction</SHORT-NAME>
+                          <SHORT-NAME>Swc_DtcDisplay_50ms</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Steering_Init</SHORT-NAME>
+                          <SHORT-NAME>Swc_DtcDisplay_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -13697,22 +14139,22 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>RZC_Swc_Battery_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_Battery_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_Battery/RZC_Swc_Battery_IB/Swc_Battery_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_Battery_MainFunction_100ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_Battery/RZC_Swc_Battery_IB/Swc_Battery_MainFunction</START-ON-EVENT-REF>
                           <PERIOD>0.1</PERIOD>
                         </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_Battery_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_Battery/RZC_Swc_Battery_IB/Swc_Battery_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Battery_MainFunction</SHORT-NAME>
+                          <SHORT-NAME>Swc_Battery_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Battery_Init</SHORT-NAME>
+                          <SHORT-NAME>Swc_Battery_MainFunction</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -13762,22 +14204,22 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>RZC_Swc_CurrentMonitor_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_CurrentMonitor_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_CurrentMonitor/RZC_Swc_CurrentMonitor_IB/Swc_CurrentMonitor_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_CurrentMonitor_MainFunction_1ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_CurrentMonitor/RZC_Swc_CurrentMonitor_IB/Swc_CurrentMonitor_MainFunction</START-ON-EVENT-REF>
                           <PERIOD>0.001</PERIOD>
                         </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_CurrentMonitor_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_CurrentMonitor/RZC_Swc_CurrentMonitor_IB/Swc_CurrentMonitor_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_CurrentMonitor_MainFunction</SHORT-NAME>
+                          <SHORT-NAME>Swc_CurrentMonitor_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_CurrentMonitor_Init</SHORT-NAME>
+                          <SHORT-NAME>Swc_CurrentMonitor_MainFunction</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -13803,22 +14245,22 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>RZC_Swc_Encoder_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_Encoder_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_Encoder/RZC_Swc_Encoder_IB/Swc_Encoder_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_Encoder_MainFunction_10ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_Encoder/RZC_Swc_Encoder_IB/Swc_Encoder_MainFunction</START-ON-EVENT-REF>
                           <PERIOD>0.01</PERIOD>
                         </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_Encoder_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_Encoder/RZC_Swc_Encoder_IB/Swc_Encoder_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Encoder_MainFunction</SHORT-NAME>
+                          <SHORT-NAME>Swc_Encoder_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Encoder_Init</SHORT-NAME>
+                          <SHORT-NAME>Swc_Encoder_MainFunction</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -14070,22 +14512,22 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>RZC_Swc_Motor_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_Motor_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_Motor/RZC_Swc_Motor_IB/Swc_Motor_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_Motor_MainFunction_10ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_Motor/RZC_Swc_Motor_IB/Swc_Motor_MainFunction</START-ON-EVENT-REF>
                           <PERIOD>0.01</PERIOD>
                         </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_Motor_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_Motor/RZC_Swc_Motor_IB/Swc_Motor_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Motor_MainFunction</SHORT-NAME>
+                          <SHORT-NAME>Swc_Motor_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Motor_Init</SHORT-NAME>
+                          <SHORT-NAME>Swc_Motor_MainFunction</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -14399,6 +14841,10 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>RZC_Swc_RzcCom_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_RzcCom_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom/RZC_Swc_RzcCom_IB/Swc_RzcCom_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_RzcCom_Receive_10ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom/RZC_Swc_RzcCom_IB/Swc_RzcCom_Receive</START-ON-EVENT-REF>
@@ -14409,20 +14855,16 @@
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom/RZC_Swc_RzcCom_IB/Swc_RzcCom_TransmitSchedule</START-ON-EVENT-REF>
                           <PERIOD>0.01</PERIOD>
                         </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_RzcCom_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_RzcCom/RZC_Swc_RzcCom_IB/Swc_RzcCom_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
+                        <RUNNABLE-ENTITY>
+                          <SHORT-NAME>Swc_RzcCom_Init</SHORT-NAME>
+                        </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
                           <SHORT-NAME>Swc_RzcCom_Receive</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
                           <SHORT-NAME>Swc_RzcCom_TransmitSchedule</SHORT-NAME>
-                        </RUNNABLE-ENTITY>
-                        <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_RzcCom_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -14472,22 +14914,22 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>RZC_Swc_RzcSafety_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_RzcSafety_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_RzcSafety/RZC_Swc_RzcSafety_IB/Swc_RzcSafety_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_RzcSafety_MainFunction_100ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_RzcSafety/RZC_Swc_RzcSafety_IB/Swc_RzcSafety_MainFunction</START-ON-EVENT-REF>
                           <PERIOD>0.1</PERIOD>
                         </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_RzcSafety_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_RzcSafety/RZC_Swc_RzcSafety_IB/Swc_RzcSafety_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_RzcSafety_MainFunction</SHORT-NAME>
+                          <SHORT-NAME>Swc_RzcSafety_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_RzcSafety_Init</SHORT-NAME>
+                          <SHORT-NAME>Swc_RzcSafety_MainFunction</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -14537,22 +14979,22 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>RZC_Swc_RzcSensorFeeder_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_RzcSensorFeeder_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_RzcSensorFeeder/RZC_Swc_RzcSensorFeeder_IB/Swc_RzcSensorFeeder_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_RzcSensorFeeder_MainFunction_10ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_RzcSensorFeeder/RZC_Swc_RzcSensorFeeder_IB/Swc_RzcSensorFeeder_MainFunction</START-ON-EVENT-REF>
                           <PERIOD>0.01</PERIOD>
                         </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_RzcSensorFeeder_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_RzcSensorFeeder/RZC_Swc_RzcSensorFeeder_IB/Swc_RzcSensorFeeder_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_RzcSensorFeeder_MainFunction</SHORT-NAME>
+                          <SHORT-NAME>Swc_RzcSensorFeeder_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_RzcSensorFeeder_Init</SHORT-NAME>
+                          <SHORT-NAME>Swc_RzcSensorFeeder_MainFunction</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -14594,344 +15036,22 @@
                     <SWC-INTERNAL-BEHAVIOR>
                       <SHORT-NAME>RZC_Swc_TempMonitor_IB</SHORT-NAME>
                       <EVENTS>
+                        <INIT-EVENT>
+                          <SHORT-NAME>IE_Swc_TempMonitor_Init</SHORT-NAME>
+                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_TempMonitor/RZC_Swc_TempMonitor_IB/Swc_TempMonitor_Init</START-ON-EVENT-REF>
+                        </INIT-EVENT>
                         <TIMING-EVENT>
                           <SHORT-NAME>TE_Swc_TempMonitor_MainFunction_100ms</SHORT-NAME>
                           <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_TempMonitor/RZC_Swc_TempMonitor_IB/Swc_TempMonitor_MainFunction</START-ON-EVENT-REF>
                           <PERIOD>0.1</PERIOD>
                         </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_TempMonitor_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/RZC/RZC_Swc_TempMonitor/RZC_Swc_TempMonitor_IB/Swc_TempMonitor_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
                       </EVENTS>
                       <RUNNABLES>
-                        <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_TempMonitor_MainFunction</SHORT-NAME>
-                        </RUNNABLE-ENTITY>
                         <RUNNABLE-ENTITY>
                           <SHORT-NAME>Swc_TempMonitor_Init</SHORT-NAME>
                         </RUNNABLE-ENTITY>
-                      </RUNNABLES>
-                    </SWC-INTERNAL-BEHAVIOR>
-                  </INTERNAL-BEHAVIORS>
-                </APPLICATION-SW-COMPONENT-TYPE>
-              </ELEMENTS>
-            </AR-PACKAGE>
-            <AR-PACKAGE>
-              <SHORT-NAME>BCM</SHORT-NAME>
-              <ELEMENTS>
-                <APPLICATION-SW-COMPONENT-TYPE>
-                  <SHORT-NAME>BCM_Swc_BcmCan</SHORT-NAME>
-                  <INTERNAL-BEHAVIORS>
-                    <SWC-INTERNAL-BEHAVIOR>
-                      <SHORT-NAME>BCM_Swc_BcmCan_IB</SHORT-NAME>
-                    </SWC-INTERNAL-BEHAVIOR>
-                  </INTERNAL-BEHAVIORS>
-                </APPLICATION-SW-COMPONENT-TYPE>
-                <APPLICATION-SW-COMPONENT-TYPE>
-                  <SHORT-NAME>BCM_Swc_BcmMain</SHORT-NAME>
-                  <PORTS>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_BCM_Heartbeat_AliveCounter</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_BCM_Heartbeat_AliveCounter</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_BCM_Heartbeat_E2E_AliveCounter</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_BCM_Heartbeat_E2E_AliveCounter</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_BCM_Heartbeat_E2E_CRC8</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_BCM_Heartbeat_E2E_CRC8</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_BCM_Heartbeat_E2E_DataID</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_BCM_Heartbeat_E2E_DataID</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_BCM_Heartbeat_ECU_ID</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_BCM_Heartbeat_ECU_ID</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Door_Lock_Status_CentralLock</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_CentralLock</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Door_Lock_Status_FrontLeftLock</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_FrontLeftLock</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Door_Lock_Status_FrontRightLock</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_FrontRightLock</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Door_Lock_Status_RearLeftLock</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_RearLeftLock</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Door_Lock_Status_RearRightLock</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_RearRightLock</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Indicator_State_BlinkPhaseHigh</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Indicator_State_BlinkPhaseHigh</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Indicator_State_HazardActive</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Indicator_State_HazardActive</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Indicator_State_LeftOn</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Indicator_State_LeftOn</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Indicator_State_RightOn</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Indicator_State_RightOn</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Light_Status_BrakeLightOn</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_BrakeLightOn</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Light_Status_FogLightOn</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_FogLightOn</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Light_Status_HeadlightLevel</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_HeadlightLevel</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Light_Status_HeadlightOn</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_HeadlightOn</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Light_Status_TailLightOn</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_TailLightOn</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_Body_Control_Cmd_DoorLockCmd</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Body_Control_Cmd_DoorLockCmd</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_Body_Control_Cmd_HazardActive</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Body_Control_Cmd_HazardActive</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_Body_Control_Cmd_HeadlightCmd</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Body_Control_Cmd_HeadlightCmd</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_Body_Control_Cmd_TailLightOn</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Body_Control_Cmd_TailLightOn</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_Body_Control_Cmd_TurnSignalCmd</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Body_Control_Cmd_TurnSignalCmd</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_EStop_Broadcast_Active</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_EStop_Broadcast_Active</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_EStop_Broadcast_E2E_AliveCounter</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_EStop_Broadcast_E2E_AliveCounter</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_EStop_Broadcast_E2E_CRC8</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_EStop_Broadcast_E2E_CRC8</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_EStop_Broadcast_E2E_DataID</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_EStop_Broadcast_E2E_DataID</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_EStop_Broadcast_Source</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_EStop_Broadcast_Source</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_UDS_Func_Request_UDS_Data</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_UDS_Func_Request_UDS_Data</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_Vehicle_State_E2E_AliveCounter</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Vehicle_State_E2E_AliveCounter</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_Vehicle_State_E2E_CRC8</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Vehicle_State_E2E_CRC8</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_Vehicle_State_E2E_DataID</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Vehicle_State_E2E_DataID</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_Vehicle_State_FaultMask</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Vehicle_State_FaultMask</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_Vehicle_State_Mode</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Vehicle_State_Mode</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                  </PORTS>
-                  <INTERNAL-BEHAVIORS>
-                    <SWC-INTERNAL-BEHAVIOR>
-                      <SHORT-NAME>BCM_Swc_BcmMain_IB</SHORT-NAME>
-                    </SWC-INTERNAL-BEHAVIOR>
-                  </INTERNAL-BEHAVIORS>
-                </APPLICATION-SW-COMPONENT-TYPE>
-                <APPLICATION-SW-COMPONENT-TYPE>
-                  <SHORT-NAME>BCM_Swc_DoorLock</SHORT-NAME>
-                  <PORTS>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Door_Lock_Status_CentralLock</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_CentralLock</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Door_Lock_Status_FrontLeftLock</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_FrontLeftLock</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Door_Lock_Status_FrontRightLock</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_FrontRightLock</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Door_Lock_Status_RearLeftLock</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_RearLeftLock</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Door_Lock_Status_RearRightLock</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Door_Lock_Status_RearRightLock</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_Body_Control_Cmd_DoorLockCmd</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Body_Control_Cmd_DoorLockCmd</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                  </PORTS>
-                  <INTERNAL-BEHAVIORS>
-                    <SWC-INTERNAL-BEHAVIOR>
-                      <SHORT-NAME>BCM_Swc_DoorLock_IB</SHORT-NAME>
-                      <EVENTS>
-                        <TIMING-EVENT>
-                          <SHORT-NAME>TE_Swc_DoorLock_100ms_100ms</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/BCM/BCM_Swc_DoorLock/BCM_Swc_DoorLock_IB/Swc_DoorLock_100ms</START-ON-EVENT-REF>
-                          <PERIOD>0.1</PERIOD>
-                        </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_DoorLock_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/BCM/BCM_Swc_DoorLock/BCM_Swc_DoorLock_IB/Swc_DoorLock_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
-                      </EVENTS>
-                      <RUNNABLES>
                         <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_DoorLock_100ms</SHORT-NAME>
-                        </RUNNABLE-ENTITY>
-                        <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_DoorLock_Init</SHORT-NAME>
-                        </RUNNABLE-ENTITY>
-                      </RUNNABLES>
-                    </SWC-INTERNAL-BEHAVIOR>
-                  </INTERNAL-BEHAVIORS>
-                </APPLICATION-SW-COMPONENT-TYPE>
-                <APPLICATION-SW-COMPONENT-TYPE>
-                  <SHORT-NAME>BCM_Swc_Indicators</SHORT-NAME>
-                  <PORTS>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Indicator_State_BlinkPhaseHigh</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Indicator_State_BlinkPhaseHigh</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Indicator_State_HazardActive</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Indicator_State_HazardActive</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Indicator_State_LeftOn</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Indicator_State_LeftOn</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Indicator_State_RightOn</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Indicator_State_RightOn</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_Body_Control_Cmd_TurnSignalCmd</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Body_Control_Cmd_TurnSignalCmd</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                  </PORTS>
-                  <INTERNAL-BEHAVIORS>
-                    <SWC-INTERNAL-BEHAVIOR>
-                      <SHORT-NAME>BCM_Swc_Indicators_IB</SHORT-NAME>
-                      <EVENTS>
-                        <TIMING-EVENT>
-                          <SHORT-NAME>TE_Swc_Indicators_10ms_10ms</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/BCM/BCM_Swc_Indicators/BCM_Swc_Indicators_IB/Swc_Indicators_10ms</START-ON-EVENT-REF>
-                          <PERIOD>0.01</PERIOD>
-                        </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_Indicators_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/BCM/BCM_Swc_Indicators/BCM_Swc_Indicators_IB/Swc_Indicators_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
-                      </EVENTS>
-                      <RUNNABLES>
-                        <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Indicators_10ms</SHORT-NAME>
-                        </RUNNABLE-ENTITY>
-                        <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Indicators_Init</SHORT-NAME>
-                        </RUNNABLE-ENTITY>
-                      </RUNNABLES>
-                    </SWC-INTERNAL-BEHAVIOR>
-                  </INTERNAL-BEHAVIORS>
-                </APPLICATION-SW-COMPONENT-TYPE>
-                <APPLICATION-SW-COMPONENT-TYPE>
-                  <SHORT-NAME>BCM_Swc_Lights</SHORT-NAME>
-                  <PORTS>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Light_Status_BrakeLightOn</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_BrakeLightOn</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Light_Status_FogLightOn</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_FogLightOn</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Light_Status_HeadlightLevel</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_HeadlightLevel</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Light_Status_HeadlightOn</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_HeadlightOn</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <P-PORT-PROTOTYPE>
-                      <SHORT-NAME>PP_Light_Status_TailLightOn</SHORT-NAME>
-                      <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Light_Status_TailLightOn</PROVIDED-INTERFACE-TREF>
-                    </P-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_Body_Control_Cmd_HeadlightCmd</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Body_Control_Cmd_HeadlightCmd</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_Body_Control_Cmd_TailLightOn</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Body_Control_Cmd_TailLightOn</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                  </PORTS>
-                  <INTERNAL-BEHAVIORS>
-                    <SWC-INTERNAL-BEHAVIOR>
-                      <SHORT-NAME>BCM_Swc_Lights_IB</SHORT-NAME>
-                      <EVENTS>
-                        <TIMING-EVENT>
-                          <SHORT-NAME>TE_Swc_Lights_10ms_10ms</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/BCM/BCM_Swc_Lights/BCM_Swc_Lights_IB/Swc_Lights_10ms</START-ON-EVENT-REF>
-                          <PERIOD>0.01</PERIOD>
-                        </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_Lights_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/BCM/BCM_Swc_Lights/BCM_Swc_Lights_IB/Swc_Lights_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
-                      </EVENTS>
-                      <RUNNABLES>
-                        <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Lights_10ms</SHORT-NAME>
-                        </RUNNABLE-ENTITY>
-                        <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Lights_Init</SHORT-NAME>
+                          <SHORT-NAME>Swc_TempMonitor_MainFunction</SHORT-NAME>
                         </RUNNABLE-ENTITY>
                       </RUNNABLES>
                     </SWC-INTERNAL-BEHAVIOR>
@@ -14940,124 +15060,7 @@
               </ELEMENTS>
             </AR-PACKAGE>
             <AR-PACKAGE>
-              <SHORT-NAME>ICU</SHORT-NAME>
-              <ELEMENTS>
-                <APPLICATION-SW-COMPONENT-TYPE>
-                  <SHORT-NAME>ICU_Swc_Dashboard</SHORT-NAME>
-                  <PORTS>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_Motor_Status_MotorSpeed_RPM</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Motor_Status_MotorSpeed_RPM</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                  </PORTS>
-                  <INTERNAL-BEHAVIORS>
-                    <SWC-INTERNAL-BEHAVIOR>
-                      <SHORT-NAME>ICU_Swc_Dashboard_IB</SHORT-NAME>
-                      <EVENTS>
-                        <TIMING-EVENT>
-                          <SHORT-NAME>TE_Swc_Dashboard_50ms_50ms</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/ICU/ICU_Swc_Dashboard/ICU_Swc_Dashboard_IB/Swc_Dashboard_50ms</START-ON-EVENT-REF>
-                          <PERIOD>0.05</PERIOD>
-                        </TIMING-EVENT>
-                      </EVENTS>
-                      <RUNNABLES>
-                        <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_Dashboard_50ms</SHORT-NAME>
-                        </RUNNABLE-ENTITY>
-                      </RUNNABLES>
-                    </SWC-INTERNAL-BEHAVIOR>
-                  </INTERNAL-BEHAVIORS>
-                </APPLICATION-SW-COMPONENT-TYPE>
-                <APPLICATION-SW-COMPONENT-TYPE>
-                  <SHORT-NAME>ICU_Swc_DtcDisplay</SHORT-NAME>
-                  <PORTS>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_Brake_Status_BrakeFaultStatus</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Brake_Status_BrakeFaultStatus</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_CVC_Heartbeat_FaultStatus</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_CVC_Heartbeat_FaultStatus</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_DTC_Broadcast_ECU_Source</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_DTC_Broadcast_ECU_Source</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_DTC_Broadcast_FreezeFrame0</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_DTC_Broadcast_FreezeFrame0</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_DTC_Broadcast_FreezeFrame1</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_DTC_Broadcast_FreezeFrame1</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_DTC_Broadcast_Number</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_DTC_Broadcast_Number</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_DTC_Broadcast_OccurrenceCount</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_DTC_Broadcast_OccurrenceCount</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_DTC_Broadcast_Status</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_DTC_Broadcast_Status</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_FZC_Heartbeat_FaultStatus</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_FZC_Heartbeat_FaultStatus</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_Motor_Status_MotorFaultStatus</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Motor_Status_MotorFaultStatus</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_RZC_Heartbeat_FaultStatus</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_RZC_Heartbeat_FaultStatus</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_SC_Status_FaultFlags</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_SC_Status_FaultFlags</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_SC_Status_FaultReason</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_SC_Status_FaultReason</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_Steering_Status_SteerFaultStatus</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Steering_Status_SteerFaultStatus</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                    <R-PORT-PROTOTYPE>
-                      <SHORT-NAME>RP_Vehicle_State_FaultMask</SHORT-NAME>
-                      <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/Taktflow/Interfaces/SRI_Vehicle_State_FaultMask</REQUIRED-INTERFACE-TREF>
-                    </R-PORT-PROTOTYPE>
-                  </PORTS>
-                  <INTERNAL-BEHAVIORS>
-                    <SWC-INTERNAL-BEHAVIOR>
-                      <SHORT-NAME>ICU_Swc_DtcDisplay_IB</SHORT-NAME>
-                      <EVENTS>
-                        <TIMING-EVENT>
-                          <SHORT-NAME>TE_Swc_DtcDisplay_50ms_50ms</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/ICU/ICU_Swc_DtcDisplay/ICU_Swc_DtcDisplay_IB/Swc_DtcDisplay_50ms</START-ON-EVENT-REF>
-                          <PERIOD>0.05</PERIOD>
-                        </TIMING-EVENT>
-                        <INIT-EVENT>
-                          <SHORT-NAME>IE_Swc_DtcDisplay_Init</SHORT-NAME>
-                          <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Taktflow/SWCs/ICU/ICU_Swc_DtcDisplay/ICU_Swc_DtcDisplay_IB/Swc_DtcDisplay_Init</START-ON-EVENT-REF>
-                        </INIT-EVENT>
-                      </EVENTS>
-                      <RUNNABLES>
-                        <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_DtcDisplay_50ms</SHORT-NAME>
-                        </RUNNABLE-ENTITY>
-                        <RUNNABLE-ENTITY>
-                          <SHORT-NAME>Swc_DtcDisplay_Init</SHORT-NAME>
-                        </RUNNABLE-ENTITY>
-                      </RUNNABLES>
-                    </SWC-INTERNAL-BEHAVIOR>
-                  </INTERNAL-BEHAVIORS>
-                </APPLICATION-SW-COMPONENT-TYPE>
-              </ELEMENTS>
+              <SHORT-NAME>SC</SHORT-NAME>
             </AR-PACKAGE>
             <AR-PACKAGE>
               <SHORT-NAME>TCU</SHORT-NAME>
