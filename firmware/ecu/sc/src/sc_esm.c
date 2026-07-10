@@ -22,6 +22,9 @@ extern void    esm_clear_flag(uint8 group, uint8 channel);
 extern boolean esm_is_flag_set(uint8 group, uint8 channel);
 #ifdef PLATFORM_TMS570
 extern void    esm_install_high_level_handler(void);
+#ifdef OS_BOOTSTRAP_BRINGUP
+extern void    Os_Port_Tms570_BringupClearRetainedEsmGroup2(void);
+#endif
 #endif
 
 /* ==================================================================
@@ -50,6 +53,11 @@ void SC_ESM_Init(void)
     esm_enable_group1_channel(ESM_CHANNEL_LOCKSTEP);
 
 #ifdef PLATFORM_TMS570
+#ifdef OS_BOOTSTRAP_BRINGUP
+    /* Bench recovery only: report and drain retained group-2 state before
+     * the one-way FIQ unmask. Production never compiles this call. */
+    Os_Port_Tms570_BringupClearRetainedEsmGroup2();
+#endif
     /* Install VIM ch0 ownership before the one-way NMFI FIQ unmask. */
     esm_install_high_level_handler();
 #endif

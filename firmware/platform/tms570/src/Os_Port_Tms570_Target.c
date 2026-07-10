@@ -384,6 +384,10 @@ void Os_Port_Tms570_BringupClearRetainedEsmGroup2(void)
         sc_sci_puts(" -> cleared, SSR2 now ");
         sc_sci_put_hex32(esmREG->SSR2);
     }
+    sc_sci_puts(" post SR2="); sc_sci_put_hex32(esmREG->SR1[1u]);
+    sc_sci_puts(" SSR2="); sc_sci_put_hex32(esmREG->SSR2);
+    sc_sci_puts(" IOFFHR="); sc_sci_put_hex32(esmREG->IOFFHR);
+    sc_sci_puts(" INTREQ0="); sc_sci_put_hex32(vimREG->INTREQ0);
     sc_sci_puts("\r\n");
 }
 #endif

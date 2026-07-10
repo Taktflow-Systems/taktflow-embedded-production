@@ -10,6 +10,7 @@ MAKE = (ROOT / "firmware/platform/tms570/Makefile.tms570").read_text(encoding="u
 SCHEDULER = (ROOT / "firmware/bsw/os/bootstrap/src/Os_Scheduler.c").read_text(encoding="utf-8")
 TMS_HW = (ROOT / "firmware/platform/tms570/src/Os_Port_Tms570_Hw.c").read_text(encoding="utf-8")
 SC_TMS_HW = (ROOT / "firmware/platform/tms570/src/sc_hw_tms570.c").read_text(encoding="utf-8")
+SC_ESM = (ROOT / "firmware/ecu/sc/src/sc_esm.c").read_text(encoding="utf-8")
 TMS_TARGET = (ROOT / "firmware/platform/tms570/src/Os_Port_Tms570_Target.c").read_text(encoding="utf-8")
 TASK_BINDING = (ROOT / "firmware/bsw/os/bootstrap/port/src/Os_Port_TaskBinding.c").read_text(encoding="utf-8")
 TMS_ASM = (ROOT / "firmware/platform/tms570/src/Os_Port_Tms570_Asm.S").read_text(encoding="utf-8")
@@ -249,3 +250,23 @@ def test_tms570_production_preserves_and_dumps_group2_status():
     assert "reg_write(ESM_BASE, ESM_SR1_1" not in g3
     for marker in ("ESM_SR2=", "ESM_SSR2="):
         assert marker in SC_TMS_HW
+
+
+def test_tms570_bringup_recovery_precedes_one_way_fiq_unmask():
+    init = SC_ESM[SC_ESM.index("void SC_ESM_Init(void)") :]
+    init = init[: init.index("\n}")]
+    assert "#ifdef OS_BOOTSTRAP_BRINGUP" in init
+    assert "Os_Port_Tms570_BringupClearRetainedEsmGroup2();" in init
+    assert init.index("Os_Port_Tms570_BringupClearRetainedEsmGroup2();") < init.index(
+        "esm_install_high_level_handler();"
+    )
+
+    recovery = TMS_TARGET[
+        TMS_TARGET.index("void Os_Port_Tms570_BringupClearRetainedEsmGroup2(void)") :
+    ]
+    recovery = recovery[: recovery.index("\n}")]
+    assert "[BRINGUP-ESM] retained SR2=" in recovery
+    assert "esmREG->SR1[1u] = sr2;" in recovery
+    assert "esmREG->SSR2 = ssr2;" in recovery
+    for marker in ("post SR2=", "SSR2=", "IOFFHR=", "INTREQ0="):
+        assert marker in recovery
