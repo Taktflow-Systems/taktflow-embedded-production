@@ -62,15 +62,27 @@
 
 **Principle:** In a run-to-completion model with alarm-driven activation, the ISR preemption path must only fire when an OS task is actually running. The idle loop is NOT an OS task — it's bare main() context with no save context. Always check for a valid current task before requesting a cooperative context switch from an ISR.
 
-## 2026-03-14 — ESM now_SR1 bit 21 is DCC1, not lockstep — waiver HIL-PF-008 was misdiagnosed
+## 2026-07-10 correction — ESM group-1 bit 21 is DCAN1 ECC, not DCC1
 
-**Context:** SC ESM lockstep monitoring was disabled via `#ifdef SC_ESM_ENABLED` (waiver HIL-PF-008) because "CCM-R5F asserts a persistent ESM Group 2 error causing SC_ESM_Init() to enter an infinite ISR loop." Runtime UART register dumps showed `now_SR1=0x00200000`.
+**Context:** Runtime and bring-up dumps repeatedly showed `ESM_SR1=0x00200000`.
+An older diagnosis attributed bit 21 to DCC1 and treated it as harmless clock
+monitor residue.
 
-**Mistake:** Assumed `now_SR1=0x00200000` was a lockstep error. It's actually ESM Group 1 Channel 21 = DCC1 (Dual Clock Comparator 1), a clock validation module — NOT Channel 2 (CCM-R5F lockstep). All lockstep registers (CCMSR1-4, ESM SR3) were clean at runtime. The original lockstep error was transient (caused by JTAG debug reset desync) and was already being cleared by `esmGroup3Notification()` during startup.
+**Correction:** The TMS570LC4357 device ESM assignment table maps group-1
+channel 21 to **DCAN1 message-RAM ECC uncorrectable error**. DCC1 is group-1
+channel 30. Read-only target forensics confirmed the DCAN source:
+`ECC_CS=0x050A0101` had both DEFLG and SEFLG set, `PERR=5`, and `ECC_SERR=6`,
+implicating message objects 5 and 6. The latch is not evidence of a DCC clock
+validation failure and must not be blindly cleared as such.
 
-**Fix:** Made `SC_ESM_Init()` defensive: (1) clear residual Group 1 flags for ch2 (lockstep) and ch21 (DCC1) before enabling, (2) verify ch2 is clean — if persistent, latch error without enabling EEPAPR1, (3) set a runtime mode flag so `esmGroup3Notification()` triggers `SC_ESM_HighLevelInterrupt()` (relay off + halt) for runtime errors instead of clear-and-continue. Removed `#ifdef SC_ESM_ENABLED` guard.
+**Disposition:** The ESM source is traced, but the original DCAN message-RAM
+access that created the retained ECC state is not yet proven. Production
+recovery must initialize/validate the DCAN ECC RAM at its source and retain
+fault evidence until the fail-closed reaction is recorded.
 
-**Principle:** Always decode ESM channel numbers to their peripheral source before diagnosing. `0x00200000` = bit 21, not bit 2. The TMS570 ESM has 128+ channels across 3 groups — DCC, CCM, ADC, and other peripherals share the same status registers. Use the device TRM ESM channel mapping table, not assumptions.
+**Principle:** Decode ESM channels against the device-specific assignment
+table and corroborate them with the source peripheral's status registers.
+Bit position alone is not a peripheral identity.
 
 ## 2026-03-14 — GIO DIN readback unreliable on TMS570 LaunchPad (N2HET muxing)
 

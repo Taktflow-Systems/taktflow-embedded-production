@@ -613,6 +613,22 @@ merge is not viable; the port work must be harvested file-wise.
     stack margin, STM32-only FIX-10 gate) are recorded in
     `test/hil/reports/os-migration-tms570.md`. Physical CAN gates remain
     DEFERRED; the deviation disposition itself is unchanged.
+  - Status (2026-07-10, ESM-high follow-up): **GROUP-2 REACTION/VISIBILITY
+    GAP CLOSED; S-OS-40 STILL NOT CLOSED.** Production VIM ch0 now owns a
+    fail-closed FIQ handler from VIM initialization onward: relay DCLR first,
+    then retained SR2/SSR2 snapshots, then park, with no production W1C of
+    group-2 status. SR2/SSR2 were added to the boot dump. Host contracts are
+    15/15 and clean production/diagnostic TMS570 cross-builds pass. On target,
+    the uncleared group-2 ch3 source reasserted as `SR2=SSR2=0x00000008`;
+    VIM ch0 pointed to the new handler and both parked snapshots captured
+    `0x00000008`. The non-diagnostic production image is restored and remains
+    fail-closed on that retained fault. Optional follow-ups also traced group-1
+    ch21 to DCAN1 message-RAM ECC (not DCC1: `ECC_CS=0x050A0101`, `PERR=5`,
+    `ECC_SERR=6`) and quantified the 256-byte IRQ stack at 144 bytes static
+    maximum / 112 bytes margin for the current `-Og` profile. Runtime
+    stack-paint evidence remains open. The CCM/ESM self-test remains NOT RUN,
+    every physical-CAN gate remains DEFERRED, and the deviation disposition is
+    unchanged.
 
 ### Phase 5 — Legacy retirement + safety documentation (closes G3)
 

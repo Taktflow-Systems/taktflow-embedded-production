@@ -33,6 +33,20 @@ contexts); and `os_dispatch_task` now records the configured task stack top
 dispatches. With the fix, task CPSR reads `0x600003DF` (F=1) on target where
 the broken path produced F=0.
 
+**Update (2026-07-10, ESM-high follow-up):** the production group-2
+visibility/reaction gap is closed in source and exercised on target. VIM ch0
+now owns a dedicated FIQ handler both in the generated VIM initialization
+table and in the runtime defensive remap. Its first MMIO action drives the
+relay output low, then it snapshots retained `SR2`/`SSR2` into debugger-visible
+globals and parks without acknowledging either status register. Production
+startup, HAL ESM initialization, and group-3 handling no longer clear group-2
+status; the boot CCM/ESM dump now prints both registers. A retained group-2
+channel-3 source reasserted on target (`SR2=SSR2=0x00000008`): VIM RAM ch0
+contained the new handler address and the parked handler snapshots both read
+`0x00000008`. The non-diagnostic production image was restored and remains
+fail-closed on that uncleared retained fault. This is fault-path evidence, not
+the still-NOT-RUN CCM/ESM self-test and not full S-OS-40 closure.
+
 ## Scope and unchanged limits
 
 The fixed 10 ms SC sequence runs as one highest-priority, run-to-completion
@@ -48,17 +62,19 @@ and telemetry limits remain unchanged.
 | Gate | Classification | Evidence or reason |
 |---|---|---|
 | Full OSEK host runner | PASS | 37 executables; 533 Unity tests; 0 failures; 3 expected ignores |
-| SC scheduling/watchdog contract | PASS | 10 passed, 0 failed, including periodic TMS570 switchback source contracts |
+| SC scheduling/watchdog/ESM contract | PASS | 15 passed, 0 failed, including periodic TMS570 switchback and fail-closed group-2 source contracts |
 | SC main executable | PASS | 7 passed, 0 failed |
 | SC watchdog executable | PASS | 9 passed, 0 failed |
 | Clean production TMS570 build | PASS | 0 warning diagnostics, 0 errors; authored SC/kernel sources use warnings-as-errors |
 | Clean isolated TMS570 build | PASS | 0 warning diagnostics, 0 errors |
-| Production image size | PASS | text 40,579 bytes; data 0 bytes; BSS 8,842 bytes |
+| Production image size | PASS | final ESM-high image: text 41,895 bytes; data 0 bytes; BSS 8,858 bytes |
 | Isolated image size | PASS | text 42,185 bytes; data 0 bytes; BSS 10,542 bytes |
 | Production boot and module initialization | PASS | one boot; 9 modules initialized; relay entered MONITORING |
 | Startup BIST sequencer | PASS with limitation | sequencer reported 7/7 before relay energization; the current lockstep slot is a target stub and is not independent lockstep-test evidence |
 | OSEK periodic alarm/task activation | PASS | a diagnostic production build observed activations 1, 2, 10, and 100 plus the 5-second periodic marker; this exposed and verified the termination-switchback fix |
 | TMS570 port checks on final source | PASS (2026-07-10 closure) | 6/6 checks pass with `[BRINGUP-SUMMARY] ALL PASS` after the F-bit fix; check 2 confirms task CPSR `0x600003DF` (System mode, I=1, F=1); check 6 observed 25 IRQs, 56 FIQs, 1 preemption with full R4-R11/SP preservation. Pre-unmask VIM/ESM dumps captured; the retained group-2 latch was reported and drained before the FIQ unmask (bench substitute for the documented power cycle, bring-up image only) |
+| Production ESM-high fail-closed path | PASS (fault path) | 15/15 host source contracts; clean production and diagnostic TMS570 builds; disassembly confirms relay DCLR precedes SR2/SSR2 reads; on target VIM ch0 pointed to the dedicated handler and its parked snapshots captured `SR2=SSR2=0x00000008`. No production group-2 clear was performed |
+| IRQ-stack static margin | PASS with limitation | `-fstack-usage` build at the current debug `-Og` profile gives a conservative 144-byte maximum for the RTI assembly save + tick/alarm activation + ISR2-exit dispatch chain. The 256-byte IRQ stack therefore has 112 bytes (43.75%) static margin. No runtime stack-paint high-water measurement exists |
 | Fixed safety-sequence order | PASS | executable host mock observed the required order and sequence counter 9 |
 | Watchdog ownership and suppression | PASS | executable host injection covered RAM/self-test, stack canary, DCAN bus-off, ESM, sequence integrity, 5,001 us overrun, and the exact 5,000 us passing boundary |
 | DCAN internal target logic | PASS | 24 tests, 0 failures using production timing/mailbox constants; no physical continuity claimed |
@@ -127,27 +143,27 @@ Ethernet-enabled first-dispatch stop are CLOSED (2026-07-10, shared FIQ-unmask
 root cause above). The repeatable CCM/ESM execution handoff remains the one
 open non-CAN item.
 
-## New findings from the 2026-07-10 closure (open, non-blocking)
+## Findings from the 2026-07-10 closure
 
-- **Production ESM group-2 visibility gap.** VIM ch0/ch1 (ESM high-level,
-  hardwired FIQ class, always REQMASK-enabled) are mapped to HALCoGen's
-  `phantomInterrupt`, which returns without acknowledging the source.
-  `sc_esm.c` monitors group-1 channel 2 only, and the boot CCM/ESM dump
-  prints SR1/SR3 but not group-2 SR2/SSR2 — so a latched group-2 error
-  (e.g. CCM-R5F) is invisible to both boot evidence and runtime monitoring
-  while F=1. Recommended follow-up: a fail-closed ESM-high handler on VIM
-  ch0 (de-energize relay, record `SR2/SSR2`, park) and SR2/SSR2 in the boot
-  dump. Until then, "no asserted CCM/ESM status" claims from the existing
-  boot dump do not cover group 2.
-- **ESM group-1 channel 21 latched** (`ESMSR1=0x00200000`) throughout the
-  bring-up runs; not high-level-routed (INTREQ0 stayed clear of it) and no
-  behavioral effect observed. Raw observation only; channel disposition not
-  yet traced.
-- **Kernel tick path runs on the 256-byte HALCoGen IRQ stack.** The RTI
-  service now nests ~10 C frames (counter tick, alarm expiry, activation,
-  frame rebuild) in IRQ mode. No overflow observed, but the margin is
-  unquantified; resize (>=1 KB) plus a stack-paint check is the safe
-  follow-up.
+- **Production ESM group-2 gap CLOSED in implementation/fault-path evidence.**
+  VIM ch0 is fail-closed from VIM initialization onward, SR2/SSR2 are recorded
+  and never acknowledged by production startup or handler paths, and both are
+  present in the boot dump. The uncleared channel-3 latch was captured by the
+  handler on target. This does not substitute for the CCM/ESM self-test.
+- **ESM group-1 channel 21 traced to DCAN1 message-RAM ECC.** The device ESM
+  assignment table maps group-1 channel 21 to DCAN1 ECC uncorrectable error;
+  DCC1 is channel 30. Read-only target forensics captured
+  `ESM_SR1=0x00200000`, DCAN1 `ECC_CS=0x050A0101` (double- and single-bit
+  flags set), `PERR=5`, and `ECC_SERR=6`, implicating message objects 5 and 6.
+  The source is therefore dispositioned as retained DCAN1 ECC evidence; the
+  original triggering access and correct source-level recovery remain open.
+- **IRQ-stack static margin quantified.** The current 100 Hz RTI path has a
+  conservative 144-byte static maximum: 24-byte assembly exception save plus
+  the deepest `-fstack-usage` call chain through tick/alarm activation or
+  ISR2-exit dispatch. The 256-byte IRQ stack has 112 bytes (43.75%) remaining.
+  Because this is profile-sensitive static evidence and no stack-paint
+  high-water exists, resizing to at least 1 KiB plus runtime watermarking
+  remains the production-qualification recommendation.
 - **`os_commit_dispatch_live` is never TRUE on TMS570.** The FIX-10 commit
   gate is `PLATFORM_STM32`-only; TMS570 runs the legacy tick-staging route
   (speculative advance + double staging). Consistent and passing today —
@@ -170,3 +186,13 @@ open non-CAN item.
 - The retained ESM group-2 latch observed during bring-up was drained during
   the instrumented runs (IOFFHR reads plus the bring-up-only reporting
   clear); production images never clear group-2 status.
+
+### Follow-up bench end state
+
+- The non-diagnostic production image from `build/tms570-esm-high/sc.elf` is
+  installed with DSLite `flash --run`.
+- Retained group-2 channel 3 remains asserted and uncleared. The controller
+  enters the dedicated VIM ch0 handler before normal module completion,
+  drives the relay output low, records `SR2=SSR2=0x00000008`, and parks.
+- No debugger, serial monitor, or flash process remains attached. Physical
+  CAN wiring and bench networking were not changed.
