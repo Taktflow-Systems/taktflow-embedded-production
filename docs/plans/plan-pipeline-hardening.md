@@ -1,6 +1,6 @@
 # Plan: DBC-to-ARXML Pipeline Hardening
 
-**Status:** STOP-GATE MEMO COMPLETE - OWNER REVIEW PENDING
+**Status:** STOP-GATE MEMO APPROVED - IMPLEMENTATION PLAN AWAITS APPROVAL
 **Created:** 2026-07-09
 **Branch:** `feat/pipeline-hardening`
 **Scope:** `gateway/taktflow_vehicle.dbc` -> `tools/arxml/dbc2arxml.py` ->
@@ -14,7 +14,8 @@ partial result after an unreported conversion failure, validate emitted ARXML,
 record every conversion assumption, and independently compare the DBC and
 ARXML communication models. The C BSW and the overall DBC-first architecture
 remain unchanged. Signal-to-SWC name heuristics are documented and designed
-out in a memo, but are not removed until owner approval.
+out in an owner-approved memo. Implementation remains forbidden until the
+separate implementation plan is approved.
 
 ## Governing inputs
 
@@ -374,7 +375,7 @@ are not attached through I-SIGNAL data-type references. CI and README expose
 the same one-command gate; focused, full ARXML, strict corpus and in-house
 end-to-end checks pass.
 
-### STOP-GATE - Signal-to-SWC mapping removal memo - OWNER REVIEW PENDING
+### STOP-GATE - Signal-to-SWC mapping removal memo - OWNER APPROVED
 
 **Step ID:** PH-SG1
 **Inputs:** P1 heuristic inventory, current seven-ECU sidecar and generated SWC
@@ -385,15 +386,19 @@ migration for seven ECUs, compatibility window and rollback.
 **Acceptance criteria:** every current heuristic has an explicit replacement;
 examples cover TX, RX, shared signals and unmapped signals; no production code
 or sidecar schema is changed.
-**Gate:** commit memo and stop for owner review. Implementation is forbidden in
-this task.
+**Gate:** commit memo and stop for owner review. Implementation remains
+forbidden until the
+[explicit mapping implementation plan](plan-signal-swc-mapping-implementation.md)
+is separately approved.
 
 **Result:** The memo is complete and proposes an explicit fail-closed sidecar
 schema, validation and conflict rules, ownership, a seven-ECU migration,
 compatibility window and rollback. Every P1 Signal-to-SWC heuristic has an
 explicit replacement, with TX, RX, shared and unmapped examples. No production
-code, generated output or sidecar schema changed. Owner approval remains
-pending.
+code, generated output or sidecar schema changed. The owner approved the memo;
+the concrete phased implementation is proposed in the
+[explicit mapping implementation plan](plan-signal-swc-mapping-implementation.md)
+and awaits approval.
 
 ## Cross-phase gates
 
@@ -420,7 +425,8 @@ pending.
 - In-house DBC passes conversion, strict load-back, arxmlgen and semantic
   round-trip verification.
 - Assumptions report is complete, deterministic and golden-tested.
-- Signal-to-SWC removal memo is committed and awaiting owner approval; no
-  heuristic-removal implementation is included.
+- Signal-to-SWC removal memo is committed and owner-approved; the linked
+  implementation plan awaits separate approval and no heuristic-removal
+  implementation is included.
 - End-of-job handoff describes the actual commits, test results, blockers and
   next action.
