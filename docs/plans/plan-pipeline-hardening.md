@@ -1,6 +1,6 @@
 # Plan: DBC-to-ARXML Pipeline Hardening
 
-**Status:** P6 DONE - STOP-GATE PENDING
+**Status:** STOP-GATE MEMO COMPLETE - OWNER REVIEW PENDING
 **Created:** 2026-07-09
 **Branch:** `feat/pipeline-hardening`
 **Scope:** `gateway/taktflow_vehicle.dbc` -> `tools/arxml/dbc2arxml.py` ->
@@ -374,7 +374,7 @@ are not attached through I-SIGNAL data-type references. CI and README expose
 the same one-command gate; focused, full ARXML, strict corpus and in-house
 end-to-end checks pass.
 
-### STOP-GATE - Signal-to-SWC mapping removal memo - PENDING
+### STOP-GATE - Signal-to-SWC mapping removal memo - OWNER REVIEW PENDING
 
 **Step ID:** PH-SG1
 **Inputs:** P1 heuristic inventory, current seven-ECU sidecar and generated SWC
@@ -387,6 +387,13 @@ examples cover TX, RX, shared signals and unmapped signals; no production code
 or sidecar schema is changed.
 **Gate:** commit memo and stop for owner review. Implementation is forbidden in
 this task.
+
+**Result:** The memo is complete and proposes an explicit fail-closed sidecar
+schema, validation and conflict rules, ownership, a seven-ECU migration,
+compatibility window and rollback. Every P1 Signal-to-SWC heuristic has an
+explicit replacement, with TX, RX, shared and unmapped examples. No production
+code, generated output or sidecar schema changed. Owner approval remains
+pending.
 
 ## Cross-phase gates
 
