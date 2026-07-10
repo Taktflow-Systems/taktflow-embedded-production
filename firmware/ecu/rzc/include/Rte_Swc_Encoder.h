@@ -22,22 +22,6 @@
  * ==================================================================== */
 
 /**
- * @brief  Read Vehicle_State_SpeedLimit (uint8_t)
- * @param  data  Pointer to receive the signal value
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Read_Vehicle_State_SpeedLimit(uint8_t *data)
-{
-    uint32_t tmp;
-    Rte_StatusType status = Rte_Read(RZC_SIG_VEHICLE_STATE_SPEED_LIMIT, &tmp);
-    if (status == RTE_E_OK)
-    {
-        *data = (uint8_t)tmp;
-    }
-    return status;
-}
-
-/**
  * @brief  Read RZC_Virtual_Sensors_MotorSpeed_RPM (uint16_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
@@ -49,6 +33,22 @@ static inline Rte_StatusType Rte_Read_RZC_Virtual_Sensors_MotorSpeed_RPM(uint16_
     if (status == RTE_E_OK)
     {
         *data = (uint16_t)tmp;
+    }
+    return status;
+}
+
+/**
+ * @brief  Read Vehicle_State_SpeedLimit (uint8_t)
+ * @param  data  Pointer to receive the signal value
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Read_Vehicle_State_SpeedLimit(uint8_t *data)
+{
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(RZC_SIG_VEHICLE_STATE_SPEED_LIMIT, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint8_t)tmp;
     }
     return status;
 }

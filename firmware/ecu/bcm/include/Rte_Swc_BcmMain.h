@@ -22,33 +22,17 @@
  * ==================================================================== */
 
 /**
- * @brief  Read EStop_Broadcast_E2E_DataID (uint8_t)
+ * @brief  Read Body_Control_Cmd_DoorLockCmd (boolean)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_EStop_Broadcast_E2E_DataID(uint8_t *data)
+static inline Rte_StatusType Rte_Read_Body_Control_Cmd_DoorLockCmd(boolean *data)
 {
     uint32_t tmp;
-    Rte_StatusType status = Rte_Read(BCM_SIG_ESTOP_BROADCAST_E_2_E_DATA_ID, &tmp);
+    Rte_StatusType status = Rte_Read(BCM_SIG_BODY_CONTROL_CMD_DOOR_LOCK_CMD, &tmp);
     if (status == RTE_E_OK)
     {
-        *data = (uint8_t)tmp;
-    }
-    return status;
-}
-
-/**
- * @brief  Read Vehicle_State_FaultMask (uint16_t)
- * @param  data  Pointer to receive the signal value
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Read_Vehicle_State_FaultMask(uint16_t *data)
-{
-    uint32_t tmp;
-    Rte_StatusType status = Rte_Read(BCM_SIG_VEHICLE_STATE_FAULT_MASK, &tmp);
-    if (status == RTE_E_OK)
-    {
-        *data = (uint16_t)tmp;
+        *data = (boolean)tmp;
     }
     return status;
 }
@@ -70,70 +54,6 @@ static inline Rte_StatusType Rte_Read_Body_Control_Cmd_HazardActive(boolean *dat
 }
 
 /**
- * @brief  Read EStop_Broadcast_E2E_AliveCounter (uint8_t)
- * @param  data  Pointer to receive the signal value
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Read_EStop_Broadcast_E2E_AliveCounter(uint8_t *data)
-{
-    uint32_t tmp;
-    Rte_StatusType status = Rte_Read(BCM_SIG_ESTOP_BROADCAST_E_2_E_ALIVE_COUNTER, &tmp);
-    if (status == RTE_E_OK)
-    {
-        *data = (uint8_t)tmp;
-    }
-    return status;
-}
-
-/**
- * @brief  Read Vehicle_State_E2E_AliveCounter (uint8_t)
- * @param  data  Pointer to receive the signal value
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Read_Vehicle_State_E2E_AliveCounter(uint8_t *data)
-{
-    uint32_t tmp;
-    Rte_StatusType status = Rte_Read(BCM_SIG_VEHICLE_STATE_E_2_E_ALIVE_COUNTER, &tmp);
-    if (status == RTE_E_OK)
-    {
-        *data = (uint8_t)tmp;
-    }
-    return status;
-}
-
-/**
- * @brief  Read Vehicle_State_E2E_DataID (uint8_t)
- * @param  data  Pointer to receive the signal value
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Read_Vehicle_State_E2E_DataID(uint8_t *data)
-{
-    uint32_t tmp;
-    Rte_StatusType status = Rte_Read(BCM_SIG_VEHICLE_STATE_E_2_E_DATA_ID, &tmp);
-    if (status == RTE_E_OK)
-    {
-        *data = (uint8_t)tmp;
-    }
-    return status;
-}
-
-/**
- * @brief  Read EStop_Broadcast_Source (uint8_t)
- * @param  data  Pointer to receive the signal value
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Read_EStop_Broadcast_Source(uint8_t *data)
-{
-    uint32_t tmp;
-    Rte_StatusType status = Rte_Read(BCM_SIG_ESTOP_BROADCAST_SOURCE, &tmp);
-    if (status == RTE_E_OK)
-    {
-        *data = (uint8_t)tmp;
-    }
-    return status;
-}
-
-/**
  * @brief  Read Body_Control_Cmd_HeadlightCmd (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
@@ -142,64 +62,6 @@ static inline Rte_StatusType Rte_Read_Body_Control_Cmd_HeadlightCmd(uint8_t *dat
 {
     uint32_t tmp;
     Rte_StatusType status = Rte_Read(BCM_SIG_BODY_CONTROL_CMD_HEADLIGHT_CMD, &tmp);
-    if (status == RTE_E_OK)
-    {
-        *data = (uint8_t)tmp;
-    }
-    return status;
-}
-
-/**
- * @brief  Read Vehicle_State_Mode (uint8_t)
- * @param  data  Pointer to receive the signal value
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Read_Vehicle_State_Mode(uint8_t *data)
-{
-    uint32_t tmp;
-    Rte_StatusType status = Rte_Read(BCM_SIG_VEHICLE_STATE_MODE, &tmp);
-    if (status == RTE_E_OK)
-    {
-        *data = (uint8_t)tmp;
-    }
-    return status;
-}
-
-/**
- * @brief  Read UDS_Func_Request_UDS_Data (uint32_t)
- * @param  data  Pointer to receive the signal value
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Read_UDS_Func_Request_UDS_Data(uint32_t *data)
-{
-    return Rte_Read(BCM_SIG_UDS_FUNC_REQUEST_UDS_DATA, data);
-}
-
-/**
- * @brief  Read Body_Control_Cmd_TurnSignalCmd (uint8_t)
- * @param  data  Pointer to receive the signal value
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Read_Body_Control_Cmd_TurnSignalCmd(uint8_t *data)
-{
-    uint32_t tmp;
-    Rte_StatusType status = Rte_Read(BCM_SIG_BODY_CONTROL_CMD_TURN_SIGNAL_CMD, &tmp);
-    if (status == RTE_E_OK)
-    {
-        *data = (uint8_t)tmp;
-    }
-    return status;
-}
-
-/**
- * @brief  Read EStop_Broadcast_E2E_CRC8 (uint8_t)
- * @param  data  Pointer to receive the signal value
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Read_EStop_Broadcast_E2E_CRC8(uint8_t *data)
-{
-    uint32_t tmp;
-    Rte_StatusType status = Rte_Read(BCM_SIG_ESTOP_BROADCAST_E_2_E_CRC_8, &tmp);
     if (status == RTE_E_OK)
     {
         *data = (uint8_t)tmp;
@@ -224,30 +86,14 @@ static inline Rte_StatusType Rte_Read_Body_Control_Cmd_TailLightOn(boolean *data
 }
 
 /**
- * @brief  Read Body_Control_Cmd_DoorLockCmd (boolean)
+ * @brief  Read Body_Control_Cmd_TurnSignalCmd (uint8_t)
  * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Read_Body_Control_Cmd_DoorLockCmd(boolean *data)
+static inline Rte_StatusType Rte_Read_Body_Control_Cmd_TurnSignalCmd(uint8_t *data)
 {
     uint32_t tmp;
-    Rte_StatusType status = Rte_Read(BCM_SIG_BODY_CONTROL_CMD_DOOR_LOCK_CMD, &tmp);
-    if (status == RTE_E_OK)
-    {
-        *data = (boolean)tmp;
-    }
-    return status;
-}
-
-/**
- * @brief  Read Vehicle_State_E2E_CRC8 (uint8_t)
- * @param  data  Pointer to receive the signal value
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Read_Vehicle_State_E2E_CRC8(uint8_t *data)
-{
-    uint32_t tmp;
-    Rte_StatusType status = Rte_Read(BCM_SIG_VEHICLE_STATE_E_2_E_CRC_8, &tmp);
+    Rte_StatusType status = Rte_Read(BCM_SIG_BODY_CONTROL_CMD_TURN_SIGNAL_CMD, &tmp);
     if (status == RTE_E_OK)
     {
         *data = (uint8_t)tmp;
@@ -272,133 +118,157 @@ static inline Rte_StatusType Rte_Read_EStop_Broadcast_Active(uint8_t *data)
 }
 
 /**
- * @brief  Write Door_Lock_Status_RearLeftLock (boolean)
- * @param  value  Signal value to transmit
+ * @brief  Read EStop_Broadcast_E2E_AliveCounter (uint8_t)
+ * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_Door_Lock_Status_RearLeftLock(boolean value)
+static inline Rte_StatusType Rte_Read_EStop_Broadcast_E2E_AliveCounter(uint8_t *data)
 {
-    return Rte_Write(BCM_SIG_DOOR_LOCK_STATUS_REAR_LEFT_LOCK, (uint32_t)value);
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(BCM_SIG_ESTOP_BROADCAST_E_2_E_ALIVE_COUNTER, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint8_t)tmp;
+    }
+    return status;
 }
 
 /**
- * @brief  Write Indicator_State_RightOn (boolean)
- * @param  value  Signal value to transmit
+ * @brief  Read EStop_Broadcast_E2E_CRC8 (uint8_t)
+ * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_Indicator_State_RightOn(boolean value)
+static inline Rte_StatusType Rte_Read_EStop_Broadcast_E2E_CRC8(uint8_t *data)
 {
-    return Rte_Write(BCM_SIG_INDICATOR_STATE_RIGHT_ON, (uint32_t)value);
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(BCM_SIG_ESTOP_BROADCAST_E_2_E_CRC_8, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint8_t)tmp;
+    }
+    return status;
 }
 
 /**
- * @brief  Write BCM_Heartbeat_E2E_AliveCounter (uint8_t)
- * @param  value  Signal value to transmit
+ * @brief  Read EStop_Broadcast_E2E_DataID (uint8_t)
+ * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_BCM_Heartbeat_E2E_AliveCounter(uint8_t value)
+static inline Rte_StatusType Rte_Read_EStop_Broadcast_E2E_DataID(uint8_t *data)
 {
-    return Rte_Write(BCM_SIG_BCM_HEARTBEAT_E_2_E_ALIVE_COUNTER, (uint32_t)value);
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(BCM_SIG_ESTOP_BROADCAST_E_2_E_DATA_ID, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint8_t)tmp;
+    }
+    return status;
 }
 
 /**
- * @brief  Write Door_Lock_Status_RearRightLock (boolean)
- * @param  value  Signal value to transmit
+ * @brief  Read EStop_Broadcast_Source (uint8_t)
+ * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_Door_Lock_Status_RearRightLock(boolean value)
+static inline Rte_StatusType Rte_Read_EStop_Broadcast_Source(uint8_t *data)
 {
-    return Rte_Write(BCM_SIG_DOOR_LOCK_STATUS_REAR_RIGHT_LOCK, (uint32_t)value);
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(BCM_SIG_ESTOP_BROADCAST_SOURCE, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint8_t)tmp;
+    }
+    return status;
 }
 
 /**
- * @brief  Write BCM_Heartbeat_E2E_CRC8 (uint8_t)
- * @param  value  Signal value to transmit
+ * @brief  Read UDS_Func_Request_UDS_Data (uint32_t)
+ * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_BCM_Heartbeat_E2E_CRC8(uint8_t value)
+static inline Rte_StatusType Rte_Read_UDS_Func_Request_UDS_Data(uint32_t *data)
 {
-    return Rte_Write(BCM_SIG_BCM_HEARTBEAT_E_2_E_CRC_8, (uint32_t)value);
+    return Rte_Read(BCM_SIG_UDS_FUNC_REQUEST_UDS_DATA, data);
 }
 
 /**
- * @brief  Write Light_Status_BrakeLightOn (boolean)
- * @param  value  Signal value to transmit
+ * @brief  Read Vehicle_State_E2E_AliveCounter (uint8_t)
+ * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_Light_Status_BrakeLightOn(boolean value)
+static inline Rte_StatusType Rte_Read_Vehicle_State_E2E_AliveCounter(uint8_t *data)
 {
-    return Rte_Write(BCM_SIG_LIGHT_STATUS_BRAKE_LIGHT_ON, (uint32_t)value);
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(BCM_SIG_VEHICLE_STATE_E_2_E_ALIVE_COUNTER, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint8_t)tmp;
+    }
+    return status;
 }
 
 /**
- * @brief  Write Light_Status_HeadlightOn (boolean)
- * @param  value  Signal value to transmit
+ * @brief  Read Vehicle_State_E2E_CRC8 (uint8_t)
+ * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_Light_Status_HeadlightOn(boolean value)
+static inline Rte_StatusType Rte_Read_Vehicle_State_E2E_CRC8(uint8_t *data)
 {
-    return Rte_Write(BCM_SIG_LIGHT_STATUS_HEADLIGHT_ON, (uint32_t)value);
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(BCM_SIG_VEHICLE_STATE_E_2_E_CRC_8, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint8_t)tmp;
+    }
+    return status;
 }
 
 /**
- * @brief  Write Door_Lock_Status_FrontRightLock (boolean)
- * @param  value  Signal value to transmit
+ * @brief  Read Vehicle_State_E2E_DataID (uint8_t)
+ * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_Door_Lock_Status_FrontRightLock(boolean value)
+static inline Rte_StatusType Rte_Read_Vehicle_State_E2E_DataID(uint8_t *data)
 {
-    return Rte_Write(BCM_SIG_DOOR_LOCK_STATUS_FRONT_RIGHT_LOCK, (uint32_t)value);
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(BCM_SIG_VEHICLE_STATE_E_2_E_DATA_ID, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint8_t)tmp;
+    }
+    return status;
 }
 
 /**
- * @brief  Write Light_Status_HeadlightLevel (uint8_t)
- * @param  value  Signal value to transmit
+ * @brief  Read Vehicle_State_FaultMask (uint16_t)
+ * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_Light_Status_HeadlightLevel(uint8_t value)
+static inline Rte_StatusType Rte_Read_Vehicle_State_FaultMask(uint16_t *data)
 {
-    return Rte_Write(BCM_SIG_LIGHT_STATUS_HEADLIGHT_LEVEL, (uint32_t)value);
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(BCM_SIG_VEHICLE_STATE_FAULT_MASK, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint16_t)tmp;
+    }
+    return status;
 }
 
 /**
- * @brief  Write Indicator_State_LeftOn (boolean)
- * @param  value  Signal value to transmit
+ * @brief  Read Vehicle_State_Mode (uint8_t)
+ * @param  data  Pointer to receive the signal value
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_Indicator_State_LeftOn(boolean value)
+static inline Rte_StatusType Rte_Read_Vehicle_State_Mode(uint8_t *data)
 {
-    return Rte_Write(BCM_SIG_INDICATOR_STATE_LEFT_ON, (uint32_t)value);
-}
-
-/**
- * @brief  Write Light_Status_TailLightOn (boolean)
- * @param  value  Signal value to transmit
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Write_Light_Status_TailLightOn(boolean value)
-{
-    return Rte_Write(BCM_SIG_LIGHT_STATUS_TAIL_LIGHT_ON, (uint32_t)value);
-}
-
-/**
- * @brief  Write BCM_Heartbeat_ECU_ID (uint8_t)
- * @param  value  Signal value to transmit
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Write_BCM_Heartbeat_ECU_ID(uint8_t value)
-{
-    return Rte_Write(BCM_SIG_BCM_HEARTBEAT_ECU_ID, (uint32_t)value);
-}
-
-/**
- * @brief  Write Door_Lock_Status_FrontLeftLock (boolean)
- * @param  value  Signal value to transmit
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Write_Door_Lock_Status_FrontLeftLock(boolean value)
-{
-    return Rte_Write(BCM_SIG_DOOR_LOCK_STATUS_FRONT_LEFT_LOCK, (uint32_t)value);
+    uint32_t tmp;
+    Rte_StatusType status = Rte_Read(BCM_SIG_VEHICLE_STATE_MODE, &tmp);
+    if (status == RTE_E_OK)
+    {
+        *data = (uint8_t)tmp;
+    }
+    return status;
 }
 
 /**
@@ -412,13 +282,23 @@ static inline Rte_StatusType Rte_Write_BCM_Heartbeat_AliveCounter(uint8_t value)
 }
 
 /**
- * @brief  Write Door_Lock_Status_CentralLock (boolean)
+ * @brief  Write BCM_Heartbeat_E2E_AliveCounter (uint8_t)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_Door_Lock_Status_CentralLock(boolean value)
+static inline Rte_StatusType Rte_Write_BCM_Heartbeat_E2E_AliveCounter(uint8_t value)
 {
-    return Rte_Write(BCM_SIG_DOOR_LOCK_STATUS_CENTRAL_LOCK, (uint32_t)value);
+    return Rte_Write(BCM_SIG_BCM_HEARTBEAT_E_2_E_ALIVE_COUNTER, (uint32_t)value);
+}
+
+/**
+ * @brief  Write BCM_Heartbeat_E2E_CRC8 (uint8_t)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_BCM_Heartbeat_E2E_CRC8(uint8_t value)
+{
+    return Rte_Write(BCM_SIG_BCM_HEARTBEAT_E_2_E_CRC_8, (uint32_t)value);
 }
 
 /**
@@ -432,6 +312,76 @@ static inline Rte_StatusType Rte_Write_BCM_Heartbeat_E2E_DataID(uint8_t value)
 }
 
 /**
+ * @brief  Write BCM_Heartbeat_ECU_ID (uint8_t)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_BCM_Heartbeat_ECU_ID(uint8_t value)
+{
+    return Rte_Write(BCM_SIG_BCM_HEARTBEAT_ECU_ID, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Door_Lock_Status_CentralLock (boolean)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Door_Lock_Status_CentralLock(boolean value)
+{
+    return Rte_Write(BCM_SIG_DOOR_LOCK_STATUS_CENTRAL_LOCK, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Door_Lock_Status_FrontLeftLock (boolean)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Door_Lock_Status_FrontLeftLock(boolean value)
+{
+    return Rte_Write(BCM_SIG_DOOR_LOCK_STATUS_FRONT_LEFT_LOCK, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Door_Lock_Status_FrontRightLock (boolean)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Door_Lock_Status_FrontRightLock(boolean value)
+{
+    return Rte_Write(BCM_SIG_DOOR_LOCK_STATUS_FRONT_RIGHT_LOCK, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Door_Lock_Status_RearLeftLock (boolean)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Door_Lock_Status_RearLeftLock(boolean value)
+{
+    return Rte_Write(BCM_SIG_DOOR_LOCK_STATUS_REAR_LEFT_LOCK, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Door_Lock_Status_RearRightLock (boolean)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Door_Lock_Status_RearRightLock(boolean value)
+{
+    return Rte_Write(BCM_SIG_DOOR_LOCK_STATUS_REAR_RIGHT_LOCK, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Indicator_State_BlinkPhaseHigh (boolean)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Indicator_State_BlinkPhaseHigh(boolean value)
+{
+    return Rte_Write(BCM_SIG_INDICATOR_STATE_BLINK_PHASE_HIGH, (uint32_t)value);
+}
+
+/**
  * @brief  Write Indicator_State_HazardActive (boolean)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
@@ -439,6 +389,36 @@ static inline Rte_StatusType Rte_Write_BCM_Heartbeat_E2E_DataID(uint8_t value)
 static inline Rte_StatusType Rte_Write_Indicator_State_HazardActive(boolean value)
 {
     return Rte_Write(BCM_SIG_INDICATOR_STATE_HAZARD_ACTIVE, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Indicator_State_LeftOn (boolean)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Indicator_State_LeftOn(boolean value)
+{
+    return Rte_Write(BCM_SIG_INDICATOR_STATE_LEFT_ON, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Indicator_State_RightOn (boolean)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Indicator_State_RightOn(boolean value)
+{
+    return Rte_Write(BCM_SIG_INDICATOR_STATE_RIGHT_ON, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Light_Status_BrakeLightOn (boolean)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Light_Status_BrakeLightOn(boolean value)
+{
+    return Rte_Write(BCM_SIG_LIGHT_STATUS_BRAKE_LIGHT_ON, (uint32_t)value);
 }
 
 /**
@@ -452,13 +432,33 @@ static inline Rte_StatusType Rte_Write_Light_Status_FogLightOn(boolean value)
 }
 
 /**
- * @brief  Write Indicator_State_BlinkPhaseHigh (boolean)
+ * @brief  Write Light_Status_HeadlightLevel (uint8_t)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
  */
-static inline Rte_StatusType Rte_Write_Indicator_State_BlinkPhaseHigh(boolean value)
+static inline Rte_StatusType Rte_Write_Light_Status_HeadlightLevel(uint8_t value)
 {
-    return Rte_Write(BCM_SIG_INDICATOR_STATE_BLINK_PHASE_HIGH, (uint32_t)value);
+    return Rte_Write(BCM_SIG_LIGHT_STATUS_HEADLIGHT_LEVEL, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Light_Status_HeadlightOn (boolean)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Light_Status_HeadlightOn(boolean value)
+{
+    return Rte_Write(BCM_SIG_LIGHT_STATUS_HEADLIGHT_ON, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Light_Status_TailLightOn (boolean)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Light_Status_TailLightOn(boolean value)
+{
+    return Rte_Write(BCM_SIG_LIGHT_STATUS_TAIL_LIGHT_ON, (uint32_t)value);
 }
 
 #endif /* RTE_SWC_BCMMAIN_H */

@@ -22,26 +22,6 @@
  * ==================================================================== */
 
 /**
- * @brief  Write Lidar_Distance_SensorStatus (uint8_t)
- * @param  value  Signal value to transmit
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Write_Lidar_Distance_SensorStatus(uint8_t value)
-{
-    return Rte_Write(FZC_SIG_LIDAR_DISTANCE_SENSOR_STATUS, (uint32_t)value);
-}
-
-/**
- * @brief  Write Lidar_Distance_Range_cm (uint16_t)
- * @param  value  Signal value to transmit
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Write_Lidar_Distance_Range_cm(uint16_t value)
-{
-    return Rte_Write(FZC_SIG_LIDAR_DISTANCE_RANGE_CM, (uint32_t)value);
-}
-
-/**
  * @brief  Write Lidar_Distance_E2E_AliveCounter (uint8_t)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
@@ -49,26 +29,6 @@ static inline Rte_StatusType Rte_Write_Lidar_Distance_Range_cm(uint16_t value)
 static inline Rte_StatusType Rte_Write_Lidar_Distance_E2E_AliveCounter(uint8_t value)
 {
     return Rte_Write(FZC_SIG_LIDAR_DISTANCE_E_2_E_ALIVE_COUNTER, (uint32_t)value);
-}
-
-/**
- * @brief  Write Lidar_Distance_E2E_DataID (uint8_t)
- * @param  value  Signal value to transmit
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Write_Lidar_Distance_E2E_DataID(uint8_t value)
-{
-    return Rte_Write(FZC_SIG_LIDAR_DISTANCE_E_2_E_DATA_ID, (uint32_t)value);
-}
-
-/**
- * @brief  Write Lidar_Distance_SignalStrength (uint16_t)
- * @param  value  Signal value to transmit
- * @return Rte_StatusType (RTE_E_OK on success)
- */
-static inline Rte_StatusType Rte_Write_Lidar_Distance_SignalStrength(uint16_t value)
-{
-    return Rte_Write(FZC_SIG_LIDAR_DISTANCE_SIGNAL_STRENGTH, (uint32_t)value);
 }
 
 /**
@@ -82,6 +42,16 @@ static inline Rte_StatusType Rte_Write_Lidar_Distance_E2E_CRC8(uint8_t value)
 }
 
 /**
+ * @brief  Write Lidar_Distance_E2E_DataID (uint8_t)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Lidar_Distance_E2E_DataID(uint8_t value)
+{
+    return Rte_Write(FZC_SIG_LIDAR_DISTANCE_E_2_E_DATA_ID, (uint32_t)value);
+}
+
+/**
  * @brief  Write Lidar_Distance_ObstacleZone (uint8_t)
  * @param  value  Signal value to transmit
  * @return Rte_StatusType (RTE_E_OK on success)
@@ -89,6 +59,36 @@ static inline Rte_StatusType Rte_Write_Lidar_Distance_E2E_CRC8(uint8_t value)
 static inline Rte_StatusType Rte_Write_Lidar_Distance_ObstacleZone(uint8_t value)
 {
     return Rte_Write(FZC_SIG_LIDAR_DISTANCE_OBSTACLE_ZONE, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Lidar_Distance_Range_cm (uint16_t)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Lidar_Distance_Range_cm(uint16_t value)
+{
+    return Rte_Write(FZC_SIG_LIDAR_DISTANCE_RANGE_CM, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Lidar_Distance_SensorStatus (uint8_t)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Lidar_Distance_SensorStatus(uint8_t value)
+{
+    return Rte_Write(FZC_SIG_LIDAR_DISTANCE_SENSOR_STATUS, (uint32_t)value);
+}
+
+/**
+ * @brief  Write Lidar_Distance_SignalStrength (uint16_t)
+ * @param  value  Signal value to transmit
+ * @return Rte_StatusType (RTE_E_OK on success)
+ */
+static inline Rte_StatusType Rte_Write_Lidar_Distance_SignalStrength(uint16_t value)
+{
+    return Rte_Write(FZC_SIG_LIDAR_DISTANCE_SIGNAL_STRENGTH, (uint32_t)value);
 }
 
 #endif /* RTE_SWC_LIDAR_H */
