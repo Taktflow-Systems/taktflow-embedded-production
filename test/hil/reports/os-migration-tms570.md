@@ -47,6 +47,19 @@ contained the new handler address and the parked handler snapshots both read
 fail-closed on that uncleared retained fault. This is fault-path evidence, not
 the still-NOT-RUN CCM/ESM self-test and not full S-OS-40 closure.
 
+**Update (2026-07-10, controlled-boot recovery):** the isolated bring-up
+recovery now executes before the one-way FIQ unmask. It remains compiled only
+with `OS_BOOTSTRAP_BRINGUP`; production still has no group-2 clear. UART
+captured `SR2=0x00000000, SSR2=0x00000008`, then post-recovery
+`SR2=SSR2=IOFFHR=INTREQ0=0`. The same boot completed 9-module init, BIST 7/7,
+alarm arming, first safety-task activation, and bring-up checks 1-5; check 6
+then entered with group-2 state still zero. A clean production build from
+`be9675a1` is installed and has size text 41,895 bytes / BSS 8,858 bytes.
+DSLite's programming reset recreated `SSR2=0x00000008` before production
+module init, so production correctly parked without acknowledging it. A
+physical power cycle with UART capture is now required for the controlled
+normal boot; steps 2-5 remain unexecuted in this continuation.
+
 ## Scope and unchanged limits
 
 The fixed 10 ms SC sequence runs as one highest-priority, run-to-completion
@@ -196,3 +209,18 @@ open non-CAN item.
   drives the relay output low, records `SR2=SSR2=0x00000008`, and parks.
 - No debugger, serial monitor, or flash process remains attached. Physical
   CAN wiring and bench networking were not changed.
+
+### Controlled-boot continuation end state
+
+- The prior `build/tms570-esm-high/sc.elf` artifact was stale despite its
+  timestamp: its boot banner was `56f174eb`, not the handoff's stated
+  `be9675a1`. It is not used as current-source evidence.
+- A fresh non-diagnostic image was built in a clean directory from
+  `be9675a1`; its observed banner and size match the source and recorded
+  production budget.
+- The fresh image is installed via DSLite `flash --run`. Its programming
+  reset recreated `ESM_SSR2=0x00000008`; the production image did not clear
+  it and remains fail-closed before module completion.
+- No debugger, serial monitor, or flash process remains attached. The next
+  target action is a physical power cycle followed by XDS110 Application/User
+  UART capture; do not reflash before that observation.

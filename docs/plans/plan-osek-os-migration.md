@@ -629,6 +629,19 @@ merge is not viable; the port work must be harvested file-wise.
     stack-paint evidence remains open. The CCM/ESM self-test remains NOT RUN,
     every physical-CAN gate remains DEFERRED, and the deviation disposition is
     unchanged.
+  - Status (2026-07-10, controlled-boot continuation): **BLOCKED ON PHYSICAL
+    POWER CYCLE.** The bring-up-only group-2 recovery was moved before the
+    one-way FIQ unmask and target-tested with UART evidence: retained
+    `SR2=0, SSR2=0x8` became `SR2=SSR2=IOFFHR=INTREQ0=0`, after which module
+    init, BIST, alarm activation, the first safety-task activation, and
+    bring-up checks 1-5 passed. Production still compiles no group-2 clear.
+    A clean `be9675a1` production image is installed, but DSLite's programming
+    reset recreated `SSR2=0x8`; production correctly parked fail-closed.
+    Complete the controlled normal boot by physically power-cycling the board
+    and capturing the XDS110 Application/User UART without reflashing. Do not
+    start DCAN1 ECC recovery or IRQ-stack work until that ordered boot and
+    non-diagnostic verification step is complete. CCM/ESM self-test remains
+    NOT RUN and physical-CAN gates remain DEFERRED.
 
 ### Phase 5 — Legacy retirement + safety documentation (closes G3)
 
