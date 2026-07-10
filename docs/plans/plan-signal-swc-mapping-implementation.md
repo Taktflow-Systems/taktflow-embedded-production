@@ -1,12 +1,12 @@
 # Plan: Explicit Signal-to-SWC Mapping Implementation
 
-**Status:** OWNER APPROVED - SM0-SM1 DONE; SM2 PENDING
+**Status:** OWNER APPROVED - SM0-SM2 DONE; SM3 PENDING
 **Source decision:** [approved removal memo](memo-signal-swc-mapping-removal.md)
 **Scope:** Replace name-derived Signal-to-SWC and related identity decisions
 with an explicit, fail-closed mapping in `model/ecu_sidecar.yaml`.
-**Current boundary:** SM1 provides a disconnected schema parser only; it does
-not implement cross-input validation, mapping behavior, migration, generated
-output, or heuristic removal.
+**Current boundary:** SM2 provides disconnected, fail-closed cross-input
+validation and a validate-before-publish boundary only; it does not implement
+mapping behavior, migration, generated output, or heuristic removal.
 
 ## Objective and authority boundary
 
@@ -166,7 +166,7 @@ SM0 inventory remains green at 48 SWCs, 848 ports, 71 runnables and 71 events.
 No converter, reader, sidecar, generated output, ARXML, CI emission or mapping
 behavior changed.
 
-### SM2 - Fail-closed cross-input validation - PENDING
+### SM2 - Fail-closed cross-input validation - DONE
 
 **Tests first:** Add one failing fixture for each rule: unknown
 ECU/SWC/runnable/message/signal, sanitized-name collision, sender/receiver
@@ -189,6 +189,24 @@ diagnostics are deterministic/source-addressed; no precedence exists; atomic
 no-output/no-replacement is tested for each output class.
 
 **Commit:** `feat(pipeline): validate explicit SWC mapping`.
+
+**Result:** Tests were observed failing at collection because the validation
+API did not exist, then pass against a disconnected aggregate validator with
+stable `SWCMAP008`-`SWCMAP015` diagnostics. Exact DBC, extracted SWC/runnable
+and sidecar identities are validated fail-closed for references, governed-ECU
+coverage, routing, uniqueness, sharing, safety approval and no-precedence
+conflicts. Governed ECUs come from the exact SWC-model inventory plus an
+explicit caller-supplied set for model-external production ECUs; an external
+diagnostic node is therefore not silently treated as an application ECU.
+Safety relevance comes only from structured DBC `ASIL` and `E2E_*` message
+attributes and is unchanged by message or signal renaming.
+Migration-only message sets expand deterministically for review but do not
+grant coverage, so a newly added signal cannot inherit an exception silently.
+A validate-before-publish boundary proves validation failure creates or
+replaces none of the ARXML, assumptions or parity output classes. The combined
+ARXML, arxmlgen and CI regression suite passes with 438 tests, and the SM0
+inventory remains at 48 SWCs, 848 ports, 71 runnables and 71 events. Converter,
+reader, actual sidecar, generated output and mapping behavior remain unchanged.
 
 ### SM3 - Milestone 1: inventory/report shadow mode - PENDING
 

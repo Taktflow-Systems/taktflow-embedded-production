@@ -1,0 +1,22 @@
+VERSION ""
+
+NS_ :
+    BA_DEF_
+    BA_
+
+BS_:
+
+BU_: CVC FZC Diag
+
+BO_ 100 Torque_Request: 8 CVC
+ SG_ PedalPosition : 0|8@1+ (1,0) [0|100] "" FZC
+
+BO_ 101 Brake_Command: 8 FZC
+ SG_ BrakeForceCmd : 0|8@1+ (1,0) [0|100] "" CVC
+
+BO_ 200 Diagnostic_Request: 8 Diag
+ SG_ Service : 0|8@1+ (1,0) [0|255] "" Diag
+
+BA_DEF_ BO_ "ASIL" ENUM "QM","A","B","C","D";
+BA_ "ASIL" BO_ 100 4;
+BA_ "ASIL" BO_ 101 4;

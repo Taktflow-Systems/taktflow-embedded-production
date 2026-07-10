@@ -1,0 +1,23 @@
+{
+  "ecus": {
+    "cvc": {
+      "swcs": [
+        {
+          "name": "Swc_Pedal",
+          "functions": [
+            "Swc_Pedal_Background",
+            "Swc_Pedal_Init",
+            "Swc_Pedal_MainFunction"
+          ]
+        },
+        {
+          "name": "Swc_Shadow",
+          "functions": []
+        }
+      ]
+    },
+    "fzc": {
+      "swcs": []
+    }
+  }
+}

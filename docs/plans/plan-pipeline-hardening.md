@@ -1,6 +1,6 @@
 # Plan: DBC-to-ARXML Pipeline Hardening
 
-**Status:** EXPLICIT MAPPING PLAN APPROVED - SM0-SM1 DONE; SM2 PENDING
+**Status:** EXPLICIT MAPPING PLAN APPROVED - SM0-SM2 DONE; SM3 PENDING
 **Created:** 2026-07-09
 **Branch:** `feat/pipeline-hardening`
 **Scope:** `gateway/taktflow_vehicle.dbc` -> `tools/arxml/dbc2arxml.py` ->
@@ -15,8 +15,9 @@ record every conversion assumption, and independently compare the DBC and
 ARXML communication models. The C BSW and the overall DBC-first architecture
 remain unchanged. Signal-to-SWC name heuristics are documented and designed
 out in an owner-approved memo. The separate implementation plan is approved;
-its SM0 legacy inventory and SM1 disconnected parser gates are complete; SM2
-cross-input validation remains pending.
+its SM0 legacy inventory, SM1 disconnected parser and SM2 fail-closed
+cross-input validation gates are complete; SM3 shadow-mode wiring remains
+pending.
 
 ## Governing inputs
 
@@ -402,8 +403,15 @@ the concrete phased implementation is proposed in the
 and is owner-approved. SM0 freezes a deterministic seven-ECU legacy inventory
 with the 48-SWC baseline and the recomputed SC, ICU and TCU unmapped counts.
 SM1 adds a safe, immutable, order-independent schema parser with stable
-`SWCMAP001`-`SWCMAP007` diagnostics while remaining disconnected from converter
-and emission behavior. SM2 cross-input validation remains pending.
+`SWCMAP001`-`SWCMAP007` diagnostics. SM2 adds disconnected, fail-closed
+cross-input validation with stable `SWCMAP008`-`SWCMAP015` diagnostics and a
+validate-before-publish boundary protecting ARXML, assumptions and parity
+outputs. Governed-ECU completeness uses the exact SWC-model inventory plus an
+explicit model-external production scope, while safety approval is driven only
+by structured DBC `ASIL` and `E2E_*` attributes. Migration signal sets expand
+for review but never grant coverage, so new signals cannot inherit exceptions
+silently. Converter, reader, actual sidecar, generated output and mapping
+behavior remain unchanged; SM3 shadow-mode wiring is pending.
 
 ## Cross-phase gates
 

@@ -1,0 +1,47 @@
+swc_signal_mapping:
+  schema_version: 1
+  policy:
+    unmapped_signal: error
+    unmapped_runnable: error
+  ecus:
+    cvc:
+      swcs:
+        Swc_Pedal:
+          arxml_short_name: CVC_Swc_Pedal
+          runnables:
+            - function: Swc_Pedal_Init
+              trigger: init
+            - function: Swc_Pedal_MainFunction
+              trigger: periodic
+              period_ms: 10
+          ports:
+            - name: PP_PedalPosition
+              direction: provided
+              message: Torque_Request
+              signal: PedalPosition
+              interface: SRI_PedalPosition
+              write_owner: true
+            - name: RP_BrakeForceCmd
+              direction: required
+              message: Brake_Command
+              signal: BrakeForceCmd
+              interface: SRI_BrakeForceCmd
+      unmapped_runnables:
+        - function: Swc_Pedal_Background
+          disposition: legacy-not-emitted
+          rationale: The background function is not emitted during migration.
+    fzc:
+      swcs: {}
+      unmapped_signals:
+        - direction: provided
+          message: Brake_Command
+          signal: BrakeForceCmd
+          disposition: fixture-no-swc
+          rationale: This exact route has no fixture SWC.
+          safety_approval_ref: SAFETY-DECISION-001
+        - direction: required
+          message: Torque_Request
+          signal: PedalPosition
+          disposition: fixture-no-swc
+          rationale: This exact route has no fixture SWC.
+          safety_approval_ref: SAFETY-DECISION-001
