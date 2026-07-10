@@ -11,6 +11,7 @@
  */
 #include "unity.h"
 #include "Can.h"
+#include "Can_TxFaultRecord.h"
 
 /* ==================================================================
  * Mock Hardware Layer — replaces real HAL for host testing
@@ -32,6 +33,12 @@ static uint8        mock_tx_data[MOCK_TX_MAX][8];
 static uint8        mock_tx_dlc[MOCK_TX_MAX];
 static uint8        mock_tx_count;
 static boolean      mock_tx_full;
+static uint8        mock_tx_fault_capture_count;
+static uint32       mock_tx_fault_id;
+static uint8        mock_tx_fault_path;
+static uint8        mock_tx_fault_queue_head;
+static uint8        mock_tx_fault_queue_tail;
+static uint32       mock_tx_fault_queue_hwm;
 
 /* Mock RX injection */
 #define MOCK_RX_MAX 16u
@@ -82,6 +89,21 @@ Std_ReturnType Can_Hw_Transmit(Can_IdType id, const uint8* data, uint8 dlc)
     mock_tx_dlc[mock_tx_count] = dlc;
     mock_tx_count++;
     return E_OK;
+}
+
+void Can_Hw_CaptureTxFailure(
+    uint32 FailedCanId,
+    uint8 ReturnPath,
+    uint8 QueueHead,
+    uint8 QueueTail,
+    uint32 QueueHighWater)
+{
+    mock_tx_fault_capture_count++;
+    mock_tx_fault_id = FailedCanId;
+    mock_tx_fault_path = ReturnPath;
+    mock_tx_fault_queue_head = QueueHead;
+    mock_tx_fault_queue_tail = QueueTail;
+    mock_tx_fault_queue_hwm = QueueHighWater;
 }
 
 boolean Can_Hw_Receive(Can_IdType* id, uint8* data, uint8* dlc)
@@ -161,6 +183,12 @@ void setUp(void)
     mock_hw_rec = 0u;
     mock_tx_count = 0u;
     mock_tx_full = FALSE;
+    mock_tx_fault_capture_count = 0u;
+    mock_tx_fault_id = 0u;
+    mock_tx_fault_path = 0u;
+    mock_tx_fault_queue_head = 0u;
+    mock_tx_fault_queue_tail = 0u;
+    mock_tx_fault_queue_hwm = 0u;
     mock_rx_count = 0u;
     mock_rx_read_idx = 0u;
     canif_rx_call_count = 0u;
@@ -305,7 +333,7 @@ void test_Can_Write_invalid_dlc_fails(void)
 }
 
 /** @verifies SWR-BSW-002 */
-void test_Can_Write_tx_full_returns_busy(void)
+void test_Can_Write_tx_full_queues_and_captures(void)
 {
     Can_Init(&test_config);
     Can_SetControllerMode(0u, CAN_CS_STARTED);
@@ -319,7 +347,43 @@ void test_Can_Write_tx_full_returns_busy(void)
     pdu.sdu = data;
 
     Can_ReturnType ret = Can_Write(0u, &pdu);
-    TEST_ASSERT_EQUAL(CAN_BUSY, ret);
+    TEST_ASSERT_EQUAL(CAN_OK, ret);
+    TEST_ASSERT_EQUAL_UINT8(1u, mock_tx_fault_capture_count);
+    TEST_ASSERT_EQUAL_HEX32(0x100u, mock_tx_fault_id);
+    TEST_ASSERT_EQUAL_UINT8(CAN_TX_FAILURE_PATH_DIRECT_ENQUEUE, mock_tx_fault_path);
+    TEST_ASSERT_EQUAL_UINT8(0u, mock_tx_fault_queue_head);
+    TEST_ASSERT_EQUAL_UINT8(0u, mock_tx_fault_queue_tail);
+    TEST_ASSERT_EQUAL_HEX32(0u, mock_tx_fault_queue_hwm);
+
+    mock_tx_full = FALSE;
+    Can_MainFunction_Write();
+    TEST_ASSERT_EQUAL_UINT8(1u, mock_tx_count);
+    TEST_ASSERT_EQUAL_HEX32(0x100u, mock_tx_ids[0]);
+}
+
+/** @verifies RZC-FDCAN-01 */
+void test_Can_MainFunction_Write_failure_captures_queue_state(void)
+{
+    Can_PduType pdu;
+    uint8 data[] = {0x5Au};
+
+    Can_Init(&test_config);
+    Can_SetControllerMode(0u, CAN_CS_STARTED);
+    mock_tx_full = TRUE;
+    pdu.id = 0x303u;
+    pdu.length = 1u;
+    pdu.sdu = data;
+
+    TEST_ASSERT_EQUAL(CAN_OK, Can_Write(0u, &pdu));
+    mock_tx_fault_capture_count = 0u;
+    Can_MainFunction_Write();
+
+    TEST_ASSERT_EQUAL_UINT8(1u, mock_tx_fault_capture_count);
+    TEST_ASSERT_EQUAL_HEX32(0x303u, mock_tx_fault_id);
+    TEST_ASSERT_EQUAL_UINT8(CAN_TX_FAILURE_PATH_QUEUE_DRAIN, mock_tx_fault_path);
+    TEST_ASSERT_EQUAL_UINT8(1u, mock_tx_fault_queue_head);
+    TEST_ASSERT_EQUAL_UINT8(0u, mock_tx_fault_queue_tail);
+    TEST_ASSERT_EQUAL_HEX32(1u, mock_tx_fault_queue_hwm);
 }
 
 /* ==================================================================
@@ -700,7 +764,8 @@ int main(void)
     RUN_TEST(test_Can_Write_not_started_fails);
     RUN_TEST(test_Can_Write_null_pdu_fails);
     RUN_TEST(test_Can_Write_invalid_dlc_fails);
-    RUN_TEST(test_Can_Write_tx_full_returns_busy);
+    RUN_TEST(test_Can_Write_tx_full_queues_and_captures);
+    RUN_TEST(test_Can_MainFunction_Write_failure_captures_queue_state);
 
     /* Read tests (SWR-BSW-003) */
     RUN_TEST(test_Can_MainFunction_Read_processes_message);

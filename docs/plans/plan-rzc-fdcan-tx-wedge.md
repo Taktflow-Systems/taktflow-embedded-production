@@ -37,7 +37,7 @@ repair is selected.
 
 ## 3. Work items
 
-### RZC-FDCAN-01 - Capture the first wedge without a debugger
+### RZC-FDCAN-01 - Capture the first wedge without a debugger - HIL PENDING
 
 - Goal: leave a bounded, machine-readable record at the first persistent TX
   failure without changing real-time behavior through breakpoints.
@@ -51,6 +51,22 @@ repair is selected.
 - Gate: Layer 1 host tests, then one short Layer 4 reproduction.
 - Definition of done: the first failed enqueue is classified as hardware
   full/error, HAL rejection, software queue overflow, or contract loss.
+
+Implementation result (2026-07-10):
+
+- Added a one-shot `.noinit` record committed by a magic/inverse-magic pair.
+- The RZC OSEK hardware hook captures CCCR, ECR, PSR, IR, TXFQS, HAL state,
+  HAL lock/error, queue head/tail/high-water, failed CAN ID and return path.
+- Capture performs no UART output; the next RZC boot prints and clears the
+  complete record before the OS starts.
+- Direct-enqueue, queue-overflow and queue-drain paths are distinguished.
+- Four retained-record host tests and 33 CAN driver tests pass; tests cover
+  one-shot behavior, clear/re-arm, sequence wrap and queue-state forwarding.
+- A clean RZC OSEK `-Werror` cross-build passes, the strong RZC capture hook
+  is linked, and the 64-byte record is present in `.noinit`.
+- Remaining gate: flash this committed build, reproduce the short free-running
+  wedge, reset once, and harvest the `[CAN-TX]` boot record before selecting
+  RZC-FDCAN-02.
 
 ### RZC-FDCAN-02 - Repair the classified transmit contract
 

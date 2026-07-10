@@ -20,6 +20,7 @@
 #include "Std_Types.h"
 #include "ComStack_Types.h"
 #include "Can.h"
+#include "Can_TxFaultRecord.h"
 #include "stm32g4xx_hal.h"
 
 /* ==================================================================
@@ -40,6 +41,34 @@ static const uint32 dlc_to_hal[9] = {
     FDCAN_DLC_BYTES_7,
     FDCAN_DLC_BYTES_8
 };
+
+#if defined(USE_OSEK) && defined(ECU_TARGET_RZC)
+void Can_Hw_CaptureTxFailure(
+    uint32 FailedCanId,
+    uint8 ReturnPath,
+    uint8 QueueHead,
+    uint8 QueueTail,
+    uint32 QueueHighWater)
+{
+    Can_TxFaultSnapshotType snapshot;
+
+    snapshot.Cccr = FDCAN1->CCCR;
+    snapshot.Ecr = FDCAN1->ECR;
+    snapshot.Psr = FDCAN1->PSR;
+    snapshot.Ir = FDCAN1->IR;
+    snapshot.Txfqs = FDCAN1->TXFQS;
+    snapshot.HalState = (uint32)hfdcan1.State;
+    snapshot.HalLock = (uint32)hfdcan1.Lock;
+    snapshot.HalErrorCode = hfdcan1.ErrorCode;
+    snapshot.QueueHead = (uint32)QueueHead;
+    snapshot.QueueTail = (uint32)QueueTail;
+    snapshot.QueueHighWater = QueueHighWater;
+    snapshot.FailedCanId = FailedCanId;
+    snapshot.ReturnPath = (uint32)ReturnPath;
+
+    (void)Can_TxFaultRecord_Capture(&snapshot);
+}
+#endif
 
 /* ==================================================================
  * Static Helpers

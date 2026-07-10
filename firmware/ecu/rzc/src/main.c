@@ -78,6 +78,7 @@
 #include "Os_TaskMap.h"
 #include "Os_Port.h"
 #include "Os_FaultRecord.h"   /* S-OS-31-FIX-07 boot forensics */
+#include "Can_TxFaultRecord.h" /* RZC-FDCAN-01 retained TX record */
 #endif
 
 /* ==================================================================
@@ -485,6 +486,7 @@ int main(void)
 
         /* S-OS-31-FIX-07: dump + clear any prior fault record and the
          * RCC_CSR reset flags before the kernel starts (memo section 8.5). */
+        Can_TxFaultRecord_BootReport();
         Os_FaultRecord_BootReport();
 
         Os_PortTargetInit();

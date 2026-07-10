@@ -13,6 +13,7 @@
  * @copyright Taktflow Systems 2026
  */
 #include "Can.h"
+#include "Can_TxFaultRecord.h"
 #include "SchM.h"
 #include "Det.h"
 
@@ -31,7 +32,7 @@ volatile uint32 g_can_tx_busy_count = 0u;
 /** Debug: TX queue high watermark */
 volatile uint32 g_can_tx_queue_hwm = 0u;
 
-/* ---- TX Software Queue (for bxCAN with only 3 HW mailboxes) ---- */
+/* ---- TX Software Queue (the STM32G4 target also has 3 HW TX buffers) ---- */
 
 #define CAN_TX_QUEUE_SIZE  16u  /**< Must be power of 2 */
 
@@ -48,6 +49,21 @@ static volatile uint8   can_tx_queue_tail = 0u;  /**< Next read slot   */
 volatile uint32 g_can_rx_012_count = 0u;
 /** Debug: CAN RX counter for specific ID 0x011 (FZC heartbeat trace) */
 volatile uint32 g_can_rx_011_count = 0u;
+
+/** Default for non-RZC/non-OSEK platforms. The RZC STM32 backend overrides. */
+__attribute__((weak)) void Can_Hw_CaptureTxFailure(
+    uint32 FailedCanId,
+    uint8 ReturnPath,
+    uint8 QueueHead,
+    uint8 QueueTail,
+    uint32 QueueHighWater)
+{
+    (void)FailedCanId;
+    (void)ReturnPath;
+    (void)QueueHead;
+    (void)QueueTail;
+    (void)QueueHighWater;
+}
 
 /* ---- API Implementation ---- */
 
@@ -66,6 +82,9 @@ void Can_Init(const Can_ConfigType* ConfigPtr)
         return;
     }
 
+    can_tx_queue_head = 0u;
+    can_tx_queue_tail = 0u;
+    g_can_tx_queue_hwm = 0u;
     can_bus_off_active = FALSE;
     can_state = CAN_CS_STOPPED;
 }
@@ -156,11 +175,24 @@ Can_ReturnType Can_Write(uint8 Hth, const Can_PduType* PduInfo)
     SchM_Exit_Can_CAN_EXCLUSIVE_AREA_0();
 
     if (hw_ret != E_OK) {
-        /* HW mailbox full — enqueue in software TX buffer.
-         * Can_MainFunction_Write drains this queue each tick.
-         * On FDCAN (32-deep HW FIFO) this path is never reached. */
+        Can_Hw_CaptureTxFailure(
+            (uint32)PduInfo->id,
+            CAN_TX_FAILURE_PATH_DIRECT_ENQUEUE,
+            can_tx_queue_head,
+            can_tx_queue_tail,
+            g_can_tx_queue_hwm);
+
+        /* HW transmit storage unavailable: retain the frame in the software
+         * queue. Can_MainFunction_Write retries it each tick. STM32G4 FDCAN
+         * is configured with three TX buffers, so this is an active path. */
         uint8 next_head = (can_tx_queue_head + 1u) & (CAN_TX_QUEUE_SIZE - 1u);
         if (next_head == can_tx_queue_tail) {
+            Can_Hw_CaptureTxFailure(
+                (uint32)PduInfo->id,
+                CAN_TX_FAILURE_PATH_QUEUE_OVERFLOW,
+                can_tx_queue_head,
+                can_tx_queue_tail,
+                g_can_tx_queue_hwm);
             /* Queue full — truly drop (should not happen with 16 slots) */
             g_can_tx_busy_count++;
             return CAN_BUSY;
@@ -204,6 +236,12 @@ void Can_MainFunction_Write(void)
         SchM_Exit_Can_CAN_EXCLUSIVE_AREA_0();
 
         if (hw_ret != E_OK) {
+            Can_Hw_CaptureTxFailure(
+                (uint32)entry->id,
+                CAN_TX_FAILURE_PATH_QUEUE_DRAIN,
+                can_tx_queue_head,
+                can_tx_queue_tail,
+                g_can_tx_queue_hwm);
             break;  /* HW still busy — try again next tick */
         }
 

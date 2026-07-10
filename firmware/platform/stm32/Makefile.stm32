@@ -38,6 +38,10 @@ CFLAGS += -DPLATFORM_STM32 -DSTM32G474xx -DUSE_HAL_DRIVER -DUSE_NUCLEO_64 -DCANT
 CFLAGS += -DGIT_HASH=\"$(GIT_HASH)\"
 CFLAGS += -fdata-sections -ffunction-sections
 
+ifeq ($(TARGET),rzc)
+  CFLAGS += -DECU_TARGET_RZC
+endif
+
 # --- Build mode (default: debug for bring-up phase) ---
 ifdef RELEASE
   CFLAGS += -Os -DNDEBUG
@@ -230,7 +234,8 @@ OS_SRCS = \
     $(PLAT)/src/Os_Port_Stm32.c \
     $(PLAT)/src/Os_Port_Stm32_Sc3.c \
     $(PLAT)/src/Os_Port_Stm32_Bringup.c \
-    $(PLAT)/src/Os_FaultRecord.c
+    $(PLAT)/src/Os_FaultRecord.c \
+    $(BSW)/mcal/Can/src/Can_TxFaultRecord.c
 
 OS_ASM_SRCS = $(PLAT)/src/Os_Port_Stm32_Asm.S
 

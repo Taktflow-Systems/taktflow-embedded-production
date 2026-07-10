@@ -115,9 +115,9 @@ Can_ReturnType Can_Write(uint8 Hth, const Can_PduType* PduInfo);
 /**
  * @brief Drain software TX queue into hardware mailboxes (called cyclically)
  *
- * On bxCAN (3 HW mailboxes), Can_Write enqueues frames that didn't fit.
- * This function retries them each tick until the HW drains.
- * On FDCAN (32-deep HW FIFO), the queue stays empty — zero overhead.
+ * Can_Write enqueues frames that do not fit in hardware transmit storage.
+ * This function retries them each tick until hardware progress resumes.
+ * STM32G4 FDCAN is configured with three TX buffers, so the queue is active.
  */
 void Can_MainFunction_Write(void);
 
