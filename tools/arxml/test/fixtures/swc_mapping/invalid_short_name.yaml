@@ -1,0 +1,10 @@
+swc_signal_mapping:
+  schema_version: 1
+  policy:
+    unmapped_signal: error
+    unmapped_runnable: error
+  ecus:
+    cvc:
+      swcs:
+        Swc_Pedal:
+          arxml_short_name: 1-invalid

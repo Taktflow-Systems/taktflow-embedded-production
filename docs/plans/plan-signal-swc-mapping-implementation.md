@@ -1,12 +1,12 @@
 # Plan: Explicit Signal-to-SWC Mapping Implementation
 
-**Status:** OWNER APPROVED - SM0 DONE; SM1 PENDING
+**Status:** OWNER APPROVED - SM0-SM1 DONE; SM2 PENDING
 **Source decision:** [approved removal memo](memo-signal-swc-mapping-removal.md)
 **Scope:** Replace name-derived Signal-to-SWC and related identity decisions
 with an explicit, fail-closed mapping in `model/ecu_sidecar.yaml`.
-**Current boundary:** SM0 freezes the legacy inventory only; it does not
-implement the schema, parser, mapping, migration, generated output, or
-heuristic removal.
+**Current boundary:** SM1 provides a disconnected schema parser only; it does
+not implement cross-input validation, mapping behavior, migration, generated
+output, or heuristic removal.
 
 ## Objective and authority boundary
 
@@ -130,7 +130,7 @@ TCU 5/3, and the checker fails before report creation if those baselines or the
 suite passes with 374 tests. No converter, reader, sidecar, generated ARXML or
 ECU configuration changed.
 
-### SM1 - Schema and disconnected parser - PENDING
+### SM1 - Schema and disconnected parser - DONE
 
 **Tests first**
 
@@ -152,6 +152,19 @@ ECU configuration changed.
 fixtures report exact category/object; existing output and tests are unchanged.
 
 **Commit:** `feat(pipeline): parse explicit SWC mapping`.
+
+**Result:** Tests were observed failing at collection because the parser module
+did not exist, then all 27 schema tests passed. The parser reads only an
+explicitly supplied path, uses safe YAML with duplicate-key detection, and
+returns frozen typed objects normalized independently of YAML order. It expands
+each migration-only message set to deterministically ordered exact-message
+entries for later DBC signal expansion. Schema diagnostics are fixed as the
+contiguous `SWCMAP001`-`SWCMAP007` family for YAML/duplicate-key, unknown-key,
+required-field, type, value, SHORT-NAME and forbidden-pattern failures. The
+combined ARXML, arxmlgen and CI regression suite passes with 401 tests, and the
+SM0 inventory remains green at 48 SWCs, 848 ports, 71 runnables and 71 events.
+No converter, reader, sidecar, generated output, ARXML, CI emission or mapping
+behavior changed.
 
 ### SM2 - Fail-closed cross-input validation - PENDING
 

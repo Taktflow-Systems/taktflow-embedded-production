@@ -1,0 +1,16 @@
+swc_signal_mapping:
+  schema_version: 1
+  policy:
+    unmapped_signal: error
+    unmapped_runnable: error
+  ecus:
+    cvc:
+      swcs:
+        Swc_Pedal:
+          arxml_short_name: CVC_Swc_Pedal
+          ports:
+            - name: RP_Vehicle_State_Mode
+              direction: required
+              message: Vehicle_*
+              signal: Vehicle_State_Mode
+              interface: SRI_Vehicle_State_Mode

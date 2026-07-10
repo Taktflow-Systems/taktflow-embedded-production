@@ -1,0 +1,38 @@
+swc_signal_mapping:
+  schema_version: 1
+  policy:
+    unmapped_signal: error
+    unmapped_runnable: error
+  ecus:
+    cvc:
+      swcs:
+        Swc_Pedal:
+          arxml_short_name: CVC_Swc_Pedal
+          runnables:
+            - function: Swc_Pedal_Init
+              trigger: init
+            - function: Swc_Pedal_MainFunction
+              trigger: periodic
+              period_ms: 10
+          ports:
+            - name: PP_Torque_Request_PedalPosition1
+              direction: provided
+              message: Torque_Request
+              signal: Torque_Request_PedalPosition1
+              interface: SRI_Torque_Request_PedalPosition1
+              write_owner: true
+      unmapped_signals:
+        - direction: required
+          message: Vehicle_State
+          signal: Vehicle_State_Mode
+          disposition: legacy-no-swc-port
+          rationale: Existing output has no matching application port.
+      unmapped_signal_sets:
+        - direction: required
+          messages: [Steer_Command, Brake_Command]
+          disposition: legacy-no-swc-port
+          rationale: Existing output has no matching application ports.
+      unmapped_runnables:
+        - function: Swc_Pedal_Background
+          disposition: legacy-not-emitted
+          rationale: Existing output has no matching runnable.

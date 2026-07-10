@@ -1,6 +1,6 @@
 # Plan: DBC-to-ARXML Pipeline Hardening
 
-**Status:** EXPLICIT MAPPING PLAN APPROVED - SM0 DONE; SM1 PENDING
+**Status:** EXPLICIT MAPPING PLAN APPROVED - SM0-SM1 DONE; SM2 PENDING
 **Created:** 2026-07-09
 **Branch:** `feat/pipeline-hardening`
 **Scope:** `gateway/taktflow_vehicle.dbc` -> `tools/arxml/dbc2arxml.py` ->
@@ -15,7 +15,8 @@ record every conversion assumption, and independently compare the DBC and
 ARXML communication models. The C BSW and the overall DBC-first architecture
 remain unchanged. Signal-to-SWC name heuristics are documented and designed
 out in an owner-approved memo. The separate implementation plan is approved;
-its SM0 legacy inventory gate is complete and SM1 remains pending.
+its SM0 legacy inventory and SM1 disconnected parser gates are complete; SM2
+cross-input validation remains pending.
 
 ## Governing inputs
 
@@ -398,9 +399,11 @@ explicit replacement, with TX, RX, shared and unmapped examples. No production
 code, generated output or sidecar schema changed. The owner approved the memo;
 the concrete phased implementation is proposed in the
 [explicit mapping implementation plan](plan-signal-swc-mapping-implementation.md)
-and is owner-approved. SM0 now freezes a deterministic seven-ECU legacy
-inventory with the 48-SWC baseline and the recomputed SC, ICU and TCU unmapped
-counts; SM1 remains pending.
+and is owner-approved. SM0 freezes a deterministic seven-ECU legacy inventory
+with the 48-SWC baseline and the recomputed SC, ICU and TCU unmapped counts.
+SM1 adds a safe, immutable, order-independent schema parser with stable
+`SWCMAP001`-`SWCMAP007` diagnostics while remaining disconnected from converter
+and emission behavior. SM2 cross-input validation remains pending.
 
 ## Cross-phase gates
 
@@ -428,7 +431,8 @@ counts; SM1 remains pending.
   round-trip verification.
 - Assumptions report is complete, deterministic and golden-tested.
 - Signal-to-SWC removal memo and linked implementation plan are committed and
-  owner-approved; SM0 freezes the legacy inventory and no heuristic-removal
-  implementation is included.
+  owner-approved; SM0 freezes the legacy inventory, SM1 parses the schema
+  without activating mapping behavior, and no heuristic-removal implementation
+  is included.
 - End-of-job handoff describes the actual commits, test results, blockers and
   next action.
