@@ -2,3 +2,4 @@ cantools>=39.0
 autosar-data==0.16.0
 autosar>=0.4.3
 armodel>=1.8.6
+canmatrix==1.2

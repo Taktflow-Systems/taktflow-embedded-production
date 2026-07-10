@@ -1,6 +1,6 @@
 # Plan: DBC-to-ARXML Pipeline Hardening
 
-**Status:** P4 DONE - P5 PENDING
+**Status:** P6 DONE - STOP-GATE PENDING
 **Created:** 2026-07-09
 **Branch:** `feat/pipeline-hardening`
 **Scope:** `gateway/taktflow_vehicle.dbc` -> `tools/arxml/dbc2arxml.py` ->
@@ -319,7 +319,7 @@ canonical ARXML and resulting ECU configuration were regenerated only through
 their generators and are committed separately from the handwritten P4 change.
 All 350 combined Python tests pass on the pinned dependency.
 
-### P5 - Deterministic conversion assumptions report - PENDING
+### P5 - Deterministic conversion assumptions report - DONE
 
 **Step ID:** PH-P5
 **Inputs:** diagnostics, detected DBC attribute definitions/instances,
@@ -341,7 +341,7 @@ reports are visibly and accurately different; every applied default/override
 has an object identity and reason.
 **Gate:** private-data scan of reports/goldens; commit P5 before P6.
 
-### P6 - Independent round-trip consistency check - PENDING
+### P6 - Independent round-trip consistency check - DONE
 
 **Step ID:** PH-P6
 **Inputs:** source DBC via cantools, strict-valid generated ARXML via canmatrix
@@ -361,6 +361,18 @@ usage documentation.
 **Acceptance criteria:** in-house DBC passes; start-bit mutation fails with the
 message/signal and expected/actual values; canmatrix is import-only.
 **Gate:** corpus strict mode and in-house end-to-end pipeline green; commit P6.
+
+**Result:** `canmatrix==1.2` is pinned after verification against its current
+PyPI release and a CPython 3.14 import probe. The checker imports DBC with
+cantools and ARXML with canmatrix, then compares 45 frame and 182 signal
+identities across frame ID, extended flag, DLC, start bit, length, byte order,
+factor and offset. Diffs are stable and object-addressed. A seeded start-bit
+mutation fails with the message, signal, expected and actual values. The only
+allowed gaps are the converter's naming-only `_Frame` suffix and eight exact
+factor tuples that canmatrix reports as 1 because the emitted COMPU-METHODs
+are not attached through I-SIGNAL data-type references. CI and README expose
+the same one-command gate; focused, full ARXML, strict corpus and in-house
+end-to-end checks pass.
 
 ### STOP-GATE - Signal-to-SWC mapping removal memo - PENDING
 

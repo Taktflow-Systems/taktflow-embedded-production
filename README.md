@@ -385,7 +385,17 @@ python -m tools.arxmlgen --config project.yaml
 
 # Verify the pipeline is idempotent (run twice, expect zero diff)
 bash tools/ci/check_codegen_idempotency.sh
+
+# Independently compare DBC and ARXML frame/signal communication semantics
+python tools/ci/roundtrip_check.py gateway/taktflow_vehicle.dbc arxml/TaktflowSystem.arxml
 ```
+
+The round-trip gate compares frame ID, extended-ID flag, DLC, signal start,
+length, byte order, factor, and offset. ARXML is imported with canmatrix only.
+The converter's `_Frame` suffix is a naming-only gap. canmatrix 1.2 reports a
+factor of 1 for the eight currently detached scaled `COMPU-METHOD` objects;
+the checker permits only those exact object/value tuples and fails on any new
+or changed mismatch.
 
 ---
 
