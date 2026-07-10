@@ -397,6 +397,10 @@ heuristics. The parity checker is a blocking gate over normalized SWCs, ports,
 interfaces, runnables, and events. A missing, invalid, or incomplete map fails
 before ARXML, assumptions-report, or parity-report replacement. Compatibility
 modes are rejected; the exact SM4 milestone remains the rollback base.
+The permanent project decision `SM6-STRICT-001` owns the reviewed shared-writer
+selections and safety-sensitive unmapped dispositions in the strict map. The
+strict parity golden is the only retained migration report; schema and
+validation negative fixtures remain as fail-closed regression coverage.
 
 The round-trip gate compares frame ID, extended-ID flag, DLC, signal start,
 length, byte order, factor, and offset. ARXML is imported with canmatrix only.

@@ -1,13 +1,14 @@
 # Plan: Explicit Signal-to-SWC Mapping Implementation
 
-**Status:** OWNER APPROVED - SM0-SM5 DONE; SM6 PENDING
+**Status:** OWNER APPROVED - SM0-SM6 DONE; MIGRATION CLOSED
 **Source decision:** [approved removal memo](memo-signal-swc-mapping-removal.md)
 **Scope:** Replace name-derived Signal-to-SWC and related identity decisions
 with an explicit, fail-closed mapping in `model/ecu_sidecar.yaml`.
-**Current boundary:** SM5 validates the exact seven-ECU map and uses it as the
+**Current boundary:** SM6 validates the exact seven-ECU map and uses it as the
 sole emitter in strict mode. Compatibility modes and name-derived converter and
 reader identity heuristics are removed. The separately governed Com bridge
-filter remains. SM6 stabilization and migration closure have not started.
+filter remains. The migration is closed under permanent project decision
+`SM6-STRICT-001`.
 
 ## Objective and authority boundary
 
@@ -375,7 +376,7 @@ with two documented skips and no crashes. The standalone ARXML, arxmlgen and
 CI suites pass 98, 333 and 21 tests respectively; arxmlgen completes in 23.51
 seconds with no material regression.
 
-### SM6 - Stabilize strict mode and close migration - PENDING
+### SM6 - Stabilize strict mode and close migration - DONE
 
 Run one strict integration milestone, remove expired waivers, confirm owners,
 archive only obsolete migration goldens, retain final coverage/negative
@@ -386,6 +387,34 @@ remain, all seven ECU coverage is exact, and generated drift is reviewed.
 
 **Commit:** `docs(pipeline): close SWC mapping migration`.
 
+**Result:** Closure tests were first observed failing with two failures and two
+passes because the expired `SM3-COMPAT-001` reference and three obsolete
+migration goldens remained. The owner permanently approved the existing strict
+mapping, shared-writer selections, unmapped dispositions and rationales without
+identity changes under project decision `SM6-STRICT-001`. All 755 active
+approval references now name that decision: 607 mapped port rows over 235 exact
+shared signal identities and 148 exact unmapped safety-sensitive signals.
+
+The checker and release CI require strict mode. The final strict golden is the
+only retained mapping report; legacy, shadow and preferred migration goldens
+were removed while all schema/validation negative fixtures remain. Exact
+coverage remains seven ECUs, 48 SWCs, 848 ports, 71 mapped and 69 unmapped
+runnables, and 185 unmapped signals, with no temporary signal sets. The
+normalized report records 182 interfaces, 71 events and zero differences.
+
+Focused closure tests pass 83 tests. The standalone ARXML, arxmlgen and CI
+suites pass 98, 333 and 25 tests respectively, for 456 tests. Two strict runs
+produce byte-identical ARXML, assumptions and parity reports. Strict validation
+reports zero warnings and 2,523 identifiable elements; round trip covers 45
+frames and 182 signals; the strict corpus converts three corpora with two
+documented skips and no crashes. Two complete generator runs are byte-identical
+across 543 generated files and match the tracked baseline, so no ARXML or ECU
+configuration replacement is required. C configuration validation passes all
+three checks. Arxmlgen measured 27.09 and 27.58 seconds in the SM6 worktree;
+a same-machine SM5 rerun measured 24.57 seconds. No arxmlgen production path or
+generated semantics changed, but the observed timing variance is retained for
+review rather than normalized away.
+
 ## Verification commands and gates
 
 Exact checker flags are fixed in SM0/SM1 tests; these command shapes and
@@ -395,8 +424,8 @@ existing gates are mandatory:
 python -m pytest tools/arxml/test/test_swc_mapping_schema.py tools/arxml/test/test_swc_mapping_validation.py tools/arxml/test/test_swc_mapping_modes.py -q
 python -m pytest tools/arxmlgen/tests/test_swc_mapping_reader.py tools/ci/tests/test_check_swc_mapping.py -q
 python -m pytest tools/arxml/test tools/arxmlgen/tests tools/ci/tests -q
-python tools/ci/check_swc_mapping.py gateway/taktflow_vehicle.dbc arxml_v2/swc_model.json model/ecu_sidecar.yaml arxml/TaktflowSystem.arxml --mode <shadow|preferred|strict> --check
-python tools/arxml/dbc2arxml.py gateway/taktflow_vehicle.dbc <temporary-output> arxml_v2/swc_model.json --swc-mapping model/ecu_sidecar.yaml --swc-mapping-mode <shadow|preferred|strict>
+python tools/ci/check_swc_mapping.py gateway/taktflow_vehicle.dbc arxml_v2/swc_model.json model/ecu_sidecar.yaml arxml/TaktflowSystem.arxml --mode strict --check
+python tools/arxml/dbc2arxml.py gateway/taktflow_vehicle.dbc <temporary-output> arxml_v2/swc_model.json --swc-mapping model/ecu_sidecar.yaml --swc-mapping-mode strict
 python tools/ci/validate_arxml_strict.py <temporary-output>/TaktflowSystem.arxml
 python -m tools.arxmlgen --config project.yaml
 python tools/ci/roundtrip_check.py gateway/taktflow_vehicle.dbc <temporary-output>/TaktflowSystem.arxml
@@ -404,7 +433,7 @@ python tools/ci/run_dbc_corpus.py --strict
 git diff --check <phase-base>..HEAD
 ```
 
-Run shadow/parity twice into separate temporary directories and compare report
+Run strict/parity twice into separate temporary directories and compare report
 bytes. Before each commit also run:
 
 ```text

@@ -416,7 +416,13 @@ time-bounded project decision `SM3-COMPAT-001` for reviewed shared writers and
 safety exceptions. Legacy remains the sole emitter and normalized parity is
 exact at 48 SWCs, 848 ports, 182 interfaces, 71 runnables and 71 events. The
 combined ARXML, arxmlgen and CI suite passes with 447 tests; generated ARXML
-and ECU configuration remain unchanged. SM4 preferred emission is pending.
+and ECU configuration remain unchanged. SM4 then made the exact map the sole
+preferred emitter, and SM5 removed compatibility modes and name-derived
+converter/reader heuristics after a green preferred milestone. SM6 closes the
+migration in strict-only CI under permanent project decision
+`SM6-STRICT-001`, retaining exact seven-ECU coverage and the strict golden plus
+negative fixtures. Strict normalized parity remains zero-difference; generated
+ARXML and ECU configuration remain unchanged.
 
 ## Cross-phase gates
 
