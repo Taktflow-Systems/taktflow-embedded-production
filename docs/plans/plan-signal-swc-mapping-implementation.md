@@ -1,13 +1,13 @@
 # Plan: Explicit Signal-to-SWC Mapping Implementation
 
-**Status:** OWNER APPROVED - SM0-SM4 DONE; SM5 PENDING
+**Status:** OWNER APPROVED - SM0-SM5 DONE; SM6 PENDING
 **Source decision:** [approved removal memo](memo-signal-swc-mapping-removal.md)
 **Scope:** Replace name-derived Signal-to-SWC and related identity decisions
 with an explicit, fail-closed mapping in `model/ecu_sidecar.yaml`.
-**Current boundary:** SM4 validates the exact seven-ECU map and uses it as the
-sole emitter in preferred mode. Generated ARXML and affected RTE declarations
-are migrated; legacy heuristics remain only for shadow comparison and
-pre-SM5 rollback. Strict activation and heuristic removal have not started.
+**Current boundary:** SM5 validates the exact seven-ECU map and uses it as the
+sole emitter in strict mode. Compatibility modes and name-derived converter and
+reader identity heuristics are removed. The separately governed Com bridge
+filter remains. SM6 stabilization and migration closure have not started.
 
 ## Objective and authority boundary
 
@@ -330,7 +330,7 @@ the 23.14-second SM3 baseline. `DOMAIN_MAP`, `_sig_matches`, type-recovery
 compatibility paths and the separately governed Com bridge filter remain for
 SM5 review.
 
-### SM5 - Milestone 3: explicit/strict and removal - PENDING
+### SM5 - Milestone 3: explicit/strict and removal - DONE
 
 **Entry gate:** One green preferred milestone plus explicit approval to delete
 legacy behavior.
@@ -355,6 +355,25 @@ identity changes fail; strict pipeline/regressions pass for all seven ECUs.
 
 **Commits:** `refactor(pipeline): remove SWC name heuristics`, then separate
 `chore(codegen): refresh strict SWC mapping outputs` if needed.
+
+**Result:** The release gate accepts only strict mapping mode and rejects
+shadow and preferred compatibility modes. The converter no longer contains
+`DOMAIN_MAP`, `_sig_matches`, catch-all port assignment, two-segment runnable
+ownership or legacy SWC emission. Arxmlgen requires exact sidecar SWC and port
+identity, resolves types only by exact DBC `(message, signal)`, and no longer
+uses ECU prefixes, `SRI_` stripping or PDU suffix recovery. The separately
+governed `Com_Receive` / `Com_TransmitSchedule` bridge filter is unchanged.
+
+Strict output is byte-identical to the approved SM4 ARXML, so no tracked ARXML
+or ECU configuration regeneration was required. The checker-generated strict
+golden differs from preferred only in schema and mode metadata and records 48
+SWCs, 848 ports, 182 interfaces, 71 runnables, 71 events and zero differences.
+Two strict runs produced byte-identical ARXML, assumptions and parity reports.
+Strict ARXML validation reports zero warnings, the semantic round trip covers
+45 frames and 182 signals, and the strict corpus gate converts three corpora
+with two documented skips and no crashes. The standalone ARXML, arxmlgen and
+CI suites pass 98, 333 and 21 tests respectively; arxmlgen completes in 23.51
+seconds with no material regression.
 
 ### SM6 - Stabilize strict mode and close migration - PENDING
 
