@@ -130,8 +130,8 @@ extern uint32 canTransmit(canBASE_t *node, uint32 messageBox, const uint8 *data)
 #define ESM_DEPAPR1             0x04u   /* Group 1 enable clear */
 #define ESM_SR1                 0x18u   /* Group 1 status */
 #define ESM_SR4                 0x24u   /* Group 1 status clear (write-1-to-clear) */
-#define ESM_SR2                 0x1Cu   /* Group 2 status (read-only) */
-/* Group 2 clear: write to ESM_SR2 (some TMS570 variants) or use EKR */
+#define ESM_SR2                 0x1Cu   /* Group 2 status (retained, W1C) */
+#define ESM_SSR2                0x3Cu   /* Group 2 shadow status (retained, W1C) */
 
 /* ==================================================================
  * SCI Register Offsets (from SCI_BASE)
@@ -1058,7 +1058,7 @@ void sc_het_led_set(uint8 led2, uint8 led3)
 
 /** ESM status register offsets */
 #define ESM_SR1_0               0x18u   /* Group 1 status (channels 0-31) */
-#define ESM_SR1_1               0x1Cu   /* Group 1 status (channels 32-63) */
+#define ESM_SR1_1               0x1Cu   /* Group 2 status (channels 0-31) */
 #define ESM_SR3                 0x20u   /* Group 3 status (write-1-to-clear) */
 #define ESM_EKR_OFF             0x38u   /* Error Key Register */
 
@@ -1070,6 +1070,75 @@ void sc_het_led_set(uint8 led2, uint8 led3)
 #define CCMSR4_OFF              0x1Cu   /* Status Register 4 (inactivity) */
 
 /*
+ * Fail-closed ESM high-level interrupt ownership.
+ *
+ * Group-2 status is retained diagnostic evidence. The production handler
+ * deliberately does not acknowledge SR2/SSR2: it drops the relay first,
+ * snapshots both registers for debugger/post-reset forensics, and parks so
+ * the external watchdog resets the controller.
+ * ================================================================== */
+
+volatile uint32 sc_tms570_esm_high_sr2;
+volatile uint32 sc_tms570_esm_high_ssr2;
+
+typedef void (*sc_tms570_isr_ptr)(void);
+extern void vimChannelMap(uint32 request, uint32 channel,
+                          sc_tms570_isr_ptr handler);
+#ifdef SIL_DIAG
+static inline __attribute__((always_inline)) void sc_esm_diag_puts(const char *str)
+{
+    while (*str != '\0') {
+        uint32 timeout = 100000u;
+        while (((*(volatile uint32 *)(SCI_BASE + SCI_FLR) & SCI_FLR_TXRDY) == 0u) &&
+               (timeout > 0u)) {
+            timeout--;
+        }
+        if (timeout > 0u) {
+            *(volatile uint32 *)(SCI_BASE + SCI_TD) = (uint32)(uint8)*str;
+        }
+        str++;
+    }
+}
+#endif
+
+#ifdef SIL_DIAG
+void __attribute__((interrupt("FIQ"), interrupt_save_fp, noreturn))
+Sc_Tms570_EsmHighInterrupt(void)
+#else
+void __attribute__((interrupt("FIQ"), noreturn)) Sc_Tms570_EsmHighInterrupt(void)
+#endif
+{
+    /* The safety output write is intentionally the first handler action. */
+    *(volatile uint32 *)(GIO_BASE + GIO_DCLRA) =
+        ((uint32)1u << (uint32)SC_PIN_RELAY);
+
+    sc_tms570_esm_high_sr2 =
+        *(volatile uint32 *)(ESM_BASE + ESM_SR2);
+    sc_tms570_esm_high_ssr2 =
+        *(volatile uint32 *)(ESM_BASE + ESM_SSR2);
+
+#ifdef SIL_DIAG
+    /* Bench-only evidence after the safety action and forensic snapshot. */
+    sc_esm_diag_puts("[ESM-HIGH] relay=OFF, SR2/SSR2 captured, parked\r\n");
+#endif
+
+    for (;;) {
+        __asm__ volatile("nop");
+    }
+}
+
+void esm_install_high_level_handler(void)
+{
+    /* VIM requests/channels 0 and 1 are fixed ESM FIQ ownership. */
+    vimChannelMap(0u, 0u, (sc_tms570_isr_ptr)&Sc_Tms570_EsmHighInterrupt);
+
+    /* NMFI makes this a one-way transition. Install the fail-closed vector
+     * before unmasking so a retained or fresh group-2 source cannot livelock
+     * through HALCoGen's acknowledging/default handler. */
+    __asm__ volatile("cpsie f" ::: "memory");
+}
+
+/* ==================================================================
  * HALCoGen notification function replacements.
  *
  * HL_notification.c is excluded from the build because its
@@ -1128,6 +1197,8 @@ static uint32 g3_ccmsr2;
 static uint32 g3_ccmsr3;
 static uint32 g3_ccmsr4;
 static uint32 g3_esm_sr1;
+static uint32 g3_esm_sr2;
+static uint32 g3_esm_ssr2;
 static uint32 g3_esm_sr3;
 static uint32 g3_esm_ekr;
 static uint32 g3_channel;
@@ -1144,6 +1215,8 @@ void sc_ccm_debug_get(uint32 *out)
     out[6] = g3_esm_ekr;
     out[7] = g3_channel;
     out[8] = g3_call_count;
+    out[9] = g3_esm_sr2;
+    out[10] = g3_esm_ssr2;
 }
 
 void esmGroup3Notification(void *esm, uint32 channel)
@@ -1156,6 +1229,8 @@ void esmGroup3Notification(void *esm, uint32 channel)
     g3_ccmsr3  = reg_read(CCMR5_BASE, CCMSR3_OFF);
     g3_ccmsr4  = reg_read(CCMR5_BASE, CCMSR4_OFF);
     g3_esm_sr1 = reg_read(ESM_BASE, ESM_SR1_0);
+    g3_esm_sr2 = reg_read(ESM_BASE, ESM_SR1_1);
+    g3_esm_ssr2 = reg_read(ESM_BASE, ESM_SSR2);
     g3_esm_sr3 = reg_read(ESM_BASE, ESM_SR3);
     g3_esm_ekr = reg_read(ESM_BASE, ESM_EKR_OFF);
     g3_channel = channel;
@@ -1170,9 +1245,9 @@ void esmGroup3Notification(void *esm, uint32 channel)
     reg_write(CCMR5_BASE, CCMSR3_OFF, 0xFFFFFFFFu);
     reg_write(CCMR5_BASE, CCMSR4_OFF, 0xFFFFFFFFu);
 
-    /* 2. Clear ALL ESM status registers (write-1-to-clear) */
+    /* 2. Clear group-1/group-3 status only. Group-2 SR2/SSR2 is retained
+     * diagnostic evidence and production code must never acknowledge it. */
     reg_write(ESM_BASE, ESM_SR1_0, 0xFFFFFFFFu);
-    reg_write(ESM_BASE, ESM_SR1_1, 0xFFFFFFFFu);
     reg_write(ESM_BASE, ESM_SR3, channel);
 
     /* 3. Reset nERROR pin to inactive (HIGH) — key value 5 */
@@ -1361,7 +1436,7 @@ void sc_sci_put_hex32(uint32 val)
 
 void sc_hw_debug_boot_dump(void)
 {
-    uint32 ccm_dbg[9];
+    uint32 ccm_dbg[11];
     sc_ccm_debug_get(ccm_dbg);
     sc_sci_puts("--- CCM/ESM G3 snapshot (pre-clear) ---\r\n");
     sc_sci_puts("G3_calls="); sc_sci_put_uint(ccm_dbg[8]); sc_sci_puts("\r\n");
@@ -1371,11 +1446,15 @@ void sc_hw_debug_boot_dump(void)
     sc_sci_puts("CCMSR3=");   sc_sci_put_hex32(ccm_dbg[2]); sc_sci_puts("\r\n");
     sc_sci_puts("CCMSR4=");   sc_sci_put_hex32(ccm_dbg[3]); sc_sci_puts("\r\n");
     sc_sci_puts("ESM_SR1=");  sc_sci_put_hex32(ccm_dbg[4]); sc_sci_puts("\r\n");
+    sc_sci_puts("ESM_SR2=");  sc_sci_put_hex32(ccm_dbg[9]); sc_sci_puts("\r\n");
+    sc_sci_puts("ESM_SSR2="); sc_sci_put_hex32(ccm_dbg[10]); sc_sci_puts("\r\n");
     sc_sci_puts("ESM_SR3=");  sc_sci_put_hex32(ccm_dbg[5]); sc_sci_puts("\r\n");
     sc_sci_puts("ESM_EKR=");  sc_sci_put_hex32(ccm_dbg[6]); sc_sci_puts("\r\n");
     sc_sci_puts("--- current registers (post-clear) ---\r\n");
     sc_sci_puts("CCMSR1=");   sc_sci_put_hex32(*(volatile uint32 *)0xFFFFF600u); sc_sci_puts("\r\n");
     sc_sci_puts("ESM_SR1=");  sc_sci_put_hex32(*(volatile uint32 *)0xFFFFF518u); sc_sci_puts("\r\n");
+    sc_sci_puts("ESM_SR2=");  sc_sci_put_hex32(*(volatile uint32 *)0xFFFFF51Cu); sc_sci_puts("\r\n");
+    sc_sci_puts("ESM_SSR2="); sc_sci_put_hex32(*(volatile uint32 *)0xFFFFF53Cu); sc_sci_puts("\r\n");
     sc_sci_puts("ESM_SR3=");  sc_sci_put_hex32(*(volatile uint32 *)0xFFFFF520u); sc_sci_puts("\r\n");
     sc_sci_puts("ESM_EKR=");  sc_sci_put_hex32(*(volatile uint32 *)0xFFFFF538u); sc_sci_puts("\r\n");
     sc_sci_puts("--- end dump ---\r\n");
@@ -1399,7 +1478,7 @@ void sc_hw_debug_periodic(void)
         sc_sci_puts("\r\n");
     }
 #else
-    uint32 ccm_dbg[9];
+    uint32 ccm_dbg[11];
 
     sc_sci_puts("[5s] SC: ES=0x");
     sc_sci_put_uint(*(volatile uint32 *)0xFFF7DC04u);  /* DCAN1 ES */

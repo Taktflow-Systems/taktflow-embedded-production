@@ -20,6 +20,9 @@
 extern void    esm_enable_group1_channel(uint8 channel);
 extern void    esm_clear_flag(uint8 group, uint8 channel);
 extern boolean esm_is_flag_set(uint8 group, uint8 channel);
+#ifdef PLATFORM_TMS570
+extern void    esm_install_high_level_handler(void);
+#endif
 
 /* ==================================================================
  * Constants
@@ -45,6 +48,11 @@ void SC_ESM_Init(void)
 
     /* Enable ESM group 1 channel 2 for lockstep compare error */
     esm_enable_group1_channel(ESM_CHANNEL_LOCKSTEP);
+
+#ifdef PLATFORM_TMS570
+    /* Install VIM ch0 ownership before the one-way NMFI FIQ unmask. */
+    esm_install_high_level_handler();
+#endif
 }
 
 void SC_ESM_HighLevelInterrupt(void)

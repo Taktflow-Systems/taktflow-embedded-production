@@ -46,6 +46,7 @@
 #include "HL_esm.h"
 
 /* USER CODE BEGIN (0) */
+extern void Sc_Tms570_EsmHighInterrupt(void);
 /* USER CODE END */
 
 /* Vim Ram Definition */
@@ -69,7 +70,7 @@ typedef volatile struct vimRam
 static const t_isrFuncPTR s_vim_init[128U] =
 {
     &phantomInterrupt,
-    &esmHighInterrupt,        /* Channel 0   */
+    &Sc_Tms570_EsmHighInterrupt, /* Channel 0: fail-closed ESM high */
     &phantomInterrupt,        /* Channel 1   */
     &phantomInterrupt,          /* Channel 2   */
     &phantomInterrupt,          /* Channel 3   */
@@ -810,7 +811,8 @@ void vimECCErrorHandler(void)
         }
         else if (vec < 64U)
         {
-            esmREG->SR1[1U] = (uint32)1U << (vec-32U);
+            /* Production retains group-2 SR2/SSR2 for fail-closed
+             * forensics; never acknowledge it from VIM ECC recovery. */
             esmGroup2Notification(esmREG, (vec-32U));
         }
         else if (vec < 96U)
@@ -828,7 +830,6 @@ void vimECCErrorHandler(void)
             esmREG->SR7[0U] = 0xFFFFFFFFU;
             esmREG->SR4[1U] = 0xFFFFFFFFU;
             esmREG->SR4[0U] = 0xFFFFFFFFU;
-            esmREG->SR1[1U] = 0xFFFFFFFFU;
             esmREG->SR1[0U] = 0xFFFFFFFFU;
         }
     }

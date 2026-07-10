@@ -84,10 +84,9 @@ void esmInit(void)
     esmREG->IECR4   = 0xFFFFFFFFU;
     esmREG->IECR7   = 0xFFFFFFFFU;
 
-    /** - Clear error status flags */
+    /** - Clear non-retained error status flags.
+     * Production preserves group-2 SR2/SSR2 for fail-closed forensics. */
     esmREG->SR1[0U] = 0xFFFFFFFFU;
-    esmREG->SR1[1U] = 0xFFFFFFFFU;
-    esmREG->SSR2    = 0xFFFFFFFFU;
     esmREG->SR1[2U] = 0xFFFFFFFFU;
 
     esmREG->SR4[0U] = 0xFFFFFFFFU;
@@ -763,7 +762,9 @@ void esmClearStatusBuffer(uint32 channels)
 /* USER CODE BEGIN (35) */
 /* USER CODE END */
 
-    esmREG->SSR2 = channels;
+    /* Production policy: group-2 shadow status is retained diagnostic
+     * evidence and must not be acknowledged by the running image. */
+    (void)channels;
 
 /* USER CODE BEGIN (36) */
 /* USER CODE END */
@@ -1049,7 +1050,8 @@ void esmHighInterrupt(void)
     }
     else if (vec < 64U)
     {
-        esmREG->SR1[1U] = (uint32)1U << (vec-32U);
+        /* Preserve retained group-2 status; the application callback owns
+         * the fail-closed reaction and must not acknowledge SR2/SSR2. */
         esmGroup2Notification(esmREG,(vec-32U));
     }
     else if (vec < 96U)
@@ -1066,7 +1068,6 @@ void esmHighInterrupt(void)
     {
         esmREG->SR7[0U] = 0xFFFFFFFFU;
         esmREG->SR4[0U] = 0xFFFFFFFFU;
-        esmREG->SR1[1U] = 0xFFFFFFFFU;
         esmREG->SR1[0U] = 0xFFFFFFFFU;
     }
 

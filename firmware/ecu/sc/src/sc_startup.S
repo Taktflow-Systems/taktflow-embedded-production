@@ -161,14 +161,11 @@ _preamble_mem_wait:
     str  r1, [r0, #8]
     str  r1, [r0, #12]
 
-    /* ---- Step 3: Clear ESM/CCM errors ---- */
+    /* ---- Step 3: Clear non-retained ESM/CCM errors ----
+     * Group-2 SR2/SSR2 is retained production evidence. Never W1C it. */
     movw r0, #0xF518
     movt r0, #0xFFFF               @ ESMSR1
     mvn  r1, #0
-    str  r1, [r0]
-
-    movw r0, #0xF51C
-    movt r0, #0xFFFF               @ ESMSR2
     str  r1, [r0]
 
     movw r0, #0xF520
@@ -179,11 +176,6 @@ _preamble_mem_wait:
     movt r0, #0xFFFF               @ ESMEKR
     mov  r1, #5
     str  r1, [r0]                  @ Deassert NERROR
-
-    movw r0, #0xF53C
-    movt r0, #0xFFFF               @ ESMSSR2
-    mov  r1, #0x04
-    str  r1, [r0]
 
     movw r0, #0xF600
     movt r0, #0xFFFF               @ CCMR4F
@@ -200,10 +192,6 @@ _preamble_mem_wait:
     movw r0, #0xF518
     movt r0, #0xFFFF
     mvn  r1, #0
-    str  r1, [r0]
-
-    movw r0, #0xF51C
-    movt r0, #0xFFFF
     str  r1, [r0]
 
     movw r0, #0xF538
@@ -229,17 +217,8 @@ _preamble_mem_wait:
     mvn  r1, #0
     str  r1, [r0]
 
-    movw r0, #0xF51C
-    movt r0, #0xFFFF               @ ESMSR2
-    str  r1, [r0]
-
     movw r0, #0xF520
     movt r0, #0xFFFF               @ ESMSR4
-    str  r1, [r0]
-
-    movw r0, #0xF53C
-    movt r0, #0xFFFF               @ ESMSSR2
-    mov  r1, #0x04
     str  r1, [r0]
 
     movw r0, #0xFE20
@@ -256,10 +235,6 @@ _preamble_mem_wait:
     movw r0, #0xF518
     movt r0, #0xFFFF
     mvn  r1, #0
-    str  r1, [r0]
-
-    movw r0, #0xF51C
-    movt r0, #0xFFFF
     str  r1, [r0]
 
     movw r0, #0xF538
@@ -551,12 +526,6 @@ _esmCcmErrorsClear_:
     ldr r0, .LESMSR1_REG
     ldr r2, .LESMSR1_ERR_CLR
     str r2, [r0]
-    ldr r0, .LESMSR2_REG
-    ldr r2, .LESMSR2_ERR_CLR
-    str r2, [r0]
-    ldr r0, .LESMSSR2_REG
-    ldr r2, .LESMSSR2_ERR_CLR
-    str r2, [r0]
     ldr r0, .LESMKEY_REG
     mov r2, #5
     str r2, [r0]
@@ -571,13 +540,9 @@ _esmCcmErrorsClear_:
 
     .align 2
 .LESMSR1_REG:       .word 0xFFFFF518
-.LESMSR2_REG:       .word 0xFFFFF51C
 .LESMKEY_REG:       .word 0xFFFFF538
-.LESMSSR2_REG:      .word 0xFFFFF53C
 .LCCMR4_STAT_REG:   .word 0xFFFFF600
 .LESMSR1_ERR_CLR:   .word 0x80000000
-.LESMSR2_ERR_CLR:   .word 0x00000004
-.LESMSSR2_ERR_CLR:  .word 0x00000004
 .LVIM_INT_CLR:      .word 0x00000001
 .LVIM_INTREQ:       .word 0xFFFFFE20
 .LCCMR4_ERR_CLR:    .word 0x00010000

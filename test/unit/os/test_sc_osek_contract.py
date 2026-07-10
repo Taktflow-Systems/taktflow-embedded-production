@@ -9,9 +9,13 @@ CFG = (ROOT / "firmware/ecu/sc/src/sc_os_cfg.c").read_text(encoding="utf-8")
 MAKE = (ROOT / "firmware/platform/tms570/Makefile.tms570").read_text(encoding="utf-8")
 SCHEDULER = (ROOT / "firmware/bsw/os/bootstrap/src/Os_Scheduler.c").read_text(encoding="utf-8")
 TMS_HW = (ROOT / "firmware/platform/tms570/src/Os_Port_Tms570_Hw.c").read_text(encoding="utf-8")
+SC_TMS_HW = (ROOT / "firmware/platform/tms570/src/sc_hw_tms570.c").read_text(encoding="utf-8")
 TMS_TARGET = (ROOT / "firmware/platform/tms570/src/Os_Port_Tms570_Target.c").read_text(encoding="utf-8")
 TASK_BINDING = (ROOT / "firmware/bsw/os/bootstrap/port/src/Os_Port_TaskBinding.c").read_text(encoding="utf-8")
 TMS_ASM = (ROOT / "firmware/platform/tms570/src/Os_Port_Tms570_Asm.S").read_text(encoding="utf-8")
+TMS_STARTUP = (ROOT / "firmware/ecu/sc/src/sc_startup.S").read_text(encoding="utf-8")
+HAL_ESM = (ROOT / "firmware/ecu/sc/halcogen/source/HL_esm.c").read_text(encoding="utf-8")
+HAL_VIM = (ROOT / "firmware/ecu/sc/halcogen/source/HL_sys_vim.c").read_text(encoding="utf-8")
 
 
 def _function_body(name: str) -> str:
@@ -206,3 +210,42 @@ def test_bringup_tick_observability_is_isolated_and_change_driven():
     combined = MAIN + hw + target
     for marker in markers:
         assert f"[OSEK-TICK] {marker}" in combined
+
+
+def test_tms570_esm_high_fiq_is_fail_closed_and_never_acknowledges_group2():
+    signature = 'void __attribute__((interrupt("FIQ"), noreturn)) Sc_Tms570_EsmHighInterrupt'
+    handler = SC_TMS_HW[SC_TMS_HW.index(signature) :]
+    handler = handler[: handler.index("\n}")]
+    assert '__attribute__((interrupt("FIQ"), noreturn))' in handler
+    relay_off = handler.index("GIO_DCLRA")
+    sr2_capture = handler.index("sc_tms570_esm_high_sr2")
+    ssr2_capture = handler.index("sc_tms570_esm_high_ssr2")
+    park = handler.index("for (;;)")
+    assert relay_off < sr2_capture < ssr2_capture < park
+    assert "reg_write(ESM_BASE" not in handler
+    vim_init = HAL_VIM[HAL_VIM.index("static const t_isrFuncPTR s_vim_init") :]
+    vim_init = vim_init[: vim_init.index("&phantomInterrupt,        /* Channel 1")]
+    assert "&Sc_Tms570_EsmHighInterrupt" in vim_init
+    assert "vimChannelMap(0u, 0u" in SC_TMS_HW
+    assert SC_TMS_HW.index("vimChannelMap(0u, 0u") < SC_TMS_HW.index('cpsie f')
+
+
+def test_tms570_production_preserves_and_dumps_group2_status():
+    # Group-2 status is retained diagnostic evidence. Production startup,
+    # ESM init, and the VIM ch0 handler must observe it, never W1C it.
+    assert "0xF51C" not in TMS_STARTUP
+    assert "0xF53C" not in TMS_STARTUP
+
+    esm_init = HAL_ESM[HAL_ESM.index("void esmInit(void)") :]
+    esm_init = esm_init[: esm_init.index("\n}")]
+    assert "esmREG->SR1[1U] =" not in esm_init
+    assert "esmREG->SSR2" not in esm_init
+    assert "esmREG->SR1[1U] =" not in HAL_ESM
+    assert "esmREG->SR1[1U] =" not in HAL_VIM
+    assert re.search(r"esmREG->SSR2\s*=", HAL_ESM) is None
+
+    g3 = SC_TMS_HW[SC_TMS_HW.index("void esmGroup3Notification") :]
+    g3 = g3[: g3.index("\n}")]
+    assert "reg_write(ESM_BASE, ESM_SR1_1" not in g3
+    for marker in ("ESM_SR2=", "ESM_SSR2="):
+        assert marker in SC_TMS_HW
