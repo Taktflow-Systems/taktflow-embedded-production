@@ -60,6 +60,7 @@ class ConverterRun:
 
     returncode: int
     output: str
+    assumptions_report_emitted: bool | None = None
 
 
 EXPECTED_REJECTIONS = {
@@ -111,7 +112,12 @@ def run_converter(converter: Path, dbc: Path, output_dir: Path, timeout: int) ->
         timeout=timeout,
         check=False,
     )
-    return ConverterRun(completed.returncode, completed.stdout)
+    assumptions_path = output_dir / "TaktflowSystem.arxml.assumptions.md"
+    return ConverterRun(
+        completed.returncode,
+        completed.stdout,
+        assumptions_path.is_file() if completed.returncode == 0 else None,
+    )
 
 
 def expected_rejection_reason(output: str) -> str | None:
@@ -181,6 +187,14 @@ def run_input(
             item.name,
             "crashed",
             f"converter exited {converter_run.returncode}",
+        )
+
+    if converter_run.assumptions_report_emitted is False:
+        return CorpusResult(
+            item.source,
+            item.name,
+            "crashed",
+            "converter emitted no assumptions report",
         )
 
     arxml_path = output_dir / "TaktflowSystem.arxml"

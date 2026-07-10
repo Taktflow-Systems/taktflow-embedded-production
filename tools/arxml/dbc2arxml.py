@@ -41,6 +41,7 @@ from arxml_validation import (
     StrictArxmlValidationError,
     validate_arxml_strict,
 )
+from conversion_assumptions import AssumptionsCollector
 from autosar_data.abstraction.communication import (
     CanAddressingMode, CanFrameType, CyclicTiming, IpduTiming,
     TransmissionModeTiming,
@@ -106,6 +107,22 @@ def get_msg_attr_value(
 
 KNOWN_GEN_ATTRIBUTES = {"GenMsgCycleTime", "GenMsgSendType"}
 SUPPORTED_SEND_TYPES = {"cyclic", "event", "nomsgsendtype"}
+RECOGNIZED_MESSAGE_ATTRIBUTES = (
+    "ASIL",
+    "E2E_DataID",
+    "E2E_MaxDeltaCounter",
+    "GenMsgCycleTime",
+    "GenMsgSendType",
+    "Satisfies",
+)
+DEFAULT_REASONS = {
+    "ASIL": "no safety classification was supplied; the converter uses QM",
+    "E2E_DataID": "no E2E data identifier was supplied",
+    "E2E_MaxDeltaCounter": "no E2E maximum delta was supplied",
+    "GenMsgCycleTime": "no message cycle time was supplied",
+    "GenMsgSendType": "no send type was supplied; cycle-time fallback applies",
+    "Satisfies": "no requirement trace was supplied",
+}
 
 
 def validate_dbc_input(database, diagnostics, source_path=None):
@@ -285,7 +302,105 @@ class Dbc2Arxml:
                     path=portable_path(ecu_model_path),
                 ) from exc
 
+        self.assumptions = AssumptionsCollector(
+            dbc_path, ecu_model_path if self.ecu_model is not None else None
+        )
+        self._record_assumption_inputs()
         self._build_routing_maps()
+
+    def _record_assumption_inputs(self):
+        """Record recognized conventions and consumed sidecar values."""
+        dbc_specifics = getattr(self.db, "dbc", None)
+        definitions = getattr(dbc_specifics, "attribute_definitions", {}) or {}
+        for name in RECOGNIZED_MESSAGE_ATTRIBUTES:
+            explicit_instances = sum(
+                name in (getattr(msg.dbc, "attributes", {}) or {})
+                for msg in self.db.messages
+            )
+            self.assumptions.record_convention(
+                name, "DBC message attribute", name in definitions,
+                explicit_instances,
+            )
+
+        ecus = (self.ecu_model or {}).get("ecus", {})
+        self.assumptions.record_convention(
+            "ECU model JSON", "sidecar", self.ecu_model is not None, len(ecus)
+        )
+        if self.ecu_model is None:
+            self.assumptions.record_default(
+                "conversion:SWC architecture",
+                "ECU model",
+                "not generated",
+                "no ECU-model sidecar was supplied",
+            )
+            return
+
+        if "ecus" not in self.ecu_model:
+            self.assumptions.record_default(
+                "sidecar:ECU model",
+                "ecus",
+                {},
+                "sidecar has no ECU map; no SWC architecture is generated",
+            )
+
+        for ecu_name in sorted(ecus):
+            ecu_data = ecus[ecu_name]
+            ecu_identity = "ECU:%s" % safe_name(ecu_name)
+            if "runnables" not in ecu_data:
+                self.assumptions.record_default(
+                    ecu_identity,
+                    "runnables",
+                    [],
+                    "sidecar ECU has no runnable list",
+                )
+            if "swcs" not in ecu_data:
+                self.assumptions.record_default(
+                    ecu_identity,
+                    "swcs",
+                    [],
+                    "sidecar ECU has no software-component list",
+                )
+            for runnable in sorted(
+                ecu_data.get("runnables", []),
+                key=lambda item: item.get("function", ""),
+            ):
+                identity = "ECU:%s/runnable:%s" % (
+                    safe_name(ecu_name), runnable.get("function", "<unnamed>")
+                )
+                if "period_ms" in runnable:
+                    self.assumptions.record_override(
+                        identity,
+                        "period_ms",
+                        runnable["period_ms"],
+                        "sidecar supplies runnable timing",
+                    )
+                else:
+                    self.assumptions.record_default(
+                        identity,
+                        "period_ms",
+                        0,
+                        "sidecar runnable has no period; no TimingEvent is emitted",
+                    )
+            for swc in sorted(
+                ecu_data.get("swcs", []), key=lambda item: item.get("name", "")
+            ):
+                identity = "ECU:%s/SWC:%s" % (
+                    safe_name(ecu_name), swc.get("name", "<unnamed>")
+                )
+                if "functions" in swc:
+                    self.assumptions.record_override(
+                        identity,
+                        "functions",
+                        sorted(swc["functions"]),
+                        "sidecar supplies functions used to create init runnables",
+                    )
+                else:
+                    self.assumptions.record_default(
+                        identity,
+                        "functions",
+                        [],
+                        "sidecar SWC has no function list",
+                    )
 
     def _build_routing_maps(self):
         """Build per-ECU TX/RX signal maps from DBC sender/receiver info."""
@@ -336,10 +451,19 @@ class Dbc2Arxml:
             path=path, line=line, column=column,
         ) from exc
 
-    def _message_attr(self, msg, name, default=None):
-        return get_msg_attr_value(
+    def _message_attr(self, msg, name, default=None, applied=True):
+        value = get_msg_attr_value(
             msg, name, default, self.diagnostics, self.source_path
         )
+        attrs = getattr(getattr(msg, "dbc", None), "attributes", {}) or {}
+        if applied and name not in attrs:
+            self.assumptions.record_default(
+                "message:%s" % safe_name(msg.name),
+                name,
+                default,
+                DEFAULT_REASONS.get(name, "input value was not supplied"),
+            )
+        return value
 
     def write(self, output_dir, output_name="TaktflowSystem.arxml"):
         """Atomically replace the output after complete serialization."""
@@ -399,6 +523,21 @@ class Dbc2Arxml:
                 action, exc, location_path=output_name,
             )
         print("  Written: %s (%d bytes)" % (portable_path(filepath), len(content)))
+
+        report_name = "%s.assumptions.md" % output_name
+        report_path = os.path.join(output_dir, report_name)
+        self.assumptions.record_diagnostics(self.diagnostics.items)
+        try:
+            self.assumptions.write_atomic(report_path)
+        except (OSError, UnicodeError) as exc:
+            self._fail(
+                "IO002",
+                "conversion assumptions report '%s'" % report_name,
+                "atomic write failed",
+                exc,
+                location_path=report_name,
+            )
+        print("  Written: %s" % portable_path(report_path))
 
     # -- Platform data types ------------------------------------------------
 
@@ -589,7 +728,36 @@ class Dbc2Arxml:
                     "DBC001", "DBC message '%s' attribute 'GenMsgCycleTime'" % msg.name,
                     "value is not an integer", exc,
                 )
+            send_type = str(
+                self._message_attr(msg, "GenMsgSendType", "noMsgSendType")
+            ).strip().lower()
+            emit_cyclic_timing = cycle_ms > 0
             if cycle_ms > 0:
+                decision = "Cyclic timing emitted every %d ms" % cycle_ms
+                if send_type == "event":
+                    timing_reason = (
+                        "positive cycle drives ARXML timing; event controls "
+                        "downstream C transmission mode"
+                    )
+                elif send_type == "cyclic":
+                    timing_reason = "explicit cyclic send type and positive cycle"
+                else:
+                    timing_reason = "positive cycle used as send-type fallback"
+            elif send_type == "event":
+                decision = "No timing specification emitted"
+                timing_reason = "event maps to DIRECT downstream with no cycle"
+            else:
+                decision = "No timing specification emitted"
+                timing_reason = "no positive cyclic timing input was available"
+            self.assumptions.record_timing(
+                "message:%s" % mn,
+                send_type,
+                cycle_ms,
+                decision,
+                timing_reason,
+            )
+
+            if emit_cyclic_timing:
                 try:
                     ipdu.set_timing(
                         IpduTiming(
@@ -983,7 +1151,7 @@ class Dbc2Arxml:
 
         asil = {}
         for msg in self.db.messages:
-            a = self._message_attr(msg, "ASIL", "QM")
+            a = self._message_attr(msg, "ASIL", "QM", applied=False)
             asil[a] = asil.get(a, 0) + 1
         print("  [Safety]")
         print("    ASIL distribution: %s" % asil)

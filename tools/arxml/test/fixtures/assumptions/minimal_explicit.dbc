@@ -1,0 +1,15 @@
+VERSION ""
+
+NS_ :
+
+BS_:
+
+BU_: ECU_A ECU_B
+
+BO_ 257 ExplicitMessage: 8 ECU_A
+ SG_ Temperature : 0|16@1+ (0.1,-40) [-40|215.5] "degC" ECU_B
+
+BA_DEF_ BO_ "GenMsgCycleTime" INT 0 10000;
+BA_DEF_ BO_ "GenMsgSendType" STRING;
+BA_ "GenMsgCycleTime" BO_ 257 20;
+BA_ "GenMsgSendType" BO_ 257 "cyclic";

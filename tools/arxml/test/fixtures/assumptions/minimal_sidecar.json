@@ -1,0 +1,20 @@
+{
+  "ecus": {
+    "ECU_A": {
+      "runnables": [
+        {
+          "function": "Swc_Com_Main",
+          "period_ms": 20
+        }
+      ],
+      "swcs": [
+        {
+          "functions": [
+            "Swc_Com_Init"
+          ],
+          "name": "Swc_Com"
+        }
+      ]
+    }
+  }
+}
