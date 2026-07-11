@@ -27,6 +27,14 @@
 #ifdef OS_BOOTSTRAP_BRINGUP
 #ifdef PLATFORM_STM32
 
+#if !defined(OS_PORT_STM32_BRINGUP_CPU_MHZ)
+#define OS_PORT_STM32_BRINGUP_CPU_MHZ 170u
+#endif
+
+#if !defined(OS_PORT_STM32_BRINGUP_GPIOA_BSRR)
+#define OS_PORT_STM32_BRINGUP_GPIOA_BSRR 0x48000018u
+#endif
+
 #include "Std_Types.h"
 #include "Os.h"
 #include "Os_Port_Stm32.h"
@@ -262,7 +270,7 @@ static boolean bringup_test_same_task_isr_return(void)
         "MRS    %[pspa], PSP        \n\t"
         : [pspb] "=&r" (pspBefore), [pspa] "=&r" (pspAfter)
         : [sen] "r" (bringup_reg_sentinels), [aft] "r" (after),
-          [cnt] "r" ((uint32)11333333u)  /* ~200ms at 170 MHz / 3 cycles per iter */
+          [cnt] "r" ((uint32)((OS_PORT_STM32_BRINGUP_CPU_MHZ * 200000u) / 3u))
         : "r0", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11",
           "memory"
     );
@@ -715,7 +723,7 @@ static void bringup_first_task_entry(void)
     /* Stay alive: polled LED blink via SysTick (LD2 = PA5 on Nucleo G474RE) */
     {
         uint32 lastBlink = HAL_GetTick();
-        volatile uint32 *gpioa_bsrr = (volatile uint32 *)0x48000018u; /* GPIOA BSRR */
+        volatile uint32 *gpioa_bsrr = (volatile uint32 *)OS_PORT_STM32_BRINGUP_GPIOA_BSRR;
         boolean ledOn = FALSE;
 
         for (;;) {
@@ -747,7 +755,11 @@ static void bringup_first_task_entry(void)
  */
 void Os_Port_Stm32_BringupAll(void)
 {
+#if defined(STM32F413xx)
+    Dbg_Uart_Print("\r\n=== OS Bootstrap Bring-up Tests (STM32 F413ZH) ===\r\n");
+#else
     Dbg_Uart_Print("\r\n=== OS Bootstrap Bring-up Tests (STM32 G474RE) ===\r\n");
+#endif
 
     bringup_pass_count = 0u;
     bringup_fail_count = 0u;

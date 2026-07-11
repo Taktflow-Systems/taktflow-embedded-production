@@ -349,6 +349,12 @@ static const Os_TaskMapEntryType rzc_os_task_map[] = {
  * Main Entry Point
  * ================================================================== */
 
+#ifdef OS_BOOTSTRAP_BRINGUP
+/* S-OS-32 F413ZH port bring-up image entry. The six-test suite runs after
+ * clock setup and before BSW initialization, then remains in task context. */
+extern void Os_Port_Stm32_BringupAll(void);
+#endif
+
 /**
  * @brief  RZC main function — init, self-test, main loop
  *
@@ -368,6 +374,14 @@ int main(void)
     /* ---- Step 1: Hardware initialization ---- */
     Main_Hw_SystemClockInit();
     Main_Hw_MpuConfig();
+
+#ifdef OS_BOOTSTRAP_BRINGUP
+    Os_Port_Stm32_BringupAll();
+    for (;;)
+    {
+        Main_Hw_Wfi();
+    }
+#endif
 
     /* ---- Step 2: BSW module initialization (order matters) ---- */
     Det_ReportRuntimeError(DET_MODULE_RZC_MAIN, 0u, MAIN_API_INIT, DET_E_DBG_BSW_INIT_START);

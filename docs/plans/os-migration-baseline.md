@@ -504,3 +504,23 @@ periodic execution is now the expectation):
 - SIL scenario baseline (frame sets/periods per ECU) is deferred to the
   Linux CI environment; S-OS-20 acceptance requires capturing it there
   before the BCM migration lands.
+
+## S-OS-32 STM32F413ZH OSEK build baseline (2026-07-10)
+
+The isolated `rzc_f4` build now compiles the production RZC main, generated
+OSEK configuration, complete bootstrap kernel, shared Cortex-M4 port, SC3
+hooks with a 96 MHz clock override, and F4-owned exception handlers. Project
+sources compile with warnings treated as errors; vendor sources retain their
+existing warning policy. Both production and six-check bringup images embed
+build ID `<rzc-osek-build-id>`.
+
+| F413ZH variant | text | data | bss | result |
+|---|---:|---:|---:|---|
+| default non-OSEK | 34,020 | 160 | 7,432 | links |
+| OSEK production | 46,592 | 180 | 16,272 | links |
+| OSEK delta | +12,572 | +20 | +8,840 | within budget |
+
+The linker provides 1,536 KiB flash and 320 KiB RAM. The production image is
+well within both budgets. The F413 hardware bringup suite passes 6/6, while
+the mixed-bench production soak remains blocked by the physical CAN RX
+segment; see `test/hil/reports/os-migration-stm32f4.md`.

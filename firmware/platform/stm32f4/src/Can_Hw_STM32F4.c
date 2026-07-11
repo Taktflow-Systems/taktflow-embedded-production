@@ -418,5 +418,3 @@ restore:
 }
 
 /* Bringup debug stub — referenced by HardFault handler in stm32f4xx_it.c */
-void bringup_put_hex(uint32_t val) { (void)val; }
-void bringup_puts(const char* s) { (void)s; }

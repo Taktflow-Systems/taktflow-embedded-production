@@ -20,6 +20,7 @@ AS      = $(PREFIX)gcc -x assembler-with-cpp
 CP      = $(PREFIX)objcopy
 SZ      = $(PREFIX)size
 OCD     = openocd
+GIT_HASH := $(shell git rev-parse --short=8 HEAD 2>/dev/null || echo "unknown")
 
 # --- MCU flags (STM32F413ZH = Cortex-M4 with FPU) ---
 MCU_FLAGS  = -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
@@ -28,6 +29,7 @@ MCU_FLAGS  = -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS  = $(MCU_FLAGS)
 CFLAGS += -Wall -Wextra -Werror -std=c99
 CFLAGS += -DPLATFORM_STM32 -DSTM32F413xx -DUSE_HAL_DRIVER -DCANTP_ENABLED
+CFLAGS += -DGIT_HASH=\"$(GIT_HASH)\"
 CFLAGS += -fdata-sections -ffunction-sections
 
 # --- Build mode ---
@@ -66,7 +68,7 @@ BSW       = $(FW)/bsw
 ECU       = $(FW)/ecu
 PLAT_F4   = $(FW)/platform/stm32f4
 PLAT_G4   = $(FW)/platform/stm32
-BUILD_DIR = build/stm32f4
+BUILD_DIR = build/stm32f4/$(TARGET)
 
 # --- CubeMX generated project paths (F413ZH) ---
 CUBEMX_DIR  = $(ECU)/rzc_f4/cuberzccf4fg
@@ -160,7 +162,16 @@ BSW_SRCS = \
     $(BSW)/services/FiM/src/FiM.c \
     $(BSW)/services/Xcp/src/Xcp.c \
     $(BSW)/services/SchM/src/SchM_Timing.c \
-    $(BSW)/rte/src/Rte.c \
+    $(BSW)/rte/src/Rte.c
+
+# --- OSEK bootstrap kernel + shared STM32 Cortex-M4 port (S-OS-32) ---
+ifdef OSEK
+CFLAGS += -DUSE_OSEK
+CFLAGS += -DOS_PORT_STM32_SC3_CPU_MHZ=96u
+CFLAGS += -DOS_PORT_STM32_BRINGUP_CPU_MHZ=96u
+CFLAGS += -DOS_PORT_STM32_BRINGUP_GPIOA_BSRR=0x40020018u
+CFLAGS += -I$(ECU)/rzc/cfg
+OS_SRCS = \
     $(BSW)/os/bootstrap/src/Os_Core.c \
     $(BSW)/os/bootstrap/src/Os_Task.c \
     $(BSW)/os/bootstrap/src/Os_Scheduler.c \
@@ -171,8 +182,26 @@ BSW_SRCS = \
     $(BSW)/os/bootstrap/src/Os_Ioc.c \
     $(BSW)/os/bootstrap/src/Os_Memory.c \
     $(BSW)/os/bootstrap/src/Os_Stack.c \
+    $(BSW)/os/bootstrap/src/Os_ServiceProt.c \
+    $(BSW)/os/bootstrap/src/Os_TimingProt.c \
+    $(BSW)/os/bootstrap/src/Os_MemProt.c \
+    $(BSW)/os/bootstrap/src/Os_Interrupt.c \
+    $(BSW)/os/bootstrap/src/Os_ScheduleTable.c \
+    $(BSW)/os/bootstrap/src/Os_CounterDriver.c \
+    $(BSW)/os/bootstrap/src/Os_TaskMap.c \
     $(BSW)/os/bootstrap/port/src/Os_Port_TaskBinding.c \
-    $(PLAT_G4)/src/Os_Port_Stm32.c
+    $(PLAT_G4)/src/Os_Port_Stm32.c \
+    $(PLAT_G4)/src/Os_Port_Stm32_Sc3.c \
+    $(PLAT_G4)/src/Os_Port_Stm32_Bringup.c \
+    $(PLAT_G4)/src/Os_FaultRecord.c \
+    $(PLAT_F4)/src/Os_Irq_Stm32F4.c \
+    $(BSW)/mcal/Can/src/Can_TxFaultRecord.c
+BSW_SRCS += $(OS_SRCS)
+OS_ASM_SRCS = $(PLAT_G4)/src/Os_Port_Stm32_Asm.S
+else
+OS_SRCS =
+OS_ASM_SRCS =
+endif
 
 # --- CubeMX HAL sources (STM32F4xx) ---
 HAL_SRCS = \
@@ -195,8 +224,11 @@ HAL_SRCS = \
 # CubeMX-generated init code
 CUBEMX_SRCS = \
     $(CUBEMX_SRC)/system_stm32f4xx.c \
-    $(CUBEMX_SRC)/stm32f4xx_hal_msp.c \
-    $(CUBEMX_SRC)/stm32f4xx_it.c
+    $(CUBEMX_SRC)/stm32f4xx_hal_msp.c
+
+ifndef OSEK
+CUBEMX_SRCS += $(CUBEMX_SRC)/stm32f4xx_it.c
+endif
 
 # --- ECU sources: RZC application code + F4 hw backend ---
 # Reuses RZC SWC/cfg sources, replaces hw file with F4 variant
@@ -209,9 +241,6 @@ OUR_SRCS = $(BSW_SRCS) $(ECU_SRCS) $(ECU_HW)
 
 # --- Vendor sources (HAL/CubeMX, compiled without -Werror) ---
 VENDOR_SRCS = $(HAL_SRCS) $(CUBEMX_SRCS)
-
-# --- OS port assembly (uppercase .S for cpp preprocessing) ---
-OS_ASM_SRCS = $(PLAT_G4)/src/Os_Port_Stm32_Asm.S
 
 # --- Object files ---
 OUR_OBJS    = $(patsubst %.c,$(BUILD_DIR)/%.o,$(OUR_SRCS))

@@ -21,6 +21,10 @@
 #include "Can.h"
 #include "Rte.h"
 
+#if !defined(GIT_HASH)
+#define GIT_HASH "unknown"
+#endif
+
 /* ==================================================================
  * Error Handler — required by CubeMX HAL MspInit
  * ================================================================== */
@@ -211,7 +215,7 @@ void Main_Hw_SystemClockInit(void)
     (void)HAL_Init();
     Ecu_SystemClock_Config();
     Dbg_Uart_Init();
-    Dbg_Uart_Print("\r\n=== RZC_F4 Boot (HSE PLL 96 MHz) ===\r\n");
+    Dbg_Uart_Print("\r\n=== RZC_F4 Boot (HSE PLL 96 MHz) [" GIT_HASH "] ===\r\n");
 }
 
 void Main_Hw_MpuConfig(void)
