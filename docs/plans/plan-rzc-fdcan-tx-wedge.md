@@ -1,7 +1,8 @@
 # Plan - RZC STM32G4 FDCAN transmit wedge
 
 Date: 2026-07-10
-Status: OPEN - independent defect; blocks the S-OS-31 CAN-parity gate
+Status: KNOWN PHYSICAL LIMITATION - RZC-FDCAN-03 acceptance not met; no
+longer blocks continued OS-adoption work by user direction
 
 ## 1. Scope and evidence boundary
 
@@ -124,3 +125,24 @@ Implementation result (2026-07-10) - SOFTWARE COMPLETE, HIL BLOCKED:
 - Gate: Layer 4 bus-observed evidence, with no soak under gdb.
 - Definition of done: the independent FDCAN plan closes and S-OS-31 can be
   reconsidered against its unchanged acceptance criteria.
+
+Disposition (2026-07-10) - DEFERRED AS A KNOWN PHYSICAL LIMITATION:
+
+- The first complete post-wiring 300 s acceptance window failed. RZC sampled
+  transmit error counters of TEC 137 and TEC 151, and all required RZC cyclic
+  IDs later paused together for approximately 1.0 to 1.1 s. The RZC OS and
+  UART stayed alive, the final controller counters recovered to zero, and no
+  reset, park, retained fault, or software-queue wedge occurred.
+- Five additional fresh-flash 150 s diagnostic runs showed variable RZC error
+  onset: 80 s, no sampled event, 30 s, 150 s, and 80 s. The earliest event
+  was TEC 130 at the 30 s UART sample; the preceding 25 s sample is therefore
+  the conservative demonstrated zero-error window. Required RZC cyclic frames
+  remained uninterrupted for all five diagnostic windows.
+- FZC latched its controller error-warning monitor in four of the five
+  diagnostic runs. The independent adapter remained error-active and reported
+  zero error-counter deltas in every run, leaving an observability discrepancy
+  between the MCU controllers and the adapter.
+- The original 300 s acceptance and definition of done remain unmet. By user
+  direction, this physical/controller limitation is recorded and deferred so
+  unrelated OS-adoption work may continue. It must not be cited as an
+  RZC-FDCAN-03 pass or as production CAN qualification.

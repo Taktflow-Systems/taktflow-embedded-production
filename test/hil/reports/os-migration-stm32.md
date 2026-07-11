@@ -408,3 +408,44 @@ S-OS-31 remains **OPEN**. Its unchanged acceptance requires RZC 0x012 at
 20 Hz for the full window and complete CVC/FZC/RZC frame-set and period
 parity. A clean UART with dead bus IDs is a failure, so the scheduler result
 does not override the failed CAN gate.
+
+## Post-wiring RZC-FDCAN-03 replay and known-limitation disposition (2026-07-10)
+
+Clean CVC, FZC, and RZC OSEK builds passed with compiler warnings treated as
+errors, and every production image embedded build ID `<rzc-osek-build-id>`. The bench was
+resolved through the ignored hardware map, each logical ECU identity was
+verified before every flash, and all measured windows were free-running with
+USART2 plus complete CAN capture and no debugger attached.
+
+The first complete 300 s acceptance window failed. RZC remained OS/UART-alive
+but sampled TEC 137 and later TEC 151 while REC remained zero. At CAN capture
+time 213.764126 s, 0x012 and 0x300-0x303 paused together for approximately
+1.0 to 1.1 s; 0x303 accumulated a 2.991983 s maximum gap. Final RZC state
+recovered to TEC 0, REC 0, error state 0, and HAL state 2. CVC and FZC cyclic
+DBC parity passed, but FZC ended with its sticky CAN error-warning status.
+The independent adapter remained error-active with zero warning, passive,
+bus-off, bus-error, RX-error, and TX-error deltas. The next fresh flashes
+harvested `no fault record` from all three boards.
+
+Five additional fresh-flash 150 s diagnostic runs characterized the limit:
+
+| Run | First sampled RZC error | RZC required cyclic continuity | FZC final monitor |
+|---|---:|---:|---|
+| 1 | 80 s, TEC 144 | full 150 s | sticky error warning |
+| 2 | none sampled | full 150 s | sticky error warning |
+| 3 | 30 s, TEC 130 | full 150 s | sticky error warning |
+| 4 | 150 s, TEC 108 | full 150 s | OK |
+| 5 | 80 s, TEC 185 | full 150 s | sticky error warning |
+
+The earliest sampled RZC error was at 30 s; because UART controller samples
+are five seconds apart, the preceding 25 s sample is the conservative
+demonstrated zero-error window. All required RZC cyclic IDs remained
+continuous for every 150 s diagnostic window, but that is not an error-free
+claim and does not replace the unchanged 300 s acceptance.
+
+By user direction, the intermittent physical/controller behavior is recorded
+as a known limitation so OS-adoption work may continue. The scheduler portion
+of S-OS-31 is accepted by deviation because no fault record, silent park,
+unexplained reset, or OS/UART loss occurred. RZC-FDCAN-03 and the original
+system-level CAN acceptance remain unmet and deferred; this evidence is not
+production CAN qualification.
