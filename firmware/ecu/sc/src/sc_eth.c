@@ -96,9 +96,9 @@ extern uint32 EMACSwizzleData(uint32 word);
 extern uint32 EMACHWInit(uint8 macaddr[SC_ETH_MAC_ADDR_LEN]);
 extern boolean EMACTransmit(hdkif_t *hdkif, pbuf_t *pbuf);
 extern void EMACReceive(hdkif_t *hdkif);
-extern void EMACTxIntPulseEnable(uint32 emacBase, uint32 emacCtrlBase,
+extern void EMACTxIntPulseDisable(uint32 emacBase, uint32 emacCtrlBase,
                                  uint32 core, uint32 channel);
-extern void EMACRxIntPulseEnable(uint32 emacBase, uint32 emacCtrlBase,
+extern void EMACRxIntPulseDisable(uint32 emacBase, uint32 emacCtrlBase,
                                  uint32 core, uint32 channel);
 extern boolean MDIOPhyRegRead(uint32 baseAddr, uint32 phyAddr,
                               uint32 regNum, volatile uint16 *dataPtr);
@@ -196,14 +196,17 @@ Std_ReturnType Sc_Eth_Init(const uint8 *mac)
     g_sc_eth_hdkif = &hdkif_data[0u];
     g_sc_eth_initialized = TRUE;
 
-    EMACTxIntPulseEnable(g_sc_eth_hdkif->emac_base,
-                         g_sc_eth_hdkif->emac_ctrl_base,
-                         0u,
-                         EMAC_CHANNELNUMBER);
-    EMACRxIntPulseEnable(g_sc_eth_hdkif->emac_base,
-                         g_sc_eth_hdkif->emac_ctrl_base,
-                         0u,
-                         EMAC_CHANNELNUMBER);
+    /* RX and TX are polled from the SC task. Keep EMAC pulse interrupts
+     * masked so enabling the OSEK RTI IRQ cannot vector into an unowned
+     * EMAC interrupt source. */
+    EMACTxIntPulseDisable(g_sc_eth_hdkif->emac_base,
+                          g_sc_eth_hdkif->emac_ctrl_base,
+                          0u,
+                          EMAC_CHANNELNUMBER);
+    EMACRxIntPulseDisable(g_sc_eth_hdkif->emac_base,
+                          g_sc_eth_hdkif->emac_ctrl_base,
+                          0u,
+                          EMAC_CHANNELNUMBER);
 
     return ((emac_result == EMAC_ERR_OK) && (link_seen == TRUE)) ? E_OK : E_NOT_OK;
 }

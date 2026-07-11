@@ -2,9 +2,12 @@
 from pathlib import Path
 import re
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[3]
 MAIN = (ROOT / "firmware/ecu/sc/src/sc_main.c").read_text(encoding="utf-8")
+SC_CAN = (ROOT / "firmware/ecu/sc/src/sc_can.c").read_text(encoding="utf-8")
 CFG = (ROOT / "firmware/ecu/sc/src/sc_os_cfg.c").read_text(encoding="utf-8")
 MAKE = (ROOT / "firmware/platform/tms570/Makefile.tms570").read_text(encoding="utf-8")
 SCHEDULER = (ROOT / "firmware/bsw/os/bootstrap/src/Os_Scheduler.c").read_text(encoding="utf-8")
@@ -17,6 +20,8 @@ TMS_ASM = (ROOT / "firmware/platform/tms570/src/Os_Port_Tms570_Asm.S").read_text
 TMS_STARTUP = (ROOT / "firmware/ecu/sc/src/sc_startup.S").read_text(encoding="utf-8")
 HAL_ESM = (ROOT / "firmware/ecu/sc/halcogen/source/HL_esm.c").read_text(encoding="utf-8")
 HAL_VIM = (ROOT / "firmware/ecu/sc/halcogen/source/HL_sys_vim.c").read_text(encoding="utf-8")
+LINK_CMD_PATH = ROOT / "firmware/ecu/sc/halcogen/source/HL_sys_link.cmd"
+LINK_CMD = LINK_CMD_PATH.read_text(encoding="utf-8")
 
 
 def _function_body(name: str) -> str:
@@ -252,6 +257,54 @@ def test_tms570_production_preserves_and_dumps_group2_status():
         assert marker in SC_TMS_HW
 
 
+def test_tms570_dcan1_message_ram_ecc_init_and_source_recovery():
+    # SPNU563A 27.4.1 requires the complete DCAN RAM to be initialized by
+    # MINITGCR/MSINENA so both data and ECC bits are valid before any message
+    # object access. A timeout must fail closed before HALCoGen canInit().
+    init = SC_CAN[SC_CAN.index("void SC_CAN_Init(void)") :]
+    init = init[: init.index("\n}")]
+    ram_init = init.index("dcan1_message_ram_ecc_init()")
+    hal_init = init.index("canInit();")
+    mailbox_setup = init.index("dcan1_setup_mailboxes();")
+    post_config_check = init.index("dcan1_ecc_status_ok()")
+    normal_mode = init.index("dcan1_reg_write(DCAN_CTL_OFFSET, 0x00u)")
+    assert ram_init < hal_init
+    assert hal_init < mailbox_setup < post_config_check < normal_mode
+    assert "bus_off = TRUE;" in init[:hal_init]
+    assert "return;" in init[:hal_init]
+
+    hw_init = SC_TMS_HW[
+        SC_TMS_HW.index("boolean dcan1_message_ram_ecc_init(void)") :
+    ]
+    hw_init = hw_init[: hw_init.index("\n}")]
+    ordered = [
+        "reg_write(SYSTEM1_BASE, SYSTEM_MINITGCR",
+        "reg_write(SYSTEM1_BASE, SYSTEM_MSINENA",
+        "reg_read(SYSTEM1_BASE, SYSTEM_MINISTAT)",
+        "ecc_cs = reg_read(DCAN1_BASE, DCAN_ECC_CS)",
+        "reg_write(ESM_BASE, ESM_SR1",
+    ]
+    offsets = [hw_init.index(token) for token in ordered]
+    assert offsets == sorted(offsets)
+    assert "SYSTEM_DCAN1_RAM_BIT" in hw_init
+    assert "DCAN_ECC_FLAG_MASK" in hw_init
+    assert "ESM_DCAN1_ECC_BIT" in hw_init
+    assert "DCAN_PERR" in hw_init and "DCAN_ECC_SERR" in hw_init
+    assert "DCAN_ECC_CS" in hw_init
+    assert "ESM_SR2" not in hw_init and "ESM_SSR2" not in hw_init
+
+    loopback = SC_TMS_HW[
+        SC_TMS_HW.index("boolean hw_dcan_loopback_test(void)") :
+    ]
+    loopback = loopback[: loopback.index("\n}")]
+    assert "DCAN_TEST_INTERNAL_LBACK" in loopback
+    assert "dcan1_transmit(" in loopback
+    assert "dcan1_read_message_object(" in loopback
+    assert "sc_dcan1_loopback_pass" in loopback
+    assert "dcan1_ecc_status_ok()" in loopback
+    assert "TODO:HARDWARE" not in loopback
+
+
 def test_tms570_bringup_recovery_precedes_one_way_fiq_unmask():
     init = SC_ESM[SC_ESM.index("void SC_ESM_Init(void)") :]
     init = init[: init.index("\n}")]
@@ -274,3 +327,62 @@ def test_tms570_bringup_recovery_precedes_one_way_fiq_unmask():
     )
     for marker in ("post SR2=", "SSR2=", "IOFFHR=", "INTREQ0="):
         assert marker in recovery
+
+
+def test_flash_sections_end_programmed_on_cache_line_boundaries():
+    # S-OS-41: ESM group-2 ch3 is the R5F fatal-bus-error event (SPNS195C
+    # Table 6-45); consuming a flash word with invalid (erased) ECC latches
+    # it with no abort, and production then parks fail-closed at the FIQ
+    # unmask. Every flash output section must end on a programmed 32-byte
+    # cache-line boundary, .rodata must be placed explicitly, and a
+    # programmed guard band must follow the image tail so no ECC
+    # doubleword, cache linefill, or sequential prefetch reaches erased
+    # flash.
+    for section in (".text", ".const", ".rodata", ".cinit", ".pinit"):
+        spec = re.search(
+            re.escape(section)
+            + r"\s+:\s*palign\(32\),\s*fill = 0x00000000",
+            LINK_CMD,
+        )
+        assert spec is not None, section
+    assert re.search(
+        r"\.flashguard\s*:\s*fill = 0x00000000\s*\{\s*\.\s*\+=\s*0x100;\s*\}",
+        LINK_CMD,
+    )
+
+
+def test_flash_image_has_no_unprogrammed_interior_bytes():
+    # S-OS-41 layout contract on real linker output: flash output sections
+    # must be contiguous (no erased interior bytes), the image end must be
+    # 32-byte aligned, and the programmed .flashguard band must be present.
+    # Only maps produced after the current linker script count; stale
+    # pre-fix maps are expected to violate the layout.
+    link_mtime = LINK_CMD_PATH.stat().st_mtime
+    maps = [
+        p for p in (ROOT / "build").glob("tms570*/sc*.map")
+        if p.stat().st_mtime >= link_mtime
+    ]
+    if not maps:
+        pytest.skip("no TMS570 map built since the linker script changed")
+    for map_path in maps:
+        text = map_path.read_text(encoding="utf-8", errors="replace")
+        # Long section names (e.g. .flashguard) wrap: the name is printed
+        # alone and the attributes line follows, starting with the dummy
+        # marker "*" instead of blanks.
+        rows = re.findall(
+            r"^(\.[\w.]+)[ \t]*\r?\n?\*?[ \t]+\d+[ \t]+([0-9a-f]{8})[ \t]+([0-9a-f]{8})",
+            text,
+            re.M,
+        )
+        flash = sorted(
+            (int(origin, 16), int(length, 16), name)
+            for name, origin, length in rows
+            if int(origin, 16) < 0x00400000 and int(length, 16) > 0
+        )
+        assert flash, map_path.name
+        end = 0x0
+        for origin, length, name in flash:
+            assert origin == end, (map_path.name, name, hex(origin), hex(end))
+            end = origin + length
+        assert end % 32 == 0, (map_path.name, hex(end))
+        assert any(name == ".flashguard" for _, _, name in flash), map_path.name

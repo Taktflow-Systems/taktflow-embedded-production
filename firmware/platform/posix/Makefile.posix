@@ -82,7 +82,7 @@ BSW_INC = \
 # =============================================================================
 ifeq ($(TARGET),sc)
 # --- SC: bare-metal TMS570, no AUTOSAR BSW ---
-CFLAGS += -I$(PLAT)/include -I$(ECU)/sc/include
+CFLAGS += -I$(BSW)/include -I$(PLAT)/include -I$(ECU)/sc/include
 SC_SRCS = $(wildcard $(ECU)/sc/src/*.c) $(PLAT)/src/sc_hw_posix.c
 APP_SRCS = $(filter-out %_tms570.c %startup.S,$(SC_SRCS))
 else

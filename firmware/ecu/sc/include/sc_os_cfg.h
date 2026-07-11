@@ -1,26 +1,23 @@
-/**
- * @file    sc_os_cfg.h
- * @brief   SC OS configuration — task and alarm IDs, init function
- * @date    2026-03-14
- *
- * @copyright Taktflow Systems 2026
- */
+/** @file sc_os_cfg.h @brief Production OSEK configuration for the SC. */
 #ifndef SC_OS_CFG_H
 #define SC_OS_CFG_H
 
-#define SC_TASK_MAIN_ID    0u
-#define SC_ALARM_MAIN_ID   0u
+#include "Os.h"
+#include "Os_Cfg_Types.h"
 
-/**
- * @brief  Populate kernel tables with SC task/alarm configuration.
- * @note   Must be called before Os_Init() / StartOS().
- */
-void SC_Os_Configure(void);
+#define SC_TASK_MAIN_ID   ((TaskType)0u)
+#define SC_TASK_IDLE_ID   ((TaskType)1u)
+#define SC_TASK_COUNT     ((uint8)2u)
+#define SC_ALARM_MAIN_ID  ((AlarmType)0u)
+#define SC_ALARM_COUNT    ((uint8)1u)
 
-/**
- * @brief  SC main task entry — alarm-driven, runs every 10ms tick.
- * @note   Run-to-completion: does monitoring work then TerminateTask().
- */
+/* Numeric priority zero is the kernel's highest priority. Only this task
+ * executes the verified sequence and is permitted to request a WDI feed. */
+#define SC_TASK_MAIN_PRIORITY ((uint8)0u)
+
+extern const Os_ConfigType sc_os_config;
+
 void SC_Task_Main(void);
+void SC_Task_Idle(void);
 
-#endif /* SC_OS_CFG_H */
+#endif

@@ -41,8 +41,10 @@ typedef uint8               Std_ReturnType;
 #define SC_HB_ALIVE_MAX             15u
 #define SC_CAN_DLC                  8u
 #define SC_BUS_SILENCE_TICKS        20u
-/* SC_DCAN_BRP, SC_DCAN_TSEG1, SC_DCAN_TSEG2, SC_DCAN_SJW
- * come from sc_cfg.h via the included sc_can.c */
+#define SC_DCAN_BRP                 9u
+#define SC_DCAN_TSEG1               10u
+#define SC_DCAN_TSEG2               2u
+#define SC_DCAN_SJW                 3u
 
 #define SC_MB_IDX_ESTOP             0u
 #define SC_MB_IDX_CVC_HB            1u
@@ -64,6 +66,8 @@ typedef uint8               Std_ReturnType;
 #define SC_MB_RZC_HB                4u
 #define SC_MB_VEHICLE_STATE         5u
 #define SC_MB_MOTOR_CURRENT         6u
+#define SC_MB_TX_STATUS             7u
+#define SC_MB_TX_UDS_RESPONSE       9u
 
 #define SC_E2E_ESTOP_DATA_ID        0x01u
 #define SC_E2E_CVC_HB_DATA_ID      0x02u
@@ -94,6 +98,18 @@ static uint32 mock_dcan_nwdat1;
 /* Simulated mailbox data (6 mailboxes x 8 bytes) */
 static uint8  mock_mb_data[SC_MB_COUNT][SC_CAN_DLC];
 static boolean mock_mb_new_data[SC_MB_COUNT];
+static boolean mock_dcan_ecc_init_ok;
+static boolean mock_dcan_ecc_status_ok;
+
+boolean dcan1_message_ram_ecc_init(void)
+{
+    return mock_dcan_ecc_init_ok;
+}
+
+boolean dcan1_ecc_status_ok(void)
+{
+    return mock_dcan_ecc_status_ok;
+}
 
 /* DCAN register read/write functions (mocked HALCoGen style) */
 uint32 dcan1_reg_read(uint32 offset)
@@ -134,6 +150,13 @@ boolean dcan1_get_mailbox_data(uint8 mbIndex, uint8* data, uint8* dlc)
     *dlc = SC_CAN_DLC;
     mock_mb_new_data[mbIndex] = FALSE;
     return TRUE;
+}
+
+boolean dcan1_get_diag_request(uint8* data, uint8* dlc)
+{
+    (void)data;
+    (void)dlc;
+    return FALSE;
 }
 
 /* ==================================================================
@@ -223,6 +246,10 @@ void dcan1_transmit(uint8 mbIndex, const uint8* data, uint8 dlc)
  * Include source under test
  * ================================================================== */
 
+/* This legacy single-TU harness supplies its own platform/config types and
+ * reduced loop counts; suppress the production headers only in this test. */
+#define STD_TYPES_H
+#define SC_CFG_H
 #include "../src/sc_can.c"
 
 /* ==================================================================
@@ -264,6 +291,8 @@ void setUp(void)
         mock_transmit_data[i] = 0u;
     }
 
+    mock_dcan_ecc_init_ok = TRUE;
+    mock_dcan_ecc_status_ok = TRUE;
     SC_CAN_Init();
 }
 
@@ -285,6 +314,29 @@ void test_CAN_Init_resets_silence(void)
 {
     /* Silence counter should be 0 after init */
     TEST_ASSERT_EQUAL_UINT16(0u, bus_silence_counter);
+}
+
+/** @verifies SWR-SC-001 -- ECC RAM initialization failure is fail-closed */
+void test_CAN_Init_ecc_ram_failure_sets_bus_off(void)
+{
+    mock_dcan_ecc_init_ok = FALSE;
+
+    SC_CAN_Init();
+
+    TEST_ASSERT_FALSE(can_initialized);
+    TEST_ASSERT_TRUE(SC_CAN_IsBusOff());
+}
+
+/** @verifies SWR-SC-001 -- post-mailbox ECC failure is fail-closed */
+void test_CAN_Init_post_config_ecc_failure_sets_bus_off(void)
+{
+    mock_dcan_ecc_status_ok = FALSE;
+
+    SC_CAN_Init();
+
+    TEST_ASSERT_FALSE(can_initialized);
+    TEST_ASSERT_TRUE(SC_CAN_IsBusOff());
+    TEST_ASSERT_TRUE((mock_dcan_ctl & 0x01u) != 0u);
 }
 
 /* ==================================================================
@@ -605,6 +657,8 @@ int main(void)
     /* SWR-SC-001: Initialization */
     RUN_TEST(test_CAN_Init_silent_mode);
     RUN_TEST(test_CAN_Init_resets_silence);
+    RUN_TEST(test_CAN_Init_ecc_ram_failure_sets_bus_off);
+    RUN_TEST(test_CAN_Init_post_config_ecc_failure_sets_bus_off);
 
     /* SWR-SC-002: Mailbox Polling */
     RUN_TEST(test_CAN_Receive_polls_all);

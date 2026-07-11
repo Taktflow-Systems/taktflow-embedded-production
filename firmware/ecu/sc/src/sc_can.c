@@ -27,6 +27,8 @@ extern void    dcan1_reg_write(uint32 offset, uint32 value);
 extern boolean dcan1_get_mailbox_data(uint8 mbIndex, uint8* data, uint8* dlc);
 extern boolean dcan1_get_diag_request(uint8* data, uint8* dlc);
 extern void    dcan1_setup_mailboxes(void);
+extern boolean dcan1_message_ram_ecc_init(void);
+extern boolean dcan1_ecc_status_ok(void);
 
 /* TX function — firmware constraint: called ONLY from SC_CAN_TransmitStatus().
  * Defined in sc_hw_tms570.c (TMS570) and sc_hw_posix.c (SIL). */
@@ -108,6 +110,16 @@ void SC_CAN_Init(void)
     bus_silence_counter = 0u;
     bus_off             = FALSE;
     estop_active        = FALSE;
+    can_initialized     = FALSE;
+
+    /* SPNU563A 27.4.1: initialize the complete DCAN1 message RAM before
+     * canInit() performs its first IFx message-object access. The hardware
+     * sequence writes zero data and matching ECC, then recovers any retained
+     * DCAN source flags and ESM group-1 channel 21 evidence. */
+    if (dcan1_message_ram_ecc_init() == FALSE) {
+        bus_off = TRUE;
+        return;
+    }
 
     /* HALCoGen DCAN1 init: parity/ECC, message RAM, default baud rate.
      * TMS570: real init. POSIX: no-op stub. */
@@ -123,6 +135,13 @@ void SC_CAN_Init(void)
 
     /* Configure 6 receive mailboxes with SC CAN IDs */
     dcan1_setup_mailboxes();
+
+    /* Validate the source again after every message-object write and before
+     * allowing normal CAN operation. Any fresh SECDED event is fail-closed. */
+    if (dcan1_ecc_status_ok() == FALSE) {
+        bus_off = TRUE;
+        return;
+    }
 
     /* Exit init: normal CAN mode. HIL and production both use normal mode
      * for RX. HIL skips SC_Status TX in SC_CAN_TransmitStatus() instead.

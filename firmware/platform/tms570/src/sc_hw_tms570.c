@@ -45,6 +45,16 @@ extern uint32 canTransmit(canBASE_t *node, uint32 messageBox, const uint8 *data)
 /** DCAN message object RAM base (TMS570LC43x, DCAN1) */
 #define DCAN1_MSG_RAM_BASE      0xFFF7E000u
 
+/** System module 1 base and memory-initialization registers */
+#define SYSTEM1_BASE            0xFFFFFF00u
+#define SYSTEM_MINITGCR         0x5Cu
+#define SYSTEM_MSINENA          0x60u
+#define SYSTEM_MINISTAT         0x6Cu
+#define SYSTEM_DCAN1_RAM_BIT    ((uint32)1u << 5u)
+#define SYSTEM_MINIT_ENABLE     0x0Au
+#define SYSTEM_MINIT_DISABLE    0x05u
+#define SYSTEM_MINIT_TIMEOUT    1000000u
+
 /** GIO base address */
 #define GIO_BASE                0xFFF7BC00u
 
@@ -186,6 +196,20 @@ extern uint32 canTransmit(canBASE_t *node, uint32 messageBox, const uint8 *data)
 #define DCAN_IF2DATA            0x130u
 #define DCAN_IF2DATB            0x134u
 #define DCAN_IF2STAT_BYTE       0x122u
+
+/** DCAN1 SECDED source registers */
+#define DCAN_PERR               0x1Cu
+#define DCAN_ECC_CS             0x2Cu
+#define DCAN_ECC_SERR           0x30u
+#define DCAN_ECC_FLAG_MASK      0x00000101u
+#define ESM_DCAN1_ECC_BIT       ((uint32)1u << 21u)
+#define DCAN_CTL                0x00u
+#define DCAN_TEST               0x14u
+#define DCAN_CTL_INIT_CCE       0x00000041u
+#define DCAN_CTL_TEST_ENABLE    0x00000080u
+#define DCAN_TEST_INTERNAL_LBACK 0x00000018u
+#define DCAN_LOOPBACK_RX_OBJECT 8u
+#define DCAN_LOOPBACK_TIMEOUT   10000000u
 
 /** IF command register bits — TMS570 big-endian: command byte is bits [23:16]
  *  (MISRA 12.2: use uint32 literal for shift) */
@@ -363,6 +387,12 @@ void rtiStartCounter(void)
     reg_write(RTI_BASE, RTI_GCTRL, gctrl);
 }
 
+uint32 sc_hw_cycle_time_us(void)
+{
+    const uint32 ticks = *(volatile uint32 *)(RTI_BASE + RTI_FRC0);
+    return ((ticks / 75u) * 8u) + (((ticks % 75u) * 8u) / 75u);
+}
+
 /* ==================================================================
  * GIO pin access (from sc_gio.h / sc_main.c)
  * ================================================================== */
@@ -507,6 +537,84 @@ uint32 dcan1_reg_read(uint32 offset)
 void dcan1_reg_write(uint32 offset, uint32 value)
 {
     reg_write(DCAN1_BASE, offset, value);
+}
+
+/* Retained RAM diagnostics for target readback through the XCP SRAM window.
+ * PERR/ECC_SERR error codes themselves are power-on-reset evidence and are
+ * intentionally never written. */
+volatile uint32 sc_dcan1_ecc_initial_cs;
+volatile uint32 sc_dcan1_ecc_initial_perr;
+volatile uint32 sc_dcan1_ecc_initial_serr;
+volatile uint32 sc_dcan1_ecc_final_cs;
+volatile uint32 sc_dcan1_ecc_final_esm_sr1;
+volatile uint32 sc_dcan1_loopback_pass;
+
+/**
+ * @brief Initialize DCAN1 message RAM data/ECC and recover its source flags
+ * @return TRUE when initialization completed and source/ESM status is clear
+ * @note Thread safety: call once during startup before canInit().
+ */
+boolean dcan1_message_ram_ecc_init(void)
+{
+    volatile uint32 timeout = SYSTEM_MINIT_TIMEOUT;
+    uint32 ecc_cs;
+
+    sc_dcan1_ecc_initial_cs = reg_read(DCAN1_BASE, DCAN_ECC_CS);
+    sc_dcan1_ecc_initial_perr = reg_read(DCAN1_BASE, DCAN_PERR);
+    sc_dcan1_ecc_initial_serr = reg_read(DCAN1_BASE, DCAN_ECC_SERR);
+
+    /* Initialize all DCAN1 message objects and their SECDED check bits. */
+    reg_write(SYSTEM1_BASE, SYSTEM_MINITGCR, SYSTEM_MINIT_ENABLE);
+    reg_write(SYSTEM1_BASE, SYSTEM_MSINENA, SYSTEM_DCAN1_RAM_BIT);
+    while (((reg_read(SYSTEM1_BASE, SYSTEM_MINISTAT) &
+             SYSTEM_DCAN1_RAM_BIT) == 0u) && (timeout > 0u)) {
+        timeout--;
+    }
+    reg_write(SYSTEM1_BASE, SYSTEM_MINITGCR, SYSTEM_MINIT_DISABLE);
+
+    if (timeout == 0u) {
+        sc_dcan1_ecc_final_cs = reg_read(DCAN1_BASE, DCAN_ECC_CS);
+        sc_dcan1_ecc_final_esm_sr1 = reg_read(ESM_BASE, ESM_SR1);
+        return FALSE;
+    }
+
+    /* Clear the single/double-bit flags at their DCAN source. Writing the
+     * read value preserves ECCMODE/SBE_EVT_EN and W1C-clears only set flags. */
+    ecc_cs = reg_read(DCAN1_BASE, DCAN_ECC_CS);
+    if ((ecc_cs & DCAN_ECC_FLAG_MASK) != 0u) {
+        reg_write(DCAN1_BASE, DCAN_ECC_CS, ecc_cs);
+    }
+
+    sc_dcan1_ecc_final_cs = reg_read(DCAN1_BASE, DCAN_ECC_CS);
+    if ((sc_dcan1_ecc_final_cs & DCAN_ECC_FLAG_MASK) != 0u) {
+        sc_dcan1_ecc_final_esm_sr1 = reg_read(ESM_BASE, ESM_SR1);
+        return FALSE;
+    }
+
+    /* The source is clean; acknowledge only its group-1 event. Production
+     * group-2 SR2/SSR2 retained evidence is outside this recovery path. */
+    if ((reg_read(ESM_BASE, ESM_SR1) & ESM_DCAN1_ECC_BIT) != 0u) {
+        reg_write(ESM_BASE, ESM_SR1, ESM_DCAN1_ECC_BIT);
+    }
+    sc_dcan1_ecc_final_esm_sr1 = reg_read(ESM_BASE, ESM_SR1);
+
+    return ((sc_dcan1_ecc_final_esm_sr1 & ESM_DCAN1_ECC_BIT) == 0u) ?
+           TRUE : FALSE;
+}
+
+/**
+ * @brief Validate DCAN1 SECDED and ESM source status after mailbox setup
+ * @return TRUE when neither DCAN ECC flags nor ESM group-1 channel 21 is set
+ * @note Thread safety: call in DCAN initialization mode before normal mode.
+ */
+boolean dcan1_ecc_status_ok(void)
+{
+    sc_dcan1_ecc_final_cs = reg_read(DCAN1_BASE, DCAN_ECC_CS);
+    sc_dcan1_ecc_final_esm_sr1 = reg_read(ESM_BASE, ESM_SR1);
+
+    return (((sc_dcan1_ecc_final_cs & DCAN_ECC_FLAG_MASK) == 0u) &&
+            ((sc_dcan1_ecc_final_esm_sr1 & ESM_DCAN1_ECC_BIT) == 0u)) ?
+           TRUE : FALSE;
 }
 
 /**
@@ -911,10 +1019,63 @@ boolean hw_flash_crc_check(void)
  */
 boolean hw_dcan_loopback_test(void)
 {
-    /* TODO:HARDWARE — Put DCAN1 in internal loopback mode (TEST.Lback),
-     * transmit a frame, verify reception on another mailbox.
-     * This is the highest-priority real self-test. */
-    return TRUE;
+    static const uint8 tx_data[SC_RELAY_STATUS_DLC] = {
+        0xA5u, 0x5Au, 0x3Cu, 0xC3u
+    };
+    uint8 rx_data[SC_CAN_DLC];
+    uint8 rx_dlc = 0u;
+    uint8 i;
+    uint32 saved_ctl = reg_read(DCAN1_BASE, DCAN_CTL);
+    uint32 saved_test = reg_read(DCAN1_BASE, DCAN_TEST);
+    volatile uint32 timeout = DCAN_LOOPBACK_TIMEOUT;
+    boolean payload_ok = FALSE;
+
+    sc_dcan1_loopback_pass = 0u;
+
+    /* Configure one otherwise-unused receive object while communication is
+     * stopped, then use the DCAN core's internal path (no transceiver/bus). */
+    reg_write(DCAN1_BASE, DCAN_CTL, saved_ctl | DCAN_CTL_INIT_CCE);
+    dcan1_config_rx_mailbox(DCAN_LOOPBACK_RX_OBJECT,
+                            SC_CAN_ID_RELAY_STATUS,
+                            SC_RELAY_STATUS_DLC);
+    reg_write(DCAN1_BASE, DCAN_CTL,
+              (saved_ctl & ~(uint32)1u) | DCAN_CTL_TEST_ENABLE);
+    reg_write(DCAN1_BASE, DCAN_TEST,
+              saved_test | DCAN_TEST_INTERNAL_LBACK);
+
+    dcan1_transmit(SC_MB_TX_STATUS, tx_data, SC_RELAY_STATUS_DLC);
+    while (timeout > 0u) {
+        if (dcan1_read_message_object(DCAN_LOOPBACK_RX_OBJECT,
+                                      rx_data, &rx_dlc) == TRUE) {
+            payload_ok = (rx_dlc == SC_RELAY_STATUS_DLC) ? TRUE : FALSE;
+            for (i = 0u; (i < SC_RELAY_STATUS_DLC) &&
+                         (payload_ok == TRUE); i++) {
+                if (rx_data[i] != tx_data[i]) {
+                    payload_ok = FALSE;
+                }
+            }
+            break;
+        }
+        timeout--;
+    }
+
+    /* Restore production mode and invalidate the temporary receive object. */
+    reg_write(DCAN1_BASE, DCAN_CTL, saved_ctl | DCAN_CTL_INIT_CCE);
+    dcan1_wait_if1_ready();
+    reg_write(DCAN1_BASE, DCAN_IF1ARB, 0u);
+    reg_write(DCAN1_BASE, DCAN_IF1CMD,
+              DCAN_IFCMD_WR | DCAN_IFCMD_ARB |
+              (uint32)DCAN_LOOPBACK_RX_OBJECT);
+    dcan1_wait_if1_ready();
+    reg_write(DCAN1_BASE, DCAN_TEST, saved_test);
+    reg_write(DCAN1_BASE, DCAN_CTL, saved_ctl);
+
+    if ((payload_ok == TRUE) && (dcan1_ecc_status_ok() == TRUE)) {
+        sc_dcan1_loopback_pass = 1u;
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 /**

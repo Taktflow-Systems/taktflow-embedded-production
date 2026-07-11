@@ -24,11 +24,17 @@ MCU_FLAGS = -mcpu=cortex-r5 -marm -mfpu=vfpv3-d16 -mfloat-abi=hard -mbig-endian
 
 # --- Git hash (embedded in firmware for traceability) ---
 GIT_HASH := $(shell git rev-parse --short=8 HEAD 2>/dev/null || echo "unknown")
+ifdef BRINGUP
+  BUILD_STAMP := $(shell date -u +%Y%m%dT%H%M%SZ 2>/dev/null || echo current)
+  GIT_HASH := $(GIT_HASH)-bringup-$(BUILD_STAMP)
+endif
 
 # --- Common compiler flags (shared by HALCoGen and SC) ---
 COMMON_CFLAGS  = $(MCU_FLAGS)
 COMMON_CFLAGS += -std=c99
 COMMON_CFLAGS += -DPLATFORM_TMS570
+COMMON_CFLAGS += -DUSE_OSEK
+COMMON_CFLAGS += -DSC_ESM_ENABLED
 COMMON_CFLAGS += -DGIT_HASH=\"$(GIT_HASH)\"
 COMMON_CFLAGS += -fdata-sections -ffunction-sections
 
@@ -81,15 +87,27 @@ PLAT         = $(FW)/platform/tms570
 SC_DIR       = $(ECU)/sc
 HALCOGEN_DIR = $(SC_DIR)/halcogen
 BUILD_DIR    = build/tms570
+OS_DIR       = $(FW)/bsw/os/bootstrap
+ifdef BRINGUP
+  BUILD_DIR = build/tms570-bringup
+  COMMON_CFLAGS += -DOS_BOOTSTRAP_BRINGUP
+endif
 
 # --- Include paths (shared) ---
 INC_FLAGS  = -I$(SC_DIR)/include
+INC_FLAGS += -I$(FW)/bsw/include
+INC_FLAGS += -I$(FW)/bsw/services/Det/include
 INC_FLAGS += -I$(HALCOGEN_DIR)/include
 INC_FLAGS += -I$(PLAT)/include
+INC_FLAGS += -I$(OS_DIR)/include
+INC_FLAGS += -I$(OS_DIR)/src
+INC_FLAGS += -I$(OS_DIR)/port/include
 
 # --- SC code: strict warnings ---
 SC_CFLAGS  = $(COMMON_CFLAGS) $(INC_FLAGS)
 SC_CFLAGS += -Wall -Wextra -Werror
+OS_CFLAGS  = $(SC_CFLAGS) -Wno-parentheses-equality
+OS_TARGET_CFLAGS = $(SC_CFLAGS) -Wno-ti-macros -Wno-ti-pragmas
 
 # --- HALCoGen code: relaxed warnings (auto-generated, can't fix) ---
 HAL_CFLAGS  = $(COMMON_CFLAGS) $(INC_FLAGS)
@@ -159,14 +177,20 @@ SC_ETH_SRCS = $(SC_DIR)/src/sc_eth.c \
               $(SC_DIR)/src/sc_eth_telemetry.c \
               $(SC_DIR)/src/sc_eth_rx_dispatch.c \
               $(SC_DIR)/src/sc_xcp_eth.c
-# OSEK bootstrap config: needs the OS kernel include/link integration that
-# the OSEK migration plan schedules AFTER the STM32 build phase
-# (docs/plans/plan-osek-os-migration.md). Excluded until that phase wires
-# the kernel into this Makefile; the SC image still runs the bare-metal
-# scheduler.
-SC_OS_WIP_SRCS = $(SC_DIR)/src/sc_os_cfg.c
 SC_HW_TMS570 = $(PLAT)/src/sc_hw_tms570.c
-SC_SRCS = $(filter-out %_posix.c $(SC_ETH_SRCS) $(SC_OS_WIP_SRCS),$(SC_SRCS_ALL)) $(SC_HW_TMS570)
+SC_SRCS = $(filter-out %_posix.c $(SC_ETH_SRCS),$(SC_SRCS_ALL)) $(SC_HW_TMS570)
+
+# Production OSEK kernel and TMS570 target bridge. The host-only monolithic
+# port model and bring-up diagnostic are intentionally not linked here.
+OS_KERNEL_SRCS = $(wildcard $(OS_DIR)/src/*.c) \
+                 $(OS_DIR)/port/src/Os_Port_TaskBinding.c \
+                 $(FW)/bsw/services/Det/src/Det.c
+OS_TMS570_SRCS = $(PLAT)/src/Os_Port_Tms570_Hw.c \
+                 $(PLAT)/src/Os_Port_Tms570_Target.c
+ifdef BRINGUP
+  OS_TMS570_SRCS += $(PLAT)/src/Os_Port_Tms570_Bringup.c
+endif
+SC_SRCS += $(OS_KERNEL_SRCS) $(OS_TMS570_SRCS)
 
 ifdef ETH
   SC_SRCS += $(SC_ETH_SRCS)
@@ -174,16 +198,22 @@ endif
 
 # --- SC GNU assembly (.S — preprocessed assembly, e.g. sc_startup.S) ---
 SC_ASM_GNU = $(wildcard $(SC_DIR)/src/*.S)
+OS_ASM_GNU = $(PLAT)/src/Os_Port_Tms570_Asm.S
 
 # --- Object files ---
 HAL_OBJS     = $(patsubst %.c,$(BUILD_DIR)/%.o,$(HALCOGEN_SRCS))
 SC_OBJS      = $(patsubst %.c,$(BUILD_DIR)/%.o,$(SC_SRCS))
 ASM_OBJS     = $(patsubst %.asm,$(BUILD_DIR)/%.o,$(HALCOGEN_ASM))
 SC_ASM_OBJS  = $(patsubst %.S,$(BUILD_DIR)/%.o,$(SC_ASM_GNU))
-ALL_OBJS     = $(HAL_OBJS) $(SC_OBJS) $(ASM_OBJS) $(SC_ASM_OBJS)
+OS_ASM_OBJS  = $(patsubst %.S,$(BUILD_DIR)/%.o,$(OS_ASM_GNU))
+ALL_OBJS     = $(HAL_OBJS) $(SC_OBJS) $(ASM_OBJS) $(SC_ASM_OBJS) $(OS_ASM_OBJS)
 
 # --- Output files ---
-ELF = $(BUILD_DIR)/sc.elf
+ifdef BRINGUP
+  ELF = $(BUILD_DIR)/sc_osek_bringup.elf
+else
+  ELF = $(BUILD_DIR)/sc.elf
+endif
 MAP = $(BUILD_DIR)/sc.map
 
 # --- Flash size budget (TMS570LC4357: < 80% of 3MB = 2457600 bytes) ---
@@ -229,6 +259,22 @@ $(BUILD_DIR)/$(PLAT)/%.o: $(PLAT)/%.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
 	$(CC) $(SC_CFLAGS) -c $< -o $@
 
+$(BUILD_DIR)/$(PLAT)/src/Os_Port_Tms570_Target.o: $(PLAT)/src/Os_Port_Tms570_Target.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(OS_TARGET_CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/$(PLAT)/src/Os_Port_Tms570_Bringup.o: $(PLAT)/src/Os_Port_Tms570_Bringup.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(OS_TARGET_CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/$(OS_DIR)/%.o: $(OS_DIR)/%.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(OS_CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/$(FW)/bsw/services/Det/%.o: $(FW)/bsw/services/Det/%.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(SC_CFLAGS) -c $< -o $@
+
 # --- Assemble .asm (TI assembler syntax — requires -x ti-asm for LLVM) ---
 $(BUILD_DIR)/$(HALCOGEN_DIR)/%.o: $(HALCOGEN_DIR)/%.asm | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
@@ -236,6 +282,10 @@ $(BUILD_DIR)/$(HALCOGEN_DIR)/%.o: $(HALCOGEN_DIR)/%.asm | $(BUILD_DIR)
 
 # --- Assemble .S (GNU syntax — preprocessed assembly, e.g. sc_startup.S) ---
 $(BUILD_DIR)/$(SC_DIR)/%.o: $(SC_DIR)/%.S | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(MCU_FLAGS) $(INC_FLAGS) -c $< -o $@
+
+$(BUILD_DIR)/$(PLAT)/%.o: $(PLAT)/%.S | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
 	$(CC) $(MCU_FLAGS) $(INC_FLAGS) -c $< -o $@
 

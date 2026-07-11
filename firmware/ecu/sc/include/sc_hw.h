@@ -22,6 +22,8 @@ void systemInit(void);
 void gioInit(void);
 void rtiInit(void);
 void rtiStartCounter(void);
+/** Monotonic RTI time in microseconds, used for the 5 ms safety-cycle gate. */
+uint32 sc_hw_cycle_time_us(void);
 boolean rtiIsTickPending(void);
 void rtiClearTick(void);
 void gioSetDirection(uint8 port, uint8 pin, uint8 direction);

@@ -135,6 +135,7 @@ static void log_call(uint8 id)
 #define CALL_CAN_MONITOR     15u
 #define CALL_SELFTEST_RT     16u
 #define CALL_WDG_FEED        17u
+#define CALL_MONITOR_UPDATE  20u
 
 #define CALL_SELFTEST_STARTUP 18u
 #define CALL_RELAY_ENERGIZE   19u
@@ -153,6 +154,7 @@ void SC_CAN_Receive(void)         { log_call(CALL_CAN_RECEIVE); }
 void SC_Heartbeat_Monitor(void)   { log_call(CALL_HB_MONITOR); }
 void SC_Plausibility_Check(void)  { log_call(CALL_PLAUS_CHECK); }
 void SC_Relay_CheckTriggers(void) { log_call(CALL_RELAY_TRIGGERS); }
+void SC_Monitoring_Update(void)    { log_call(CALL_MONITOR_UPDATE); }
 void SC_LED_Update(void)          { log_call(CALL_LED_UPDATE); }
 void SC_CAN_MonitorBus(void)      { log_call(CALL_CAN_MONITOR); }
 void SC_SelfTest_Runtime(void)    { log_call(CALL_SELFTEST_RT); }
@@ -195,6 +197,7 @@ boolean SC_ESM_IsErrorActive(void)      { return mock_esm_error_active; }
 static uint32 mock_tick_us;
 static uint32 mock_cycle_start_us;
 static uint32 mock_cycle_end_us;
+static boolean mock_sequence_fault;
 
 /* ====================================================================
  * Simulated SC main loop iteration (from sc_main.c structure)
@@ -203,30 +206,42 @@ static uint32 mock_cycle_end_us;
 static void sc_main_loop_iteration(void)
 {
     boolean all_checks_ok;
+    uint8 sequence_step = 0u;
 
     /* Reset call log for this iteration */
     call_log_idx = 0u;
 
     /* Step 1: CAN Receive */
     SC_CAN_Receive();
+    sequence_step++;
 
     /* Step 2: Heartbeat Monitor */
     SC_Heartbeat_Monitor();
+    sequence_step++;
 
     /* Step 3: Plausibility Check */
     SC_Plausibility_Check();
+    sequence_step++;
 
     /* Step 4: Relay Trigger Evaluation */
     SC_Relay_CheckTriggers();
+    sequence_step++;
+
+    /* Step 4b: Monitoring/telemetry update */
+    SC_Monitoring_Update();
+    sequence_step++;
 
     /* Step 5: LED Update */
     SC_LED_Update();
+    sequence_step++;
 
     /* Step 6: Bus Silence Monitor */
     SC_CAN_MonitorBus();
+    sequence_step++;
 
     /* Step 7: Runtime Self-Test */
     SC_SelfTest_Runtime();
+    sequence_step++;
 
     /* Step 8: Stack Canary Check + condition evaluation */
     all_checks_ok = TRUE;
@@ -241,6 +256,15 @@ static void sc_main_loop_iteration(void)
         all_checks_ok = FALSE;
     }
     if (SC_ESM_IsErrorActive() == TRUE) {
+        all_checks_ok = FALSE;
+    }
+    if (mock_sequence_fault == FALSE) {
+        sequence_step++;
+    }
+    if (sequence_step != 9u) {
+        all_checks_ok = FALSE;
+    }
+    if ((mock_cycle_end_us - mock_cycle_start_us) > 5000u) {
         all_checks_ok = FALSE;
     }
 
@@ -313,7 +337,8 @@ void setUp(void)
 
     mock_tick_us       = 0u;
     mock_cycle_start_us = 0u;
-    mock_cycle_end_us   = 0u;
+    mock_cycle_end_us   = 1000u;
+    mock_sequence_fault = FALSE;
 }
 
 void tearDown(void) { }
@@ -327,18 +352,19 @@ void test_sc_main_loop_executes_8_functions_in_order(void)
 {
     sc_main_loop_iteration();
 
-    /* Verify all 8 functions were called */
-    TEST_ASSERT_TRUE(call_log_idx >= 8u);
+    /* Verify all sequence functions plus the watchdog call were made. */
+    TEST_ASSERT_TRUE(call_log_idx >= 9u);
 
     /* Verify correct order: CAN_RX, HB, PLAUS, RELAY, LED, CAN_MON, SELFTEST_RT, WDG */
     TEST_ASSERT_EQUAL_UINT8(CALL_CAN_RECEIVE,    call_log[0]);
     TEST_ASSERT_EQUAL_UINT8(CALL_HB_MONITOR,     call_log[1]);
     TEST_ASSERT_EQUAL_UINT8(CALL_PLAUS_CHECK,     call_log[2]);
     TEST_ASSERT_EQUAL_UINT8(CALL_RELAY_TRIGGERS,  call_log[3]);
-    TEST_ASSERT_EQUAL_UINT8(CALL_LED_UPDATE,      call_log[4]);
-    TEST_ASSERT_EQUAL_UINT8(CALL_CAN_MONITOR,     call_log[5]);
-    TEST_ASSERT_EQUAL_UINT8(CALL_SELFTEST_RT,     call_log[6]);
-    TEST_ASSERT_EQUAL_UINT8(CALL_WDG_FEED,        call_log[7]);
+    TEST_ASSERT_EQUAL_UINT8(CALL_MONITOR_UPDATE,  call_log[4]);
+    TEST_ASSERT_EQUAL_UINT8(CALL_LED_UPDATE,      call_log[5]);
+    TEST_ASSERT_EQUAL_UINT8(CALL_CAN_MONITOR,     call_log[6]);
+    TEST_ASSERT_EQUAL_UINT8(CALL_SELFTEST_RT,     call_log[7]);
+    TEST_ASSERT_EQUAL_UINT8(CALL_WDG_FEED,        call_log[8]);
 }
 
 /** @verifies SWR-SC-025 */
@@ -350,10 +376,11 @@ void test_sc_main_loop_wcet_under_2ms(void)
      * Actual WCET is validated on target hardware. */
 
     mock_cycle_start_us = 0u;
+    mock_cycle_end_us = 1500u;  /* 1.5ms -- within 2ms target. */
     sc_main_loop_iteration();
-    mock_cycle_end_us = 1500u;  /* 1.5ms — within 2ms budget */
 
     TEST_ASSERT_TRUE((mock_cycle_end_us - mock_cycle_start_us) < 2000u);
+    TEST_ASSERT_EQUAL_UINT8(TRUE, mock_wdg_feed_all_ok);
 }
 
 /** @verifies SWR-SC-025 */
@@ -384,8 +411,20 @@ void test_sc_main_loop_overrun_suppresses_watchdog(void)
     sc_main_loop_iteration();
     TEST_ASSERT_EQUAL_UINT8(FALSE, mock_wdg_feed_all_ok);
 
-    /* Case 5: All OK — watchdog should be fed */
+    /* Case 5: Fixed-sequence integrity failure */
     mock_esm_error_active = FALSE;
+    mock_sequence_fault = TRUE;
+    sc_main_loop_iteration();
+    TEST_ASSERT_EQUAL_UINT8(FALSE, mock_wdg_feed_all_ok);
+
+    /* Case 6: Existing 5ms threshold exceeded by one microsecond */
+    mock_sequence_fault = FALSE;
+    mock_cycle_end_us = 5001u;
+    sc_main_loop_iteration();
+    TEST_ASSERT_EQUAL_UINT8(FALSE, mock_wdg_feed_all_ok);
+
+    /* Boundary: exactly 5ms remains permitted; no threshold relaxation. */
+    mock_cycle_end_us = 5000u;
     sc_main_loop_iteration();
     TEST_ASSERT_EQUAL_UINT8(TRUE, mock_wdg_feed_all_ok);
 }

@@ -102,6 +102,12 @@ StatusType Os_Port_RebuildTaskFrame(TaskType TaskID)
         }
         return E_OS_STATE;
     }
+#elif defined(PLATFORM_TMS570)
+    if (os_task_stack_top_cfg[TaskID] != (uintptr_t)0u) {
+        return Os_Port_Tms570_PrepareTaskContext(
+            TaskID, os_task_cfg[TaskID].Entry, os_task_stack_top_cfg[TaskID]);
+    }
+    return E_OS_STATE;
 #else
     (void)TaskID;
     return E_OS_STATE;

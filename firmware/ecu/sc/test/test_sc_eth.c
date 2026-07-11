@@ -116,8 +116,8 @@ uint32 EMACHWInit(uint8 macaddr[6])
     return mock_emac_init_result;
 }
 
-void EMACTxIntPulseEnable(uint32 emacBase, uint32 emacCtrlBase,
-                          uint32 core, uint32 channel)
+void EMACTxIntPulseDisable(uint32 emacBase, uint32 emacCtrlBase,
+                           uint32 core, uint32 channel)
 {
     (void)emacBase;
     (void)emacCtrlBase;
@@ -126,8 +126,8 @@ void EMACTxIntPulseEnable(uint32 emacBase, uint32 emacCtrlBase,
     mock_tx_int_count++;
 }
 
-void EMACRxIntPulseEnable(uint32 emacBase, uint32 emacCtrlBase,
-                          uint32 core, uint32 channel)
+void EMACRxIntPulseDisable(uint32 emacBase, uint32 emacCtrlBase,
+                           uint32 core, uint32 channel)
 {
     (void)emacBase;
     (void)emacCtrlBase;
@@ -383,7 +383,7 @@ void test_link_up_reads_phy_bsr_link_bit(void)
     TEST_ASSERT_FALSE(Sc_Eth_LinkUp());
 }
 
-void test_init_sets_mdio_before_phy_wake_and_enables_emac(void)
+void test_init_sets_mdio_before_phy_wake_and_masks_polled_emac_irqs(void)
 {
     const uint8 mac[SC_ETH_MAC_ADDR_LEN] = {0x02u, 0x00u, 0x4Bu, 0x57u, 0x01u, 0x00u};
     Std_ReturnType status;
@@ -425,7 +425,7 @@ int main(void)
     RUN_TEST(test_tx_pads_short_frame_before_transmit);
     RUN_TEST(test_tx_rejects_invalid_arguments);
     RUN_TEST(test_link_up_reads_phy_bsr_link_bit);
-    RUN_TEST(test_init_sets_mdio_before_phy_wake_and_enables_emac);
+    RUN_TEST(test_init_sets_mdio_before_phy_wake_and_masks_polled_emac_irqs);
 
     return UNITY_END();
 }

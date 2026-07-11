@@ -78,10 +78,23 @@ SECTIONS
 /* USER CODE BEGIN (5) */
 /* USER CODE END */
     .intvecs : {} > VECTORS
-    .text   align(32) : {} > FLASH0 | FLASH1
-    .const  align(32) : {} > FLASH0 | FLASH1
-    .cinit  align(32) : {} > FLASH0 | FLASH1
-    .pinit  align(32) : {} > FLASH0 | FLASH1
+    /* S-OS-41: flash ECC on this device is always on and erased flash
+     * carries invalid ECC; CPU consumption of such a word latches ESM
+     * group-2 ch3 (R5F fatal bus error, SPNS195C Table 6-45) with no
+     * abort. Every flash section therefore ends on a programmed 32-byte
+     * cache-line boundary (palign + zero fill), .rodata is placed
+     * explicitly, and a programmed guard band follows the image tail so
+     * no ECC doubleword, cache linefill, or sequential prefetch reaches
+     * erased flash. */
+    GROUP
+    {
+        .text   : palign(32), fill = 0x00000000 {}
+        .const  : palign(32), fill = 0x00000000 {}
+        .rodata : palign(32), fill = 0x00000000 {}
+        .cinit  : palign(32), fill = 0x00000000 {}
+        .pinit  : palign(32), fill = 0x00000000 {}
+        .flashguard : fill = 0x00000000 { . += 0x100; }
+    } > FLASH0
     .bss     : {} > RAM
     .data    : {} > RAM
     .sysmem  : {} > RAM

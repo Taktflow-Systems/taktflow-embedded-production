@@ -21,6 +21,16 @@
 
 #include "Os_Port_Tms570.h"   /* BSW types via Os_Port.h → Os.h → Std_Types.h */
 #include "Os_Internal.h"      /* os_select_next_ready_task, os_task_cfg */
+#ifdef OS_BOOTSTRAP_BRINGUP
+#include "sc_os_cfg.h"
+extern void sc_sci_puts(const char* str);
+extern void sc_sci_put_uint(uint32 value);
+extern uint32 Os_Port_Tms570_BringupGetTickEntryCount(void);
+#endif
+
+extern uint32 sc_hw_cycle_time_us(void);
+static uint8 os_tms570_isr_depth;
+static uint32 os_tms570_tp_start_us;
 
 /* ====================================================================
  * Extern declarations for Target.c functions (HALCoGen-side).
@@ -34,6 +44,8 @@ extern uint8 Os_Port_Tms570_TargetPrepareFirstTask(
     uint8 taskId, void (*entry)(void), uintptr_t stackTop);
 
 extern void Os_Port_Tms570_TargetSetNextTask(uint8 taskId);
+extern void Os_Port_Tms570_TargetMarkSwitchPending(void);
+extern void Os_Port_Tms570_TargetEnableRtiIrq(void);
 
 /* Assembly entry point for first-task launch */
 extern void Os_Port_Tms570_StartFirstTaskAsm(void);
@@ -149,21 +161,93 @@ void Os_PortStartFirstTask(void)
 
 void Os_PortRequestContextSwitch(void)
 {
-    /* Synchronous dispatch model — the kernel calls Entry() directly
-     * from os_dispatch_task.  No deferred context switch needed.
-     * Mark DispatchRequested for state consistency. */
+    Os_Port_Tms570_CooperativeContextType* save;
+    Os_Port_Tms570_CooperativeContextType* restore;
+
+    /* Record every staged dispatch before selecting the hardware path. */
     os_hw_state.DispatchRequested = TRUE;
     os_hw_state.DispatchRequestCount++;
+
+    /* TerminateTask requests switchback from task context. TMS570 has no
+     * PendSV equivalent, so use the validated cooperative switch directly.
+     * RTI-originated preemption remains owned by the RTI assembly handler. */
+    if (os_tms570_isr_depth == 0u) {
+        save = Os_Port_Tms570_GetPendingSaveCoopCtx();
+        restore = Os_Port_Tms570_GetPendingRestoreCoopCtx();
+        if ((save != NULL_PTR) && (restore != NULL_PTR)) {
+            Os_Port_Tms570_SwitchContextAsm(save, restore);
+        }
+    } else {
+        Os_Port_Tms570_TargetMarkSwitchPending();
+    }
 }
 
 void Os_PortEnterIsr2(void)
 {
+    os_tms570_isr_depth++;
     Os_BootstrapEnterIsr2();
 }
+
+void Os_Port_Tms570_EnableRtiTick(void)
+{
+#ifdef OS_BOOTSTRAP_BRINGUP
+    sc_sci_puts("[OSEK-TICK] wrapper enter\r\n");
+#endif
+    Os_Port_Tms570_TargetEnableRtiIrq();
+#ifdef OS_BOOTSTRAP_BRINGUP
+    sc_sci_puts("[OSEK-TICK] wrapper exit\r\n");
+#endif
+}
+
+#ifdef OS_BOOTSTRAP_BRINGUP
+void Os_Port_Tms570_BringupObserveKernelState(void)
+{
+    static uint32 last_isr_count = 0xFFFFFFFFu;
+    uint32 isr_count = Os_Port_Tms570_BringupGetTickEntryCount();
+
+    /* Emit the armed state once and the first observed ISR transition once.
+     * Do not stream at 100 Hz: UART must not perturb the scheduling seam. */
+    if ((last_isr_count == 0xFFFFFFFFu) ||
+        ((last_isr_count == 0u) && (isr_count > 0u))) {
+        TickType remaining = 0u;
+        StatusType alarm_status = GetAlarm(SC_ALARM_MAIN_ID, &remaining);
+        last_isr_count = isr_count;
+        sc_sci_puts("[OSEK-KERNEL] isr="); sc_sci_put_uint(isr_count);
+        sc_sci_puts(" counter="); sc_sci_put_uint(os_counter_value);
+        sc_sci_puts(" alarm_status="); sc_sci_put_uint((uint32)alarm_status);
+        sc_sci_puts(" remaining="); sc_sci_put_uint(remaining);
+        sc_sci_puts("\r\n");
+    }
+}
+#endif
 
 void Os_PortExitIsr2(void)
 {
     Os_BootstrapExitIsr2();
+    if (os_tms570_isr_depth > 0u) {
+        os_tms570_isr_depth--;
+    }
+}
+
+boolean Os_PortIsInIsrContext(void)
+{
+    return (boolean)(os_tms570_isr_depth > 0u);
+}
+
+void Os_PortTimingProtArmBudget(uint32 BudgetUs)
+{
+    (void)BudgetUs;
+    os_tms570_tp_start_us = sc_hw_cycle_time_us();
+}
+
+void Os_PortTimingProtDisarm(void)
+{
+    os_tms570_tp_start_us = sc_hw_cycle_time_us();
+}
+
+uint32 Os_PortTimingProtElapsedUs(void)
+{
+    return sc_hw_cycle_time_us() - os_tms570_tp_start_us;
 }
 
 /* ====================================================================

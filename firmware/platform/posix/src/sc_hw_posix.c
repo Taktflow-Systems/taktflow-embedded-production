@@ -129,6 +129,17 @@ void rtiStartCounter(void)
 #endif
 }
 
+uint32 sc_hw_cycle_time_us(void)
+{
+#ifndef PLATFORM_POSIX_TEST
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return (uint32)(((uint64_t)now.tv_sec * 1000000u) + ((uint64_t)now.tv_nsec / 1000u));
+#else
+    return 0u;
+#endif
+}
+
 /**
  * @brief  Check if RTI tick flag is set (10ms elapsed)
  * @return TRUE if 10ms has elapsed since last clear
@@ -477,6 +488,24 @@ void dcan1_transmit(uint8 mbIndex, const uint8* data, uint8 dlc)
         return;
     }
     sc_posix_can_send(SC_CAN_ID_RELAY_STATUS, data, dlc);
+}
+
+/**
+ * @brief POSIX has no DCAN message RAM or ECC source to initialize
+ * @return Always TRUE
+ */
+boolean dcan1_message_ram_ecc_init(void)
+{
+    return TRUE;
+}
+
+/**
+ * @brief POSIX has no DCAN ECC source to validate
+ * @return Always TRUE
+ */
+boolean dcan1_ecc_status_ok(void)
+{
+    return TRUE;
 }
 
 /* ==================================================================

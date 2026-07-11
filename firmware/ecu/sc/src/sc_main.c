@@ -33,8 +33,14 @@
 #include "sc_eth_rx_dispatch.h" /* S-XCP-02: QM UDP RX port dispatch */
 #include "sc_xcp_eth.h"        /* S-XCP-02: QM XCP-on-Ethernet slave */
 #endif
+
 #include "sc_state.h"         /* GAP-SC-006: authoritative state machine */
 #include "sc_uds_shim.h"
+#include "sc_os_cfg.h"
+#include "Os_Port.h"
+#ifdef PLATFORM_TMS570
+#include "Os_Port_Tms570.h"
+#endif
 
 /* SIL diagnostic logging — compile with -DSIL_DIAG to enable */
 #ifdef SIL_DIAG
@@ -46,6 +52,20 @@
 
 /* Platform hardware functions (link-time selection: sc_hw_tms570.c or sc_hw_posix.c) */
 #include "sc_hw.h"
+
+#ifdef OS_BOOTSTRAP_BRINGUP
+extern void Os_Port_Tms570_BringupAll(void);
+#endif
+
+#ifdef SC_DEBUG_PERIODIC
+static uint16 dbg_tick_counter;
+#endif
+#ifndef SC_ETH_ENABLE
+static uint8 hb_blink_counter;
+#endif
+#ifdef SIL_DIAG
+static uint16 sil_diag_tick;
+#endif
 
 /* ==================================================================
  * Internal: Configure GIO pins
@@ -111,16 +131,7 @@ static void sc_startup_fail_blink(uint8 failStep)
 int main(void)
 {
     uint8 startup_result;
-    boolean all_checks_ok;
-#ifdef SC_DEBUG_PERIODIC
-    uint16 dbg_tick_counter = 0u;  /* 5s periodic debug print */
-#endif
-#ifndef SC_ETH_ENABLE
-    uint8 hb_blink_counter = 0u;  /* heartbeat LED blink (GIOB[6:7]) */
-#endif
-#ifdef SIL_DIAG
-    uint16 sil_diag_tick = 0u;
-#endif
+    StatusType os_status;
 
     /* ---- 0. LED checkpoint -- prove CPU reaches main() ---- */
     /* Startup ASM turns GIOB[6:7] ON.
@@ -175,15 +186,10 @@ int main(void)
     SC_State_Init();            /* GAP-SC-006: state machine starts in INIT */
     SC_UdsShim_Init();          /* HIL-only direct UDS shim for Phase 5 SC routing */
     /* ESM lockstep monitoring — define SC_ESM_ENABLED to activate.
-     * WAIVER HIL-PF-008: Temporarily disabled because CCM-R5F (CPU lockstep
-     * comparator) asserts a persistent ESM Group 2 error on the TMS570LC43x
-     * LaunchPad, causing SC_ESM_Init() to enter an infinite ISR loop.
-     * Root cause: CPU1 lockstep diagnostic test leaves comparator in error
-     * state until power cycle.  Must debug with CCS JTAG before re-enabling.
-     * TODO:HARDWARE Re-enable after lockstep error root cause is resolved.
-     * Safety impact: ESM channel 2 (lockstep) not monitored at runtime.
-     * Compensating measure: SC self-test (startup + periodic) covers RAM,
-     * flash CRC, CAN, and GPIO; lockstep is only runtime-relevant. */
+     * Production builds define SC_ESM_ENABLED unconditionally. Bring-up must
+     * power-cycle after destructive CCM diagnostics so a deliberately retained
+     * comparator error is not mistaken for a fresh runtime divergence. Any
+     * active ESM error remains fail-closed. */
 #ifdef SC_ESM_ENABLED
     SC_ESM_Init();
 #endif
@@ -210,23 +216,52 @@ int main(void)
     }
 
     /* ---- 4. Startup passed — energize relay ---- */
+#ifndef OS_BOOTSTRAP_BRINGUP
     SC_Relay_Energize();
     (void)SC_State_Transition(SC_STATE_MONITORING);
-
     sc_sci_puts("SC_Relay: energized (MONITORING)\r\n");
+#else
+    sc_sci_puts("[OSEK-SAFE] relay held de-energized\r\n");
+#endif
 
-    /* ---- 5. Start RTI timer and enter main loop ---- */
-    rtiStartCounter();
-
-    for (;;) {
-        /* Wait for 10ms RTI tick */
-        if (rtiIsTickPending() == FALSE) {
-            continue;
+    /* ---- 5. Configure and enter the production OSEK scheduler ---- */
+    Os_PortTargetInit();
+    os_status = Os_Configure(&sc_os_config);
+    if (os_status != E_OK) {
+        /* Fail closed: relay is de-energized and WDI is never serviced. */
+        SC_Relay_DeEnergize();
+        for (;;) {
+            /* External watchdog performs the final reset reaction. */
         }
-        rtiClearTick();
+    }
+    StartOS(OSDEFAULTAPPMODE);
+#ifdef OS_BOOTSTRAP_BRINGUP
+    sc_sci_puts("[OSEK-START] FAIL - StartOS returned\r\n");
+#endif
+    SC_Relay_DeEnergize();
+    for (;;) {
+        /* No watchdog feed after a scheduler launch failure. */
+    }
+}
+
+void SC_Task_Main(void)
+{
+        boolean all_checks_ok;
+        uint8 sequence_step = 0u;
+        const uint32 cycle_start_us = sc_hw_cycle_time_us();
+
+#ifdef OS_BOOTSTRAP_BRINGUP
+        sc_sci_puts("[OSEK-TASK] SC_Safety activated by alarm\r\n");
+        Os_Port_Tms570_BringupAll();
+        SC_Relay_DeEnergize();
+        for (;;) {
+            /* A returning port suite is a failed, watchdog-starving gate. */
+        }
+#endif
 
         /* ---- Step 1: CAN Receive ---- */
         SC_CAN_Receive();
+        sequence_step++;
 
         /* ---- Step 1a: HIL diagnostic shim ---- */
         SC_UdsShim_Poll();
@@ -238,15 +273,18 @@ int main(void)
 
         /* ---- Step 2: Heartbeat Monitor ---- */
         SC_Heartbeat_Monitor();
+        sequence_step++;
 
         /* ---- Step 3: Plausibility Check ---- */
         SC_Plausibility_Check();
 
         /* ---- Step 3a: Creep Guard (SSR-SC-018) ---- */
         SC_CreepGuard_Check();
+        sequence_step++;
 
         /* ---- Step 4: Relay Trigger Evaluation ---- */
         SC_Relay_CheckTriggers();
+        sequence_step++;
 
         /* ---- Step 4a: State machine update (GAP-SC-006) ---- */
         if (SC_Relay_IsKilled() == TRUE) {
@@ -284,9 +322,11 @@ int main(void)
 #ifdef SC_ETH_ENABLE
         SC_EthTelemetry_Update();
 #endif
+        sequence_step++;
 
         /* ---- Step 5: LED Update ---- */
         SC_LED_Update();
+        sequence_step++;
 
         /* Heartbeat blink on GIOB[6:7] user LEDs (no-op on POSIX):
          *   ESM error active → both solid ON (fault)
@@ -317,9 +357,11 @@ int main(void)
 
         /* ---- Step 6: Bus Silence Monitor ---- */
         SC_CAN_MonitorBus();
+        sequence_step++;
 
         /* ---- Step 7: Runtime Self-Test (1 step) ---- */
         SC_SelfTest_Runtime();
+        sequence_step++;
 
         /* ---- Step 8: Stack Canary Check ---- */
         /* Must be BEFORE watchdog feed */
@@ -340,6 +382,7 @@ int main(void)
         if (SC_ESM_IsErrorActive() == TRUE) {
             all_checks_ok = FALSE;
         }
+        sequence_step++;
 
         /* ---- Step 8b: Periodic debug status (every 5 seconds) ---- */
         /* Opt-in only (DBGDUMP=1): the dump is ~270 chars mirrored to
@@ -368,9 +411,43 @@ int main(void)
 #endif /* SC_DEBUG_PERIODIC */
 
         /* ---- Step 9: Watchdog Feed ---- */
+        if (sequence_step != 9u) {
+            all_checks_ok = FALSE;
+        }
+        if ((sc_hw_cycle_time_us() - cycle_start_us) > 5000u) {
+            all_checks_ok = FALSE;
+        }
         SC_Watchdog_Feed(all_checks_ok);
-    }
+        (void)TerminateTask();
+}
 
-    /* Should never reach here */
-    return 0;
+void SC_Task_Idle(void)
+{
+    /* Alarm is armed from task context after StartOS service protection is
+     * active. The target counter source advances once per 10 ms RTI tick. */
+    if (SetRelAlarm(SC_ALARM_MAIN_ID, 1u, 1u) != E_OK) {
+        SC_Relay_DeEnergize();
+    } else {
+#ifdef OS_BOOTSTRAP_BRINGUP
+        sc_sci_puts("[OSEK-ALARM] SC_10ms armed\r\n");
+#endif
+        rtiStartCounter();
+#ifdef OS_BOOTSTRAP_BRINGUP
+        sc_sci_puts("[OSEK-TICK] counter started\r\n");
+#endif
+#ifdef PLATFORM_TMS570
+        Os_Port_Tms570_EnableRtiTick();
+#endif
+#ifdef OS_BOOTSTRAP_BRINGUP
+        sc_sci_puts("[OSEK-TICK] enable returned\r\n");
+        Os_Port_Tms570_BringupDumpTargetState();
+        Os_Port_Tms570_BringupObserveKernelState();
+#endif
+    }
+    for (;;) {
+        /* The RTI interrupt preempts this lowest-priority task. */
+#ifdef OS_BOOTSTRAP_BRINGUP
+        Os_Port_Tms570_BringupObserveKernelState();
+#endif
+    }
 }
