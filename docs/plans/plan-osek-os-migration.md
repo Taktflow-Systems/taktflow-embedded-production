@@ -652,10 +652,179 @@ merge is not viable; the port work must be harvested file-wise.
     only after source registers verify zero; its retained-state replay passed
     module init, BIST, and all six port checks. Production still never writes
     SR2/SSR2. A proposed production VIM drain was withdrawn uncommitted because
-    production liveness was not proven. The committed `7be31ce`
+    production liveness was not proven. The committed
+    `<pre-fix-production-build-id>`
     non-diagnostic image is restored fail-closed. Do not start the ordered
     DCAN1 ECC, IRQ-stack, or CCM/ESM self-test tasks until the normal-production
     handoff is resolved. Physical-CAN gates remain DEFERRED.
+  - Status (2026-07-11, normal-boot root cause): **NORMAL PRODUCTION BOOT
+    ROOT-CAUSED — IMAGE-LAYOUT FLASH-ECC DEFECT; FIX APPROVED AS S-OS-41.**
+    The ordered power cycle was executed on the ETH production image with
+    UART armed, and the parked boot was then read with a verified
+    non-resetting debugger method (DSS `connect()` without `reset()`; ESM
+    `IOFFHR` deliberately never read because reads participate in draining
+    the latch). The fail-closed handler snapshots, written at FIQ entry
+    before any debugger attach, read `SR2=SSR2=0x00000008`: ESM group-2
+    ch3 latches fresh on every boot of that image, on both reset types.
+    Channel identity corrected against SPNS195C Table 6-45
+    (`hardware/datasheets/combined-ds-sections/ds-30-esm.md`): group-2 ch3
+    is the Cortex-R5F core fatal-bus-error event, commonly invalid flash
+    ECC — NOT a CCM channel; the "CCM diagnostic residue" attribution in
+    `test/hil/reports/os-migration-tms570.md` is wrong and must be
+    corrected when S-OS-41 evidence is recorded. Mechanism:
+    `HL_sys_link.cmd` pads no flash section ends (`align(32)` starts
+    only), and the ETH image tail's last programmed byte begins an
+    otherwise-erased ECC doubleword and cache line; the first CPU
+    consumption of such a word latches ESM 2.3 with no abort.
+    Layout-dependence is proven across on-disk images: the bring-up image
+    (no tail gap) and the non-ETH `<pre-fix-production-build-id>` image
+    (UART-verified `SR2=SSR2=0`) boot clean; only the ETH layout latches.
+    The boot is otherwise healthy: cold-PHY Ethernet init succeeded and
+    the power-on boot ran to the fail-closed park at the one-way FIQ
+    unmask. This explains the 2026-07-10 "still blocked" power-cycle
+    observation and eliminates the startup-hang and PHY-race hypotheses.
+    Production continues to never write `SR2`/`SSR2`; the fix removes the
+    invalid-ECC source from the image.
+
+- **S-OS-41 Flash-image ECC layout hardening (unblocks normal production
+  boot)**
+  - Goal: guarantee that no flash word reachable by the CPU carries
+    invalid (erased) ECC, so production boots stop latching ESM group-2
+    ch3 and the controlled normal production boot completes.
+  - Inputs: S-OS-40 status 2026-07-11 root-cause evidence;
+    `firmware/ecu/sc/halcogen/source/HL_sys_link.cmd`;
+    `test/unit/os/test_sc_osek_contract.py`;
+    `firmware/platform/tms570/Makefile.tms570` (read-only input).
+  - Deliverables:
+    - `firmware/ecu/sc/halcogen/source/HL_sys_link.cmd`: explicit
+      `.rodata` output section; `palign(32), fill = 0x00000000` on every
+      flash output section (`.text`, `.const`, `.rodata`, `.cinit`,
+      `.pinit`); a programmed 256-byte `.flashguard` band after the last
+      flash section.
+    - `test/unit/os/test_sc_osek_contract.py`: contract
+      `test_flash_sections_end_programmed_on_cache_line_boundaries`
+      (linker-script shape) and
+      `test_flash_image_has_no_unprogrammed_interior_bytes` (fresh-map
+      layout: contiguous flash sections, 32-byte-aligned image end,
+      guard band present; skips when no map postdates the linker script).
+  - Acceptance criteria:
+    - `test/unit/os/test_sc_osek_contract.py` passes in full with zero
+      regressions in the pre-existing contracts.
+    - Clean production, ETH-production, and bring-up TMS570 cross-builds
+      into fresh build directories; each map shows contiguous flash
+      sections, a 32-byte-aligned image end, and `.flashguard`.
+    - On target: a DSLite programming-reset boot dumps fresh
+      `SR2=0x00000000` (`SSR2` may retain pre-fix `0x8` — it is
+      power-on-clear-only and is never written); a physical power cycle
+      boots `SR2=SSR2=0x00000000`, 9-module init, BIST 7/7, relay
+      energized, SCET at 100 Hz, XCP CONNECT — the controlled normal
+      production boot.
+    - Negative control: reflashing the preserved pre-fix ETH image
+      re-latches fresh `0x8`, proving detection is intact and the fix
+      removed the source.
+  - Gate: feeds the S-OS-40 deviation record; completion unparks the
+    ordered DCAN1 message-RAM ECC, IRQ-stack paint, and CCM/ESM
+    self-test tasks (in that order, per the 2026-07-10 stops).
+  - Definition of done: a power-cycled non-diagnostic ETH production
+    image completes the normal boot with zero group-2 status and live
+    SCET/XCP, recorded in `test/hil/reports/os-migration-tms570.md`.
+  - Status (2026-07-11, execution): **DONE — ALL ACCEPTANCE CRITERIA
+    MET; NORMAL PRODUCTION BOOT UNBLOCKED.** 18/18 host contracts; three
+    clean cross-builds with verified contiguous, fully-programmed,
+    32-aligned flash layouts and tail guard (tiarmlnk required a `GROUP`
+    wrapper — a standalone `.flashguard` allocated ahead of `.text` —
+    and rejects pre-colon `align(32)` combined with a property list;
+    `palign(32)` provides start alignment). Programming-reset boot of
+    the fixed ETH image dumped fresh `SR2=0x00000000` and ran to BIST
+    7/7 with relay energized. Physical power cycle produced the
+    controlled normal production boot with SCET at 100.000 Hz (3001
+    frames/30 s, 0 gaps) and live XCP (`os_counter_value` +101/s).
+    Negative control passed: the preserved pre-fix ETH image freshly
+    latched `SR2=0x8` and parked; the fixed image then booted clean with
+    the retained `SSR2=0xC` shadow untouched. Full evidence and one NEW
+    OPEN observation (post-boot SAFE_STOP with relay-readback kill
+    reason and bench heartbeat faults — separate disposition, does not
+    affect this gate) are recorded in
+    `test/hil/reports/os-migration-tms570.md`. Known follow-ups: the
+    ELF link rule lacks a linker-script prerequisite (a `.cmd` edit does
+    not trigger relink — force the link after linker changes;
+    `Makefile.tms570` carries unrelated uncommitted changes, so the rule
+    fix is deferred), and the `GROUP` targets FLASH0 only (an image
+    outgrowing FLASH0 now fails the link loudly rather than spilling,
+    which matches the contiguity contract). The DCAN1 message-RAM ECC,
+    IRQ-stack paint, and CCM/ESM self-test tasks are now unparked in
+    that order.
+
+- **S-OS-42 Relay READBACK kill disposition (T1)**
+  - Goal: determine whether the observed READBACK transition is the specified
+    fail-closed response on a bench without relay-feedback hardware or a
+    source defect, and establish whether the heartbeat-fault path
+    de-energizes the relay before READBACK is recorded.
+  - Method: trace SWR-SC-012 through the relay/state/heartbeat sources and
+    contract tests, then collect non-CAN target evidence from the installed
+    Ethernet production image. Do not weaken or bypass the relay check.
+  - Deliverables: append-only disposition in
+    `test/hil/reports/os-migration-tms570.md`; TDD-first source fix only if a
+    defect is proven.
+  - Definition of done: the OPEN report row is dispositioned with source and
+    target evidence, including event order.
+  - Status (2026-07-11): **DONE.** Source inspection and a pre-armed SCET
+    replay proved the production READBACK kill is the correct fail-closed
+    response to unavailable feedback on this LaunchPad, where GIOA0 is
+    remuxed to debug UART. READBACK latched before heartbeat faults; no source
+    defect or code change was found. Physical CAN and relay-feedback
+    qualification remain DEFERRED.
+
+- **S-OS-43 DCAN1 message-RAM ECC initialization and recovery (T2)**
+  - Goal: initialize all used DCAN1 message RAM with valid ECC before first
+    access and recover source-level single/double-bit ECC status without
+    acknowledging retained ESM group-2 evidence.
+  - Method: add failing source contracts first; implement the documented
+    device sequence in the TMS570 HAL; verify with host contracts, a fresh
+    production build, and internal/loopback-only target evidence.
+  - Deliverables: tested initialization/recovery source and append-only HIL
+    evidence in a fresh `build/tms570-*-dcan1-ecc` directory.
+  - Definition of done: DCAN1 ECC source flags and ESM group-1 channel 21 are
+    clean after initialization/recovery, with internal traffic still working.
+  - Status (2026-07-11): **BLOCKED ON TARGET INTERNAL LOOPBACK.** The
+    TRM-mandated pre-`canInit()` hardware initialization, DCAN-source
+    recovery, post-mailbox ECC validation, fail-closed timeout paths, and
+    retained SRAM diagnostics pass 19 source contracts and 26 executable SC
+    CAN tests. A fresh Ethernet production image without the new loopback
+    implementation booted 9 modules and BIST 7/7; XCP showed initial/final
+    `ECC_CS=0x050A0000`, final ESM group-1 status zero, and preserved nonzero
+    PERR/ECC_SERR historical object codes. The required bus-independent
+    startup proof remains blocked: both the initial internal-loopback attempt
+    and a TRM 27.14.4 hot-self-test retry (internal plus silent mode with a
+    longer bounded wait) failed startup BIST step 4. Stop before S-OS-44; do
+    not claim T2 complete or attempt physical CAN.
+
+- **S-OS-44 IRQ-stack paint, high-water measurement, and resize (T3)**
+  - Goal: replace the 256-byte IRQ stack with at least 1 KiB and provide a
+    runtime paint/high-water measurement in addition to the existing 144-byte
+    static estimate.
+  - Method: add failing linker/source contracts first; implement startup paint
+    and bounded watermark reporting; verify in a fresh target build and on the
+    board without physical CAN.
+  - Deliverables: IRQ stack >=1 KiB, runtime high-water evidence, and an
+    append-only HIL report update.
+  - Definition of done: measured peak usage and remaining margin are recorded
+    for the production 100 Hz path.
+  - Status (2026-07-11): **PENDING S-OS-43.**
+
+- **S-OS-45 CCM-R5/ESM lockstep self-test (T4)**
+  - Goal: execute the documented debugger-free CCM-R5 self-test method now
+    that the reset handoff is repeatable, and record the ESM reaction.
+  - Method: locate and follow the existing safety/TRM method exactly, add
+    failing contracts before any source change, build into a fresh directory,
+    and use the repeatable programming-reset handoff. Because the diagnostic
+    latches group-2/SR1.31 evidence, request a physical power cycle after the
+    test rather than clearing retained production evidence.
+  - Deliverables: append-only target evidence and final disposition of the
+    NOT RUN table row.
+  - Definition of done: debugger-free execution is observed and the board is
+    restored by a user-performed power cycle, with no physical-CAN claim.
+  - Status (2026-07-11): **PENDING S-OS-44.**
 
 ### Phase 5 — Legacy retirement + safety documentation (closes G3)
 

@@ -807,11 +807,17 @@ Note: GIO_A[4] is used for the TPS3823 WDI (watchdog feed), and GIO_B[1] is used
 | Vendor | STMicroelectronics | Texas Instruments |
 | CPU | Cortex-M4F (single core) | Cortex-R5F (dual lockstep) |
 | Compiler | arm-none-eabi-gcc | TI ARM CGT (CCS) |
-| BSW | AUTOSAR-like (~2500 LOC) | Bare-metal (~400 LOC) |
+| BSW | AUTOSAR-like application stack | Minimal SC application plus OSEK kernel/port; no AUTOSAR communication stack |
 | CAN mode | Normal TX/RX (FDCAN) | Listen-only (DCAN silent) |
-| OS | FreeRTOS | None (bare-metal cooperative) |
+| OS | OSEK kernel | Same OSEK kernel, TMS570-specific port and single run-to-completion safety task (not a diversity dimension) |
 | Safety HW | External WDT only | Lockstep + ESM + PBIST + ECC + external WDT |
 | Dev tool | STM32CubeIDE + CubeMX | Code Composer Studio + HALCoGen |
+
+S-OS-02 Option B removes OS scheduling as a diversity claim. The shared OSEK
+kernel is therefore treated as a common-cause candidate in the dependent-
+failure analysis. Vendor, CPU, compiler, port, safety-hardware, and development-
+tool diversity remain and must be assessed independently; none compensates for
+an unverified scheduler failure.
 
 <!-- HITL-LOCK START:COMMENT-BLOCK-HSI-SEC7 -->
 **HITL Review (An Dao) — Reviewed: 2026-02-27:** Section 7 (SC HSI) is the most detailed and critical section, covering the TMS570LC43x lockstep platform. The DCAN1 configuration correctly shows 7 mailboxes with exact-match acceptance masks for the monitored CAN IDs. The mailbox list includes 0x101 (torque request) which is separate from 0x100 (vehicle state) -- this should be verified against the CAN matrix to confirm these are indeed separate CAN IDs. The GIO configuration note about GIO_A[4] being WDT (not status LED) and GIO_B[1] being system fault LED is an important deviation from the initial pin mapping that must be kept in sync. The RTI configuration for 10 ms tick (75 MHz / 7500 = 10 kHz, then compare at 100 = 10 ms) is correct. The RAM usage detail shows only ~3 KB of 512 KB used, which is expected for a bare-metal safety monitor. The diverse redundancy summary (Section 7.9) is valuable -- it clearly demonstrates diversity across 8 dimensions (vendor, CPU, compiler, BSW, CAN mode, OS, safety HW, dev tool). The startup sequence with blink-count error indication is consistent with SSR-SC-016. No gaps identified.
@@ -854,6 +860,18 @@ Note: GIO_A[4] is used for the TPS3823 WDI (watchdog feed), and GIO_B[1] is used
 | Brake servo | 12V actuator rail | **Gated** | Loses power (mechanical hold) |
 | BTS7960 | 12V actuator rail | **Gated** | Loses power (motor stops) |
 | Relay coil | 12V main rail | SC GIO_A[0] | De-energized = contacts open |
+
+### 8.3 S-OS-40 bench verification disposition
+
+Non-physical-CAN verification is accepted for continued OSEK adoption by
+explicit deviation, not as full S-OS-40 closure or production CAN, telemetry,
+or system qualification. The physical CAN segment was not modified. Physical
+CAN continuity and dependent traffic/fault gates remain deferred. The
+lockstep CCM/ESM target self-test remains not run because the current reset
+handoff is not repeatable. The SC-to-PC Ethernet link is confirmed at 100 Mbps;
+direct telemetry/XCP was attempted but produced no SCET frames and timed out,
+and the final-source isolated port suite stops in check 2. Hardware and
+software safety limits remain unchanged.
 
 <!-- HITL-LOCK START:COMMENT-BLOCK-HSI-SEC8 -->
 **HITL Review (An Dao) — Reviewed: 2026-02-27:** Section 8 provides critical cross-ECU integration information. The interrupt priority assignment table correctly places E-stop at highest priority (0) on CVC, with SysTick at priority 2 (required for FreeRTOS). The SC uses FIQ (highest) for ESM lockstep error, ensuring immediate relay de-energize. The power domain dependency table (Section 8.2) is the most critical cross-ECU information: it clearly shows that all ECU compute boards remain powered when the kill relay opens, but actuators (steering servo, brake servo, BTS7960) lose power. This is correct -- ECUs must continue operating to log DTCs and maintain safe state monitoring. The SC's independent power path (not gated by kill relay) is correctly documented. One observation: the CVC, FZC, and RZC are powered via "Nucleo LDO" which is the Nucleo-64 board's onboard 3.3V regulator powered from 12V -- this should be verified for adequate current capacity when all peripherals are active.

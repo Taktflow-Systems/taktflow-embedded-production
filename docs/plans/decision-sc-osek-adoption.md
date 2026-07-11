@@ -1,6 +1,6 @@
 # Decision Memo — SC (TMS570) Scheduling: Bare RTI Loop vs OSEK Kernel (S-OS-02)
 
-Status: DRAFT — awaiting user decision
+Status: APPROVED — Option B selected for the experimental platform
 Date: 2026-07-07
 Decision owner: user (blocking gate for Phase 4 / S-OS-40 of
 `docs/plans/plan-osek-os-migration.md`)
@@ -138,5 +138,50 @@ option is signed below and must not start before sign-off.
 
 ## Sign-off
 
-User decision (2026-07-07): DEFERRED — revisit after STM32 cutover
-(S-OS-31) is complete and proven. Phase 4 remains blocked until then.
+User decision (2026-07-10): **APPROVED — Option B.** Migrate the TMS570
+Safety Controller to the OSEK kernel for this experimental platform and
+execute S-OS-40. This approval accepts the increased ASIL D audit surface
+and the reduced OS-scheduling diversity described above; it does not relax
+the SC watchdog, timing, ESM, CAN, telemetry, startup-BIST, relay-gating, or
+non-clearable safe-state requirements.
+
+Implementation constraints accepted with the decision:
+
+- Preserve the fixed safety sequence as one highest-priority,
+  run-to-completion 10 ms task. No lower-priority or QM task may feed the
+  external watchdog.
+- Feed the watchdog only after the complete verified sequence, and suppress
+  the feed after RAM/self-test, stack-canary, DCAN bus-off, lockstep ESM,
+  timing-overrun, or sequence-integrity failure.
+- Retain the 2 ms WCET target and 5 ms overrun threshold. Re-verify both with
+  OSEK dispatch/interrupt overhead included; approval does not increase
+  either limit.
+- Treat use of the shared OSEK kernel as a common-cause candidate in the
+  dependent-failure argument. Hardware, CPU, compiler, safety-peripheral,
+  and toolchain diversity remain; OS-scheduler diversity does not.
+- Re-run the S-UDP-03 closure scenario and the existing CAN, XCP, BIST,
+  lockstep ESM, relay, watchdog, and retained-fault checks on target before
+  claiming S-OS-40 complete.
+
+## S-OS-40 verification deviation (2026-07-10)
+
+The completed non-physical-CAN evidence is **accepted for continued OSEK
+adoption by explicit deviation**. This is not full S-OS-40 closure and is not
+production CAN, telemetry, or system qualification. Physical CAN continuity,
+on-bus SC_Status, CAN-driven S-UDP-03 phases, CAN-dependent XCP continuity,
+physical DCAN bus-off injection, and system retained-fault/reset behavior
+after CAN faults remain DEFERRED. The lockstep CCM/ESM target self-test is NOT
+RUN because the available debugger-detach/reset handoff does not repeatably
+execute the documented method. The Option B limits and safety behavior above
+are unchanged.
+
+Correction: the Ethernet cable and PHY path are present. The production image
+keeps Ethernet disabled, which made the PC port appear disconnected; an
+Ethernet bench image raised a 100 Mbps link. Direct SCET reception and XCP were
+attempted but produced zero frames and an XCP timeout. The same investigation
+found and repaired a one-shot TMS570 termination-switchback defect, with 100+
+periodic activations observed afterward. The final-source isolated port suite
+now stops in check 2, and the Ethernet-enabled image stops at its first task
+dispatch. These are open non-CAN experimental integration blockers. The
+deviation remains permission to continue experimentation, not evidence of
+full closure or production qualification.

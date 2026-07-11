@@ -1,7 +1,7 @@
 # S-XCP-01 — XCP transport assessment memo (SC, XCP over Ethernet/UDP)
 
-Status: DELIVERED — decision pending approval (roadmap gate: plan review
-before implementation).
+Status: APPROVED 2026-07-07 — decision "minimal-slave" approved by the
+reviewer; S-XCP-02 unblocked.
 Date: 2026-07-07. Feeds: `docs/plans/plan-sc-ethernet-roadmap.md` Phase 2
 (S-XCP-02, S-XCP-03).
 
@@ -158,6 +158,5 @@ builds.
 
 ## 5. Approval
 
-- [ ] Decision "minimal-slave" approved (roadmap gate for S-XCP-02 —
-  do not start implementation before this box is ticked by the
-  reviewer).
+- [x] Decision "minimal-slave" approved (roadmap gate for S-XCP-02) —
+  reviewer approval 2026-07-07.

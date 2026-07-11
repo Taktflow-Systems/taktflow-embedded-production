@@ -1263,7 +1263,7 @@ The SC software shall de-energize the kill relay when any of the following condi
 - **Verified by**: TC-SC-016
 - **Status**: draft
 
-The SC software shall toggle the TPS3823 WDI pin once per main loop iteration, conditioned on: (a) main loop complete (all monitoring functions executed), (b) RAM test pattern intact (32-byte 0xAA/0x55 at reserved address), (c) DCAN1 not in bus-off state, (d) lockstep ESM error flag not asserted. If any condition fails, the watchdog shall not be toggled.
+The SC software shall toggle the TPS3823 WDI pin once per completed 10 ms safety-task activation, conditioned on: (a) the complete ordered safety sequence executed successfully, (b) RAM test pattern intact (32-byte 0xAA/0x55 at reserved address), (c) DCAN1 not in bus-off state, (d) lockstep ESM error flag not asserted, and (e) stack canary intact. Only the highest-priority verified safety task may toggle WDI. If any condition fails, including a sequence-integrity or timing-overrun failure, the watchdog shall not be toggled.
 
 <!-- HITL-LOCK START:COMMENT-BLOCK-SSR-SC-008 -->
 **HITL Review (An Dao) — Reviewed: 2026-02-27:** Requirement specifies SC watchdog feed conditioned on four checks: main loop complete, RAM test intact, DCAN1 not bus-off, lockstep ESM not asserted. ASIL D is correct per TSR-031. The four-condition check is consistent with zone ECU watchdog conditioning (SSR-CVC-013, SSR-FZC-020, SSR-RZC-013) with the lockstep ESM check replacing the stack canary check (SC uses TMS570 lockstep instead of software canary). The RAM test pattern (32-byte 0xAA/0x55) is simpler than a full march test but provides adequate transient detection for runtime monitoring. Traces to SC_Watchdog_Feed() are consistent. No gaps identified.
@@ -1359,7 +1359,7 @@ The SC software shall update fault LED states every 10 ms based on the monitorin
 - **Verified by**: TC-SC-026
 - **Status**: draft
 
-The SC main loop shall execute at a 10 ms period. Each iteration shall execute in the following order: (a) receive and validate CAN messages, (b) update heartbeat timeout counters, (c) perform cross-plausibility check, (d) evaluate relay trigger conditions, (e) update fault LEDs, (f) feed watchdog. The total loop execution time shall not exceed 2 ms to maintain the 10 ms cycle with adequate margin. The SC shall use a hardware timer to measure loop execution time and flag an overrun DTC if any iteration exceeds 5 ms.
+The SC highest-priority OSEK safety task shall execute at a 10 ms period and run to completion. Each activation shall execute in the following order: (a) receive and validate CAN messages, (b) update heartbeat timeout counters, (c) perform cross-plausibility check, (d) evaluate relay trigger conditions, (e) update monitoring/telemetry and fault LEDs, (f) perform CAN-bus, runtime-self-test, and stack-canary checks, and (g) conditionally feed the watchdog as the final action. The total task execution time, including OSEK dispatch and interrupt overhead attributable to the activation, shall not exceed 2 ms. The SC shall use an independent hardware timer to detect any activation exceeding 5 ms; an overrun shall suppress the watchdog feed and preserve the non-clearable safe-state behavior.
 
 <!-- HITL-LOCK START:COMMENT-BLOCK-SSR-SC-014 -->
 **HITL Review (An Dao) — Reviewed: 2026-02-27:** Requirement specifies SC 10 ms main loop with six ordered steps and 2 ms WCET budget (5 ms overrun threshold). ASIL D is correct per TSR-046. The execution order is correct: receive-first ensures fresh data, then monitoring, then actuation, then diagnostics, then watchdog feed last (proving the full loop completed). The 2 ms target with 5 ms overrun threshold provides 50% margin to the 10 ms cycle. As noted in SSR-A-002, the SC runs bare-metal (no RTOS), so this is a cooperative main loop period, not an RTOS task. The hardware timer measurement enables runtime WCET monitoring. Traces to SC_Main_Loop() are consistent. No gaps identified.
@@ -1532,7 +1532,7 @@ Note: Some SSRs may have slightly different ASIL counts due to multiple trace-up
 | ID | Assumption | Impact |
 |----|-----------|--------|
 | SSR-A-001 | FreeRTOS is used as the RTOS on all STM32G474 ECUs | WCET analysis and priority assignment depend on RTOS scheduler behavior |
-| SSR-A-002 | The SC runs bare-metal (no RTOS) with a cooperative main loop | SC timing analysis assumes no preemption |
+| SSR-A-002 | The SC uses the OSEK kernel with one highest-priority, run-to-completion 10 ms safety task; lower-priority/QM work must not preempt it or feed the watchdog | Timing analysis includes kernel/ISR overhead and verifies the unchanged 2 ms WCET target and 5 ms overrun threshold |
 | SSR-A-003 | E2E library code is shared across CVC, FZC, and RZC via firmware/shared/bsw/ | Single implementation reduces divergence risk |
 | SSR-A-004 | Flash sector erase time for NVM operations does not exceed 50 ms | CVC state persistence timing |
 
@@ -1546,6 +1546,18 @@ Note: Some SSRs may have slightly different ASIL counts due to multiple trace-up
 | SSR-O-004 | Calibrate torque-to-current lookup table | Integration Engineer | Hardware integration |
 | SSR-O-005 | Perform WCET analysis for all safety runnables | SW Engineer | SWE.3 phase |
 | SSR-O-006 | Verify RTOS scheduling configuration prevents priority inversion | SW Engineer | SWE.3 phase |
+
+### 9.3 S-OS-40 verification deviation
+
+The available non-physical-CAN verification is accepted for continued OSEK
+adoption by explicit deviation. This is not full S-OS-40 closure and does not
+qualify production CAN, telemetry, or system behavior. Physical CAN-dependent
+acceptance remains deferred. The lockstep CCM/ESM target self-test remains not
+run because the available reset handoff is not repeatable. Direct Ethernet was
+run over a confirmed physical link but received no telemetry and timed out on
+XCP; the final-source isolated port suite stops in check 2. These experimental
+integration blockers do not change the existing watchdog, timing, ESM, relay,
+BIST, safe-state, or telemetry limits.
 
 ## 10. Revision History
 

@@ -30,13 +30,13 @@ Every requirement (SWR-SC-NNN) in this document that undergoes HITL review discu
 
 # Software Requirements — Safety Controller (SC)
 
-<!-- NO AUTOSAR — independent safety monitor, bare-metal, ~400 LOC -->
+<!-- Independent safety monitor; no AUTOSAR communication BSW stack -->
 
 ## 1. Purpose
 
 This document specifies the complete software requirements for the Safety Controller (SC), the TI TMS570LC43x LaunchPad-based independent safety monitor of the Taktflow Zonal Vehicle Platform. These requirements are derived from system requirements (SYS), technical safety requirements (TSR), and software safety requirements (SSR) per Automotive SPICE 4.0 SWE.1 (Software Requirements Analysis).
 
-The SC is bare-metal firmware (no RTOS, no AUTOSAR BSW) running a simple cooperative main loop with a 10 ms tick. Total code size target: approximately 400 lines of C. The SC monitors all zone ECUs via CAN listen-only mode, performs cross-plausibility checks, controls the kill relay, drives fault LEDs, and relies on the TMS570's hardware lockstep CPU for computation error detection.
+The SC is a minimal independent safety monitor with no AUTOSAR communication BSW stack. For the experimental platform approved by S-OS-02 Option B, it uses the OSEK kernel with one highest-priority, run-to-completion 10 ms safety task. The SC monitors all zone ECUs via CAN listen-only mode, performs cross-plausibility checks, controls the kill relay, drives fault LEDs, and relies on the TMS570's hardware lockstep CPU for computation error detection.
 
 ## 2. Referenced Documents
 
@@ -51,7 +51,7 @@ The SC is bare-metal firmware (no RTOS, no AUTOSAR BSW) running a simple coopera
 
 ## 3. Requirement Conventions
 
-Same conventions as SWR-CVC document section 3. Note: all SC requirements trace down to `firmware/sc/src/` (no BSW subdirectory -- SC is bare-metal).
+Same conventions as SWR-CVC document section 3. SC application requirements trace to `firmware/ecu/sc/`; scheduler and port requirements additionally trace to `firmware/bsw/os/bootstrap/` and `firmware/platform/tms570/`.
 
 ---
 
@@ -424,7 +424,7 @@ The SC software shall write a 32-bit canary value (0xDEADBEEF) at the bottom of 
 - **Verification method**: Unit test + fault injection + PIL
 - **Status**: draft
 
-The SC software shall toggle the TPS3823 WDI pin once per main loop iteration, conditioned on: (a) main loop complete (all monitoring functions executed -- heartbeat check, plausibility check, relay trigger evaluation, LED update, self-test increment), (b) RAM test pattern intact (32-byte 0xAA/0x55 at reserved address), (c) DCAN1 not in bus-off state, (d) lockstep ESM error flag not asserted, (e) stack canary intact. If any condition fails, the watchdog shall not be toggled, and the TPS3823 shall reset the MCU after the 1.6 second timeout.
+The SC software shall toggle the TPS3823 WDI pin once per completed 10 ms OSEK safety-task activation, conditioned on: (a) the complete ordered monitoring sequence executed successfully, (b) RAM test pattern intact (32-byte 0xAA/0x55 at reserved address), (c) DCAN1 not in bus-off state, (d) lockstep ESM error flag not asserted, (e) stack canary intact, and (f) no sequence-integrity or timing-overrun failure. Only the highest-priority verified safety task may toggle WDI. If any condition fails, the watchdog shall not be toggled, and the TPS3823 shall reset the MCU after the 1.6 second timeout.
 
 <!-- HITL-LOCK START:COMMENT-BLOCK-SWR-SC-022 -->
 **HITL Review (An Dao) — Reviewed: 2026-02-27:** Watchdog requirement SWR-SC-022 is correctly ASIL D. The SC watchdog has 5 conditions (vs 4 for the STM32 zone controllers) because it adds the lockstep ESM error flag check -- this is appropriate since the TMS570 has lockstep capability that the STM32s lack. The explicit enumeration of all monitoring functions in condition (a) ensures the watchdog proves that the entire monitoring pipeline executed, not just that the main loop ran. The 1.6 second TPS3823 timeout is specified, providing a concrete worst-case recovery time. The SC watchdog approach is consistent with the other ECUs while being adapted for the TMS570-specific hardware. Traces to SYS-027, TSR-031, and SSR-SC-008 are consistent.
@@ -481,7 +481,7 @@ The SC software shall monitor for the brake-fault-motor-cutoff scenario: if the 
 - **Verification method**: Analysis (WCET) + PIL timing measurement
 - **Status**: draft
 
-The SC main loop shall execute at a 10 ms period using a hardware timer interrupt to set a tick flag. Each iteration shall execute the following functions in order:
+The SC highest-priority OSEK safety task shall execute at a 10 ms period from the RTI-driven OS counter and shall run to completion. Each activation shall execute the following functions in order:
 
 1. `SC_CAN_Receive()` -- Read and validate all pending CAN messages.
 2. `SC_Heartbeat_Monitor()` -- Update heartbeat timeout counters.
@@ -490,9 +490,9 @@ The SC main loop shall execute at a 10 ms period using a hardware timer interrup
 5. `SC_LED_Update()` -- Update fault LED states.
 6. `SC_SelfTest_Runtime()` -- Increment runtime self-test (1 step per iteration).
 7. `SC_SelfTest_StackCanary()` -- Verify stack canary.
-8. `SC_Watchdog_Feed()` -- Feed watchdog if all checks passed.
+8. `SC_Watchdog_Feed()` -- Final action; feed only if the complete sequence and all checks passed.
 
-The total loop execution time shall not exceed 2 ms to maintain the 10 ms cycle with adequate margin. The SC shall use a hardware timer to measure loop execution time. If any iteration exceeds 5 ms, a loop overrun shall be flagged internally (no DTC system on SC -- the overrun flag suppresses the watchdog feed, causing a reset).
+The total activation execution time, including OSEK dispatch and attributable interrupt overhead, shall not exceed 2 ms. An independent hardware timer shall detect any activation exceeding 5 ms. An overrun shall be flagged internally and shall suppress the watchdog feed, causing a reset. Lower-priority or QM work shall not preempt this task and shall never feed the external watchdog.
 
 <!-- HITL-LOCK START:COMMENT-BLOCK-SWR-SC-025 -->
 **HITL Review (An Dao) — Reviewed: 2026-02-27:** Main loop requirement SWR-SC-025 is correctly ASIL D. The 8-step main loop structure is precisely sequenced: CAN receive, heartbeat monitor, plausibility check, relay trigger evaluation, LED update, runtime self-test, stack canary check, and watchdog feed. This ordering is critical -- the watchdog feed is last and only executes if all preceding steps complete. The 2 ms WCET budget within a 10 ms period provides 80% margin, which is conservative and appropriate for ASIL D. The 5 ms overrun detection with watchdog suppression provides a second timing safety net. The fact that the SC has no DTC system (bare-metal ~400 LOC) is acknowledged with the correct recovery mechanism: overrun flag suppresses watchdog feed, causing TPS3823 reset. The hardware timer for WCET measurement enables PIL timing verification. Traces to SYS-053, TSR-046, and SSR-SC-014 are consistent.
@@ -707,11 +707,11 @@ since there is exactly one SC transmitter and the ICU/gateway receivers are QM.
 
 | ID | Assumption | Impact |
 |----|-----------|--------|
-| SWR-SC-A-001 | SC runs bare-metal with cooperative main loop (no RTOS) | Timing analysis assumes no preemption |
+| SWR-SC-A-001 | SC runs one highest-priority, run-to-completion 10 ms safety task under OSEK; lower-priority/QM work cannot preempt it | Timing analysis includes kernel/ISR overhead while retaining the 2 ms WCET target and 5 ms overrun threshold |
 | SWR-SC-A-002 | TMS570LC43x DCAN1 silent mode works correctly (TEST reg bit 3) | CAN listen-only depends on correct hardware behavior |
 | SWR-SC-A-003 | HALCoGen v04.07.01 DCAN1 is used (not DCAN4 due to known mailbox bug) | SWR-SC-001 initialization |
 | SWR-SC-A-004 | Kill relay dropout time is less than 10 ms (electromechanical) | FTTI analysis in TSR-046 |
-| SWR-SC-A-005 | Total SC code size is approximately 400 LOC | Finishability constraint |
+| SWR-SC-A-005 | The OSEK kernel and TMS570 port are included in the SC ASIL D audit surface | Increased audit scope and shared-kernel common-cause analysis are required |
 
 ### 19.2 Open Items
 
@@ -725,6 +725,20 @@ since there is exactly one SC transmitter and the ICU/gateway receivers are QM.
 | SWR-SC-O-006 | GAP-4 deferred: actuator command vs feedback plausibility (Steering_Status 0x200, Brake_Status 0x201) | SW Engineer | Post-HIL |
 | SWR-SC-O-007 | LOC target increase from ~400 to ~500 due to hardening additions — verify WCET stays within 2 ms | SW Engineer | SWE.3 |
 | SWR-SC-O-008 | Production: upgrade DCAN1 TX to DCAN2 (dedicated transceiver) per SWR-SC-029 production note | HW Engineer | Production |
+| SWR-SC-O-009 | Close S-OS-40 physical CAN, live telemetry/XCP, CAN-fault retained-state, and debugger-free lockstep CCM/ESM verification; continued OSEK adoption is accepted only by explicit deviation | Integration Engineer | HIL / Production qualification |
+
+### 19.3 S-OS-40 verification disposition
+
+Non-physical-CAN host, build, boot, OSEK activation, port, sequence, and
+watchdog-suppression evidence is accepted for continued OSEK adoption by
+explicit deviation. This is not full S-OS-40 closure and not production CAN,
+telemetry, or system qualification. Physical CAN-dependent gates are deferred;
+the target lockstep CCM/ESM self-test is not run because the available reset
+handoff is not repeatable. Direct Ethernet was run over the confirmed 100 Mbps
+SC-to-PC link but produced no SCET frames and an XCP timeout. The final-source
+isolated port suite also stops in check 2. These remain experimental
+integration blockers; no safety requirement or acceptance threshold is
+relaxed.
 
 ---
 

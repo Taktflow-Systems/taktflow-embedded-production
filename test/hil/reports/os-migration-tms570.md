@@ -72,8 +72,110 @@ now drains VIM ch0 only after SR2/SSR2 verify zero; a retained-state replay
 printed `VIM0 drained`, completed module init and BIST, and passed all six
 port checks. No production SR2/SSR2 clear was added. An experimental
 production VIM drain was investigated and withdrawn uncommitted because the
-normal-production boot was not proven. The committed `7be31ce`
+normal-production boot was not proven. The committed
+`<pre-fix-production-build-id>`
 non-diagnostic image is restored and remains fail-closed.
+
+**Update (2026-07-11, S-OS-41 normal-boot root cause and fix):** the
+normal-production-boot blocker is CLOSED. Root cause, with an attribution
+correction: ESM group-2 channel 3 is NOT a CCM channel and the earlier
+"CCM diagnostic residue" reading is withdrawn. Per SPNS195C Table 6-45
+(`hardware/datasheets/combined-ds-sections/ds-30-esm.md`), group-2 ch3 is
+the Cortex-R5F core fatal-bus-error event, commonly invalid flash ECC.
+`HL_sys_link.cmd` padded no flash section ends, so the ETH production
+image's last programmed byte began an otherwise-erased ECC doubleword and
+cache line; the first CPU consumption of that word latched `SR2=0x8` with
+no abort on EVERY boot of that image, on both reset types — proven by a
+power-on-boot forensic read of the parked fail-closed handler snapshots
+(`SR2=SSR2=0x00000008`, read via a verified non-resetting DSS `connect()`
+with no `reset()`, ESM IOFFHR deliberately never read) and by
+layout-dependence across images: the bring-up and non-ETH images with
+benign tails booted clean, only the ETH layout latched. The earlier
+"retained latch survives all non-power-on resets" behavior was this fresh
+per-boot re-latch. Fix (S-OS-41): flash output sections in
+`HL_sys_link.cmd` are wrapped in a `GROUP` with `palign(32),
+fill = 0x00000000`, `.rodata` is placed explicitly, and a programmed
+256-byte `.flashguard` band terminates the image; no flash word reachable
+by the CPU carries invalid ECC. Production still never writes
+`SR2`/`SSR2`. Evidence: 18/18 host contracts (two new flash-layout
+contracts); clean production, ETH-production, and bring-up cross-builds
+(text 42,176 / 51,232 / 44,384 bytes; growth vs pre-fix is exactly the
+palign padding plus the guard band); maps and ELF program headers show
+contiguous fully-programmed flash segments with 32-byte-aligned ends and
+the guard band last. On target: a DSLite programming-reset boot of the
+fixed ETH image dumped fresh `SR2=0x00000000` and completed 9-module
+init, BIST 7/7, and relay energization — the first clean ETH-production
+programming-reset boot. A physical power cycle (>=10 s off) then produced
+the controlled normal production boot: Ethernet telemetry OK, 9 modules,
+BIST 7/7, relay energized into MONITORING; SCET telemetry received 3001
+valid frames in 30.0 s at 100.000 Hz with 0 gaps; XCP CONNECT/UNLOCK
+succeeded and `os_counter_value` advanced 101 ticks/s. Direct XCP
+readback of ESM registers is rejected by the slave's flash/SRAM address
+whitelist (`sc_xcp_eth.c`), a deliberate design limit; zero group-2
+status at the power-on boot is evidenced structurally (the boot passed
+the one-way FIQ unmask without parking, which any group-2 assertion
+prevents) plus the nPORRST-clear property. Negative control: reflashing
+the preserved pre-fix ETH image freshly latched live `SR2=0x00000008`
+and parked fail-closed after Ethernet init; reflashing the fixed image
+booted clean again with the retained `SSR2=0x0000000C` shadow preserved
+and never written — detection intact, source removed, retained-evidence
+semantics honored. NEW OBSERVATION for separate disposition: SCET status
+bytes during the post-power-cycle capture showed the SC transitioned to
+SAFE_STOP with relay de-energized and fault reason READBACK (two
+consecutive relay GPIO readback mismatches) within ~90 s of the power-on
+boot, alongside heartbeat faults for all three monitored ECUs (no
+CVC/FZC/RZC nodes are on this bench's CAN). Prior SCET evidence never
+decoded status bytes, so it is unknown whether this readback kill is new;
+it does not affect the boot/ESM verdict but requires bench
+relay-feedback investigation before relay steady-state claims. The
+CCM/ESM self-test remains NOT RUN and all physical-CAN gates remain
+DEFERRED.
+
+**Update (2026-07-11, S-OS-42 relay READBACK disposition):** the observed
+READBACK kill is the specified fail-closed response to unavailable relay
+readback on this bench, not a source defect. Production energizes GIOA0 and
+checks its input value every 10 ms; SWR-SC-012 requires a kill after two
+consecutive mismatches. On this LaunchPad no relay/feedback circuit is
+connected, and the same package ball is deliberately remuxed from GIOA0 to
+the debug-UART transmit function, so a production build cannot obtain valid
+relay feedback. The existing `PLATFORM_HIL` bypass documents this bench
+limitation but was correctly absent from the production evidence image. A
+pre-armed SCET capture around a fresh `flash --run` replay observed the first
+post-reset status as SAFE_STOP, relay off, reason READBACK, with no heartbeat
+faults and all three ECU-health bits set. After 4.73 s, the three expected
+no-CAN heartbeat timeout flags appeared and ECU health became zero, while the
+latched reason remained READBACK. This matches the source ordering: READBACK
+kills on the second 10 ms safety-task pass, before the 5 s heartbeat startup
+grace expires; once killed, trigger evaluation returns without overwriting
+the reason. Therefore heartbeat loss did not de-energize the relay first and
+READBACK is not secondary recording. No code change is warranted. Relay
+steady-state behavior cannot be qualified on this hardware configuration;
+physical CAN and external relay-feedback qualification remain DEFERRED.
+
+**Update (2026-07-11, S-OS-43 DCAN1 ECC partial result and blocker):** the
+message-RAM ECC source work is implemented and host-green but T2 is NOT
+complete. Per SPNU563A 27.4.1, DCAN1 RAM is now hardware-initialized through
+`MINITGCR` and `MSINENA[5]` before HALCoGen `canInit()` makes any message-object
+access. The bounded sequence records the initial `ECC_CS`, PERR, and ECC_SERR
+values in SRAM, clears single/double-bit flags at the DCAN source, acknowledges
+only ESM group-1 channel 21 after the source is clean, and never accesses
+group-2 SR2/SSR2. A second source check runs after all mailbox writes and
+before normal CAN mode; either initialization timeout or source assertion
+keeps CAN uninitialized and reports bus-off to the existing fail-closed path.
+Host evidence is 19/19 source contracts and 26/26 executable SC CAN tests,
+including both failure gates. A fresh Ethernet production image containing
+the ECC work (before the internal-loopback implementation) built cleanly,
+booted 9 modules and BIST 7/7, and produced 501 valid SCET frames in 5.0 s at
+100.002 Hz with no gaps. XCP SRAM readback showed initial and final
+`ECC_CS=0x050A0000`, final ESM group-1 status zero, and preserved nonzero
+PERR/ECC_SERR historical object codes; the read-only error-code registers
+were not written. The required bus-independent target exercise is BLOCKED:
+implementing startup internal loopback with a temporary RX object caused BIST
+step 4 to fail. A second fresh image using the TRM 27.14.4 hot-self-test mode
+(internal plus silent, so no dominant CAN_TX output) and a 100-fold longer
+bounded poll failed at the same step. No physical CAN was connected or used,
+and no further workaround was attempted. The installed image is the latter
+fail-closed diagnostic state; S-OS-44 and S-OS-45 were not started.
 
 ## Scope and unchanged limits
 
@@ -118,6 +220,12 @@ and telemetry limits remain unchanged.
 | CAN-dependent XCP continuity | DEFERRED | requires physical CAN input |
 | Physical DCAN bus-off fault injection | DEFERRED | requires physical CAN |
 | System retained-fault/reset behavior after CAN faults | DEFERRED | requires physical CAN fault injection |
+| S-OS-41 flash-image ECC layout contracts | PASS (2026-07-11) | 18 host contracts, 0 failures: linker-shape contract (GROUP, palign(32), zero fill, explicit .rodata, .flashguard) and fresh-map layout contract (contiguous flash sections from 0x0, 32-byte-aligned image end, guard present) across production, ETH-production, and bring-up maps |
+| Controlled normal production boot (power-on, ETH image) | PASS (2026-07-11, S-OS-41) | physical power cycle >=10 s off; boot completed Ethernet telemetry OK, 9-module init, BIST 7/7, relay energized into MONITORING; SCET 3001 valid frames / 30.0 s at 100.000 Hz, 0 gaps; XCP CONNECT/UNLOCK with `os_counter_value` +101 ticks/s. Zero group-2 status evidenced structurally (boot passed the one-way FIQ unmask, which any group-2 assertion parks) plus the nPORRST-clear property; direct ESM readback over XCP is design-blocked by the flash/SRAM address whitelist |
+| S-OS-41 negative control | PASS (2026-07-11) | preserved pre-fix ETH image freshly latched live `SR2=0x00000008` on a programming-reset boot and parked fail-closed after Ethernet init; reflashed fixed image booted clean again with retained `SSR2=0x0000000C` shadow preserved and never written |
+| SC steady-state relay/mode after normal boot | OPEN (2026-07-11 observation) | SCET status bytes showed SAFE_STOP, relay de-energized, fault reason READBACK (2 consecutive relay GPIO readback mismatches) within ~90 s of the power-on boot, with heartbeat faults for all three monitored ECUs (none on bench CAN); novelty unknown — prior SCET evidence never decoded status bytes; needs bench relay-feedback investigation |
+| SC relay READBACK disposition | DISPOSITIONED (2026-07-11, S-OS-42) | Correct fail-closed response on a LaunchPad with no relay feedback and GIOA0 remuxed to debug UART; fresh replay first showed READBACK with heartbeat flags clear/health `0b111`, then 4.73 s later showed the three expected no-CAN heartbeat flags with READBACK still latched. Heartbeat loss was later, not the original kill. No source fix; relay steady-state qualification remains unavailable on this bench. |
+| DCAN1 message-RAM ECC initialization/recovery | BLOCKED (2026-07-11, S-OS-43) | ECC initialization/recovery and post-mailbox source validation are host-green (19 contracts, 26 SC CAN tests) and an intermediate target image booted with clean ECC/ESM SRAM diagnostics and 100.002 Hz SCET. Both internal-loopback target attempts failed startup BIST step 4, including TRM hot-self-test mode with an extended bounded wait. T2 is not complete; T3/T4 not started. |
 
 ## Implementation and verification notes
 
@@ -248,7 +356,8 @@ open non-CAN item.
 - The isolated recovery's guarded VIM0 drain is target-proven with a nonzero
   retained-state replay and all six bring-up checks passing.
 - The current installed image is the non-diagnostic production build from
-  `7be31ce`, flashed with DSLite `flash --run`; it remains fail-closed.
+  `<pre-fix-production-build-id>`, flashed with DSLite `flash --run`; it
+  remains fail-closed.
 - Task 2 production liveness is not passed. DCAN1 recovery, IRQ-stack work,
   and the CCM/ESM self-test were not started because the ordered normal-boot
   gate remains blocked.
