@@ -26,8 +26,9 @@ extern uint32  dcan1_reg_read(uint32 offset);
 extern void    dcan1_reg_write(uint32 offset, uint32 value);
 extern boolean dcan1_get_mailbox_data(uint8 mbIndex, uint8* data, uint8* dlc);
 extern boolean dcan1_get_diag_request(uint8* data, uint8* dlc);
-extern void    dcan1_setup_mailboxes(void);
+extern boolean dcan1_setup_mailboxes(void);
 extern boolean dcan1_message_ram_ecc_init(void);
+extern boolean dcan1_message_ram_ecc_reinit_after_hal(void);
 extern boolean dcan1_ecc_status_ok(void);
 
 /* TX function — firmware constraint: called ONLY from SC_CAN_TransmitStatus().
@@ -125,6 +126,15 @@ void SC_CAN_Init(void)
      * TMS570: real init. POSIX: no-op stub. */
     canInit();
 
+    /* HALCoGen's generated configuration uses PMD=5 (SECDED disabled) while
+     * it rewrites message objects 1-6. Reinitialize the complete RAM and ECC
+     * space once more before installing the SECDED-protected SC objects;
+     * otherwise the message handler detects stale check bits on first scan. */
+    if (dcan1_message_ram_ecc_reinit_after_hal() == FALSE) {
+        bus_off = TRUE;
+        return;
+    }
+
     /* Re-enter init mode to apply SC overrides */
     dcan1_reg_write(DCAN_CTL_OFFSET, 0x41u);    /* Init + CCE */
     dcan1_reg_write(DCAN_BTR_OFFSET,
@@ -134,7 +144,10 @@ void SC_CAN_Init(void)
                     ((uint32)SC_DCAN_SJW << 6u));
 
     /* Configure 6 receive mailboxes with SC CAN IDs */
-    dcan1_setup_mailboxes();
+    if (dcan1_setup_mailboxes() == FALSE) {
+        bus_off = TRUE;
+        return;
+    }
 
     /* Validate the source again after every message-object write and before
      * allowing normal CAN operation. Any fresh SECDED event is fail-closed. */

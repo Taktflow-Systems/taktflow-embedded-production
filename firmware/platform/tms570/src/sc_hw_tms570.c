@@ -35,6 +35,11 @@ typedef volatile struct canBase canBASE_t;
 extern uint32 canTransmit(canBASE_t *node, uint32 messageBox, const uint8 *data);
 #define canREG1 ((canBASE_t *)0xFFF7DC00u)
 
+/* Failure-path UART diagnostics are implemented later in this translation
+ * unit. Forward declarations keep the DCAN BIST close to its register logic. */
+void sc_sci_puts(const char* str);
+void sc_sci_put_hex32(uint32 val);
+
 /* ==================================================================
  * TMS570LC43x Register Base Addresses
  * ================================================================== */
@@ -204,12 +209,18 @@ extern uint32 canTransmit(canBASE_t *node, uint32 messageBox, const uint8 *data)
 #define DCAN_ECC_FLAG_MASK      0x00000101u
 #define ESM_DCAN1_ECC_BIT       ((uint32)1u << 21u)
 #define DCAN_CTL                0x00u
+#define DCAN_ES                 0x04u
 #define DCAN_TEST               0x14u
+#define DCAN_TXRQ1              0x88u
+#define DCAN_NWDAT1             0x9Cu
+#define DCAN_MSGVAL1            0xC4u
 #define DCAN_CTL_INIT_CCE       0x00000041u
 #define DCAN_CTL_TEST_ENABLE    0x00000080u
+#define DCAN_CTL_PMD_MASK       0x00003C00u
+#define DCAN_CTL_PMD_DISABLED   0x00001400u
 #define DCAN_TEST_INTERNAL_LBACK 0x00000018u
 #define DCAN_LOOPBACK_RX_OBJECT 8u
-#define DCAN_LOOPBACK_TIMEOUT   10000000u
+#define DCAN_LOOPBACK_TIMEOUT   100000u
 
 /** IF command register bits — TMS570 big-endian: command byte is bits [23:16]
  *  (MISRA 12.2: use uint32 literal for shift) */
@@ -237,6 +248,11 @@ extern uint32 canTransmit(canBASE_t *node, uint32 messageBox, const uint8 *data)
 
 /** ARB Dir bit — 0=receive, 1=transmit */
 #define DCAN_ARB_DIR            ((uint32)1u << 29u)
+
+/** HALCoGen's proven byte mapping for TMS570 BE32 IFx data registers. */
+static const uint8 DCAN_BE32_BYTE_ORDER[8] = {
+    3u, 2u, 1u, 0u, 7u, 6u, 5u, 4u
+};
 
 /* ==================================================================
  * Helper: volatile register access
@@ -548,6 +564,7 @@ volatile uint32 sc_dcan1_ecc_initial_serr;
 volatile uint32 sc_dcan1_ecc_final_cs;
 volatile uint32 sc_dcan1_ecc_final_esm_sr1;
 volatile uint32 sc_dcan1_loopback_pass;
+volatile uint32 sc_dcan1_loopback_diag[20];
 
 /**
  * @brief Initialize DCAN1 message RAM data/ECC and recover its source flags
@@ -557,11 +574,26 @@ volatile uint32 sc_dcan1_loopback_pass;
 boolean dcan1_message_ram_ecc_init(void)
 {
     volatile uint32 timeout = SYSTEM_MINIT_TIMEOUT;
+    uint32 ctl;
     uint32 ecc_cs;
 
     sc_dcan1_ecc_initial_cs = reg_read(DCAN1_BASE, DCAN_ECC_CS);
     sc_dcan1_ecc_initial_perr = reg_read(DCAN1_BASE, DCAN_PERR);
     sc_dcan1_ecc_initial_serr = reg_read(DCAN1_BASE, DCAN_ECC_SERR);
+
+    /* PMD resets to the SECDED-disable key (5). SPNU563A 27.15 states that
+     * hardware RAM initialization generates ECC only while SECDED is enabled.
+     * Keep the controller stopped and enable SECDED before MINITGCR/MSINENA so
+     * untouched objects receive valid check bits as well as zero data. */
+    ctl = reg_read(DCAN1_BASE, DCAN_CTL);
+    ctl = (ctl | (uint32)1u) & ~DCAN_CTL_PMD_MASK;
+    reg_write(DCAN1_BASE, DCAN_CTL, ctl);
+    if ((reg_read(DCAN1_BASE, DCAN_CTL) & DCAN_CTL_PMD_MASK) ==
+        DCAN_CTL_PMD_DISABLED) {
+        sc_dcan1_ecc_final_cs = reg_read(DCAN1_BASE, DCAN_ECC_CS);
+        sc_dcan1_ecc_final_esm_sr1 = reg_read(ESM_BASE, ESM_SR1);
+        return FALSE;
+    }
 
     /* Initialize all DCAN1 message objects and their SECDED check bits. */
     reg_write(SYSTEM1_BASE, SYSTEM_MINITGCR, SYSTEM_MINIT_ENABLE);
@@ -603,6 +635,26 @@ boolean dcan1_message_ram_ecc_init(void)
 }
 
 /**
+ * @brief Reinitialize DCAN1 RAM after generated canInit() ran with PMD=5
+ * @return TRUE when data/ECC and recoverable source status are clean
+ * @note Preserves the first-call power-on diagnostics while refreshing the
+ *       final status fields used by the startup acceptance gate.
+ */
+boolean dcan1_message_ram_ecc_reinit_after_hal(void)
+{
+    uint32 initial_cs = sc_dcan1_ecc_initial_cs;
+    uint32 initial_perr = sc_dcan1_ecc_initial_perr;
+    uint32 initial_serr = sc_dcan1_ecc_initial_serr;
+    boolean result = dcan1_message_ram_ecc_init();
+
+    sc_dcan1_ecc_initial_cs = initial_cs;
+    sc_dcan1_ecc_initial_perr = initial_perr;
+    sc_dcan1_ecc_initial_serr = initial_serr;
+
+    return result;
+}
+
+/**
  * @brief Validate DCAN1 SECDED and ESM source status after mailbox setup
  * @return TRUE when neither DCAN ECC flags nor ESM group-1 channel 21 is set
  * @note Thread safety: call in DCAN initialization mode before normal mode.
@@ -620,13 +672,14 @@ boolean dcan1_ecc_status_ok(void)
 /**
  * @brief  Wait for DCAN IF1 to be ready (not busy)
  */
-static void dcan1_wait_if1_ready(void)
+static boolean dcan1_wait_if1_ready(void)
 {
     volatile uint32 timeout = 10000u;
     while (((uint32)(reg_read8(DCAN1_BASE, DCAN_IF1STAT_BYTE) & 0x80u) != 0u) &&
            (timeout > 0u)) {
         timeout--;
     }
+    return (timeout > 0u) ? TRUE : FALSE;
 }
 
 /**
@@ -639,12 +692,14 @@ static void dcan1_wait_if1_ready(void)
  * @param  can_id   Standard 11-bit CAN ID
  * @param  dlc      Expected DLC (1-8)
  */
-static void dcan1_config_rx_mailbox(uint8 msg_num, uint16 can_id, uint8 dlc)
+static boolean dcan1_config_rx_mailbox(uint8 msg_num, uint16 can_id, uint8 dlc)
 {
     uint32 arb;
     uint32 mctl;
 
-    dcan1_wait_if1_ready();
+    if (dcan1_wait_if1_ready() == FALSE) {
+        return FALSE;
+    }
 
     /* Mask: match all 11 bits of standard ID (bits 28:18 of mask register) */
     reg_write(DCAN1_BASE, DCAN_IF1MSK,
@@ -664,7 +719,7 @@ static void dcan1_config_rx_mailbox(uint8 msg_num, uint16 can_id, uint8 dlc)
               DCAN_IFCMD_WR | DCAN_IFCMD_MASK | DCAN_IFCMD_ARB |
               DCAN_IFCMD_CONTROL | ((uint32)msg_num & 0xFFu));
 
-    dcan1_wait_if1_ready();
+    return dcan1_wait_if1_ready();
 }
 
 /**
@@ -679,9 +734,11 @@ static void dcan1_config_rx_mailbox(uint8 msg_num, uint16 can_id, uint8 dlc)
  * @param  can_id   Standard 11-bit CAN ID for the TX mailbox
  * @param  dlc      Data length code configured for the mailbox
  */
-static void dcan1_config_tx_mailbox(uint8 msg_num, uint16 can_id, uint8 dlc)
+static boolean dcan1_config_tx_mailbox(uint8 msg_num, uint16 can_id, uint8 dlc)
 {
-    dcan1_wait_if1_ready();
+    if (dcan1_wait_if1_ready() == FALSE) {
+        return FALSE;
+    }
 
     reg_write(DCAN1_BASE, DCAN_IF1MSK,
               0xC0000000u | ((uint32)0x7FFu << 18u));
@@ -692,7 +749,7 @@ static void dcan1_config_tx_mailbox(uint8 msg_num, uint16 can_id, uint8 dlc)
     reg_write8(DCAN1_BASE, DCAN_IF1CMD_BYTE, 0xF8u);
     reg_write8(DCAN1_BASE, DCAN_IF1NO_BYTE, msg_num);
 
-    dcan1_wait_if1_ready();
+    return dcan1_wait_if1_ready();
 }
 
 /**
@@ -712,19 +769,32 @@ static void dcan1_config_tx_mailbox(uint8 msg_num, uint16 can_id, uint8 dlc)
  *   MB8: UDS request   (0x7E3) RX only in HIL builds
  *   MB9: UDS response  (0x7EB) TX only in HIL builds
  */
-void dcan1_setup_mailboxes(void)
+boolean dcan1_setup_mailboxes(void)
 {
-    dcan1_config_rx_mailbox(SC_MB_ESTOP,         SC_CAN_ID_ESTOP,         SC_CAN_DLC);
-    dcan1_config_rx_mailbox(SC_MB_CVC_HB,        SC_CAN_ID_CVC_HB,       SC_CAN_DLC);
-    dcan1_config_rx_mailbox(SC_MB_FZC_HB,        SC_CAN_ID_FZC_HB,       SC_CAN_DLC);
-    dcan1_config_rx_mailbox(SC_MB_RZC_HB,        SC_CAN_ID_RZC_HB,       SC_CAN_DLC);
-    dcan1_config_rx_mailbox(SC_MB_VEHICLE_STATE,  SC_CAN_ID_VEHICLE_STATE, SC_CAN_DLC);
-    dcan1_config_rx_mailbox(SC_MB_MOTOR_CURRENT,  SC_CAN_ID_MOTOR_CURRENT, SC_CAN_DLC);
-    dcan1_config_tx_mailbox(SC_MB_TX_STATUS,     SC_CAN_ID_RELAY_STATUS,  SC_RELAY_STATUS_DLC);
+    if (dcan1_config_rx_mailbox(SC_MB_ESTOP, SC_CAN_ID_ESTOP,
+                                SC_CAN_DLC) == FALSE) { return FALSE; }
+    if (dcan1_config_rx_mailbox(SC_MB_CVC_HB, SC_CAN_ID_CVC_HB,
+                                SC_CAN_DLC) == FALSE) { return FALSE; }
+    if (dcan1_config_rx_mailbox(SC_MB_FZC_HB, SC_CAN_ID_FZC_HB,
+                                SC_CAN_DLC) == FALSE) { return FALSE; }
+    if (dcan1_config_rx_mailbox(SC_MB_RZC_HB, SC_CAN_ID_RZC_HB,
+                                SC_CAN_DLC) == FALSE) { return FALSE; }
+    if (dcan1_config_rx_mailbox(SC_MB_VEHICLE_STATE,
+                                SC_CAN_ID_VEHICLE_STATE,
+                                SC_CAN_DLC) == FALSE) { return FALSE; }
+    if (dcan1_config_rx_mailbox(SC_MB_MOTOR_CURRENT,
+                                SC_CAN_ID_MOTOR_CURRENT,
+                                SC_CAN_DLC) == FALSE) { return FALSE; }
+    if (dcan1_config_tx_mailbox(SC_MB_TX_STATUS, SC_CAN_ID_RELAY_STATUS,
+                                SC_RELAY_STATUS_DLC) == FALSE) { return FALSE; }
 #ifdef PLATFORM_HIL
-    dcan1_config_rx_mailbox(SC_MB_UDS_REQUEST,   SC_CAN_ID_UDS_REQUEST,   SC_CAN_DLC);
-    dcan1_config_tx_mailbox(SC_MB_TX_UDS_RESPONSE, SC_CAN_ID_UDS_RESPONSE, SC_CAN_DLC);
+    if (dcan1_config_rx_mailbox(SC_MB_UDS_REQUEST, SC_CAN_ID_UDS_REQUEST,
+                                SC_CAN_DLC) == FALSE) { return FALSE; }
+    if (dcan1_config_tx_mailbox(SC_MB_TX_UDS_RESPONSE,
+                                SC_CAN_ID_UDS_RESPONSE,
+                                SC_CAN_DLC) == FALSE) { return FALSE; }
 #endif
+    return TRUE;
 }
 
 /**
@@ -733,13 +803,14 @@ void dcan1_setup_mailboxes(void)
  * DCAN IF registers have a busy flag while transferring data
  * between the CPU interface and message object RAM.
  */
-static void dcan1_wait_if2_ready(void)
+static boolean dcan1_wait_if2_ready(void)
 {
     volatile uint32 timeout = 10000u;
     while (((uint32)(reg_read8(DCAN1_BASE, DCAN_IF2STAT_BYTE) & 0x80u) != 0u) &&
            (timeout > 0u)) {
         timeout--;
     }
+    return (timeout > 0u) ? TRUE : FALSE;
 }
 
 /**
@@ -757,16 +828,17 @@ static void dcan1_wait_if2_ready(void)
 static boolean dcan1_read_message_object(uint32 msg_num, uint8* data, uint8* dlc)
 {
     uint32 mctl;
-    uint32 data_a;
-    uint32 data_b;
     uint8 msg_dlc;
+    uint8 i;
 
     if ((data == NULL_PTR) || (dlc == NULL_PTR)) {
         return FALSE;
     }
 
     /* Wait for IF2 to be available */
-    dcan1_wait_if2_ready();
+    if (dcan1_wait_if2_ready() == FALSE) {
+        return FALSE;
+    }
 
     /* Request transfer from message object to IF2 registers:
      * Read data A + data B + control (includes NewDat, DLC) */
@@ -776,7 +848,9 @@ static boolean dcan1_read_message_object(uint32 msg_num, uint8* data, uint8* dlc
               (msg_num & 0xFFu));  /* Message number, WR=0 (read) */
 
     /* Wait for transfer to complete */
-    dcan1_wait_if2_ready();
+    if (dcan1_wait_if2_ready() == FALSE) {
+        return FALSE;
+    }
 
     /* Check NewDat bit in MCTL */
     mctl = reg_read(DCAN1_BASE, DCAN_IF2MCTL);
@@ -790,19 +864,12 @@ static boolean dcan1_read_message_object(uint32 msg_num, uint8* data, uint8* dlc
         msg_dlc = 8u;
     }
 
-    /* Read data registers — DCAN stores CAN bytes in register words.
-     * TMS570 DCAN: byte0 in bits 7:0 of IF2DATA (per TRM Table 16-25). */
-    data_a = reg_read(DCAN1_BASE, DCAN_IF2DATA);
-    data_b = reg_read(DCAN1_BASE, DCAN_IF2DATB);
-
-    data[0] = (uint8)(data_a & 0xFFu);
-    data[1] = (uint8)((data_a >> 8u) & 0xFFu);
-    data[2] = (uint8)((data_a >> 16u) & 0xFFu);
-    data[3] = (uint8)((data_a >> 24u) & 0xFFu);
-    data[4] = (uint8)(data_b & 0xFFu);
-    data[5] = (uint8)((data_b >> 8u) & 0xFFu);
-    data[6] = (uint8)((data_b >> 16u) & 0xFFu);
-    data[7] = (uint8)((data_b >> 24u) & 0xFFu);
+    /* Match HALCoGen canGetData(): BE32 byte-lane addresses are 3,2,1,0 then
+     * 7,6,5,4. Native uint32 extraction reverses every four-byte group. */
+    for (i = 0u; i < SC_CAN_DLC; i++) {
+        data[i] = reg_read8(DCAN1_BASE,
+                            DCAN_IF2DATA + (uint32)DCAN_BE32_BYTE_ORDER[i]);
+    }
 
     *dlc = msg_dlc;
 
@@ -1029,21 +1096,31 @@ boolean hw_dcan_loopback_test(void)
     uint32 saved_test = reg_read(DCAN1_BASE, DCAN_TEST);
     volatile uint32 timeout = DCAN_LOOPBACK_TIMEOUT;
     boolean payload_ok = FALSE;
+    boolean restore_ok = TRUE;
 
     sc_dcan1_loopback_pass = 0u;
+    sc_dcan1_loopback_diag[0] = saved_ctl;
+    sc_dcan1_loopback_diag[1] = saved_test;
 
     /* Configure one otherwise-unused receive object while communication is
      * stopped, then use the DCAN core's internal path (no transceiver/bus). */
     reg_write(DCAN1_BASE, DCAN_CTL, saved_ctl | DCAN_CTL_INIT_CCE);
-    dcan1_config_rx_mailbox(DCAN_LOOPBACK_RX_OBJECT,
-                            SC_CAN_ID_RELAY_STATUS,
-                            SC_RELAY_STATUS_DLC);
+    if (dcan1_config_rx_mailbox(DCAN_LOOPBACK_RX_OBJECT,
+                                SC_CAN_ID_RELAY_STATUS,
+                                SC_RELAY_STATUS_DLC) == FALSE) {
+        reg_write(DCAN1_BASE, DCAN_CTL, saved_ctl);
+        return FALSE;
+    }
+    sc_dcan1_loopback_diag[2] = reg_read(DCAN1_BASE, DCAN_MSGVAL1);
     reg_write(DCAN1_BASE, DCAN_CTL,
               (saved_ctl & ~(uint32)1u) | DCAN_CTL_TEST_ENABLE);
     reg_write(DCAN1_BASE, DCAN_TEST,
               saved_test | DCAN_TEST_INTERNAL_LBACK);
+    sc_dcan1_loopback_diag[3] = reg_read(DCAN1_BASE, DCAN_CTL);
+    sc_dcan1_loopback_diag[4] = reg_read(DCAN1_BASE, DCAN_TEST);
 
     dcan1_transmit(SC_MB_TX_STATUS, tx_data, SC_RELAY_STATUS_DLC);
+    sc_dcan1_loopback_diag[5] = reg_read(DCAN1_BASE, DCAN_TXRQ1);
     while (timeout > 0u) {
         if (dcan1_read_message_object(DCAN_LOOPBACK_RX_OBJECT,
                                       rx_data, &rx_dlc) == TRUE) {
@@ -1059,21 +1136,64 @@ boolean hw_dcan_loopback_test(void)
         timeout--;
     }
 
+    sc_dcan1_loopback_diag[6] = reg_read(DCAN1_BASE, DCAN_TXRQ1);
+    sc_dcan1_loopback_diag[7] = reg_read(DCAN1_BASE, DCAN_NWDAT1);
+    sc_dcan1_loopback_diag[8] = reg_read(DCAN1_BASE, DCAN_MSGVAL1);
+    sc_dcan1_loopback_diag[9] = reg_read(DCAN1_BASE, DCAN_ES);
+    sc_dcan1_loopback_diag[10] = reg_read(DCAN1_BASE, DCAN_IF2MCTL);
+    sc_dcan1_loopback_diag[11] = (uint32)rx_dlc;
+    sc_dcan1_loopback_diag[12] = (uint32)payload_ok;
+    sc_dcan1_loopback_diag[13] = timeout;
+    sc_dcan1_loopback_diag[14] = reg_read(DCAN1_BASE, DCAN_ECC_CS);
+    sc_dcan1_loopback_diag[15] = reg_read(ESM_BASE, ESM_SR1);
+    sc_dcan1_loopback_diag[16] = reg_read(DCAN1_BASE, DCAN_PERR);
+    sc_dcan1_loopback_diag[17] = reg_read(DCAN1_BASE, DCAN_ECC_SERR);
+
     /* Restore production mode and invalidate the temporary receive object. */
     reg_write(DCAN1_BASE, DCAN_CTL, saved_ctl | DCAN_CTL_INIT_CCE);
-    dcan1_wait_if1_ready();
-    reg_write(DCAN1_BASE, DCAN_IF1ARB, 0u);
-    reg_write(DCAN1_BASE, DCAN_IF1CMD,
-              DCAN_IFCMD_WR | DCAN_IFCMD_ARB |
-              (uint32)DCAN_LOOPBACK_RX_OBJECT);
-    dcan1_wait_if1_ready();
+    if (dcan1_wait_if1_ready() == TRUE) {
+        reg_write(DCAN1_BASE, DCAN_IF1ARB, 0u);
+        reg_write(DCAN1_BASE, DCAN_IF1CMD,
+                  DCAN_IFCMD_WR | DCAN_IFCMD_ARB |
+                  (uint32)DCAN_LOOPBACK_RX_OBJECT);
+        restore_ok = dcan1_wait_if1_ready();
+    } else {
+        restore_ok = FALSE;
+    }
     reg_write(DCAN1_BASE, DCAN_TEST, saved_test);
     reg_write(DCAN1_BASE, DCAN_CTL, saved_ctl);
 
-    if ((payload_ok == TRUE) && (dcan1_ecc_status_ok() == TRUE)) {
+    if ((payload_ok == TRUE) && (restore_ok == TRUE) &&
+        (dcan1_ecc_status_ok() == TRUE)) {
         sc_dcan1_loopback_pass = 1u;
         return TRUE;
     }
+
+    sc_sci_puts("[DCAN-BIST] ctl=");
+    sc_sci_put_hex32(sc_dcan1_loopback_diag[3]);
+    sc_sci_puts(" test=");
+    sc_sci_put_hex32(sc_dcan1_loopback_diag[4]);
+    sc_sci_puts(" txrq0=");
+    sc_sci_put_hex32(sc_dcan1_loopback_diag[5]);
+    sc_sci_puts(" txrq1=");
+    sc_sci_put_hex32(sc_dcan1_loopback_diag[6]);
+    sc_sci_puts(" nwdat=");
+    sc_sci_put_hex32(sc_dcan1_loopback_diag[7]);
+    sc_sci_puts(" msgval=");
+    sc_sci_put_hex32(sc_dcan1_loopback_diag[8]);
+    sc_sci_puts(" es=");
+    sc_sci_put_hex32(sc_dcan1_loopback_diag[9]);
+    sc_sci_puts(" if2mctl=");
+    sc_sci_put_hex32(sc_dcan1_loopback_diag[10]);
+    sc_sci_puts(" ecc=");
+    sc_sci_put_hex32(sc_dcan1_loopback_diag[14]);
+    sc_sci_puts(" esm1=");
+    sc_sci_put_hex32(sc_dcan1_loopback_diag[15]);
+    sc_sci_puts(" perr=");
+    sc_sci_put_hex32(sc_dcan1_loopback_diag[16]);
+    sc_sci_puts(" serr=");
+    sc_sci_put_hex32(sc_dcan1_loopback_diag[17]);
+    sc_sci_puts("\r\n");
 
     return FALSE;
 }

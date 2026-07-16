@@ -99,7 +99,9 @@ static uint32 mock_dcan_nwdat1;
 static uint8  mock_mb_data[SC_MB_COUNT][SC_CAN_DLC];
 static boolean mock_mb_new_data[SC_MB_COUNT];
 static boolean mock_dcan_ecc_init_ok;
+static boolean mock_dcan_ecc_reinit_ok;
 static boolean mock_dcan_ecc_status_ok;
+static boolean mock_dcan_mailbox_setup_ok;
 
 boolean dcan1_message_ram_ecc_init(void)
 {
@@ -109,6 +111,11 @@ boolean dcan1_message_ram_ecc_init(void)
 boolean dcan1_ecc_status_ok(void)
 {
     return mock_dcan_ecc_status_ok;
+}
+
+boolean dcan1_message_ram_ecc_reinit_after_hal(void)
+{
+    return mock_dcan_ecc_reinit_ok;
 }
 
 /* DCAN register read/write functions (mocked HALCoGen style) */
@@ -163,9 +170,9 @@ boolean dcan1_get_diag_request(uint8* data, uint8* dlc)
  * Mock: dcan1_setup_mailboxes (HAL — mailbox configuration)
  * ================================================================== */
 
-void dcan1_setup_mailboxes(void)
+boolean dcan1_setup_mailboxes(void)
 {
-    /* Stub — mailbox setup is hardware-only, not tested here */
+    return mock_dcan_mailbox_setup_ok;
 }
 
 void canInit(void)
@@ -292,7 +299,9 @@ void setUp(void)
     }
 
     mock_dcan_ecc_init_ok = TRUE;
+    mock_dcan_ecc_reinit_ok = TRUE;
     mock_dcan_ecc_status_ok = TRUE;
+    mock_dcan_mailbox_setup_ok = TRUE;
     SC_CAN_Init();
 }
 
@@ -337,6 +346,28 @@ void test_CAN_Init_post_config_ecc_failure_sets_bus_off(void)
     TEST_ASSERT_FALSE(can_initialized);
     TEST_ASSERT_TRUE(SC_CAN_IsBusOff());
     TEST_ASSERT_TRUE((mock_dcan_ctl & 0x01u) != 0u);
+}
+
+/** @verifies SWR-SC-001 -- post-HAL RAM/ECC reinitialization is fail-closed */
+void test_CAN_Init_post_hal_ecc_reinit_failure_sets_bus_off(void)
+{
+    mock_dcan_ecc_reinit_ok = FALSE;
+
+    SC_CAN_Init();
+
+    TEST_ASSERT_FALSE(can_initialized);
+    TEST_ASSERT_TRUE(SC_CAN_IsBusOff());
+}
+
+/** @verifies SWR-SC-001 -- IF timeout during mailbox setup is fail-closed */
+void test_CAN_Init_mailbox_setup_failure_sets_bus_off(void)
+{
+    mock_dcan_mailbox_setup_ok = FALSE;
+
+    SC_CAN_Init();
+
+    TEST_ASSERT_FALSE(can_initialized);
+    TEST_ASSERT_TRUE(SC_CAN_IsBusOff());
 }
 
 /* ==================================================================
@@ -658,6 +689,8 @@ int main(void)
     RUN_TEST(test_CAN_Init_silent_mode);
     RUN_TEST(test_CAN_Init_resets_silence);
     RUN_TEST(test_CAN_Init_ecc_ram_failure_sets_bus_off);
+    RUN_TEST(test_CAN_Init_post_hal_ecc_reinit_failure_sets_bus_off);
+    RUN_TEST(test_CAN_Init_mailbox_setup_failure_sets_bus_off);
     RUN_TEST(test_CAN_Init_post_config_ecc_failure_sets_bus_off);
 
     /* SWR-SC-002: Mailbox Polling */

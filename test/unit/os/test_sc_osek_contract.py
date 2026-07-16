@@ -265,11 +265,14 @@ def test_tms570_dcan1_message_ram_ecc_init_and_source_recovery():
     init = init[: init.index("\n}")]
     ram_init = init.index("dcan1_message_ram_ecc_init()")
     hal_init = init.index("canInit();")
-    mailbox_setup = init.index("dcan1_setup_mailboxes();")
+    post_hal_init = init.index("dcan1_message_ram_ecc_reinit_after_hal()")
+    mailbox_setup = init.index("dcan1_setup_mailboxes()")
     post_config_check = init.index("dcan1_ecc_status_ok()")
     normal_mode = init.index("dcan1_reg_write(DCAN_CTL_OFFSET, 0x00u)")
     assert ram_init < hal_init
-    assert hal_init < mailbox_setup < post_config_check < normal_mode
+    assert hal_init < post_hal_init < mailbox_setup < post_config_check < normal_mode
+    assert "bus_off = TRUE;" in init[hal_init:mailbox_setup]
+    assert "return;" in init[hal_init:mailbox_setup]
     assert "bus_off = TRUE;" in init[:hal_init]
     assert "return;" in init[:hal_init]
 
@@ -293,6 +296,34 @@ def test_tms570_dcan1_message_ram_ecc_init_and_source_recovery():
     assert "DCAN_ECC_CS" in hw_init
     assert "ESM_SR2" not in hw_init and "ESM_SSR2" not in hw_init
 
+
+def test_tms570_dcan1_enables_secded_before_hardware_ram_init():
+    # SPNU563A 27.15: hardware initialization generates DCAN ECC only while
+    # SECDED is enabled. PMD resets to the disable key (5), so clearing PMD
+    # must precede MINITGCR/MSINENA; otherwise untouched message objects keep
+    # invalid check bits until the first real message-handler access.
+    hw_init = SC_TMS_HW[
+        SC_TMS_HW.index("boolean dcan1_message_ram_ecc_init(void)") :
+    ]
+    hw_init = hw_init[: hw_init.index("\n}")]
+    enable = hw_init.index("DCAN_CTL_PMD_MASK")
+    minit = hw_init.index("reg_write(SYSTEM1_BASE, SYSTEM_MINITGCR")
+    assert enable < minit
+    assert "DCAN_CTL_PMD_DISABLED" in hw_init
+
+
+def test_tms570_dcan1_rx_uses_halcogen_be32_byte_order():
+    receive = SC_TMS_HW[
+        SC_TMS_HW.index("static boolean dcan1_read_message_object(") :
+    ]
+    receive = receive[: receive.index("\n}")]
+    assert "DCAN_BE32_BYTE_ORDER" in receive
+    assert "reg_read8(DCAN1_BASE," in receive
+    assert "DCAN_IF2DATA +" in receive
+    assert "data_a" not in receive and "data_b" not in receive
+
+
+def test_tms570_dcan1_loopback_remains_an_ecc_gated_bist():
     loopback = SC_TMS_HW[
         SC_TMS_HW.index("boolean hw_dcan_loopback_test(void)") :
     ]
