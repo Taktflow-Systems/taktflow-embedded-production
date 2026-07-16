@@ -83,7 +83,7 @@ Every SWC file must carry metadata that answers:
  * @satisfies   SSR-RZC-006 (battery voltage monitoring)
  *              SSR-RZC-007 (battery undervoltage detection)
  * @period      10ms (cyclic via Rte_MainFunction)
- * @wcet        50us (measured on STM32F446RE @ 180MHz)
+ * @wcet        50us (measured on STM32G474RE @ 170MHz)
  *
  * @consumes    IoHwAb_ReadBatteryVoltage (from Swc_RzcSensorFeeder on SIL)
  * @produces    RZC_SIG_BATTERY_MV       (uint16, 0-20000 mV)  → Swc_RzcCom → CAN 0x303

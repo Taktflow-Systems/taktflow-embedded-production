@@ -4,7 +4,7 @@ ISO 26262 ASIL D zonal vehicle platform — 7 ECUs, AUTOSAR-like BSW, CAN 500k, 
 
 ## Architecture
 
-**Zonal topology**: CVC (central) + FZC (front) + RZC (rear) + SC (safety, TMS570) + BCM/ICU/TCU (body/instrument/transmission).
+**Zonal topology**: CVC (central) + FZC (front) + RZC (rear) + SC (safety, TMS570) + BCM/ICU/TCU (body/instrument/telematics). Physical zone ECUs run on STM32G474RE (NUCLEO-G474RE); SC on TMS570LC4357 (LAUNCHXL2-570LC43).
 
 **DBC-first workflow**: `gateway/taktflow_vehicle.dbc` is the single source of truth for CAN communication.
 `tools/arxml/` converts DBC → ARXML → generated C configs. Never hand-edit generated files.
@@ -25,19 +25,21 @@ firmware/
   bsw/                   — AUTOSAR-like BSW stack (shared across ECUs)
     mcal/                 — MCAL: Can, Spi, Adc, Pwm, Dio, Gpt, Uart
     ecual/                — ECUAL: CanIf, PduR, IoHwAb
-    services/             — Services: Com, Dcm, Dem, E2E, WdgM, BswM, NvM, SchM, Det, CanTp
+    services/             — Services: Com, Dcm, Dem, E2E, WdgM, BswM, NvM, SchM, Det, CanTp, CanSM, FiM, Xcp
     rte/                  — Runtime Environment
-    os/                   — OS abstraction (bare-metal scheduler / POSIX shim)
-  ecu/{cvc,fzc,rzc,sc,bcm,icu,tcu}/  — Per-ECU application code
+    os/                   — OS abstraction (bare-metal scheduler / POSIX shim; OSEK migration in progress)
+  ecu/{cvc,fzc,rzc,rzc_f4,sc,bcm,icu,tcu}/  — Per-ECU application code
     src/                  — SWC source files
     include/              — SWC headers
     cfg/                  — GENERATED config (Com_Cfg, Rte_Cfg) — do not hand-edit
     test/                 — Unit tests
+  ecu_cpp/{bcm,icu,tcu,shared}/  — C++ vECU implementations (CMake)
   lib/vendor/             — Third-party / vendor libraries (wrapped)
   platform/{stm32,tms570,posix}/  — Platform-specific MCAL implementations + makefiles
+  platform/{stm32f4,stm32l5,qnx}/ — Experimental platform ports
 gateway/                  — Edge gateway services (MQTT, CAN bridge, plant-sim, SAP QM)
 docker/                   — Dockerfiles and compose for SIL/HIL
-test/{sil,hil,mil,pil}/   — xIL test scenarios, fixtures, reports
+test/{unit,integration,sil,hil,mil,pil}/  — Unit, integration, and xIL test scenarios, fixtures, reports
 test/framework/           — Shared test framework
 tools/
   arxml/                  — DBC→ARXML converter, SWC extractor, C codegen

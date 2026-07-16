@@ -42,7 +42,7 @@
                ▼                  ▼                   ▼
         ┌─ FRONT ZONE ──┐ ┌── CENTRAL ──┐  ┌── REAR ZONE ──┐
         │ FZC (ASIL D)   │ │ CVC (ASIL D) │  │ RZC (ASIL C)  │
-        │ STM32F407      │ │ STM32F407    │  │ STM32F407      │
+        │ STM32G474RE    │ │ STM32G474RE  │  │ STM32G474RE    │
         │ Steer,Brake,   │ │ Vehicle,     │  │ Motor,Traction │
         │ Lidar          │ │ Heartbeat,   │  │ RearSensors    │
         │                │ │ Coordinator  │  │                │
@@ -101,7 +101,7 @@ The firmware follows the **AUTOSAR layered architecture** pattern, ensuring stri
 | **Services** | AUTOSAR standardized services: **Com** (signal packing/routing), **Dcm** (UDS diagnostics), **Dem** (fault memory), **E2E** (end-to-end CRC protection), **WdgM** (watchdog supervision), **BswM** (mode management), **NvM** (non-volatile storage), **Det** (development error tracing), **SchM** (scheduler), **CanTp** (CAN transport protocol). | Industry-standard interfaces — an engineer familiar with AUTOSAR can navigate this codebase immediately. |
 | **ECUAL** | Abstraction over communication hardware: **CanIf** (CAN interface multiplexing), **PduR** (PDU router — routes messages between Com, Dcm, CanTp), **IoHwAb** (I/O hardware abstraction for sensors/actuators). | Allows swapping CAN controllers or adding new bus types without touching services or application code. |
 | **MCAL** | Direct register-level drivers for each peripheral. One implementation per MCU family. | Isolates all vendor-specific code. Porting to a new MCU = writing a new MCAL, nothing else changes. |
-| **Platform** | Build system, startup code, linker scripts, and HAL wrappers per target (STM32F4, STM32L5, TMS570, POSIX). | Enables the same codebase to run on physical hardware AND in Docker containers for SIL testing. |
+| **Platform** | Build system, startup code, linker scripts, and HAL wrappers per target (STM32G4 primary; TMS570, POSIX; experimental STM32F4/STM32L5/QNX). | Enables the same codebase to run on physical hardware AND in Docker containers for SIL testing. |
 
 ### Safety Controller (SC) — Special Case
 
@@ -158,7 +158,7 @@ This project implements artifacts for all major ASPICE process areas:
 |---------|----|----------|--------------|
 | **SW Requirements** | SWE.1 | `docs/aspice/software/sw-requirements/SWR-*.md` | Per-ECU software requirements derived from system requirements. One SWR document per ECU (CVC, FZC, RZC, SC, BCM, ICU, TCU) plus one for the shared BSW stack. Each requirement is traceable upward to SYS.2 and downward to code. |
 | **SW Architecture** | SWE.2 | `docs/aspice/software/sw-architecture/` | Three documents: overall SW architecture, BSW architecture (layered stack), and vECU architecture (Docker containerization). Defines module boundaries, interfaces, and data flows. |
-| **SW Detailed Design & Implementation** | SWE.3 | `firmware/ecu/*/src/`, `firmware/bsw/` | The actual C source code. 662 source files implementing the AUTOSAR-like BSW stack and per-ECU application SWCs. |
+| **SW Detailed Design & Implementation** | SWE.3 | `firmware/ecu/*/src/`, `firmware/bsw/` | The actual C source code. Over 2,000 source files implementing the AUTOSAR-like BSW stack and per-ECU application SWCs. |
 | **SW Unit Verification** | SWE.4 | `test/unit/`, `docs/aspice/verification/unit-test/` | Unity-based unit tests for individual BSW modules and SWC functions. Tests are compiled and run natively (POSIX) in CI. |
 | **SW Integration Test** | SWE.5 | `test/framework/src/`, `docs/aspice/verification/integration-test/` | 11 integration test suites verifying cross-module interactions: CAN bus-off recovery, E2E fault chains, heartbeat loss detection, watchdog supervision, signal routing, safe-state transitions. |
 | **SW Qualification Test** | SWE.6 | `test/sil/`, `docs/aspice/verification/sw-qualification/` | Full SIL simulation with all 7 ECUs in Docker containers. End-to-end qualification scenarios validating the complete software against SW requirements. |
@@ -315,7 +315,7 @@ The project implements a complete **xIL (x-in-the-loop)** verification chain mat
 | `test_int_safe_state_asild` | D | All fault paths lead to safe state: torque cutoff, steering to neutral, warning activated |
 | `test_int_wdgm_supervision_asild` | D | Watchdog supervision: alive counter monitoring, deadline monitoring, program flow monitoring |
 | `test_int_overcurrent_chain_asild` | D | Overcurrent detection → actuator shutdown → DEM event → safe state |
-| `test_int_can_matrix_asilc` | C | All 32 CAN messages route correctly between ECUs per the DBC matrix |
+| `test_int_can_matrix_asilc` | C | Vehicle-DBC CAN messages route correctly between ECUs per the matrix |
 | `test_int_signal_routing_asilc` | C | Signals flow from SWC → RTE → Com → CAN → Com → RTE → SWC across ECU boundaries |
 | `test_int_dem_to_dcm_asilc` | C | DEM fault events are readable via UDS (Dcm) — diagnostic readout works |
 | `test_int_bswm_mode_asilc` | C | BSW mode transitions (startup → run → shutdown → safe) execute correctly |
@@ -441,14 +441,16 @@ scripts/                  Build, deploy, debug utilities
 
 ## Metrics
 
+Counts of git-tracked files as of 2026-07-16.
+
 | Metric | Value |
 |--------|-------|
-| Firmware source files (C/H) | 662 |
-| Documentation files | 209 |
-| Test files | 125 |
+| Firmware source files (C/C++/headers) | 2,138 |
+| Documentation files (markdown) | 294 |
+| Test files | 187 |
 | ECUs | 7 (4 physical + 3 virtual) |
-| Target platforms | 5 (STM32F4, STM32L5, TMS570, POSIX, Docker C++) |
-| CAN messages | 32 |
+| Target platforms | STM32G4 (primary), TMS570, POSIX, Docker C++ vECUs; experimental: STM32F4, STM32L5, QNX |
+| CAN messages | 45 vehicle bus + 9 diagnostic + 2 SIL virtual-sensor |
 | Integration test suites | 11 |
 | CI/CD pipelines | 7 |
 | ASPICE documents registered | 57 |
