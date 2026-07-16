@@ -798,6 +798,29 @@ merge is not viable; the port work must be harvested file-wise.
     and a TRM 27.14.4 hot-self-test retry (internal plus silent mode with a
     longer bounded wait) failed startup BIST step 4. Stop before S-OS-44; do
     not claim T2 complete or attempt physical CAN.
+  - Status (2026-07-11, blocker closure): **DONE - INTERNAL HOT LOOPBACK AND
+    ECC GATE PASS ON TARGET.** Staged target diagnostics proved that test-mode
+    entry and transfer timing were not the blocker: CTL/TEST entered hot
+    self-test, TX object 7 asserted and cleared its request, and RX object 8
+    reported NewDat with DLC 4. The failure had two software causes. First,
+    the custom IF2 receive path decoded native 32-bit words instead of using
+    HALCoGen's BE32 byte-lane order. Second, generated `canInit()` selects
+    PMD=5 (SECDED disabled) and rewrites objects 1-6 after the initial hardware
+    RAM initialization, leaving stale check bits when SC later re-enabled
+    SECDED. The fix enables SECDED before the pre-`canInit()` MINIT sequence,
+    performs a second complete hardware RAM/ECC initialization immediately
+    after `canInit()` while preserving the power-on diagnostics, configures
+    the SC objects, and fail-closes every bounded IF1/IF2 timeout. The final
+    loopback wait is restored from the diagnostic 100-fold extension to the
+    normal bound. Evidence: 22/22 source contracts, 28/28 SC CAN executable
+    tests, SC main 7/7, SC Ethernet 13/13, and a fresh ETH production image in
+    `build/tms570-prod-final-dcan1-loopback` with a clean `-Werror` link. On
+    target that exact image booted 9 modules, passed BIST 7/7, energized the
+    relay, and emitted 511 valid SCET frames over 5.10 active seconds at
+    100.001 Hz with zero gaps or invalid frames. The loopback acceptance still
+    requires clean final DCAN ECC and ESM group-1 channel 21 status; no
+    group-2 register is acknowledged. No physical CAN was connected or used.
+    S-OS-44 is now unblocked but has not started.
 
 - **S-OS-44 IRQ-stack paint, high-water measurement, and resize (T3)**
   - Goal: replace the 256-byte IRQ stack with at least 1 KiB and provide a
@@ -810,7 +833,7 @@ merge is not viable; the port work must be harvested file-wise.
     append-only HIL report update.
   - Definition of done: measured peak usage and remaining margin are recorded
     for the production 100 Hz path.
-  - Status (2026-07-11): **PENDING S-OS-43.**
+  - Status (2026-07-11): **PENDING (UNBLOCKED BY S-OS-43); NOT STARTED.**
 
 - **S-OS-45 CCM-R5/ESM lockstep self-test (T4)**
   - Goal: execute the documented debugger-free CCM-R5 self-test method now

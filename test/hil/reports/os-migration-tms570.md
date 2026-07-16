@@ -177,6 +177,38 @@ bounded poll failed at the same step. No physical CAN was connected or used,
 and no further workaround was attempted. The installed image is the latter
 fail-closed diagnostic state; S-OS-44 and S-OS-45 were not started.
 
+**Update (2026-07-11, S-OS-43 DCAN1 loopback blocker closure):** T2 is DONE.
+Failure-path instrumentation on a fresh image separated the controller stages:
+hot-self-test mode was active (`CTL=0x000000C0`, `TEST=0x00000098`), TX object
+7 requested and completed transmission (`TXRQ1 0x40 -> 0`), object 8 was valid,
+and IF2 showed received NewDat with DLC 4 (`IF2MCTL=0x00009084`). Timing and the
+TMS570 hot-loopback hardware behavior were therefore not the blocker. The
+software failure was compound: the custom receive path extracted native
+32-bit IF2 words and reversed each four-byte group on BE32, while generated
+`canInit()` selected PMD=5 (SECDED disabled) and rewrote objects 1-6 after the
+pre-HAL MINIT sequence. When SC re-enabled SECDED, message-handler scanning
+encountered stale check bits and asserted both DCAN ECC flags plus ESM group-1
+channel 21. The corrected sequence enables SECDED before the first MINIT,
+preserves the original power-on diagnostics, repeats full RAM/ECC hardware
+initialization immediately after `canInit()`, then installs the SC mailboxes.
+IF2 data now uses HALCoGen's proven BE32 lane order; all IF1/IF2 waits propagate
+failure to the existing fail-closed CAN-init/BIST gates, and the temporary RX
+object must be invalidated successfully. The diagnostic 100-fold loopback wait
+extension was removed.
+
+Verification on final source: 22/22 SC contracts, 28/28 SC CAN executable
+tests, SC main 7/7, and SC Ethernet 13/13 passed. A fresh ETH production build
+in `build/tms570-prod-final-dcan1-loopback` linked cleanly under authored-source
+`-Werror` (text 55,776 bytes, data 0, BSS 27,305 bytes). The exact flashed image
+booted with clean startup ESM status, initialized 9 modules, passed BIST 7/7,
+and energized the relay. Its loopback return is gated on clean final DCAN
+`ECC_CS` flags and ESM group-1 channel 21, so the pass is also the post-traffic
+ECC acceptance evidence. SCET then delivered 511 valid frames over 5.10 active
+seconds at 100.001 Hz, zero gaps, zero missed, zero invalid. No physical CAN was
+connected or used; retained PERR/ECC_SERR history was not written; production
+still never acknowledges group-2 SR2/SSR2. S-OS-44 and S-OS-45 remain not
+started.
+
 ## Scope and unchanged limits
 
 The fixed 10 ms SC sequence runs as one highest-priority, run-to-completion
@@ -207,7 +239,7 @@ and telemetry limits remain unchanged.
 | IRQ-stack static margin | PASS with limitation | `-fstack-usage` build at the current debug `-Og` profile gives a conservative 144-byte maximum for the RTI assembly save + tick/alarm activation + ISR2-exit dispatch chain. The 256-byte IRQ stack therefore has 112 bytes (43.75%) static margin. No runtime stack-paint high-water measurement exists |
 | Fixed safety-sequence order | PASS | executable host mock observed the required order and sequence counter 9 |
 | Watchdog ownership and suppression | PASS | executable host injection covered RAM/self-test, stack canary, DCAN bus-off, ESM, sequence integrity, 5,001 us overrun, and the exact 5,000 us passing boundary |
-| DCAN internal target logic | PASS | 24 tests, 0 failures using production timing/mailbox constants; no physical continuity claimed |
+| DCAN internal target logic | PASS | 28 tests, 0 failures including ECC reinitialization and mailbox-setup failure gates; no physical continuity claimed |
 | ESM internal logic | PASS | 11 executable host tests, 0 failures |
 | Ethernet telemetry internal logic | PASS | Ethernet 13/13, telemetry 6/6, UDP 6/6 |
 | XCP Ethernet internal logic | PASS | XCP Ethernet 16/16; smoke-tool self-test passed |
@@ -225,7 +257,7 @@ and telemetry limits remain unchanged.
 | S-OS-41 negative control | PASS (2026-07-11) | preserved pre-fix ETH image freshly latched live `SR2=0x00000008` on a programming-reset boot and parked fail-closed after Ethernet init; reflashed fixed image booted clean again with retained `SSR2=0x0000000C` shadow preserved and never written |
 | SC steady-state relay/mode after normal boot | OPEN (2026-07-11 observation) | SCET status bytes showed SAFE_STOP, relay de-energized, fault reason READBACK (2 consecutive relay GPIO readback mismatches) within ~90 s of the power-on boot, with heartbeat faults for all three monitored ECUs (none on bench CAN); novelty unknown — prior SCET evidence never decoded status bytes; needs bench relay-feedback investigation |
 | SC relay READBACK disposition | DISPOSITIONED (2026-07-11, S-OS-42) | Correct fail-closed response on a LaunchPad with no relay feedback and GIOA0 remuxed to debug UART; fresh replay first showed READBACK with heartbeat flags clear/health `0b111`, then 4.73 s later showed the three expected no-CAN heartbeat flags with READBACK still latched. Heartbeat loss was later, not the original kill. No source fix; relay steady-state qualification remains unavailable on this bench. |
-| DCAN1 message-RAM ECC initialization/recovery | BLOCKED (2026-07-11, S-OS-43) | ECC initialization/recovery and post-mailbox source validation are host-green (19 contracts, 26 SC CAN tests) and an intermediate target image booted with clean ECC/ESM SRAM diagnostics and 100.002 Hz SCET. Both internal-loopback target attempts failed startup BIST step 4, including TRM hot-self-test mode with an extended bounded wait. T2 is not complete; T3/T4 not started. |
+| DCAN1 message-RAM ECC initialization/recovery | PASS (2026-07-11, S-OS-43) | Root-caused to BE32 IF2 payload extraction plus generated `canInit()` rewriting objects with PMD=5 after the first MINIT. Final source enables SECDED before MINIT, reinitializes full RAM/ECC after HAL, preserves power-on diagnostics, and fail-closes IF timeouts. 22 contracts, 28 SC CAN tests, and fresh target ETH image pass; target booted 9 modules, BIST 7/7, then produced 511 SCET frames at 100.001 Hz with zero gaps/invalid. No physical CAN claim; T3/T4 not started. |
 
 ## Implementation and verification notes
 
