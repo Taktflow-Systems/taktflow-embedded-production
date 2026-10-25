@@ -162,13 +162,8 @@ ssh "$VPS_HOST" "$REMOTE_ENV $COMPOSE build $BUILD_FLAGS"
 echo "[6/8] Starting services..."
 ssh "$VPS_HOST" "$REMOTE_ENV $COMPOSE up -d --remove-orphans"
 
-# Step 7: prune dangling images, record the deployed revision
-echo "[7/8] Pruning dangling images, recording revision..."
-ssh "$VPS_HOST" "docker image prune -f && printf '%s\n' '$GIT_SHA' > $REMOTE_DIR/docker/DEPLOYED_SHA"
-ssh "$VPS_HOST" "cd $REMOTE_DIR/docker && $COMPOSE ps --format 'table {{.Name}}\t{{.Status}}'"
-
-# Step 8: smoke test from taktflow-infra, retried while containers settle
-echo "[8/8] Smoke test (up to ${SMOKE_TIMEOUT_SEC}s)..."
+# Step 7: smoke test from taktflow-infra, retried while containers settle
+echo "[7/8] Smoke test (up to ${SMOKE_TIMEOUT_SEC}s)..."
 deadline=$(( $(date +%s) + SMOKE_TIMEOUT_SEC ))
 while :; do
     if bash "$SMOKE"; then
@@ -180,6 +175,12 @@ while :; do
     echo "smoke red, retrying in ${SMOKE_RETRY_SEC}s..."
     sleep "$SMOKE_RETRY_SEC"
 done
+
+# Step 8: only after a green smoke: prune dangling images (until now they are the
+# rollback images) and record the deployed revision
+echo "[8/8] Pruning dangling images, recording revision..."
+ssh "$VPS_HOST" "docker image prune -f && printf '%s\n' '$GIT_SHA' > $REMOTE_DIR/docker/DEPLOYED_SHA"
+ssh "$VPS_HOST" "cd $REMOTE_DIR/docker && $COMPOSE ps --format 'table {{.Name}}\t{{.Status}}'"
 
 echo ""
 echo "=== Deployment complete: $GIT_SHA ==="
