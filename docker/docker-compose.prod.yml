@@ -1,1 +1,27 @@
-services: {}
+# Production overrides for the SIL demo hosts, applied by scripts/deploy/deploy.sh.
+# Log caps: unrotated json-file logs once filled the host disk to 88 percent.
+x-capped-logs: &capped-logs
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  can-setup: { logging: *capped-logs }
+  cvc: { logging: *capped-logs }
+  fzc: { logging: *capped-logs }
+  rzc: { logging: *capped-logs }
+  sc: { logging: *capped-logs }
+  bcm: { logging: *capped-logs }
+  icu: { logging: *capped-logs }
+  tcu: { logging: *capped-logs }
+  plant-sim: { logging: *capped-logs }
+  can-gateway: { logging: *capped-logs }
+  mqtt-broker: { logging: *capped-logs }
+  ws-bridge: { logging: *capped-logs }
+  sap-qm-mock: { logging: *capped-logs }
+  ml-inference: { logging: *capped-logs }
+  fault-inject: { logging: *capped-logs }
+  docker-proxy: { logging: *capped-logs }
+  bms-web: { logging: *capped-logs }
+  caddy: { logging: *capped-logs }
