@@ -9,19 +9,28 @@ Endpoints:
     POST /api/fault/control/acquire    — acquire 5-min controller lock
     POST /api/fault/control/release    — release controller lock early
     GET  /api/fault/control/status     — current lock state
+    POST /api/test/run | /api/test/stop, GET /api/test/specs|status|result
+
+No endpoint needs a key: the public dashboard calls them all. Instead:
+    POST /api/fault/* and /api/test/stop   30 per minute per client
+    POST /api/test/run                     3 per 10 min per client, 20 per hour total
+A request with a valid X-Api-Key (FAULT_API_KEY) skips these limits.
+Over the limit: HTTP 429 with Retry-After. The controller lock still applies.
 
 Runs on FAULT_PORT (default 8091).
 """
 
+import hmac
 import json
 import logging
+import math
 import os
 import threading
 import time
 
 import paho.mqtt.client as paho_mqtt
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -30,6 +39,7 @@ from .scenarios import (
     _get_bus, _send, _brake_frame, _steer_frame,
     CAN_BRAKE_COMMAND, CAN_STEER_COMMAND,
 )
+from .rate_limit import Rule, SlidingWindowLimiter, client_key
 from .test_runner import DashboardTestRunner
 
 logging.basicConfig(
@@ -39,8 +49,17 @@ logging.basicConfig(
 )
 log = logging.getLogger("fault_inject")
 
-# API key for mutating endpoints (empty = no auth, dev mode)
+# Operator key: a request carrying it as X-Api-Key skips the rate limits (empty = none)
 FAULT_API_KEY = os.environ.get("FAULT_API_KEY", "")
+
+# Rate limits (see module docstring); one limiter per process
+FAULT_LIMIT = 30
+FAULT_WINDOW_SEC = 60.0
+RUN_CLIENT_LIMIT = 3
+RUN_CLIENT_WINDOW_SEC = 600.0
+RUN_GLOBAL_LIMIT = 20
+RUN_GLOBAL_WINDOW_SEC = 3600.0
+_limiter = SlidingWindowLimiter()
 
 # MQTT client for publishing reset/command messages
 _mqtt_client: paho_mqtt.Client | None = None
@@ -352,13 +371,55 @@ def _on_startup():
 
 
 # ---------------------------------------------------------------------------
+# Rate limiting
+# ---------------------------------------------------------------------------
+
+def _has_valid_key(request: Request) -> bool:
+    """True when FAULT_API_KEY is set and the request carries it as X-Api-Key."""
+    if not FAULT_API_KEY:
+        return False
+    key = request.headers.get("X-Api-Key", "")
+    return hmac.compare_digest(key.encode("utf-8"), FAULT_API_KEY.encode("utf-8"))
+
+
+def _client_of(request: Request) -> str:
+    peer = request.client.host if request.client else None
+    return client_key(peer, request.headers.get("X-Forwarded-For"))
+
+
+def _too_many(retry_after_sec: float) -> HTTPException:
+    secs = max(1, math.ceil(retry_after_sec))
+    return HTTPException(
+        status_code=429,
+        detail=f"Too many requests, retry in {secs}s",
+        headers={"Retry-After": str(secs)},
+    )
+
+
+def _limit_fault(request: Request) -> None:
+    """Dependency: per-client limit for mutating fault endpoints."""
+    if _has_valid_key(request):
+        return
+    rules = [Rule("fault", _client_of(request), FAULT_LIMIT, FAULT_WINDOW_SEC)]
+    wait = _limiter.try_acquire(rules)
+    if wait > 0.0:
+        raise _too_many(wait)
+
+
+def _run_rules(request: Request) -> list[Rule]:
+    return [
+        Rule("test-run", _client_of(request), RUN_CLIENT_LIMIT, RUN_CLIENT_WINDOW_SEC),
+        Rule("test-run-all", "*", RUN_GLOBAL_LIMIT, RUN_GLOBAL_WINDOW_SEC),
+    ]
+
+
+# ---------------------------------------------------------------------------
 # Control lock endpoints
 # ---------------------------------------------------------------------------
 
-@app.post("/api/fault/control/acquire")
+@app.post("/api/fault/control/acquire", dependencies=[Depends(_limit_fault)])
 def acquire_control(body: ClientIdBody, request: Request):
     """Acquire 5-min control lock. Returns 409 if already held by someone else."""
-    _check_api_key(request)
     now = time.time()
     with _lock_mu:
         # Check if lock is already held (and not expired)
@@ -385,10 +446,9 @@ def acquire_control(body: ClientIdBody, request: Request):
     }
 
 
-@app.post("/api/fault/control/release")
+@app.post("/api/fault/control/release", dependencies=[Depends(_limit_fault)])
 def release_control(body: ClientIdBody, request: Request):
     """Release control lock early. Returns 403 if not the holder."""
-    _check_api_key(request)
     with _lock_mu:
         if _control_lock["client_id"] != body.client_id:
             raise HTTPException(status_code=403, detail="Not the lock holder")
@@ -417,19 +477,6 @@ def control_status():
 
 
 # ---------------------------------------------------------------------------
-# API key guard
-# ---------------------------------------------------------------------------
-
-def _check_api_key(request: Request) -> None:
-    """Reject mutating requests without a valid API key (if configured)."""
-    if not FAULT_API_KEY:
-        return  # No key configured — dev mode, allow all
-    key = request.headers.get("X-Api-Key", "")
-    if key != FAULT_API_KEY:
-        raise HTTPException(status_code=401, detail="Invalid or missing API key")
-
-
-# ---------------------------------------------------------------------------
 # Lock guard helper
 # ---------------------------------------------------------------------------
 
@@ -454,10 +501,9 @@ def _check_control_lock(request: Request) -> None:
 # Fault scenario endpoints
 # ---------------------------------------------------------------------------
 
-@app.post("/api/fault/scenario/{name}")
+@app.post("/api/fault/scenario/{name}", dependencies=[Depends(_limit_fault)])
 def trigger_scenario(name: str, request: Request):
     """Trigger a fault scenario by name."""
-    _check_api_key(request)
     _check_control_lock(request)
     entry = SCENARIOS.get(name)
     if entry is None:
@@ -491,10 +537,9 @@ def trigger_scenario(name: str, request: Request):
     return {"scenario": name, "result": result}
 
 
-@app.post("/api/fault/reset")
+@app.post("/api/fault/reset", dependencies=[Depends(_limit_fault)])
 def reset_all(request: Request):
     """Power-cycle reset: restart ECU containers to clear all latched faults."""
-    _check_api_key(request)
     _check_control_lock(request)
     global _idle_paused, _idle_paused_until
     log.info("Power-cycle reset initiated")
@@ -539,22 +584,26 @@ def health_check():
 
 @app.post("/api/test/run")
 def start_test_run(body: TestRunBody, request: Request):
-    """Start E2E test suite. Requires control lock."""
-    _check_api_key(request)
+    """Start E2E test suite. Requires control lock; limited per client and in total."""
     _check_control_lock(request)
     if _test_runner is None:
         raise HTTPException(status_code=503, detail="Test runner not initialized")
+    rules = [] if _has_valid_key(request) else _run_rules(request)
+    wait = _limiter.retry_after(rules)
+    if wait > 0.0:
+        raise _too_many(wait)
     try:
         run_id = _test_runner.start(body.tests)
     except RuntimeError:
         raise HTTPException(status_code=409, detail="Test run already in progress")
+    # Only a run that really started counts against the limits.
+    _limiter.record(rules)
     return {"run_id": run_id, "state": "running"}
 
 
-@app.post("/api/test/stop")
+@app.post("/api/test/stop", dependencies=[Depends(_limit_fault)])
 def stop_test_run(request: Request):
     """Stop the running test suite after the current scenario."""
-    _check_api_key(request)
     _check_control_lock(request)
     if _test_runner is None:
         raise HTTPException(status_code=503, detail="Test runner not initialized")
