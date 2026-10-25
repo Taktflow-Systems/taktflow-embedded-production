@@ -16,3 +16,6 @@ ENV CAN_CHANNEL=vcan0
 
 USER appuser
 CMD ["python", "-m", "plant_sim.simulator"]
+
+ARG GIT_SHA=unknown
+LABEL org.opencontainers.image.revision=$GIT_SHA

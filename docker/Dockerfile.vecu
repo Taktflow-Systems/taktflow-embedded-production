@@ -67,3 +67,6 @@ ARG ECU_NAME=bcm
 ENV ECU_NAME=${ECU_NAME}
 
 ENTRYPOINT ["/bin/sh", "-c", "/usr/local/bin/${ECU_NAME}"]
+
+ARG GIT_SHA=unknown
+LABEL org.opencontainers.image.revision=$GIT_SHA

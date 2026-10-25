@@ -18,3 +18,6 @@ ENV DBC_PATH=/app/taktflow_vehicle.dbc
 
 USER appuser
 CMD ["python", "-m", "fault_inject.app"]
+
+ARG GIT_SHA=unknown
+LABEL org.opencontainers.image.revision=$GIT_SHA
