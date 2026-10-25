@@ -15,3 +15,6 @@ ENV MQTT_PORT=1883
 
 USER appuser
 CMD ["python", "-m", "sap_qm_mock.app"]
+
+ARG GIT_SHA=unknown
+LABEL org.opencontainers.image.revision=$GIT_SHA

@@ -375,6 +375,7 @@ services:
 
   # --- Caddy Reverse Proxy (auto-TLS) ---
   caddy:
+    profiles: ["standalone-ingress"]
     image: caddy:2
     init: true  # tini reaps wget children spawned by healthcheck (prevents zombie accumulation)
     network_mode: host

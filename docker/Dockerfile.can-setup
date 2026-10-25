@@ -1,2 +1,5 @@
 FROM alpine:3.19
 RUN apk add --no-cache iproute2 kmod
+
+ARG GIT_SHA=unknown
+LABEL org.opencontainers.image.revision=$GIT_SHA
