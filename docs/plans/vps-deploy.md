@@ -198,3 +198,93 @@ git pull
 cd docker
 docker compose up --build -d
 ```
+
+## MQTT credential on a deployed host (RF-P4-03)
+
+`scripts/deploy/deploy.sh` runs compose with `docker-compose.dev.yml` plus
+`docker-compose.prod.yml`. The production file sets `MQTT_PASSWORD` for every
+broker client (plant-sim, can-gateway, ws-bridge, sap-qm-mock, ml-inference,
+fault-inject) as `${MQTT_PASSWORD:?...}`: compose stops before any build when
+`docker/.env` on the host has no non-empty `MQTT_PASSWORD`. `MQTT_USER`
+defaults to `taktflow`. Laptops keep the dev defaults and need no `.env`.
+`test/sil/run_sil.sh` reads only `MQTT_USER` and `MQTT_PASSWORD` from
+`docker/.env` on a deployed host (marker `.deploy-origin`), so the verdict
+checker and the plant-inject helpers authenticate with the same credential.
+
+Facts the rotation depends on (compose project `docker`, broker container
+`docker-mqtt-broker-1`, host networking, broker is PID 1):
+
+- Host files: `/opt/taktflow-embedded/docker/.env` (mode 600) and
+  `/opt/taktflow-embedded/gateway/mosquitto/passwd`. Neither is overwritten by
+  `deploy.sh` (both are rsync excludes).
+- Container paths: `/mosquitto/config/passwd`, `/mosquitto/config/acl`,
+  `/mosquitto/config/mosquitto.conf`, all bind-mounted read-only. The tool
+  therefore cannot write the password file in place inside the container.
+- The password file is a single-file bind mount, which follows the inode. Do
+  not replace it with `mv` or `mosquitto_passwd -c` on the host; a new inode is
+  invisible to the container. Overwrite the content in place with `cat >`.
+
+### Rotate the broker password
+
+Run as root on the host. The new value is never echoed.
+
+```bash
+cd /opt/taktflow-embedded
+umask 077
+B=".backup-mqtt-$(date -u +%Y%m%dT%H%M%SZ)"   # .backup-* survives deploy.sh rsync
+mkdir "$B" && cp -p docker/.env "$B/env" && cp -p gateway/mosquitto/passwd "$B/passwd"
+
+NEW="$(openssl rand -hex 32)"; export NEW
+
+# 1. new hash, made by the running broker's own tool into its /tmp
+docker exec -e NEW docker-mqtt-broker-1 sh -c \
+  'mosquitto_passwd -b -c /tmp/passwd.new taktflow "$NEW" && cat /tmp/passwd.new && rm -f /tmp/passwd.new' \
+  > "$B/passwd.new"
+[ -s "$B/passwd.new" ] || { echo "no hash produced; stop"; false; }
+
+# 2. host .env: drop the old line, append the new one, keep mode 600
+{ grep -v '^MQTT_PASSWORD=' docker/.env || true; printf 'MQTT_PASSWORD=%s\n' "$NEW"; } > docker/.env.new
+chmod 600 docker/.env.new && mv docker/.env.new docker/.env
+
+# 3. password file, content replaced in place (same inode), then reload
+cat "$B/passwd.new" > gateway/mosquitto/passwd
+docker kill -s HUP docker-mqtt-broker-1
+
+# 4. the new password is accepted, the dev default is refused (exit 0 and non-zero)
+docker exec -e NEW docker-mqtt-broker-1 sh -c 'mosquitto_pub -h 127.0.0.1 -u taktflow -P "$NEW" -t rotation-check -m ok'; echo "new=$?"
+docker exec docker-mqtt-broker-1 sh -c 'mosquitto_pub -h 127.0.0.1 -u taktflow -P taktflow-dev -t rotation-check -m ok'; echo "dev=$?"
+unset NEW
+```
+
+If `dev=0` after the reload, run `docker restart docker-mqtt-broker-1`
+(re-resolves the bind mount) and repeat step 4.
+
+Then deploy from the workstation so the clients restart with the new
+credential (compose recreates the six services because their environment
+changed):
+
+```bash
+TAKTFLOW_INFRA_DIR=<taktflow-infra checkout> scripts/deploy/deploy.sh <ssh-target>
+```
+
+Between step 3 and the container recreation the running clients still hold the
+old password; established connections stay up, reconnects are refused, so keep
+that window short. After the deploy: smoke green, and
+`docker logs --since 10m docker-mqtt-broker-1 2>&1 | grep -c 'not authorised'`
+settles at 0 once the clients have restarted.
+
+### Roll back
+
+```bash
+cd /opt/taktflow-embedded
+B=.backup-mqtt-<stamp>                 # the directory made above
+cat "$B/passwd" > gateway/mosquitto/passwd
+cp -p "$B/env" docker/.env
+docker kill -s HUP docker-mqtt-broker-1
+```
+
+Then redeploy the previous commit (`deploy.sh` from a checkout of that commit).
+The restored `.env` carries the old values, so the old compose files (default
+`taktflow-dev`) and the restored password file agree again. Keep the backup
+directory until the rotation has run for a week; it holds both credentials, so
+it stays on the host and out of every repository.
