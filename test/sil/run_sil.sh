@@ -59,6 +59,26 @@ PROD_OVERRIDE="$REPO_ROOT/docker/docker-compose.prod.yml"
 if [ -f "$REPO_ROOT/.deploy-origin" ] && [ -f "$PROD_OVERRIDE" ]; then
     PROD_HOST=true
     COMPOSE_ARGS+=(-f "$PROD_OVERRIDE")
+    # Test-side MQTT clients need the broker credentials from the host .env.
+    # Only these two keys are read, never echoed; a variable already set wins.
+    ENV_FILE="$REPO_ROOT/docker/.env"
+    if [ -f "$ENV_FILE" ]; then
+        while IFS= read -r env_line || [ -n "$env_line" ]; do
+            env_line="${env_line%$'\r'}"
+            case "$env_line" in
+                MQTT_USER=*)     env_key=MQTT_USER;     env_val="${env_line#MQTT_USER=}" ;;
+                MQTT_PASSWORD=*) env_key=MQTT_PASSWORD; env_val="${env_line#MQTT_PASSWORD=}" ;;
+                *) continue ;;
+            esac
+            if [[ "$env_val" =~ ^\"(.*)\"$ ]] || [[ "$env_val" =~ ^\'(.*)\'$ ]]; then
+                env_val="${BASH_REMATCH[1]}"
+            fi
+            if [ -z "${!env_key+x}" ]; then
+                export "$env_key=$env_val"
+            fi
+        done < "$ENV_FILE"
+        unset env_line env_key env_val
+    fi
     if [ -f "$REPO_ROOT/docker/DEPLOYED_SHA" ]; then
         DEPLOYED_SHA="$(tr -d '[:space:]' < "$REPO_ROOT/docker/DEPLOYED_SHA")"
         if [[ "$DEPLOYED_SHA" =~ ^[0-9a-f]{7,64}$ ]]; then
