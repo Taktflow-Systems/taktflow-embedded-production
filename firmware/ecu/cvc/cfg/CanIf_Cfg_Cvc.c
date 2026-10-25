@@ -56,6 +56,8 @@ static const CanIf_RxPduConfigType cvc_rx_pdu_config[] = {
     { 0x400u,  CVC_COM_RX_LIGHT_STATUS,  4u, FALSE },
     { 0x401u,  CVC_COM_RX_INDICATOR_STATE,  4u, FALSE },
     { 0x402u,  CVC_COM_RX_DOOR_LOCK_STATUS,  2u, FALSE },
+    { 0x600u,  CVC_COM_RX_FZC_VIRTUAL_SENSORS,  8u, FALSE },
+    { 0x601u,  CVC_COM_RX_RZC_VIRTUAL_SENSORS,  8u, FALSE },
     { 0x644u,  CVC_COM_RX_UDS_RESP_TCU,  8u, FALSE },
     { 0x7DFu,  CVC_COM_RX_UDS_FUNC_REQUEST,  8u, FALSE },
     { 0x7E0u,  CVC_COM_RX_UDS_PHYS_REQ_CVC,  8u, FALSE },

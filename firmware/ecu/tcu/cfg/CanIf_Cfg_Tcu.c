@@ -57,6 +57,8 @@ static const CanIf_RxPduConfigType tcu_rx_pdu_config[] = {
     { 0x401u,  TCU_COM_RX_INDICATOR_STATE,  4u, FALSE },
     { 0x402u,  TCU_COM_RX_DOOR_LOCK_STATUS,  2u, FALSE },
     { 0x500u,  TCU_COM_RX_DTC_BROADCAST,  8u, FALSE },
+    { 0x600u,  TCU_COM_RX_FZC_VIRTUAL_SENSORS,  8u, FALSE },
+    { 0x601u,  TCU_COM_RX_RZC_VIRTUAL_SENSORS,  8u, FALSE },
     { 0x7DFu,  TCU_COM_RX_UDS_FUNC_REQUEST,  8u, FALSE },
     { 0x7E0u,  TCU_COM_RX_UDS_PHYS_REQ_CVC,  8u, FALSE },
     { 0x7E1u,  TCU_COM_RX_UDS_PHYS_REQ_FZC,  8u, FALSE },
