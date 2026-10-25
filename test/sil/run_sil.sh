@@ -49,6 +49,23 @@ elif [ -f "$REPO_ROOT/docker/docker-compose.dev.yml" ]; then
 else
     COMPOSE_FILE="$REPO_ROOT/docker/docker-compose.yml"
 fi
+
+# Compose file arguments. On a deployed host (marker .deploy-origin, written
+# only there) the production override and the deployed revision are added.
+COMPOSE_ARGS=(-f "$COMPOSE_FILE")
+BUILD_ARGS=()
+PROD_HOST=false
+PROD_OVERRIDE="$REPO_ROOT/docker/docker-compose.prod.yml"
+if [ -f "$REPO_ROOT/.deploy-origin" ] && [ -f "$PROD_OVERRIDE" ]; then
+    PROD_HOST=true
+    COMPOSE_ARGS+=(-f "$PROD_OVERRIDE")
+    if [ -f "$REPO_ROOT/docker/DEPLOYED_SHA" ]; then
+        DEPLOYED_SHA="$(tr -d '[:space:]' < "$REPO_ROOT/docker/DEPLOYED_SHA")"
+        if [[ "$DEPLOYED_SHA" =~ ^[0-9a-f]{7,64}$ ]]; then
+            BUILD_ARGS+=(--build-arg "GIT_SHA=$DEPLOYED_SHA")
+        fi
+    fi
+fi
 SCENARIOS_DIR="$SCRIPT_DIR/scenarios"
 RESULTS_DIR="$SCRIPT_DIR/results"
 VERDICT_CHECKER="$SCRIPT_DIR/verdict_checker.py"
@@ -219,8 +236,15 @@ info "Results will be saved to: $RUN_RESULTS_DIR"
 # ---------------------------------------------------------------------------
 header "Starting SIL Platform"
 
-info "Bringing up Docker services from $COMPOSE_FILE"
-docker compose -f "$COMPOSE_FILE" up --build -d 2>&1 | tee "$RUN_RESULTS_DIR/docker_startup.log"
+info "Compose files: ${COMPOSE_ARGS[*]} (deployed host: $PROD_HOST)"
+if [ "$PROD_HOST" = true ]; then
+    # Deployed host: build with the deployed revision (a cached build reproduces
+    # the running images), then up -d without --build so nothing is recreated.
+    docker compose "${COMPOSE_ARGS[@]}" build ${BUILD_ARGS[@]+"${BUILD_ARGS[@]}"} 2>&1 | tee "$RUN_RESULTS_DIR/docker_startup.log"
+    docker compose "${COMPOSE_ARGS[@]}" up -d 2>&1 | tee -a "$RUN_RESULTS_DIR/docker_startup.log"
+else
+    docker compose "${COMPOSE_ARGS[@]}" up --build -d 2>&1 | tee "$RUN_RESULTS_DIR/docker_startup.log"
+fi
 
 if [ $? -ne 0 ]; then
     fail "Docker compose up failed. Check $RUN_RESULTS_DIR/docker_startup.log"
@@ -285,10 +309,10 @@ fi
 if [ "$HEALTH_OK" = false ]; then
     fail "One or more services failed health checks"
     info "Saving container logs before exit..."
-    docker compose -f "$COMPOSE_FILE" logs --no-color > "$RUN_RESULTS_DIR/docker_logs.txt" 2>&1
+    docker compose "${COMPOSE_ARGS[@]}" logs --no-color > "$RUN_RESULTS_DIR/docker_logs.txt" 2>&1
     if [ "$KEEP_CONTAINERS" = false ]; then
         info "Tearing down containers..."
-        docker compose -f "$COMPOSE_FILE" down 2>/dev/null
+        docker compose "${COMPOSE_ARGS[@]}" down 2>/dev/null
     fi
     exit 1
 fi
@@ -332,12 +356,12 @@ echo ""
 header "Collecting Logs"
 
 info "Saving Docker container logs..."
-docker compose -f "$COMPOSE_FILE" logs --no-color > "$RUN_RESULTS_DIR/docker_logs.txt" 2>&1
+docker compose "${COMPOSE_ARGS[@]}" logs --no-color > "$RUN_RESULTS_DIR/docker_logs.txt" 2>&1
 ok "Container logs saved to $RUN_RESULTS_DIR/docker_logs.txt"
 
 # Save individual container logs
 for container in cvc fzc rzc sc bcm icu tcu plant-sim can-gateway fault-inject mqtt-broker; do
-    docker compose -f "$COMPOSE_FILE" logs --no-color "$container" \
+    docker compose "${COMPOSE_ARGS[@]}" logs --no-color "$container" \
         > "$RUN_RESULTS_DIR/${container}.log" 2>/dev/null || true
 done
 ok "Individual container logs saved"
@@ -347,10 +371,10 @@ ok "Individual container logs saved"
 # ---------------------------------------------------------------------------
 if [ "$KEEP_CONTAINERS" = true ]; then
     warn "Containers kept running (--keep flag). Tear down manually:"
-    warn "  docker compose -f $COMPOSE_FILE down"
+    warn "  docker compose ${COMPOSE_ARGS[*]} down"
 else
     header "Tearing Down SIL Platform"
-    docker compose -f "$COMPOSE_FILE" down 2>&1 | tee -a "$RUN_RESULTS_DIR/docker_teardown.log"
+    docker compose "${COMPOSE_ARGS[@]}" down 2>&1 | tee -a "$RUN_RESULTS_DIR/docker_teardown.log"
     ok "All containers stopped and removed"
 fi
 
