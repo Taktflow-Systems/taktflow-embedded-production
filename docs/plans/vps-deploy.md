@@ -242,13 +242,14 @@ docker exec -e NEW docker-mqtt-broker-1 sh -c \
   > "$B/passwd.new"
 [ -s "$B/passwd.new" ] || { echo "no hash produced; stop"; false; }
 
-# 2. host .env: drop the old line, append the new one, keep mode 600
+# 2. host .env: drop the old line, append the new one, keep mode 600, owner deploy
 { grep -v '^MQTT_PASSWORD=' docker/.env || true; printf 'MQTT_PASSWORD=%s\n' "$NEW"; } > docker/.env.new
-chmod 600 docker/.env.new && mv docker/.env.new docker/.env
+chmod 600 docker/.env.new && mv docker/.env.new docker/.env && chown deploy:deploy docker/.env
 
-# 3. password file, content replaced in place (same inode), then reload
+# 3. password file, content replaced in place (same inode), then reload from inside
+#    the container; never `docker kill -s HUP` (see the note below)
 cat "$B/passwd.new" > gateway/mosquitto/passwd
-docker kill -s HUP docker-mqtt-broker-1
+docker exec -u mosquitto docker-mqtt-broker-1 kill -HUP 1
 
 # 4. the new password is accepted, the dev default is refused (exit 0 and non-zero)
 docker exec -e NEW docker-mqtt-broker-1 sh -c 'mosquitto_pub -h 127.0.0.1 -u taktflow -P "$NEW" -t rotation-check -m ok'; echo "new=$?"
@@ -279,9 +280,17 @@ settles at 0 once the clients have restarted.
 cd /opt/taktflow-embedded
 B=.backup-mqtt-<stamp>                 # the directory made above
 cat "$B/passwd" > gateway/mosquitto/passwd
-cp -p "$B/env" docker/.env
-docker kill -s HUP docker-mqtt-broker-1
+cp -p "$B/env" docker/.env && chown deploy:deploy docker/.env
+docker exec -u mosquitto docker-mqtt-broker-1 kill -HUP 1
 ```
+
+Why not `docker kill -s HUP`: Docker records any `docker kill`, whatever the
+signal, as a manual stop, and `restart: unless-stopped` then does not start the
+container at the next boot. On 2026-10-25 the broker stayed down after a host
+restart until the watchdog restarted it about three minutes later. The signal
+sent with `docker exec -u mosquitto` reaches PID 1 (user `mosquitto`, so no
+capability is needed) without changing the container's restart state. A
+`docker restart` clears the flag again.
 
 Then redeploy the previous commit (`deploy.sh` from a checkout of that commit).
 The restored `.env` carries the old values, so the old compose files (default
