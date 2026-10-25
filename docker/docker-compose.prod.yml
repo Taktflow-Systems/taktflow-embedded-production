@@ -6,6 +6,12 @@ x-capped-logs: &capped-logs
     max-size: "10m"
     max-file: "3"
 
+# MQTT credentials for every broker client (RF-P4-03). The dev file keeps its
+# laptop default; here an unset or empty password stops compose before any build.
+x-mqtt-env: &mqtt-env
+  MQTT_USER: ${MQTT_USER:-taktflow}
+  MQTT_PASSWORD: ${MQTT_PASSWORD:?MQTT_PASSWORD must be set in docker/.env}
+
 services:
   can-setup: { logging: *capped-logs }
   cvc: { logging: *capped-logs }
@@ -15,13 +21,13 @@ services:
   bcm: { logging: *capped-logs }
   icu: { logging: *capped-logs }
   tcu: { logging: *capped-logs }
-  plant-sim: { logging: *capped-logs }
-  can-gateway: { logging: *capped-logs }
+  plant-sim: { logging: *capped-logs, environment: *mqtt-env }
+  can-gateway: { logging: *capped-logs, environment: *mqtt-env }
   mqtt-broker: { logging: *capped-logs }
-  ws-bridge: { logging: *capped-logs }
-  sap-qm-mock: { logging: *capped-logs }
-  ml-inference: { logging: *capped-logs }
-  fault-inject: { logging: *capped-logs }
+  ws-bridge: { logging: *capped-logs, environment: *mqtt-env }
+  sap-qm-mock: { logging: *capped-logs, environment: *mqtt-env }
+  ml-inference: { logging: *capped-logs, environment: *mqtt-env }
+  fault-inject: { logging: *capped-logs, environment: *mqtt-env }
   docker-proxy: { logging: *capped-logs }
   bms-web: { logging: *capped-logs }
   caddy: { logging: *capped-logs }
