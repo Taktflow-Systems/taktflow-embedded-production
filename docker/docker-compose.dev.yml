@@ -452,7 +452,9 @@ services:
   # --- Docker Socket Proxy (filtered API for fault-inject) ---
   docker-proxy:
     image: tecnativa/docker-socket-proxy:0.2
-    network_mode: host
+    # Default bridge network; published on loopback only (fault-inject uses host networking).
+    ports:
+      - "127.0.0.1:2375:2375"
     mem_limit: 64m
     cpus: 0.25
     environment:
