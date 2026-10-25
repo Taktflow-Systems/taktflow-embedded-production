@@ -128,6 +128,7 @@ rsync -avz --delete \
     --exclude '/.deploy-origin' \
     --exclude '/docker/DEPLOYED_SHA' \
     --exclude '/test/sil/results/' \
+    --exclude '/.backup-*/' \
     "$REPO_ROOT/" "$VPS_HOST:$REMOTE_DIR/"
 
 # Step 4: foxBMS sources, only when the foxbms profile is requested
