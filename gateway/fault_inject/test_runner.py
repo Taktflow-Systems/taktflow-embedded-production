@@ -313,7 +313,7 @@ class DashboardTestRunner:
         if self._running:
             return "running"
         if self.last_result:
-            return "complete"
+            return self.last_result.get("state", "complete")
         return "idle"
 
     def start(self, test_ids: list[str] | None = None) -> str:
@@ -402,11 +402,13 @@ class DashboardTestRunner:
         """Execute the test suite (runs in daemon thread)."""
         start_time = time.time()
         results: list[dict] = []
+        final_state = "complete"
 
         try:
             for idx, spec in enumerate(specs):
                 if self._stop_requested:
                     log.info("[TEST %s] Stopped by user after %d scenarios", run_id, idx)
+                    final_state = "aborted"
                     break
 
                 self._publish_progress(run_id, len(specs), idx, spec, "preparing", results, start_time)
@@ -420,6 +422,10 @@ class DashboardTestRunner:
                 self._monitor.reset()
 
                 if not self._wait_for_run(run_id):
+                    if self._stop_requested:
+                        log.info("[TEST %s] Stopped while preparing %s", run_id, spec.id)
+                        final_state = "aborted"
+                        break
                     # CVC didn't reach RUN — skip this test
                     log.warning("[TEST %s] Skipping %s — CVC not in RUN", run_id, spec.id)
                     results.append({
@@ -458,6 +464,10 @@ class DashboardTestRunner:
                         if self._stop_requested:
                             break
                         time.sleep(0.2)
+                    if self._stop_requested:
+                        log.info("[TEST %s] Stopped while settling %s", run_id, spec.id)
+                        final_state = "aborted"
+                        break
 
                 # Clear monitor state before injection
                 self._monitor.reset()
@@ -475,6 +485,10 @@ class DashboardTestRunner:
                     if self._stop_requested:
                         break
                     time.sleep(0.2)  # poll at 5Hz
+                if self._stop_requested:
+                    log.info("[TEST %s] Stopped while observing %s", run_id, spec.id)
+                    final_state = "aborted"
+                    break
 
                 # Evaluate verdicts
                 verdict_results = []
@@ -511,6 +525,7 @@ class DashboardTestRunner:
 
         except Exception as exc:
             log.error("[TEST %s] Suite aborted: %s", run_id, exc)
+            final_state = "error"
         finally:
             # Reset after suite
             try:
@@ -523,13 +538,13 @@ class DashboardTestRunner:
             failed = len(results) - passed
 
             final_result = {
-                "state": "complete",
+                "state": final_state,
                 "run_id": run_id,
                 "total": len(specs),
-                "current_index": len(specs),
+                "current_index": len(results),
                 "current_id": "",
                 "current_label": "",
-                "current_phase": "complete",
+                "current_phase": final_state,
                 "elapsed_sec": round(total_duration, 1),
                 "results": results,
                 "summary": {
@@ -545,7 +560,7 @@ class DashboardTestRunner:
             # Clear progress topic so frontend stops showing "running"
             self._mqtt.publish(
                 "taktflow/test/progress",
-                json.dumps({"state": "complete", "run_id": run_id}),
+                json.dumps({"state": final_state, "run_id": run_id}),
                 qos=0,
                 retain=False,
             )
@@ -554,8 +569,8 @@ class DashboardTestRunner:
             with self._lock:
                 self._running = False
 
-            log.info("[TEST %s] Suite complete: %d/%d passed in %.1fs",
-                     run_id, passed, len(results), total_duration)
+            log.info("[TEST %s] Suite %s: %d/%d passed in %.1fs",
+                     run_id, final_state, passed, len(results), total_duration)
 
     def _publish_progress(self, run_id: str, total: int, current_idx: int,
                           spec: TestSpec, phase: str, results: list[dict],
