@@ -73,6 +73,9 @@ _idle_paused_until = 0.0
 # Seconds to keep cruise paused after a scenario returns. Must exceed
 # the longest scenario observe_sec (battery_low = 30s).
 SCENARIO_POST_PAUSE_SEC = 35.0
+# Pedal % the idle loop keeps sending after "normal_drive"; None = no hold.
+_drive_hold_pct: float | None = None
+DRIVE_HOLD_SCENARIOS = {"normal_drive": 50.0}
 IDLE_CMD_INTERVAL = float(os.environ.get("IDLE_CMD_INTERVAL", "0.05"))  # 50ms
 
 # ---------------------------------------------------------------------------
@@ -230,6 +233,14 @@ def _idle_command_loop() -> None:
                 time.sleep(TICK)
                 continue
 
+            hold_pct = _drive_hold_pct
+            if hold_pct is not None:
+                # Normal Drive holds its pedal until reset or another scenario.
+                _send_pct(hold_pct)
+                phase, t_phase, neutral_logged = "ramp_up", 0.0, False
+                time.sleep(TICK)
+                continue
+
             if (not IDLE_CRUISE_ENABLE) or remote_locked:
                 # The web dashboard control lock does not stream manual
                 # pedal data. Keep CVC's POSIX SPI stub pinned at neutral
@@ -339,16 +350,37 @@ def _trigger_scenario(name: str):
     scenario's observation window — the scenario's clear / 100% / zero
     pedal gets overwritten on the very next cruise tick.
     """
-    global _idle_paused, _idle_paused_until
+    global _idle_paused
     entry = SCENARIOS.get(name)
     if not entry:
         return
     _idle_paused = True
+    _set_drive_hold(None)
+    ok = False
     try:
         entry["fn"]()
+        ok = True
     finally:
-        _idle_paused_until = time.time() + SCENARIO_POST_PAUSE_SEC
+        _end_scenario_pause(name, ok)
         _idle_paused = False
+
+
+def _set_drive_hold(pct: float | None) -> None:
+    global _drive_hold_pct
+    _drive_hold_pct = pct
+
+
+def _end_scenario_pause(name: str, ok: bool) -> None:
+    """Start the post-scenario window; a drive-hold scenario holds its pedal at once."""
+    global _idle_paused_until
+    hold = DRIVE_HOLD_SCENARIOS.get(name) if ok else None
+    _set_drive_hold(hold)
+    _idle_paused_until = 0.0 if hold is not None else time.time() + SCENARIO_POST_PAUSE_SEC
+
+
+def _reset_and_release_hold() -> str:
+    _set_drive_hold(None)
+    return reset_scenario()
 
 
 @app.on_event("startup")
@@ -359,7 +391,7 @@ def _on_startup():
     # Always publish initial unlocked state to clear any stale retained lock payload.
     _publish_lock_state()
     # Initialize test runner
-    _test_runner = DashboardTestRunner(_mqtt_client, _trigger_scenario, reset_scenario)
+    _test_runner = DashboardTestRunner(_mqtt_client, _trigger_scenario, _reset_and_release_hold)
     # Start lock watchdog (daemon thread — dies with process)
     t = threading.Thread(target=_lock_watchdog, daemon=True)
     t.start()
@@ -512,11 +544,14 @@ def trigger_scenario(name: str, request: Request):
             detail=f"Unknown scenario '{name}'.  "
                    f"Available: {', '.join(SCENARIOS.keys())}",
         )
-    global _idle_paused, _idle_paused_until
+    global _idle_paused
     _idle_paused = True
+    _set_drive_hold(None)
     log.info("Triggering scenario: %s (idle commands paused)", name)
+    ok = False
     try:
         result = entry["fn"]()
+        ok = True
     except Exception as exc:
         log.error("Scenario '%s' failed: %s", name, exc)
         raise HTTPException(
@@ -530,7 +565,7 @@ def trigger_scenario(name: str, request: Request):
         # this deferral, the cruise loop resumes on the next tick and
         # overwrites the 100% with its 60% cruise target, so the test
         # never observes the commanded torque -> no DEGRADED transition.
-        _idle_paused_until = time.time() + SCENARIO_POST_PAUSE_SEC
+        _end_scenario_pause(name, ok)
         _idle_paused = False
     log.info("Scenario '%s' complete: %s (cruise resumes in %.1fs)",
              name, result, SCENARIO_POST_PAUSE_SEC)
@@ -544,7 +579,7 @@ def reset_all(request: Request):
     global _idle_paused, _idle_paused_until
     log.info("Power-cycle reset initiated")
     try:
-        result = reset_scenario()
+        result = _reset_and_release_hold()
     except Exception as exc:
         log.error("Reset failed: %s", exc)
         raise HTTPException(
@@ -596,6 +631,7 @@ def start_test_run(body: TestRunBody, request: Request):
         run_id = _test_runner.start(body.tests)
     except RuntimeError:
         raise HTTPException(status_code=409, detail="Test run already in progress")
+    _set_drive_hold(None)
     # Only a run that really started counts against the limits.
     _limiter.record(rules)
     return {"run_id": run_id, "state": "running"}
