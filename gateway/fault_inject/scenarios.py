@@ -828,7 +828,8 @@ SCENARIOS: dict[str, dict] = {
         "fn": normal_drive,
         "description": (
             "Normal drive: pedal 50% (SPI override), steer 0 deg, brake 0%.  "
-            "CVC processes pedal through full pipeline -> Torque_Request CAN."
+            "CVC processes pedal through full pipeline -> Torque_Request CAN.  "
+            "The pedal is held until reset or another scenario."
         ),
     },
     "overcurrent": {
